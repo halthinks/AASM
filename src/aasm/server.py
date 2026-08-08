@@ -57,6 +57,9 @@ def make_handler(store_target:str,token:str|None=None):
                     if parts[3:]==["workers","register"]: out=engine.register_worker(WorkerRecord(**payload["worker"]))
                     elif len(parts)==6 and parts[3]=="workers" and parts[5]=="heartbeat": out=engine.worker_heartbeat(parts[4])
                     elif parts[3:]==["claim"]: out=engine.claim_task(TaskDemand(**payload["task"]),payload["worker_id"],lease_seconds=float(payload.get("lease_seconds",60)))
+                    elif parts[3:]==["claim-next"]:
+                        out=engine.claim_next_task(payload["worker_id"],lease_seconds=float(payload.get("lease_seconds",60)))
+                        if out is None: store.close(); return self._json(200,{"lease":None})
                     elif len(parts)==6 and parts[3]=="leases" and parts[5]=="heartbeat": out=engine.lease_heartbeat(parts[4],extend_seconds=float(payload.get("extend_seconds",60)))
                     elif len(parts)==6 and parts[3]=="leases" and parts[5]=="complete": out=engine.complete_lease(parts[4],result=payload.get("result"))
                     elif len(parts)==6 and parts[3]=="leases" and parts[5]=="fail": out=engine.fail_lease(parts[4],error=payload.get("error"))
