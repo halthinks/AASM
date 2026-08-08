@@ -101,3 +101,22 @@ def test_user_interrupt_with_seed_nodes_creates_durable_impact(tmp_path):
     assert resumed.paused_tasks()==["b","c"]
     assert resumed.last_impact()["signal"]["kind"]=="user_steering"
     store.close()
+
+
+def test_remote_change_control_round_trip(tmp_path):
+    import threading
+    from http.server import ThreadingHTTPServer
+    from aasm import AASMRemoteClient
+    from aasm.server import make_handler
+
+    db=str(tmp_path/"remote-impact.db"); store=SQLiteStore(db); e=AASMEngine(ProblemSpec("remote impact"),store=store)
+    e.plan_add_node(PlanNode("a","task")); e.plan_add_node(PlanNode("b","task")); e.plan_add_edge(PlanEdge("a","b")); mid=e.snapshot.machine_id; store.close()
+    server=ThreadingHTTPServer(("127.0.0.1",0),make_handler(db,"secret")); threading.Thread(target=server.serve_forever,daemon=True).start()
+    try:
+        client=AASMRemoteClient(f"http://127.0.0.1:{server.server_port}","secret")
+        impact=client.analyze_change(mid,ChangeSignal(ChangeKind.USER_STEERING,"change a",seed_nodes=["a"]))
+        state=client.change_control(mid)
+        assert impact["affected_nodes"]==["a","b"]
+        assert state["paused_tasks"]==["a","b"]
+    finally:
+        server.shutdown(); server.server_close()
