@@ -1,39 +1,58 @@
 ---
 name: aasm-algorithmic-agent-state-machine
-description: Use AASM to structure an AI task as a durable algorithmic state machine with explicit legal transitions, durable graph planning, persistent memoization, evidence lineage, external-effect control, and configurable authority.
+description: Use AASM to structure an AI task as a durable algorithmic state machine with explicit legal transitions, graph planning, backtracking, memoization, resource allocation, evidence checks, and configurable authority.
 ---
 
 # AASM Skill
 
 ## When to use
-Use AASM for multi-step, branchy, stateful, expensive, auditable, multi-agent/tool, or failure-recoverable work. Do not assume Planner/Builder; AASM is role-agnostic.
+Use this skill for tasks that are multi-step, branchy, stateful, expensive to repeat, require auditable plan changes, involve multiple agents/tools, or need deterministic failure recovery.
+
+Do not assume Planner/Builder. AASM is role-agnostic. Select an orchestration profile or define agents by capability.
 
 ## Operating rules
-1. Formalize goal, objective, constraints, invariants, acceptance tests, and structural features.
-2. Instantiate `AASMEngine(ProblemSpec(...))`; use `SQLiteStore` for recoverable work.
-3. Load a `MachineDefinition` and run `check_machine()` when the workflow has a custom control graph.
-4. Move only through legal transitions; never mutate authoritative state directly.
-5. Use durable plan APIs (`plan_add_node`, `plan_add_edge`, `plan_update_node`, `plan_mark_visited`, `plan_prune_node`) for plan state that must survive restart/replay.
-6. Use `memo_put` / `memo_get` / `memo_invalidate` for persistent dynamic-programming memory with validity scopes and proof references.
-7. Record claims, observations, assumptions, and contradictions through the evidence APIs. Link derived records with stable evidence IDs and invalidate rather than delete stale evidence.
-8. Create checkpoints before branching, irreversible work, or high-risk assumptions.
-9. Represent external side effects as durable `EffectSpec` records, authorize them explicitly, reuse stable idempotency keys, and reconcile `UNKNOWN` outcomes before retrying.
-10. Use `ResourceFlowAllocator` for bounded agents/tools/concurrency/budget and inspect min-cut bottlenecks before adding workers.
-11. Run adversarial verification before COMMIT or irreversible action.
-12. Recover with `AASMEngine.resume()` / `recover_unfinished()`; inspect history with `replay(at_sequence=N)` and create alternate futures with `fork(N)`.
-13. Treat a fork as a new machine. Historical planning, memory, and evidence copy only up to the fork boundary; prior external effects do not copy.
-14. COMPLETE only when acceptance tests are satisfied.
+1. Formalize the goal into objective, constraints, invariants, acceptance tests, and structural features.
+2. Instantiate `AASMEngine(ProblemSpec(...))`. When the workflow has a domain-specific control graph, load a `MachineDefinition` and run `check_machine()` before execution. For long-running or recoverable work, provide a durable store such as `SQLiteStore`.
+3. Move only through legal machine transitions. Never mutate `snapshot.state` directly.
+4. Run `engine.classify()` in `CLASSIFY` to select applicable algorithmic operators.
+5. Represent nontrivial dependencies as a `PlanGraph`; prefer topological execution for DAGs and shortest path when alternatives have costs.
+6. Create a checkpoint before branching, irreversible work, or a high-risk assumption.
+7. Use `DPMemory` for equivalent solved subproblems; attach validity scope and invalidate when assumptions change.
+8. Use `ResourceFlowAllocator` when work competes for bounded agents, tools, concurrency, or budget; inspect minimum-cut edges before adding workers.
+9. Before COMMIT or irreversible action, call adversarial verification and resolve blocking counterexamples.
+10. Agents may propose actions. The configured `AuthorityPolicy` decides who can authorize them. The runtime, not generated prose, owns authoritative state.
+11. Emit evidence and provenance for every material transition. Do not bypass the event-sourced transition/patch APIs by mutating durable snapshot fields directly.
+12. For durable runs, recover with `AASMEngine.resume(machine_id, store)` or `recover_unfinished(store)` and verify replay before resuming risky external work.
+13. Use `engine.replay(at_sequence=N)` to inspect historical state without re-running effects. Use `engine.fork(N)` for alternate futures; treat the fork as a new machine and explicitly propose any new external effects.
+14. COMPLETE only when acceptance tests are satisfied; FAIL is terminal and must state why.
 
-## Failure semantics
-- local defect → `REPAIR`
-- invalid ancestor decision → `BACKTRACK`
-- insufficient/contradictory evidence → `INVESTIGATE`
-- better costed route → relax the graph and preserve provenance
-- resource bottleneck → reallocate using flow/min-cut
-- external dependency/user block → `PAUSE`
+## Profiles
+- `single_agent.yaml`: one agent, reversible autonomous actions.
+- `planner_builder.yaml`: compatibility profile; Planner/Builder is not the core architecture.
+- `expert_swarm.yaml`: specialist agents with quorum governance.
+- `hierarchical_team.yaml`: delegated local authority with central/human gates.
+- `quorum_governance.yaml`: multi-party authorization.
+- `human_in_loop.yaml`: human authorization for configured external/irreversible actions.
 
 ## Required handoff payload
-Machine id/version, state, problem spec, assigned frontier node, graph neighborhood, constraints/invariants, relevant memo keys, evidence IDs/lineage, authorization scope, checkpoint if applicable, and allowed response types.
+When another agent receives AASM work, give it: machine id/version, current state, problem spec, assigned task/frontier node, relevant graph neighborhood, constraints/invariants, evidence references, authorization scope, checkpoint id if applicable, and allowed response types.
 
-## Safety
-AASM improves process control; it does not make model outputs correct. High-stakes and irreversible actions require domain-specific validation and authority policy.
+## Failure semantics
+- Local defect with preserved assumptions → `REPAIR`
+- Ancestor decision invalid → `BACKTRACK`
+- Evidence insufficient / contradiction unresolved → `INVESTIGATE`
+- Better costed path discovered → relax the plan graph, preserve provenance
+- Resource bottleneck → run max-flow/min-cut, reallocate rather than blindly spawn agents
+- User or external dependency blocks progress → `PAUSE`
+
+## Safety and correctness
+AASM improves process control; it does not make an underlying model correct. External side effects, security-sensitive actions, or domain-specific high-stakes decisions require their own policies and validation.
+
+## Durable effect rule
+When an action has an external side effect, represent it as an `EffectSpec`, persist it before execution, authorize it explicitly, and execute it through `execute_effect()`. Reuse stable idempotency keys for semantically identical operations. Never blindly retry an `UNKNOWN` effect outcome; reconcile external state first unless the executor is explicitly retry-safe.
+
+## Durable planning and evidence
+Use `engine.plan_add_node`, `plan_add_edge`, `plan_update_node`, `plan_mark_visited`, and `plan_prune_node` instead of mutating `engine.graph` when plan state must survive restart or replay. Use `memo_put`/`memo_get`/`memo_invalidate` for persistent subproblem reuse. Record claims, observations, assumptions, and contradictions through the evidence APIs, and link derived records with stable evidence IDs.
+
+## Durable resource scheduling
+When work competes for constrained agents, tools, model slots, GPUs, API quotas, or human review capacity, register them with `ResourceRecord` and express work as `TaskDemand`. Use `engine.schedule()` rather than manually assigning workers when capability/capacity constraints matter. Treat `result.bottlenecks` and `result.unmet` as planner evidence: adding workers outside the min-cut does not improve throughput. Resource/schedule state is replayable and fork-aware.

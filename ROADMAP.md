@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.5.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.6.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -9,6 +9,7 @@ AASM is currently **v0.5.0 / early-stage**. This roadmap describes direction, no
 - ✅ persistent DP-memory backend
 - ✅ durable plan graph + evidence lineage
 - ✅ durable effect lifecycle + idempotency boundary
+- ✅ durable capability registry + resource scheduler
 - richer event/evidence contracts
 - ✅ declarative machine definitions + initial static model checking
 - improved schema validation

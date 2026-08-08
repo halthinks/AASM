@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/task-demand.schema.json",
+  "title": "AASM Task Demand",
+  "type": "object",
+  "required": ["task_id"],
+  "properties": {
+    "task_id": {"type": "string", "minLength": 1},
+    "required_capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "demand": {"type": "number", "minimum": 0},
+    "priority": {"type": "integer"},
+    "allowed_kinds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "max_cost_per_unit": {"type": ["number", "null"], "minimum": 0},
+    "min_reliability": {"type": "number", "minimum": 0, "maximum": 1},
+    "metadata": {"type": "object"}
+  }
+}

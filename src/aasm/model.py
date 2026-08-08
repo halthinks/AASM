@@ -24,6 +24,7 @@ class EventType(str, Enum):
     PLAN_NODE_ADDED="plan_node_added"; PLAN_EDGE_ADDED="plan_edge_added"; PLAN_NODE_UPDATED="plan_node_updated"; PLAN_NODE_PRUNED="plan_node_pruned"
     MEMORY_PUT="memory_put"; MEMORY_INVALIDATED="memory_invalidated"
     EVIDENCE_ADDED="evidence_added"; EVIDENCE_INVALIDATED="evidence_invalidated"
+    RESOURCE_REGISTERED="resource_registered"; RESOURCE_UPDATED="resource_updated"; SCHEDULE_COMPUTED="schedule_computed"
 
 @dataclass(frozen=True)
 class CapabilitySet:
@@ -101,9 +102,11 @@ class MachineSnapshot:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def canonical_hash(self) -> str:
-        payload = asdict(self); payload.pop("version", None)
+        payload = asdict(self)
+        payload.pop("version", None)
         raw=json.dumps(payload, sort_keys=True, separators=(",",":"), default=str).encode()
         return hashlib.sha256(raw).hexdigest()
+
 
 def new_id(prefix: str) -> str: return f"{prefix}_{uuid.uuid4().hex[:12]}"
 def now() -> float: return time.time()

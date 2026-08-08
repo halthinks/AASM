@@ -4,6 +4,17 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.6.0] - 2026-08-07
+
+### Added
+
+- durable resource/capability registry for agents, tools, humans, services, and constrained execution slots
+- capability-aware max-flow scheduling with priorities, reliability/cost filters, durable assignments, utilization, and unmet demand
+- min-cut bottleneck reporting and explicit missing-capability diagnostics
+- automatic durable plan-node ownership updates when task IDs match plan nodes
+- restart/replay/fork-safe resource and scheduling state
+- `aasm resources` and `aasm schedule` CLI commands, schemas, documentation, and scheduler example
+
 ## [0.5.0] - 2026-08-07
 
 ### Added
@@ -14,7 +25,7 @@ The project uses semantic-versioning intent while the public API remains experim
 - durable evidence invalidation that preserves provenance
 - fork-aware planning, memory, and evidence state at historical event boundaries
 - CLI inspection commands for plan, memory, evidence, and evidence lineage
-- plan-node, plan-edge, memory-entry, and evidence JSON schemas plus durable-cognition documentation
+- plan-node and evidence JSON schemas plus durable-cognition documentation
 
 ### Compatibility
 
