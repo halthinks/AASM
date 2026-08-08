@@ -1,8 +1,10 @@
 import threading
 from http.server import ThreadingHTTPServer
+from urllib.request import urlopen
 import pytest
 
 from aasm import AASMEngine, ProblemSpec, SQLiteStore, ResourceRecord, WorkerRecord, TaskDemand
+from aasm.control_center import html_document
 from aasm.model_routing import ModelProfile, ModelRouteRequest, ModelStrengthRouter
 from aasm.remote import AASMRemoteClient
 from aasm.server import make_handler
@@ -39,6 +41,30 @@ def test_remote_worker_can_claim_and_complete_over_http(tmp_path):
         done=client.complete(mid,lease['lease_id'],{'ok':True}); assert done['status']=='COMPLETED'; assert client.state(mid)['leases'][-1]['status']=='COMPLETED'
     finally:
         server.shutdown(); server.server_close()
+
+
+def test_control_center_has_security_headers_and_escaped_dynamic_labels(tmp_path):
+    db=str(tmp_path/'ui.db')
+    server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(db,'secret')); threading.Thread(target=server.serve_forever,daemon=True).start()
+    try:
+        with urlopen(f'http://127.0.0.1:{server.server_port}/ui') as response:
+            assert response.headers['Cache-Control']=='no-store'
+            assert response.headers['X-Content-Type-Options']=='nosniff'
+            assert "frame-ancestors 'none'" in response.headers['Content-Security-Policy']
+        page=html_document()
+        assert 'function esc(value)' in page
+        assert '${esc(m.model_id)}' in page
+        assert '${esc(w.worker_id)}' in page
+        assert '${esc(l.task_id)}' in page
+    finally:
+        server.shutdown(); server.server_close()
+
+
+def test_remote_server_refuses_public_bind_without_authentication(tmp_path,monkeypatch):
+    from aasm.server import serve
+    monkeypatch.delenv('AASM_SERVER_TOKEN',raising=False)
+    with pytest.raises(ValueError,match='refuses non-loopback binding'):
+        serve(str(tmp_path/'public.db'),host='0.0.0.0',port=0,token=None)
 
 
 def test_postgres_store_has_clear_optional_dependency_error():
