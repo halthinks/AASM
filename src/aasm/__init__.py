@@ -13,6 +13,7 @@ from .worker_loop import RemoteWorkerLoop
 from .economics import CallPurpose, ModelPricing, ModelUsageRecord, ReviewGatePolicy, EconomicsLedger
 from .openai_executor import OpenAIResponsesExecutor, OpenAIExecutionResult, OpenAIExecutorError
 from .codex_executor import CodexCLIExecutor, CodexExecutionResult, CodexExecutorError
+from .codex_policy import CodexGovernancePolicy
 
 __all__=[
     "AASMEngine","MachineState","ProblemSpec","TaskEnvelope","Proposal","Result","CapabilitySet",
@@ -23,7 +24,7 @@ __all__=[
     "WorkerRecord","WorkerStatus","TaskLease","LeaseStatus","QuotaPolicy",
     "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","AASMRemoteClient","RemoteProtocolError","RemoteWorkerLoop",
     "CallPurpose","ModelPricing","ModelUsageRecord","ReviewGatePolicy","EconomicsLedger",
-    "OpenAIResponsesExecutor","OpenAIExecutionResult","OpenAIExecutorError","CodexCLIExecutor","CodexExecutionResult","CodexExecutorError"
+    "OpenAIResponsesExecutor","OpenAIExecutionResult","OpenAIExecutorError","CodexCLIExecutor","CodexExecutionResult","CodexExecutorError","CodexGovernancePolicy"
 ]
 
 from .graph import PlanNode, PlanEdge, PlanGraph
