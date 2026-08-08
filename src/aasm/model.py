@@ -25,6 +25,9 @@ class EventType(str, Enum):
     MEMORY_PUT="memory_put"; MEMORY_INVALIDATED="memory_invalidated"
     EVIDENCE_ADDED="evidence_added"; EVIDENCE_INVALIDATED="evidence_invalidated"
     RESOURCE_REGISTERED="resource_registered"; RESOURCE_UPDATED="resource_updated"; SCHEDULE_COMPUTED="schedule_computed"
+    WORKER_REGISTERED="worker_registered"; WORKER_UPDATED="worker_updated"; WORKER_HEARTBEAT="worker_heartbeat"
+    QUOTA_SET="quota_set"; LEASE_CLAIMED="lease_claimed"; LEASE_HEARTBEAT="lease_heartbeat"
+    LEASE_COMPLETED="lease_completed"; LEASE_FAILED="lease_failed"; LEASE_RELEASED="lease_released"; LEASE_EXPIRED="lease_expired"
 
 @dataclass(frozen=True)
 class CapabilitySet:
