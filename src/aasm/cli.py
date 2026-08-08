@@ -5,7 +5,7 @@ import json
 from dataclasses import asdict
 
 from .definitions import MachineDefinition
-from .runtime_v08 import AASMEngine
+from .runtime_v09 import AASMEngine
 from .model import MachineState, ProblemSpec
 from .model_check import check_machine
 from .persistence import SQLiteStore
@@ -88,6 +88,10 @@ def _model_route(args):
     store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); raw=json.loads(open(args.request,"r",encoding="utf-8").read()); result=engine.route_model(ModelRouteRequest(**raw)); _json(result.to_dict()); store.close()
 
 
+def _economics(args):
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); _json({"machine_id":args.machine_id,"economics":engine.economics_summary(),"review_decisions":engine.snapshot.resources.get("economics",{}).get("review_decisions",[])}); store.close()
+
+
 def _serve(args):
     from .server import serve
     serve(args.store,args.host,args.port,args.token)
@@ -115,7 +119,8 @@ def build_parser():
     claim=sub.add_parser("claim",help="atomically claim one task for a worker"); claim.add_argument("machine_id"); claim.add_argument("--db",required=True); claim.add_argument("--worker",required=True); claim.add_argument("--task",required=True); claim.add_argument("--lease-seconds",type=float,default=60.0); claim.set_defaults(func=_claim)
     models=sub.add_parser("models",help="inspect durable model profiles and last route"); models.add_argument("machine_id"); models.add_argument("--db",required=True); models.set_defaults(func=_models)
     mr=sub.add_parser("model-route",help="route a task to a registered model profile"); mr.add_argument("machine_id"); mr.add_argument("--db",required=True); mr.add_argument("--request",required=True); mr.set_defaults(func=_model_route)
-    servep=sub.add_parser("serve",help="run the remote AASM HTTP control plane"); servep.add_argument("--store",required=True,help="SQLite path/sqlite:///... or postgres://..."); servep.add_argument("--host",default="127.0.0.1"); servep.add_argument("--port",type=int,default=8787); servep.add_argument("--token"); servep.set_defaults(func=_serve)
+    econ=sub.add_parser("economics",help="inspect cache-adjusted model spend and governance overhead"); econ.add_argument("machine_id"); econ.add_argument("--db",required=True); econ.set_defaults(func=_economics)
+    servep=sub.add_parser("serve",help="run the remote AASM HTTP control plane and browser UI"); servep.add_argument("--store",required=True,help="SQLite path/sqlite:///... or postgres://..."); servep.add_argument("--host",default="127.0.0.1"); servep.add_argument("--port",type=int,default=8787); servep.add_argument("--token"); servep.set_defaults(func=_serve)
     verify=sub.add_parser("verify-machine",help="statically validate a declarative machine definition"); verify.add_argument("path"); verify.set_defaults(func=_verify_machine)
     return parser
 
