@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/governance-decision.schema.json",
+  "title": "AASM Governance Decision",
+  "type": "object",
+  "required": ["action", "requires_model_review", "reason", "fingerprint", "budget_state"],
+  "properties": {
+    "decision_id": {"type": "string"},
+    "action": {"enum": ["REVIEW_NOT_REQUIRED", "MODEL_REVIEW_REQUIRED", "REVIEW_REUSED", "BUDGET_PAUSE"]},
+    "requires_model_review": {"type": "boolean"},
+    "reason": {"type": "string"},
+    "fingerprint": {"type": "string"},
+    "budget_state": {"enum": ["OK", "SOFT", "HARD"]},
+    "coalesced": {"type": "boolean"},
+    "review_model_hint": {"type": ["string", "null"]},
+    "review_completed": {"type": "boolean"},
+    "review_evidence": {"type": "array", "items": {"type": "string"}},
+    "context": {"type": "object"},
+    "metadata": {"type": "object"}
+  }
+}
