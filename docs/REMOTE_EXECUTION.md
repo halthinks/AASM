@@ -1,6 +1,6 @@
 # Remote execution and PostgreSQL coordination
 
-AASM v0.8 adds a network control plane so workers can run on different hosts while sharing one authoritative machine history. The v0.9 audit hardens that boundary for concurrent state, capacity/quota policy, effects, and remote HTTP exposure.
+AASM v0.8 adds a network control plane so workers can run on different hosts while sharing one authoritative machine history. The v0.9 audit hardens that boundary for concurrent state, capacity/quota policy, effects, remote HTTP exposure, and long-running event-stream performance.
 
 ## Topology
 
@@ -67,7 +67,8 @@ The Python `AASMRemoteClient` wraps the worker-facing endpoints without an extra
 `PostgresStore` is the shared coordination authority for real multi-host execution:
 
 - event append is serialized by a transaction-scoped advisory lock per machine;
-- every new event is reduced against database-canonical event history, then the canonical materialized snapshot is updated in the same transaction;
+- each hot-path append reads the locked canonical materialized snapshot, reduces exactly one new event, inserts it, and updates that snapshot in the same transaction;
+- full event replay remains available for verification, historical inspection, forks, and integrity checks, but is not required for every heartbeat;
 - stale hosts therefore cannot overwrite state committed by another host;
 - task ownership is unique per `(machine_id, task_id)` and active claims are held in one shared claim table;
 - claims take the machine event lock before the claim lock, read the current durable snapshot, and enforce the **current** worker mapping, resource enabled/capacity state, and quota policy inside the claim transaction;
@@ -76,8 +77,18 @@ The Python `AASMRemoteClient` wraps the worker-facing endpoints without an extra
 - effect execution uses a row-locked atomic attempt claim, so two hosts cannot both move one authorized effect into `RUNNING` and invoke it;
 - lease renewal/release and effect recovery remain explicit durable operations.
 
+## Lazy control-plane resume
+
+Stateless HTTP handlers use:
+
+```python
+AASMEngine.resume(machine_id, store, load_history=False)
+```
+
+This loads the authoritative materialized snapshot, the first event needed to recover the machine definition, and the last event sequence. It does **not** scan the full history for routine dashboard polling or worker heartbeats. Subsequent writes synchronize only the events committed since that sequence. Calling `export()` or explicit replay still loads/uses the full history when audit semantics require it.
+
 ## Failure behavior
 
 A remote worker that loses contact stops renewing its worker heartbeat and task lease. Another controller/maintenance process can mark the worker stale and expire/reclaim its leases.
 
-A task lease and an external provider transaction are separate correctness boundaries. Externally visible operations still use the effect/idempotency system. Normal `AASMEngine.resume()` is passive and safe for dashboards/HTTP handlers; only a genuine crash-recovery path should use `recover_effects=True` (or `recover_unfinished()`) to convert unresolved `RUNNING` effects to `UNKNOWN` for reconciliation.
+A task lease and an external provider transaction are separate correctness boundaries. Externally visible operations still use the effect/idempotency system. Normal `AASMEngine.resume()` and `recover_unfinished(store)` are passive. Only a genuine crash-recovery path should explicitly pass `recover_effects=True` to convert unresolved `RUNNING` effects to `UNKNOWN` for reconciliation.
