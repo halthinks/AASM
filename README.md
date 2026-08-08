@@ -10,7 +10,7 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.13.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.14.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
@@ -68,6 +68,7 @@ AASM is an attempt to make those properties first-class.
 | **Adaptive model routing** | Learns task-class-specific model quality/cost/latency from explicit evaluated outcomes while preserving hard static eligibility floors. |
 | **Governance economics** | Separates semantic review from authority, budgets governance overhead, reuses unchanged low-risk completed reviews, and pauses rather than waiving required review. |
 | **Executable PBV profile** | Runs Builder → Verifier → Planner handoffs with Planner-only plan authority and explicit `CONTINUE | REPAIR | INVESTIGATE | PAUSE | PLAN_INTERRUPT` control messages. |
+| **Massive collaboration** | Computes useful worker fan-out from critical path, DAG width, eligible max-flow capacity, coordination overhead, cost, and min-cut bottlenecks instead of blindly spawning agents. |
 | **Provenance** | Emits state-change and execution events so the run can be inspected after the fact. |
 
 ## Architecture
@@ -150,7 +151,7 @@ Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems 
 ### Requirements
 
 - Python **3.11+**
-- No mandatory runtime dependencies beyond the Python standard library in v0.13.0; PostgreSQL support is an optional extra
+- No mandatory runtime dependencies beyond the Python standard library in v0.14.0; PostgreSQL support is an optional extra
 
 ### Install from a clone
 
@@ -179,7 +180,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.13.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.14.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -420,6 +421,36 @@ The Verifier and Planner may be Codex/Responses agents, other providers, remote 
 
 See [`docs/EXECUTABLE_PBV.md`](docs/EXECUTABLE_PBV.md) and [`examples/pbv_cycle.py`](examples/pbv_cycle.py).
 
+### Massive collaboration scheduler
+
+v0.14 makes worker fan-out an explicit scheduling decision rather than a synonym for "spawn more agents." `CollaborationPlanner` combines the durable plan graph with the capability scheduler to determine how many concurrent workers can actually reduce completion time.
+
+```python
+from aasm import CollaborationPolicy
+
+analysis = engine.analyze_collaboration(policy=CollaborationPolicy(
+    max_workers=128,
+    coordination_overhead_per_extra_worker=.05,
+    min_relative_improvement=.02,
+    near_optimal_tolerance=.02,
+))
+
+print(analysis["recommended_workers"])
+print(analysis["bottlenecks"])
+```
+
+The useful ceiling is constrained by runnable task count, DAG parallel width, physical enabled capacity, and capability-eligible max-flow capacity. Candidate worker counts are evaluated against the critical path, total work, and coordination overhead. AASM chooses the smallest team in the near-optimal projected-makespan band.
+
+This means 100 available workers can legitimately produce a recommendation of 1 when the plan is serial, 0 when capabilities cannot satisfy the task set, or a smaller intermediate number when coordination overhead erases the marginal speedup.
+
+The result is scheduling evidence only. v0.14 does not silently provision workers or infrastructure.
+
+```bash
+aasm collaboration MACHINE_ID --store runs.db --policy collaboration-policy.json
+```
+
+See [`docs/MASSIVE_COLLABORATION.md`](docs/MASSIVE_COLLABORATION.md) and [`examples/massive_collaboration.py`](examples/massive_collaboration.py).
+
 ## Orchestration profiles
 
 AASM ships with multiple profiles to demonstrate that governance and role structure are independent of the core runtime:
@@ -471,9 +502,9 @@ See [`docs/DISTRIBUTED_WORKERS.md`](docs/DISTRIBUTED_WORKERS.md) and [`docs/REMO
 
 ## Project status
 
-**Current version: `0.13.0` — early-stage / experimental.**
+**Current version: `0.14.0` — early-stage / experimental.**
 
-The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, static model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, evaluated-outcome adaptive model routing, governance-review budgets/reuse, executable Planner/Builder/Verifier orchestration, a browser Control Center, and cache-adjusted model economics.
+The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, static model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, evaluated-outcome adaptive model routing, governance-review budgets/reuse, executable Planner/Builder/Verifier orchestration, evidence-based massive-collaboration planning, a browser Control Center, and cache-adjusted model economics.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 
