@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/governance-budget.schema.json",
+  "title": "AASM Governance Budget Policy",
+  "type": "object",
+  "properties": {
+    "soft_governance_token_ratio": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "hard_governance_token_ratio": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "soft_governance_cost_ratio": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "hard_governance_cost_ratio": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "min_total_tokens_for_ratio_enforcement": {"type": "integer", "minimum": 0},
+    "max_governance_tokens": {"type": ["integer", "null"], "minimum": 0},
+    "max_governance_cost": {"type": ["number", "null"], "minimum": 0},
+    "max_permission_review_calls": {"type": ["integer", "null"], "minimum": 0},
+    "enabled": {"type": "boolean"}
+  },
+  "additionalProperties": false
+}
