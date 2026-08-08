@@ -10,10 +10,10 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.4.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.5.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-[**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
+[**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#minimal-example) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
 
 </div>
 
@@ -25,46 +25,25 @@ Most agent frameworks are very good at giving a model tools. AASM is focused on 
 
 > **How do you govern what an intelligent system is allowed to do next?**
 
-AASM provides a role-agnostic control layer around agents. The model can propose. AASM keeps the authoritative state, selects algorithmic operators, enforces legal transitions, records provenance, manages checkpoints, and provides hooks for verification and governance.
-
-The core idea is simple:
+AASM provides a role-agnostic control layer around agents. Models can propose; AASM owns authoritative state, legal transitions, provenance, recovery, durable effects, planning state, memoized subproblems, evidence lineage, and governance.
 
 > **Models propose. Algorithms organize. Policy authorizes. Evidence validates. State governs what happens next.**
 
-AASM is not tied to a Planner/Builder architecture. It can coordinate one agent, many specialists, a swarm, human approvals, tools, simulators, or external services through the same runtime contracts.
-
-## Why this exists
-
-LLMs are probabilistic. Real workflows often are not.
-
-Long-running or high-complexity agent work benefits from properties that ordinary conversational loops do not naturally provide:
-
-- explicit machine state instead of hidden conversational state
-- legal state transitions instead of improvised control flow
-- reversible checkpoints before risky branches
-- dependency graphs instead of flat task lists
-- memoized subproblems instead of repeated reasoning
-- resource-aware routing instead of indiscriminate agent spawning
-- adversarial checks before important conclusions are committed
-- configurable authority instead of assuming every worker can rewrite the plan
-- append-only event provenance for inspection and debugging
-
-AASM is an attempt to make those properties first-class.
+AASM is not tied to Planner/Builder. It can coordinate one agent, many specialists, swarms, human approvals, tools, simulators, or external services through the same runtime contracts.
 
 ## Core capabilities
 
 | Capability | What AASM does |
 |---|---|
 | **State machine** | Governs execution through explicit states and legal transitions. |
-| **Algorithm router** | Classifies problem structure and selects applicable computational strategies. |
-| **Graph planning** | Represents dependencies as a graph with topological ordering, shortest-path search, and edge relaxation. |
-| **Backtracking** | Checkpoints state, prunes invalid branches, and restores known-good states. |
-| **DP memory** | Canonicalizes and memoizes equivalent solved subproblems with validity scopes. |
+| **Declarative machines** | Loads custom control graphs and statically checks them before execution. |
+| **Durable runtime** | Event-sourced machine state, SQLite persistence, crash recovery, checkpoints, replay, and forks. |
+| **Durable effects** | Separates deciding from doing with authorization, idempotency, retries, unknown-outcome reconciliation, and persisted results. |
+| **Durable plan graph** | Persists plan nodes, edges, ownership, costs, frontier state, visited work, and pruned branches. |
+| **Persistent DP memory** | Reuses solved equivalent subproblems across process restarts with validity scopes and durable invalidation. |
+| **Evidence lineage** | Records claims, observations, assumptions, contradictions, derivation links, and invalidation history. |
 | **Resource flow** | Uses max-flow/min-cut machinery to reason about constrained agents, tools, and capacity. |
-| **Adversarial verification** | Challenges unsupported claims and searches for counterexamples or missing evidence. |
 | **Authority policies** | Supports controller, autonomous, quorum, and hierarchical governance models. |
-| **Agent protocols** | Provides generic agent contracts plus adapters for common orchestration patterns. |
-| **Provenance** | Emits state-change and execution events so the run can be inspected after the fact. |
 
 ## Architecture
 
@@ -73,82 +52,24 @@ flowchart TD
     G[Goal / Event / Request] --> I[Ingest & Normalize]
     I --> F[Formalize Objective, Constraints, Invariants]
     F --> C[Classify Problem Structure]
-    C --> R[Algorithm Router]
-    R --> P[Plan Graph / Search Frontier]
+    C --> P[Durable Plan Graph]
     P --> A[Authority Policy]
     A --> X[Agent / Tool / Human Execution]
     X --> O[Observe Result]
-    O --> V[Verify Evidence & Invariants]
+    O --> E[Evidence Ledger]
+    E --> V[Verify Evidence & Invariants]
     V -->|valid| K[Commit]
-    V -->|repairable| E[Repair]
-    V -->|bad branch| B[Backtrack]
+    V -->|repairable| R[Repair]
+    V -->|bad branch| B[Backtrack / Fork]
     V -->|unknown| N[Investigate]
     K --> D{Goal complete?}
     D -->|no| P
     D -->|yes| Z[Complete]
-    E --> X
-    B --> P
-    N --> F
 ```
 
 The LLM is **inside** the machine. It is not the machine.
 
-## Algorithmic foundation
-
-AASM translates classic algorithms into agent-runtime operators:
-
-| Classical idea | Agentic interpretation |
-|---|---|
-| Recursion / reduction | Decompose a goal into structurally related subproblems. |
-| Backtracking | Explore a branch, detect contradiction, and restore a prior valid state. |
-| Dynamic programming | Reuse solved equivalent subproblems rather than paying to solve them again. |
-| Greedy methods | Select locally optimal actions when the governing invariant makes that safe. |
-| Graph traversal | Discover dependencies, requirements, artifacts, hypotheses, and work units. |
-| Topological ordering | Determine a legal execution order for dependent work. |
-| Shortest paths | Choose a lower-cost route from the current state to the goal. |
-| Edge relaxation | Update a plan locally when a better path is discovered. |
-| Max-flow / min-cut | Allocate scarce execution capacity and identify bottlenecks. |
-| Adversary arguments | Search for a consistent counterexample that could invalidate a conclusion. |
-| Automata | Define the legal control behavior of the orchestration system itself. |
-
-The design was inspired by the algorithmic techniques presented in Jeff Erickson's openly available *Algorithms* and *Models of Computation* materials. AASM's implementation and agent-runtime interpretation are original. See [`docs/ERICKSON_MAPPING.md`](docs/ERICKSON_MAPPING.md).
-
-## Use cases
-
-AASM is intentionally domain-neutral. Examples include:
-
-### Agentic software engineering
-Coordinate architecture, implementation, tests, review, CI recovery, and release work while preserving a durable plan and preventing a worker from silently redefining project state.
-
-### Research and evidence synthesis
-Represent claims, sources, dependencies, contradictions, and confidence as explicit state; require adversarial verification before important conclusions are accepted.
-
-### CAD / engineering workflows
-Model requirements, geometry, analysis, simulation, drawings, validation, and manufacturing handoffs as dependent graph nodes with rollback when an assumption or test fails.
-
-### Multi-agent teams
-Allocate specialists by capability, control which roles can authorize changes, and use capacity-aware scheduling rather than simply spawning more workers.
-
-### Long-running autonomous workflows
-Checkpoint progress, recover from failure, memoize solved subproblems, and resume from durable machine state.
-
-### Human-in-the-loop systems
-Insert approvals only where authority policy requires them while allowing reversible low-risk work to continue autonomously.
-
-### Simulation and optimization
-Treat candidate solutions as branches, prune invalid states, reuse equivalent subproblems, and route scarce simulation capacity toward the most useful frontier.
-
-### Tool-heavy automation
-Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems through one state-and-evidence contract.
-
 ## Quick start
-
-### Requirements
-
-- Python **3.11+**
-- No runtime dependencies beyond the Python standard library in v0.4.0
-
-### Install from a clone
 
 ```bash
 git clone https://github.com/halthinks/AASM.git
@@ -159,188 +80,90 @@ pip install -e '.[dev]'
 pytest -q
 ```
 
-Run the included demo:
-
-```bash
-aasm demo
-python examples/multi_agent_demo.py
-```
-
 ## Downloads
-
-Choose whichever form is easiest:
 
 - **[Download source ZIP](https://github.com/halthinks/AASM/archive/refs/heads/main.zip)**
 - **[Download source TAR.GZ](https://github.com/halthinks/AASM/archive/refs/heads/main.tar.gz)**
-- **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
-- **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
+- **Clone:** `git clone https://github.com/halthinks/AASM.git`
 
-> AASM is currently **v0.4.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.5.0 / early-stage**.
 
 ## Minimal example
 
 ```python
-from aasm import AASMEngine, ProblemSpec, MachineState
-
-problem = ProblemSpec(
-    goal="Produce and verify an artifact",
-    constraints=[{"id": "C1", "text": "preserve provenance"}],
-    acceptance_tests=[{"id": "T1", "text": "all tests pass"}],
-    features={
-        "dependency_graph": True,
-        "branching_choices": True,
-        "overlapping_subproblems": True,
-        "capacity_constraints": True,
-    },
-)
-
-engine = AASMEngine(problem)
-engine.transition(MachineState.FORMALIZE, "goal normalized")
-engine.transition(MachineState.CLASSIFY, "problem formalized")
-
-print(engine.classify())
-```
-
-A larger multi-agent example is available at [`examples/multi_agent_demo.py`](examples/multi_agent_demo.py).
-
-### Durable runs and crash recovery
-
-```python
-from aasm import AASMEngine, MachineState, ProblemSpec, SQLiteStore
+from aasm import AASMEngine, PlanNode, ProblemSpec, SQLiteStore
 
 store = SQLiteStore("runs.db")
-engine = AASMEngine(ProblemSpec("Long-running verified work"), store=store)
-engine.transition(MachineState.FORMALIZE, "normalized")
-machine_id = engine.snapshot.machine_id
-store.close()
-
-# A later process can reconstruct the run from the durable event stream.
-store = SQLiteStore("runs.db")
-engine = AASMEngine.resume(machine_id, store)
+engine = AASMEngine(ProblemSpec("Build verified artifact"), store=store)
+engine.plan_add_node(PlanNode("research", "task", {"topic": "AASM"}))
+engine.memo_put("research-result", {"status": "done"}, scope={"repo": "AASM"})
+obs = engine.add_observation("tests passed", source="pytest", confidence=1.0)
+claim = engine.add_claim("artifact is locally verified", derived_from=[obs.evidence_id])
+print([x.statement for x in engine.evidence_lineage(claim.evidence_id)])
 ```
 
-See [`docs/DURABLE_RUNTIME.md`](docs/DURABLE_RUNTIME.md) and [`examples/durable_run.py`](examples/durable_run.py).
+## Durable cognition
 
-### Durable external effects
+AASM v0.5 persists the runtime's working cognition in the replayable history:
 
-AASM can now persist externally observable actions separately from model reasoning. Each effect has an authorization state, retry policy, idempotency key, durable result/error record, and crash-recovery semantics. If a process dies while an effect is running, AASM marks the outcome `UNKNOWN` and refuses a blind retry by default.
+- plan nodes and edges
+- frontier / visited / pruned state
+- memoized subproblems and validity scopes
+- proof references and durable memory invalidation
+- claims, observations, assumptions, contradictions
+- derivation, support, and contradiction links
+- evidence invalidation history
 
-See [`docs/EFFECT_SYSTEM.md`](docs/EFFECT_SYSTEM.md) and [`examples/effect_demo.py`](examples/effect_demo.py).
-
-### Declarative machines and model checking
-
-AASM machines can now be defined as data rather than hard-coded control flow. `MachineDefinition` supports JSON and TOML with no additional dependency, plus optional YAML when PyYAML is installed. Before execution, `check_machine()` can detect undefined targets, unreachable states, non-terminal dead ends, terminal states with outgoing edges, and reachable regions that cannot reach any terminal state.
+Historical forks receive exactly the planning, memory, and evidence state that existed at their fork boundary, then diverge independently. External effects are still intentionally not copied into forks.
 
 ```bash
-aasm verify-machine examples/machine.json
+aasm plan MACHINE_ID --db runs.db
+aasm memory MACHINE_ID --db runs.db
+aasm evidence MACHINE_ID --db runs.db
+aasm evidence MACHINE_ID --db runs.db --lineage EVIDENCE_ID
 ```
 
-See [`docs/DECLARATIVE_MACHINES.md`](docs/DECLARATIVE_MACHINES.md) and [`examples/machine.json`](examples/machine.json).
+See [`docs/DURABLE_COGNITION.md`](docs/DURABLE_COGNITION.md).
 
-### Historical replay and forks
+## Other documentation
 
-Replay can stop at an exact event sequence, and a durable run can fork from that boundary into an independent machine with explicit lineage. Forks do not copy or re-run prior external effects.
+- [`docs/DURABLE_RUNTIME.md`](docs/DURABLE_RUNTIME.md) — crash-safe event-sourced runtime
+- [`docs/EFFECT_SYSTEM.md`](docs/EFFECT_SYSTEM.md) — durable external-effect lifecycle
+- [`docs/DECLARATIVE_MACHINES.md`](docs/DECLARATIVE_MACHINES.md) — declarative control graphs and model checking
+- [`docs/REPLAY_FORK.md`](docs/REPLAY_FORK.md) — historical replay and forks
+- [`docs/ERICKSON_MAPPING.md`](docs/ERICKSON_MAPPING.md) — algorithmic design mapping
 
-```bash
-aasm replay MACHINE_ID --db runs.db --at 17
-aasm fork MACHINE_ID --db runs.db --at 17
-```
+## Use cases
 
-See [`docs/REPLAY_FORK.md`](docs/REPLAY_FORK.md) and [`examples/fork_demo.py`](examples/fork_demo.py).
-
-## Orchestration profiles
-
-AASM ships with multiple profiles to demonstrate that governance and role structure are independent of the core runtime:
-
-- [`single_agent.yaml`](profiles/single_agent.yaml) — one agent with bounded autonomy
-- [`planner_builder.yaml`](profiles/planner_builder.yaml) — compatibility profile for Planner/Builder systems
-- [`expert_swarm.yaml`](profiles/expert_swarm.yaml) — specialist swarm with quorum authority
-- [`hierarchical_team.yaml`](profiles/hierarchical_team.yaml) — layered authority and delegation
-- [`quorum_governance.yaml`](profiles/quorum_governance.yaml) — decisions authorized by multiple voters
-- [`human_in_loop.yaml`](profiles/human_in_loop.yaml) — human approval at configured boundaries
-
-## Machine lifecycle
-
-A typical run moves through:
-
-```text
-INGEST → FORMALIZE → CLASSIFY → DECOMPOSE / PLAN → SELECT
-       → EXECUTE → OBSERVE → VERIFY
-```
-
-Verification can transition to:
-
-```text
-COMMIT | REPAIR | BACKTRACK | INVESTIGATE | COMPLETE | FAIL
-```
-
-Illegal transitions raise an exception rather than silently changing machine state.
-
-## What AASM is not
-
-AASM is **not**:
-
-- an LLM provider
-- a prompt library
-- a replacement for your agent framework
-- a guarantee that an AI-generated proposal is correct
-- a fully distributed durable workflow engine yet
-- tied to any single agent role topology
-
-It is a control/runtime layer intended to sit around or underneath agent behavior.
-
-## Project status
-
-**Current version: `0.4.0` — early-stage / experimental.**
-
-The runtime now includes event-sourced state, SQLite durability, persisted checkpoints, crash/restart recovery, a durable external-effect lifecycle, declarative machine definitions, static transition-graph model checking, historical replay, and durable run forking with explicit lineage. The next stages focus on persistent planning/memory state, richer recovery semantics, async/distributed execution, observability, and integration adapters.
-
-See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
-
-## Contributing
-
-Contributions are welcome—especially small, well-tested improvements that strengthen correctness, interoperability, documentation, or agent-runtime usefulness.
-
-Please read:
-
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — development workflow and contribution standards
-- [`GOVERNANCE.md`](GOVERNANCE.md) — how project decisions are made
-- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — community expectations
-- [`SECURITY.md`](SECURITY.md) — responsible vulnerability reporting
-
-New pull requests should explain **what problem they solve, why the change belongs in AASM, how it was validated, and whether it changes any state/transition or compatibility contract**.
+AASM is domain-neutral: agentic software engineering, research/evidence synthesis, CAD and engineering pipelines, multi-agent teams, long-running automation, human-in-the-loop workflows, simulation/optimization, and tool-heavy orchestration.
 
 ## Design principles
 
-1. **Explicit over implicit.** Important state belongs in machine-readable structures.
-2. **Reversible where possible.** Risky work should have a recovery path.
-3. **Evidence before commitment.** Important claims should be inspectable and challengeable.
-4. **Role-agnostic core.** Agent topology is configuration, not architecture.
-5. **Algorithm before improvisation.** Use known computational structure when the problem has it.
-6. **Authority is separate from capability.** Being able to perform work does not automatically grant permission to redefine authoritative state.
-7. **Provenance is a feature.** A run should be understandable after it happens.
-8. **No fake determinism.** AASM constrains control flow; it does not pretend probabilistic model outputs are deterministic.
+1. Explicit over implicit.
+2. Reversible where possible.
+3. Evidence before commitment.
+4. Role-agnostic core.
+5. Algorithm before improvisation.
+6. Authority is separate from capability.
+7. Provenance is a feature.
+8. No fake determinism.
 
-## Potential
+## Contributing
 
-The long-term opportunity is larger than a single orchestration pattern. AASM can become a reusable **algorithmic control plane for intelligent systems**: a layer where agents and tools remain flexible, but execution acquires the same kinds of structure that mature software systems expect from schedulers, workflow engines, state machines, transaction logs, graph planners, and verification pipelines.
+Contributions are welcome. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md), [`GOVERNANCE.md`](GOVERNANCE.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), and [`SECURITY.md`](SECURITY.md).
 
-That could make agent systems easier to inspect, resume, benchmark, govern, integrate, and trust—not because the model becomes infallible, but because the surrounding system becomes more explicit about uncertainty, authority, state, evidence, and recovery.
+## Project status
+
+**Current version: `0.5.0` — early-stage / experimental.**
+
+The runtime now includes event-sourced state, SQLite durability, crash/restart recovery, durable external effects, declarative machine definitions, static model checking, historical replay/forking, durable planning state, persistent DP memory, and structured evidence lineage.
+
+See [`ROADMAP.md`](ROADMAP.md).
 
 ## Acknowledgements
 
-AASM's algorithmic mapping was inspired by Jeff Erickson's excellent open educational materials on algorithms and models of computation. Those materials are not bundled with this project and remain under their respective terms.
-
-This repository began as a first open-source release with the goal of turning a useful systems idea into something other people can inspect, challenge, extend, and improve.
+AASM's algorithmic mapping was inspired by Jeff Erickson's open educational materials on algorithms and models of computation. Those materials are not bundled with this project and remain under their respective terms.
 
 ## License
 
 AASM is released under the [MIT License](LICENSE).
-
----
-
-<div align="center">
-
-**If the idea is useful to you, try it, break it, open an issue, or send a PR.**
-
-</div>
