@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import asdict
 
 from .change_impact import ChangeImpactAnalyzer, ChangeKind, ChangeSignal
 from .graph import PlanGraph
@@ -26,7 +25,14 @@ class AASMEngine(V14Engine):
     def analyze_change(self,signal:ChangeSignal,*,pause_affected=True,reason="information change analyzed"):
         active=[x.get("task_id") for x in self.snapshot.resources.get("leases",[]) if x.get("status")=="ACTIVE"]
         analysis=ChangeImpactAnalyzer().analyze(PlanGraph.from_dict(self.snapshot.graph),signal,active)
-        raw=analysis.to_dict(); raw["impact_id"]=new_id("impact"); raw["status"]="OPEN"; raw["released_lease_ids"]=[]; raw["resolution"]=None
+        raw=analysis.to_dict()
+        raw.update({
+            "impact_id":new_id("impact"),
+            "status":"OPEN",
+            "remaining_nodes":list(raw["affected_nodes"]),
+            "released_lease_ids":[],
+            "resolutions":[],
+        })
         resources=deepcopy(self.snapshot.resources); control=resources.setdefault("change_control",{}); control.setdefault("impacts",[]).append(raw)
         if pause_affected:
             paused=set(control.get("paused_tasks",[]) or []); paused.update(raw["affected_nodes"]); control["paused_tasks"]=sorted(paused)
@@ -61,17 +67,18 @@ class AASMEngine(V14Engine):
         control=resources.setdefault("change_control",{}); impacts=control.setdefault("impacts",[])
         target=next((x for x in impacts if x.get("impact_id")==impact_id),None)
         if target is None: raise KeyError(impact_id)
-        if target.get("status")!="OPEN": raise ValueError("impact checkpoint is not OPEN")
-        affected=set(target.get("affected_nodes",[]) or [])
-        resume=set(resume_nodes or [])
-        retire=set(retire_nodes or [])
-        if not resume.issubset(affected) or not retire.issubset(affected):
-            raise ValueError("resume_nodes and retire_nodes must be inside the affected region")
+        if target.get("status") not in {"OPEN","PARTIAL"}: raise ValueError("impact checkpoint is already resolved")
+        remaining=set(target.get("remaining_nodes",target.get("affected_nodes",[])) or [])
+        resume=set(resume_nodes or []); retire=set(retire_nodes or [])
+        if not resume.issubset(remaining) or not retire.issubset(remaining):
+            raise ValueError("resume_nodes and retire_nodes must be inside the unresolved affected region")
         if resume & retire: raise ValueError("a node cannot be both resumed and retired")
-        paused=set(control.get("paused_tasks",[]) or []); paused.difference_update(resume); paused.update(affected-resume-retire); paused.difference_update(retire)
+        resolved_now=resume|retire; remaining.difference_update(resolved_now)
+        paused=set(control.get("paused_tasks",[]) or []); paused.difference_update(resolved_now); paused.update(remaining)
         control["paused_tasks"]=sorted(paused)
-        target["status"]="RESOLVED" if affected.issubset(resume|retire) else "PARTIAL"
-        target["resolution"]={"planner_id":planner_id,"resume_nodes":sorted(resume),"retire_nodes":sorted(retire),"plan_decision_id":plan_decision_id}
+        target["remaining_nodes"]=sorted(remaining)
+        target["status"]="RESOLVED" if not remaining else "PARTIAL"
+        target.setdefault("resolutions",[]).append({"planner_id":planner_id,"resume_nodes":sorted(resume),"retire_nodes":sorted(retire),"plan_decision_id":plan_decision_id})
         self.patch_snapshot({"resources":resources},reason)
         return deepcopy(target)
 
