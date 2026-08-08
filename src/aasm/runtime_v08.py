@@ -2,7 +2,8 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import asdict
 from .core.reducer import reduce_event, replay_events
-from .model import EventType
+from .effects import EffectStatus
+from .model import EventType, now
 from .runtime import AASMEngine as V07Engine
 from .model_routing import ModelProfile, ModelRouteRequest, ModelStrengthRouter
 
@@ -49,20 +50,12 @@ class AASMEngine(V07Engine):
         ]
 
     def _commit(self,event):
-        """Adopt state only after the durable append succeeds.
-
-        A concurrent durable store can reject a stale/invalid event. Reducing
-        into a candidate first prevents an uncommitted local "ghost" state.
-        Stores such as SQLite/PostgreSQL may replace the candidate with their
-        database-canonical reduction during append.
-        """
+        """Adopt state only after the durable append succeeds."""
         machine_id=self.snapshot.machine_id
         candidate=reduce_event(self.snapshot,event)
         try:
             stored=self.store.append(machine_id,event,candidate)
         except Exception:
-            # The live snapshot was never replaced by the candidate. Refresh
-            # when possible so the caller immediately sees authoritative state.
             try:
                 self.snapshot=self.store.load_snapshot(machine_id)
                 self.events=self.store.load_events(machine_id)
@@ -73,6 +66,59 @@ class AASMEngine(V07Engine):
         self.snapshot=candidate
         self._sync_after_append()
         return stored
+
+    def execute_effect(self,effect_id,executor):
+        """Execute one externally visible effect with an atomic durable start.
+
+        Stores that implement `claim_effect_attempt` transition AUTHORIZED (or
+        an explicitly retryable FAILED/UNKNOWN state) to RUNNING atomically.
+        This prevents two hosts from both crossing the same external side-effect
+        boundary after racing on the same authorized effect.
+        """
+        claim=getattr(self.store,"claim_effect_attempt",None)
+        if claim is None:
+            return super().execute_effect(effect_id,executor)
+
+        record=claim(self.snapshot.machine_id,effect_id)
+        if record.status==EffectStatus.SUCCEEDED.value:
+            return record
+        if record.status!=EffectStatus.RUNNING.value:
+            raise ValueError(f"Effect {effect_id} did not enter RUNNING (status={record.status})")
+
+        self.emit(
+            EventType.EFFECT_STARTED.value,
+            self.state_value,self.state_value,"effect started",
+            data={
+                "effect_id":effect_id,
+                "attempt":record.attempts,
+                "idempotency_key":record.spec.idempotency_key,
+            },
+        )
+        try:
+            result=executor(record.spec,record.spec.idempotency_key)
+        except Exception as exc:
+            record.status=EffectStatus.FAILED.value
+            record.error=f"{type(exc).__name__}: {exc}"
+            record.updated_at=now()
+            self.store.save_effect(record)
+            self.emit(
+                EventType.EFFECT_FAILED.value,
+                self.state_value,self.state_value,"effect failed",
+                data={"effect_id":effect_id,"attempt":record.attempts,"error":record.error},
+            )
+            return record
+
+        record.status=EffectStatus.SUCCEEDED.value
+        record.result=dict(result or {})
+        record.error=None
+        record.updated_at=now()
+        self.store.save_effect(record)
+        self.emit(
+            EventType.EFFECT_SUCCEEDED.value,
+            self.state_value,self.state_value,"effect succeeded",
+            data={"effect_id":effect_id,"attempt":record.attempts,"result":record.result},
+        )
+        return record
 
     def register_model_profile(self,profile:ModelProfile,*,reason="model profile registered"):
         resources=deepcopy(self.snapshot.resources); models=resources.setdefault("models",[])
