@@ -36,3 +36,6 @@ class AASMRemoteClient:
     def complete(self,machine_id,lease_id,result=None): return self._request("POST",f"/v1/machines/{machine_id}/leases/{lease_id}/complete",{"result":result or {}})
     def fail(self,machine_id,lease_id,error): return self._request("POST",f"/v1/machines/{machine_id}/leases/{lease_id}/fail",{"error":error})
     def route_model(self,machine_id,request:ModelRouteRequest): return self._request("POST",f"/v1/machines/{machine_id}/model-route",{"request":asdict(request)})
+    def model_usage(self,machine_id,record):
+        payload=asdict(record) if hasattr(record,"__dataclass_fields__") else dict(record)
+        return self._request("POST",f"/v1/machines/{machine_id}/model-usage",{"record":payload})
