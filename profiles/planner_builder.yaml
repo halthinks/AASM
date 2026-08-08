@@ -1,10 +1,24 @@
-profile: planner_builder
+profile: planner_builder_verifier
 authority:
   mode: single_controller
   controller_id: planner
+plan_authority:
+  owner_id: planner
+  mutation_directive: PLAN_INTERRUPT
+directives: [CONTINUE, REPAIR, INVESTIGATE, PAUSE, PLAN_INTERRUPT]
 roles:
   - id: planner
-    capabilities: [planning, authorization, verification]
+    role: PLANNER
+    capabilities: [planning, authorization, assumption_testing, plan_repair]
   - id: builder
-    capabilities: [implementation, testing]
-adapter: PlannerBuilderAdapter
+    role: BUILDER
+    capabilities: [implementation, testing, artifact_production]
+  - id: verifier
+    role: VERIFIER
+    capabilities: [verification, evidence_review, counterexample_search]
+runtime: PBVCoordinator
+rules:
+  - builders_do_not_mutate_plan
+  - verifiers_recommend_but_do_not_authorize
+  - planner_alone_commits_directives
+  - plan_changes_require_explicit_PLAN_INTERRUPT_patch
