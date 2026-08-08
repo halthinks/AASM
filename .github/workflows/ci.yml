@@ -24,3 +24,31 @@ jobs:
         run: python -m pip install -e '.[dev]'
       - name: Test
         run: pytest -q
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: aasm
+          POSTGRES_PASSWORD: aasm
+          POSTGRES_DB: aasm
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aasm"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      AASM_TEST_POSTGRES_DSN: postgresql://aasm:aasm@127.0.0.1:5432/aasm
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install PostgreSQL extra
+        run: python -m pip install -e '.[dev,postgres]'
+      - name: PostgreSQL coordination test
+        run: pytest -q tests/test_postgres_integration.py
