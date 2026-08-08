@@ -74,7 +74,7 @@ class GovernanceDecision:
 
 class GovernanceEconomicsController:
     """Deterministic semantic-review gate plus overhead/budget accounting."""
-    NON_REUSABLE_RISK_CLASSES={"destructive","credential","security_sensitive","external_write","network_unknown","irreversible"}
+    NON_REUSABLE_RISK_CLASSES={"destructive","credential","security_sensitive","external_write","network_unknown","irreversible","unknown"}
 
     def __init__(self,review_policy:ReviewGatePolicy|None=None,budget:GovernanceBudgetPolicy|None=None,decisions:list[dict[str,Any]]|None=None):
         self.review_policy=review_policy or ReviewGatePolicy(); self.budget=budget or GovernanceBudgetPolicy(); self.decisions=[dict(x) for x in (decisions or [])]
@@ -117,4 +117,8 @@ class GovernanceEconomicsController:
     def report(self,economics_summary):
         budget=self.budget_status(economics_summary); counts={}
         for d in self.decisions: counts[d.get("action","UNKNOWN")]=counts.get(d.get("action","UNKNOWN"),0)+1
-        return {"budget":budget,"decision_counts":counts,"coalesced_reviews":sum(1 for d in self.decisions if d.get("coalesced")),"decisions":len(self.decisions)}
+        coalesced=sum(1 for d in self.decisions if d.get("coalesced")); deterministic=counts.get(GovernanceAction.REVIEW_NOT_REQUIRED,0)
+        permission=(economics_summary.get("by_purpose",{}) or {}).get(CallPurpose.PERMISSION_REVIEW.value,{}) or {}; calls=int(permission.get("calls",0) or 0); tokens=int(permission.get("tokens",0) or 0); cost=float(permission.get("estimated_cost",0) or 0)
+        avg_tokens=(tokens/calls) if calls else None; avg_cost=(cost/calls) if calls and economics_summary.get("cost_complete") else None
+        avoided={"reused_review_calls":coalesced,"deterministic_bypasses":deterministic,"estimated_avoided_tokens_from_reuse":(coalesced*avg_tokens if avg_tokens is not None else None),"estimated_avoided_cost_from_reuse":(coalesced*avg_cost if avg_cost is not None else None),"counterfactual_basis":"observed average permission-review call" if calls else "no observed permission-review baseline"}
+        return {"budget":budget,"decision_counts":counts,"coalesced_reviews":coalesced,"decisions":len(self.decisions),"avoided_overhead":avoided}
