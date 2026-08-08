@@ -50,8 +50,6 @@ class AASMEngine(V15Engine):
         trigger = CheckpointTriggerEngine().evaluate(verified, policy)
         impact = None
         if trigger.triggered:
-            # A task may be a valid PBV work item without being a plan-graph node.
-            # In that case require Planner attention without fabricating a graph anchor.
             if trigger.signal and trigger.signal.seed_nodes:
                 known = {x.get("node_id") for x in self.snapshot.graph.get("nodes", [])}
                 trigger.signal.seed_nodes = [x for x in trigger.signal.seed_nodes if x in known]
@@ -107,9 +105,6 @@ class AASMEngine(V15Engine):
             recommended = analysis.get("recommended_workers")
         admission_limit = policy.apply(recommended)
         enforce = bool(policy.enabled and policy.enforce_admission_limit and admission_limit is not None)
-
-        # Reuse the existing machine-quota path so SQLite/PostgreSQL enforce the
-        # admission limit atomically with all other claim limits.
         self.set_quota(
             QuotaPolicy(
                 quota_id=FLEET_QUOTA_ID,
@@ -137,6 +132,7 @@ class AASMEngine(V15Engine):
     def planner_decide(self, decision: PlannerDecision, *, reason: str = "Planner directive committed"):
         raw = super().planner_decide(decision, reason=reason)
         resolution = (decision.metadata or {}).get("resolve_impact")
+        refreshed_via_resolution = False
         if resolution:
             self.resolve_change_impact(
                 decision.planner_id,
@@ -146,8 +142,9 @@ class AASMEngine(V15Engine):
                 plan_decision_id=raw.get("planner_decision_id"),
                 reason="Planner decision resolved information-change checkpoint",
             )
+            refreshed_via_resolution = self.fleet_control_policy().enabled and self.fleet_control_policy().auto_refresh_on_change_resolution
         policy = self.fleet_control_policy()
-        if decision.directive == PlannerDirective.PLAN_INTERRUPT.value and policy.enabled and policy.auto_refresh_on_plan_interrupt:
+        if decision.directive == PlannerDirective.PLAN_INTERRUPT.value and policy.enabled and policy.auto_refresh_on_plan_interrupt and not refreshed_via_resolution:
             self.refresh_fleet_control(reason="fleet control refreshed after PLAN_INTERRUPT")
         return raw
 
