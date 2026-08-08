@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.11.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.12.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -26,6 +26,11 @@ AASM is currently **v0.11.0 / early-stage**. This roadmap describes direction, n
 - ✅ remote/CLI model outcome feedback and model-performance inspection
 - ✅ cache-adjusted model economics and governance-overhead accounting
 - ✅ deterministic review gating / Codex policy generation
+- ✅ durable governance budgets with soft/hard token/cost/call thresholds
+- ✅ semantic-review fingerprints and completed-review reuse for unchanged low-risk decisions
+- ✅ hard-budget `BUDGET_PAUSE` semantics that never waive required review
+- ✅ observed-baseline avoided-review token/cost estimates
+- ✅ remote/CLI governance decision, budget, review-completion, and reporting surfaces
 - richer event/evidence contracts
 - ✅ declarative machine definitions + initial static model checking
 - improved schema validation
@@ -38,17 +43,17 @@ AASM is currently **v0.11.0 / early-stage**. This roadmap describes direction, n
 
 ## Next architecture layer
 
-- governance economics optimization: identify/coalesce repetitive permission-review calls and enforce governance-overhead budgets without weakening sandbox/security boundaries
-- information-change checkpoint policy so expensive review is triggered by changed assumptions, failed verification, risk class, or material plan changes rather than every shell boundary
+- executable Planner/Builder/Verifier orchestration profile with `CONTINUE | REPAIR | INVESTIGATE | PAUSE | PLAN_INTERRUPT`
+- planner-owned authoritative plan revisions and additive user steering without provenance loss
+- checkpoint-trigger policy that invokes expensive planning/review on changed assumptions, failed verification, contradictions, risk escalation, or material plan change
 - streamed worker logs and artifacts in the Control Center
 - create/pause/resume/approve/fork controls with authority-policy enforcement
 - richer executor adapters and provider-neutral structured result contract
-- run- and project-level token/cost budgets with hard/soft thresholds
+- run- and project-level productive-work budgets in addition to governance budgets
 - graph visualization and execution tracing
 - ✅ deterministic state replay at explicit event boundaries
 - richer human approval surfaces
 - policy-as-data for authority rules
-- executable Planner/Builder/Verifier orchestration profile
 - pluggable adversarial/verifier agents
 - benchmark suite for orchestration behavior and governance efficiency
 
