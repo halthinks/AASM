@@ -11,7 +11,8 @@ from .model import ProblemSpec
 from .model_routing import ModelRouteRequest
 from .persistence.factory import open_store
 from .resources import TaskDemand
-from .runtime_v12 import AASMEngine
+from .runtime_v13 import AASMEngine
+from .team_protocol import BuilderOutput, PlannerDecision, TeamMember, VerifierReport
 from .workers import WorkerRecord
 
 MAX_BODY_BYTES=1_000_000
@@ -20,7 +21,7 @@ CSP="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; 
 
 def make_handler(store_target:str,token:str|None=None):
     class Handler(BaseHTTPRequestHandler):
-        server_version="AASM/0.12"
+        server_version="AASM/0.13"
         def log_message(self,fmt,*args): pass
         def _auth(self):
             if not token: return True
@@ -44,17 +45,18 @@ def make_handler(store_target:str,token:str|None=None):
         def _error(self,exc): self._json(400,{"error":type(exc).__name__,"message":str(exc)})
         def do_GET(self):
             parsed=urlparse(self.path)
-            if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.12.0"})
+            if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.13.0"})
             if parsed.path=="/ui":
                 raw=html_document().encode(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self._security_headers(html=True); self.send_header("Content-Length",str(len(raw))); self.end_headers(); return self.wfile.write(raw)
             if not self._auth(): return self._json(401,{"error":"unauthorized"})
             parts=[p for p in parsed.path.split('/') if p]
             try:
-                if len(parts)==4 and parts[:2]==["v1","machines"] and parts[3] in {"state","dashboard"}:
+                if len(parts)==4 and parts[:2]==["v1","machines"] and parts[3] in {"state","dashboard","team"}:
                     store,engine=self._machine(parts[2])
                     try:
                         if parts[3]=="dashboard": payload=engine.dashboard()
-                        else: payload={"snapshot":asdict(engine.snapshot),"workers":engine.list_workers(),"leases":engine.list_leases(),"models":engine.list_model_profiles(),"last_model_route":engine.last_model_route(),"model_performance":engine.model_performance(),"governance":engine.governance_report()}
+                        elif parts[3]=="team": payload=engine.team_report()
+                        else: payload={"snapshot":asdict(engine.snapshot),"workers":engine.list_workers(),"leases":engine.list_leases(),"models":engine.list_model_profiles(),"last_model_route":engine.last_model_route(),"model_performance":engine.model_performance(),"governance":engine.governance_report(),"team_protocol":engine.team_report()}
                     finally: store.close()
                     return self._json(200,payload)
                 return self._json(404,{"error":"not_found"})
@@ -87,6 +89,10 @@ def make_handler(store_target:str,token:str|None=None):
                     elif parts[3:]==["governance-budget"]: out=engine.configure_governance_budget(GovernanceBudgetPolicy(**payload["policy"]))
                     elif parts[3:]==["governance-decision"]: out=engine.governance_decide(GovernanceContext(**payload["context"]))
                     elif len(parts)==6 and parts[3]=="governance-review" and parts[5]=="complete": out=engine.complete_governance_review(parts[4],evidence=payload.get("evidence"))
+                    elif parts[3:]==["team","initialize"]: out=engine.initialize_team([TeamMember(**x) for x in payload["members"]])
+                    elif parts[3:]==["team","builder-output"]: out=engine.submit_builder_output(BuilderOutput(**payload["output"]))
+                    elif parts[3:]==["team","verifier-report"]: out=engine.submit_verifier_report(VerifierReport(**payload["report"]))
+                    elif parts[3:]==["team","planner-decision"]: out=engine.planner_decide(PlannerDecision(**payload["decision"]))
                     elif parts[3:]==["review-gate"]: out=engine.review_gate(payload["action_class"],**payload.get("signals",{}))
                     elif parts[3:]==["interrupt"]: out=engine.user_interrupt(payload["note"],metadata=payload.get("metadata"))
                     else: return self._json(404,{"error":"not_found"})
