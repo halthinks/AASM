@@ -9,6 +9,7 @@ from .persistence import MemoryStore, SQLiteStore
 from .workers import WorkerRecord, WorkerStatus, TaskLease, LeaseStatus, QuotaPolicy
 from .model_routing import ModelProfile, ModelRouteRequest, ModelRouteResult, ModelStrengthRouter
 from .remote import AASMRemoteClient, RemoteProtocolError
+from .worker_loop import RemoteWorkerLoop
 
 __all__=[
     "AASMEngine","MachineState","ProblemSpec","TaskEnvelope","Proposal","Result","CapabilitySet",
@@ -17,7 +18,7 @@ __all__=[
     "MachineDefinition","default_machine_definition","ModelCheckIssue","ModelCheckReport","check_machine",
     "ResourceRecord","TaskDemand","Assignment","ScheduleResult","CapabilityScheduler",
     "WorkerRecord","WorkerStatus","TaskLease","LeaseStatus","QuotaPolicy",
-    "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","AASMRemoteClient","RemoteProtocolError"
+    "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","AASMRemoteClient","RemoteProtocolError","RemoteWorkerLoop"
 ]
 
 from .graph import PlanNode, PlanEdge, PlanGraph
