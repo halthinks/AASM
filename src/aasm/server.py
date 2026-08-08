@@ -5,15 +5,17 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 from .adaptive_routing import ModelOutcomeRecord
 from .change_impact import ChangeSignal
+from .checkpoint_triggers import CheckpointTriggerPolicy
 from .collaboration import CollaborationPolicy
 from .control_center import html_document
 from .economics import ModelUsageRecord
+from .fleet_control import FleetControlPolicy
 from .governance import GovernanceBudgetPolicy, GovernanceContext
 from .model import ProblemSpec
 from .model_routing import ModelRouteRequest
 from .persistence.factory import open_store
 from .resources import TaskDemand
-from .runtime_v15 import AASMEngine
+from .runtime_v16 import AASMEngine
 from .team_protocol import BuilderOutput, PlannerDecision, TeamMember, VerifierReport
 from .workers import WorkerRecord
 
@@ -23,7 +25,7 @@ CSP="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; 
 
 def make_handler(store_target:str,token:str|None=None):
     class Handler(BaseHTTPRequestHandler):
-        server_version="AASM/0.15"
+        server_version="AASM/0.16"
         def log_message(self,fmt,*args): pass
         def _auth(self):
             if not token: return True
@@ -47,20 +49,22 @@ def make_handler(store_target:str,token:str|None=None):
         def _error(self,exc): self._json(400,{"error":type(exc).__name__,"message":str(exc)})
         def do_GET(self):
             parsed=urlparse(self.path)
-            if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.15.0"})
+            if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.16.0"})
             if parsed.path=="/ui":
                 raw=html_document().encode(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self._security_headers(html=True); self.send_header("Content-Length",str(len(raw))); self.end_headers(); return self.wfile.write(raw)
             if not self._auth(): return self._json(401,{"error":"unauthorized"})
             parts=[p for p in parsed.path.split('/') if p]
             try:
-                if len(parts)==4 and parts[:2]==["v1","machines"] and parts[3] in {"state","dashboard","team","collaboration","change-control"}:
+                if len(parts)==4 and parts[:2]==["v1","machines"] and parts[3] in {"state","dashboard","team","collaboration","change-control","checkpoint-triggers","fleet-control"}:
                     store,engine=self._machine(parts[2])
                     try:
                         if parts[3]=="dashboard": payload=engine.dashboard()
                         elif parts[3]=="team": payload=engine.team_report()
                         elif parts[3]=="collaboration": payload=engine.last_collaboration_analysis() or {}
                         elif parts[3]=="change-control": payload={"paused_tasks":engine.paused_tasks(),"last_impact":engine.last_impact(),"impacts":engine.impact_history()}
-                        else: payload={"snapshot":asdict(engine.snapshot),"workers":engine.list_workers(),"leases":engine.list_leases(),"models":engine.list_model_profiles(),"last_model_route":engine.last_model_route(),"model_performance":engine.model_performance(),"governance":engine.governance_report(),"team_protocol":engine.team_report(),"collaboration":engine.last_collaboration_analysis(),"change_control":{"paused_tasks":engine.paused_tasks(),"last_impact":engine.last_impact()}}
+                        elif parts[3]=="checkpoint-triggers": payload={"policy":asdict(engine.checkpoint_trigger_policy()),"last":engine.last_checkpoint_trigger(),"history":engine.checkpoint_trigger_history()}
+                        elif parts[3]=="fleet-control": payload=engine.fleet_control_report()
+                        else: payload={"snapshot":asdict(engine.snapshot),"workers":engine.list_workers(),"leases":engine.list_leases(),"models":engine.list_model_profiles(),"last_model_route":engine.last_model_route(),"model_performance":engine.model_performance(),"governance":engine.governance_report(),"team_protocol":engine.team_report(),"collaboration":engine.last_collaboration_analysis(),"change_control":{"paused_tasks":engine.paused_tasks(),"last_impact":engine.last_impact()},"checkpoint_triggers":{"policy":asdict(engine.checkpoint_trigger_policy()),"last":engine.last_checkpoint_trigger()},"fleet_control":engine.fleet_control_report()}
                     finally: store.close()
                     return self._json(200,payload)
                 return self._json(404,{"error":"not_found"})
@@ -102,6 +106,9 @@ def make_handler(store_target:str,token:str|None=None):
                         out=engine.analyze_collaboration(tasks,CollaborationPolicy(**payload.get("policy",{})))
                     elif parts[3:]==["change-control","analyze"]: out=engine.analyze_change(ChangeSignal(**payload["signal"]),pause_affected=bool(payload.get("pause_affected",True)))
                     elif len(parts)==6 and parts[3]=="change-control" and parts[5]=="resolve": out=engine.resolve_change_impact(payload["planner_id"],parts[4],resume_nodes=payload.get("resume_nodes"),retire_nodes=payload.get("retire_nodes"),plan_decision_id=payload.get("plan_decision_id"))
+                    elif parts[3:]==["checkpoint-triggers","configure"]: out=engine.configure_checkpoint_triggers(CheckpointTriggerPolicy(**payload.get("policy",{})))
+                    elif parts[3:]==["fleet-control","configure"]: out=engine.configure_fleet_control(FleetControlPolicy(**payload.get("policy",{})),refresh=bool(payload.get("refresh",True)))
+                    elif parts[3:]==["fleet-control","refresh"]: out=engine.refresh_fleet_control(collaboration_policy=CollaborationPolicy(**payload.get("collaboration_policy",{})))
                     elif parts[3:]==["review-gate"]: out=engine.review_gate(payload["action_class"],**payload.get("signals",{}))
                     elif parts[3:]==["interrupt"]: out=engine.user_interrupt(payload["note"],metadata=payload.get("metadata"))
                     else: return self._json(404,{"error":"not_found"})
