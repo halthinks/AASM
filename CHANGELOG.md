@@ -4,6 +4,43 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.16.0] - 2026-08-08
+
+### Added
+
+- `CheckpointTriggerPolicy`, `CheckpointTrigger`, and `CheckpointTriggerEngine`
+- automatic selective information-change checkpoints from Verifier failed tests, changed assumptions, unexpected output, and blocking findings
+- durable checkpoint-trigger history linked to Verifier report IDs and generated change-impact IDs
+- PBV Planner payloads that include the automatic trigger, current affected region, paused tasks, and fleet-control state
+- optional `PlannerDecision.metadata.resolve_impact` for explicit same-cycle partial checkpoint resolution
+- `FleetControlPolicy` and durable fleet-control state
+- collaboration-driven fleet admission limits over runnable scheduled work
+- machine-quota enforcement of fleet admission so SQLite/PostgreSQL apply the cap atomically at task claim
+- automatic fleet recalculation after triggered checkpoints, Planner `PLAN_INTERRUPT`, and change-impact resolution
+- remote and CLI configuration/inspection for checkpoint triggers and fleet control
+- Control Center visibility for trigger state, pause state, recommendation, admission limit, and enforcement state
+- checkpoint-trigger and fleet-control policy schemas, documentation, worked example, and regression tests
+
+### Closed-loop semantics
+
+- Verifiers may automatically trigger a checkpoint but still cannot mutate the authoritative plan
+- the existing PBV coordinator invokes the Planner with the trigger and affected subgraph already attached
+- only explicitly resolved nodes resume; unresolved nodes remain paused
+- fleet control removes paused, completed, and pruned tasks before collaboration re-analysis
+- collaboration recommendations remain evidence; fleet-control enforcement is separately opt-in
+- fleet admission does not provision workers, model sessions, cloud instances, or external infrastructure
+
+### Distributed correctness
+
+- the enforced fleet limit reuses the existing durable machine quota rather than a process-local counter
+- concurrent SQLite/PostgreSQL task claims therefore share one atomic admission boundary with resource and quota checks
+- automatic checkpointing preserves v0.15 canonical pause/claim race protection
+
+### Architectural significance
+
+- v0.16 connects Builder/Verifier/Planner execution, information-change checkpoints, collaboration analysis, and worker admission into one continuous control loop
+- expensive Planner attention is triggered by changed information rather than by every routine execution boundary
+
 ## [0.15.0] - 2026-08-08
 
 ### Added
@@ -244,7 +281,7 @@ The project uses semantic-versioning intent while the public API remains experim
 ### Added
 
 - durable resource/capability registry for agents, tools, humans, services, and constrained execution slots
-- capability-aware max-flow scheduling with priorities, reliability/cost filters, durable assignments, utilization, unmet demand
+- capability-aware max-flow scheduling with priorities, reliability/cost filters, durable assignments, utilization, and unmet demand
 - min-cut bottleneck reporting and explicit missing-capability diagnostics
 - automatic durable plan-node ownership updates when task IDs match plan nodes
 - restart/replay/fork-safe resource and scheduling state
