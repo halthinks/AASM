@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import json
 import sqlite3
 import threading
@@ -7,6 +8,7 @@ import time
 from pathlib import Path
 
 from ..checkpoint import Checkpoint
+from ..core.reducer import reduce_event, replay_events
 from ..model import Event, MachineSnapshot, MachineState
 from ..effects import EffectRecord, EffectStatus
 from .serde import event_from_dict, event_to_dict, snapshot_from_dict, snapshot_to_dict
@@ -16,9 +18,9 @@ from .effect_serde import effect_from_dict, effect_to_dict
 class SQLiteStore:
     """Crash-safe local persistence using only Python's standard library.
 
-    Event append and snapshot update occur in one SQLite transaction. WAL mode
-    allows readers while a run is active and provides robust process-crash
-    recovery for local AASM workflows.
+    Event append and snapshot reduction occur in one `BEGIN IMMEDIATE`
+    transaction. That makes the event stream authoritative even when multiple
+    local processes advance the same machine concurrently.
     """
 
     def __init__(self, path: str | Path):
@@ -71,54 +73,78 @@ class SQLiteStore:
                     UNIQUE(machine_id, idempotency_key),
                     FOREIGN KEY (machine_id) REFERENCES runs(machine_id) ON DELETE CASCADE
                 );
-                CREATE INDEX IF NOT EXISTS idx_events_machine ON events(machine_id, sequence);
-                CREATE INDEX IF NOT EXISTS idx_runs_state ON runs(state);
                 CREATE TABLE IF NOT EXISTS task_claims (
                     machine_id TEXT NOT NULL,
                     task_id TEXT NOT NULL,
                     lease_id TEXT NOT NULL,
                     worker_id TEXT NOT NULL,
                     expires_at REAL NOT NULL,
+                    resource_id TEXT,
+                    demand REAL NOT NULL DEFAULT 0,
                     PRIMARY KEY (machine_id, task_id),
                     UNIQUE(machine_id, lease_id),
                     FOREIGN KEY (machine_id) REFERENCES runs(machine_id) ON DELETE CASCADE
                 );
+                CREATE INDEX IF NOT EXISTS idx_events_machine ON events(machine_id, sequence);
+                CREATE INDEX IF NOT EXISTS idx_runs_state ON runs(state);
                 CREATE INDEX IF NOT EXISTS idx_effects_machine ON effects(machine_id, status);
                 CREATE INDEX IF NOT EXISTS idx_claims_expiry ON task_claims(machine_id, expires_at);
+                CREATE INDEX IF NOT EXISTS idx_claims_resource ON task_claims(machine_id, resource_id, expires_at);
                 """
             )
+            columns = {row[1] for row in self._conn.execute("PRAGMA table_info(task_claims)").fetchall()}
+            if "resource_id" not in columns:
+                self._conn.execute("ALTER TABLE task_claims ADD COLUMN resource_id TEXT")
+            if "demand" not in columns:
+                self._conn.execute("ALTER TABLE task_claims ADD COLUMN demand REAL NOT NULL DEFAULT 0")
 
     def initialize_run(self, snapshot: MachineSnapshot) -> None:
-        now = time.time()
+        ts = time.time()
         payload = json.dumps(snapshot_to_dict(snapshot), sort_keys=True)
         with self._lock, self._conn:
             self._conn.execute(
                 """INSERT OR IGNORE INTO runs
                    (machine_id, snapshot_json, state, version, created_at, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?)""",
-                (snapshot.machine_id, payload, snapshot.state, snapshot.version, now, now),
+                (snapshot.machine_id, payload, snapshot.state, snapshot.version, ts, ts),
             )
 
+    @staticmethod
+    def _replace_snapshot(target: MachineSnapshot, source: MachineSnapshot) -> None:
+        target.__dict__.clear()
+        target.__dict__.update(deepcopy(source.__dict__))
+
     def append(self, machine_id: str, event: Event, snapshot: MachineSnapshot) -> Event:
-        with self._lock, self._conn:
-            row = self._conn.execute(
-                "SELECT COALESCE(MAX(sequence), 0) AS seq FROM events WHERE machine_id=?",
-                (machine_id,),
-            ).fetchone()
-            sequence = int(row["seq"]) + 1
-            event.machine_id = machine_id
-            event.sequence = sequence
-            event_json = json.dumps(event_to_dict(event), sort_keys=True)
-            snapshot_json = json.dumps(snapshot_to_dict(snapshot), sort_keys=True)
-            self._conn.execute(
-                "INSERT INTO events(machine_id, sequence, event_id, event_json, created_at) VALUES (?, ?, ?, ?, ?)",
-                (machine_id, sequence, event.event_id, event_json, event.ts),
-            )
-            self._conn.execute(
-                """UPDATE runs SET snapshot_json=?, state=?, version=?, updated_at=?
-                   WHERE machine_id=?""",
-                (snapshot_json, snapshot.state, snapshot.version, time.time(), machine_id),
-            )
+        """Append one event and materialize the canonical reduced state atomically."""
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                rows = self._conn.execute(
+                    "SELECT event_json FROM events WHERE machine_id=? ORDER BY sequence",
+                    (machine_id,),
+                ).fetchall()
+                existing = [event_from_dict(json.loads(row["event_json"])) for row in rows]
+                canonical = replay_events(existing) if existing else None
+                sequence = len(existing) + 1
+                event.machine_id = machine_id
+                event.sequence = sequence
+                canonical = reduce_event(canonical, event)
+                event_json = json.dumps(event_to_dict(event), sort_keys=True)
+                snapshot_json = json.dumps(snapshot_to_dict(canonical), sort_keys=True)
+                self._conn.execute(
+                    "INSERT INTO events(machine_id, sequence, event_id, event_json, created_at) VALUES (?, ?, ?, ?, ?)",
+                    (machine_id, sequence, event.event_id, event_json, event.ts),
+                )
+                self._conn.execute(
+                    """UPDATE runs SET snapshot_json=?, state=?, version=?, updated_at=?
+                       WHERE machine_id=?""",
+                    (snapshot_json, canonical.state, canonical.version, time.time(), machine_id),
+                )
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                raise
+        self._replace_snapshot(snapshot, canonical)
         return event
 
     def load_snapshot(self, machine_id: str) -> MachineSnapshot:
@@ -135,9 +161,7 @@ class SQLiteStore:
         return [event_from_dict(json.loads(row["event_json"])) for row in rows]
 
     def list_unfinished(self) -> list[str]:
-        rows = self._conn.execute(
-            "SELECT machine_id, snapshot_json, state FROM runs ORDER BY updated_at"
-        ).fetchall()
+        rows = self._conn.execute("SELECT machine_id, snapshot_json, state FROM runs ORDER BY updated_at").fetchall()
         unfinished=[]
         for row in rows:
             snap=snapshot_from_dict(json.loads(row["snapshot_json"]))
@@ -165,7 +189,6 @@ class SQLiteStore:
         if row is None:
             raise KeyError(checkpoint_id)
         return Checkpoint(checkpoint_id, snapshot_from_dict(json.loads(row["snapshot_json"])), row["reason"])
-
 
     def save_effect(self, record: EffectRecord) -> None:
         payload = json.dumps(effect_to_dict(record), sort_keys=True)
@@ -212,19 +235,81 @@ class SQLiteStore:
                 changed.append(record)
         return changed
 
+    @staticmethod
+    def _check_claim_limits(active, *, worker_id, resource_id, demand, resource_capacity, quotas):
+        if resource_id is not None and resource_capacity is not None:
+            used=sum(float(row["demand"] or 0) for row in active if row["resource_id"] == resource_id)
+            if used + demand > float(resource_capacity) + 1e-12:
+                raise ValueError(f"Resource capacity exhausted: {resource_id}")
+        for raw in quotas or []:
+            if not raw.get("enabled", True):
+                continue
+            scope=raw.get("scope", "machine")
+            target=raw.get("target_id")
+            relevant = scope == "machine" or (scope == "worker" and target == worker_id) or (scope == "resource" and target == resource_id)
+            if not relevant:
+                continue
+            selected=[
+                row for row in active
+                if scope == "machine"
+                or (scope == "worker" and row["worker_id"] == worker_id)
+                or (scope == "resource" and row["resource_id"] == resource_id)
+            ]
+            max_leases=raw.get("max_active_leases")
+            if max_leases is not None and len(selected) >= int(max_leases):
+                raise ValueError(f"Quota exceeded: {raw.get('quota_id')}")
+            max_units=raw.get("max_capacity_units")
+            if max_units is not None and sum(float(row["demand"] or 0) for row in selected) + demand > float(max_units) + 1e-12:
+                raise ValueError(f"Quota exceeded: {raw.get('quota_id')}")
 
-    def acquire_task_claim(self, machine_id: str, task_id: str, lease_id: str, worker_id: str, expires_at: float, at_time: float) -> bool:
-        """Atomically reserve a task across processes. Expired claims are reclaimed."""
-        with self._lock, self._conn:
-            self._conn.execute("DELETE FROM task_claims WHERE machine_id=? AND task_id=? AND expires_at<=?", (machine_id, task_id, at_time))
+    def acquire_task_claim(
+        self,
+        machine_id: str,
+        task_id: str,
+        lease_id: str,
+        worker_id: str,
+        expires_at: float,
+        at_time: float,
+        *,
+        resource_id: str | None = None,
+        demand: float = 0.0,
+        resource_capacity: float | None = None,
+        quotas: list[dict] | None = None,
+    ) -> bool:
+        """Atomically reserve task ownership and enforce shared capacity/quotas."""
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
             try:
-                self._conn.execute(
-                    "INSERT INTO task_claims(machine_id, task_id, lease_id, worker_id, expires_at) VALUES (?, ?, ?, ?, ?)",
-                    (machine_id, task_id, lease_id, worker_id, expires_at),
+                self._conn.execute("DELETE FROM task_claims WHERE machine_id=? AND expires_at<=?", (machine_id, at_time))
+                existing=self._conn.execute(
+                    "SELECT 1 FROM task_claims WHERE machine_id=? AND task_id=?",
+                    (machine_id, task_id),
+                ).fetchone()
+                if existing is not None:
+                    self._conn.rollback()
+                    return False
+                active=self._conn.execute(
+                    "SELECT worker_id, resource_id, demand FROM task_claims WHERE machine_id=? AND expires_at>?",
+                    (machine_id, at_time),
+                ).fetchall()
+                self._check_claim_limits(
+                    active,
+                    worker_id=worker_id,
+                    resource_id=resource_id,
+                    demand=float(demand),
+                    resource_capacity=resource_capacity,
+                    quotas=quotas,
                 )
-            except sqlite3.IntegrityError:
-                return False
-        return True
+                self._conn.execute(
+                    """INSERT INTO task_claims(machine_id, task_id, lease_id, worker_id, expires_at, resource_id, demand)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (machine_id, task_id, lease_id, worker_id, expires_at, resource_id, float(demand)),
+                )
+                self._conn.commit()
+                return True
+            except Exception:
+                self._conn.rollback()
+                raise
 
     def renew_task_claim(self, machine_id: str, lease_id: str, expires_at: float) -> bool:
         with self._lock, self._conn:
