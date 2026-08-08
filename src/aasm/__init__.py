@@ -1,4 +1,4 @@
-from .runtime_v16 import AASMEngine
+from .runtime_v17 import AASMEngine
 from .model import MachineState, ProblemSpec, TaskEnvelope, Proposal, Result, CapabilitySet
 from .agents import AASMAgent, FunctionAgent
 from .authority import SingleControllerAuthority, AutonomousAuthority, QuorumAuthority, HierarchicalAuthority
@@ -13,6 +13,8 @@ from .collaboration import CollaborationPolicy, CollaborationCandidate, Collabor
 from .change_impact import ChangeKind, ChangeSignal, ImpactAnalysis, ChangeImpactAnalyzer
 from .checkpoint_triggers import CheckpointTriggerPolicy, CheckpointTrigger, CheckpointTriggerEngine
 from .fleet_control import FleetControlPolicy
+from .execution_telemetry import TelemetryKind, TelemetryPolicy, ExecutionTelemetryRecord, ExecutionTelemetryLedger
+from .provisioning import ProvisioningAction, ProvisioningRequest, ProvisioningPlan, ProvisioningAdapter, FunctionProvisioningAdapter, ProvisioningRegistry
 from .team_protocol import TeamRole, PlannerDirective, TeamMember, BuilderOutput, VerifierReport, PlannerDecision, PlannerBuilderVerifierPolicy
 from .pbv_orchestrator import PBVCycleResult, PBVCoordinator
 from .remote import AASMRemoteClient, RemoteProtocolError
@@ -35,6 +37,8 @@ __all__=[
     "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","ModelOutcomeRecord","ModelPerformance","ModelOutcomeLedger","AdaptiveRouteResult","AdaptiveModelRouter",
     "CollaborationPolicy","CollaborationCandidate","CollaborationAnalysis","CollaborationPlanner",
     "ChangeKind","ChangeSignal","ImpactAnalysis","ChangeImpactAnalyzer","CheckpointTriggerPolicy","CheckpointTrigger","CheckpointTriggerEngine","FleetControlPolicy",
+    "TelemetryKind","TelemetryPolicy","ExecutionTelemetryRecord","ExecutionTelemetryLedger",
+    "ProvisioningAction","ProvisioningRequest","ProvisioningPlan","ProvisioningAdapter","FunctionProvisioningAdapter","ProvisioningRegistry",
     "TeamRole","PlannerDirective","TeamMember","BuilderOutput","VerifierReport","PlannerDecision","PlannerBuilderVerifierPolicy","PBVCycleResult","PBVCoordinator",
     "AASMRemoteClient","RemoteProtocolError","RemoteWorkerLoop",
     "CallPurpose","ModelPricing","ModelUsageRecord","ReviewGatePolicy","EconomicsLedger",
