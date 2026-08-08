@@ -4,6 +4,42 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.15.0] - 2026-08-08
+
+### Added
+
+- `ChangeKind`, `ChangeSignal`, `ImpactAnalysis`, and `ChangeImpactAnalyzer`
+- downstream dependency-closure mapping from changed plan nodes to affected work
+- durable change-control checkpoints with affected, unaffected, active-affected, preserved-active, and remaining-node provenance
+- selective pause semantics that release only affected active leases while preserving unrelated work
+- canonical pre/post claim checks so stale worker processes cannot successfully acquire work that another host just paused
+- incremental Planner-only impact resolution with partial resume, retirement, remaining-node tracking, and resolution history
+- additive `user_interrupt()` steering through optional `seed_nodes` without regenerating or discarding the whole plan
+- remote change-control analysis/resolution endpoints and matching `AASMRemoteClient` methods
+- `change-control`, `change-analyze`, and `change-resolve` CLI commands
+- live information-change checkpoint status in the browser Control Center
+- change-signal schema, documentation, worked example, and regression tests
+
+### Selective checkpoint semantics
+
+- an edge `A -> B` means B depends on A, so a change anchored at A affects A and its downstream descendants
+- unanchored changes require Planner attention without falsely invalidating every plan node
+- paused tasks cannot be claimed until explicitly resolved
+- active affected leases are released; unaffected active leases remain valid
+- a worker that finishes local computation after its lease was released cannot turn that released lease into a successful durable completion
+- partial resolution does not re-pause nodes already resumed in an earlier Planner resolution
+- when the executable PBV profile is configured, only the authoritative Planner may resolve an impact checkpoint
+
+### Distributed correctness
+
+- task claim checks read the canonical stored pause set before ownership is attempted and re-check after ownership is created
+- the pause path scans the post-pause canonical lease state, closing the claim-before-pause and pause-before-claim interleavings without weakening existing task-claim/resource/quota boundaries
+
+### Architectural significance
+
+- user steering, changed assumptions/evidence, failed verification, contradictions, and risk escalation can now interrupt only the affected dependency region instead of restarting the entire run
+- v0.15 closes the loop between durable plan provenance, PBV Planner authority, and long-running multi-worker execution
+
 ## [0.14.0] - 2026-08-08
 
 ### Added
@@ -208,7 +244,7 @@ The project uses semantic-versioning intent while the public API remains experim
 ### Added
 
 - durable resource/capability registry for agents, tools, humans, services, and constrained execution slots
-- capability-aware max-flow scheduling with priorities, reliability/cost filters, durable assignments, utilization, and unmet demand
+- capability-aware max-flow scheduling with priorities, reliability/cost filters, durable assignments, utilization, unmet demand
 - min-cut bottleneck reporting and explicit missing-capability diagnostics
 - automatic durable plan-node ownership updates when task IDs match plan nodes
 - restart/replay/fork-safe resource and scheduling state
