@@ -4,6 +4,30 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.10.0] - 2026-08-08
+
+### Added
+
+- `ExecutionContract` for carrying prompt, purpose, model-routing constraints, executor-routing constraints, and fixed-model/executor overrides inside task metadata
+- worker-local `ExecutorRegistry` and `ExecutorBinding` capability/provider matching
+- `ExecutionOrchestrator` that turns a claimed task lease into a model route, physical executor invocation, model-usage record, provider evidence, and normalized durable completion result
+- `OrchestratedRemoteWorker`, composing the existing durable worker loop with real executor orchestration
+- `aasm worker` CLI for launching Codex CLI or OpenAI Responses workers on separate machines
+- execution-contract JSON schema, worked example, and executor-orchestration documentation
+- HTTP client model-usage reporting so remote workers feed the durable economics ledger automatically
+
+### Reliability
+
+- remote worker processes can reconnect using the same durable worker ID after restart when the resource binding matches
+- changed worker/resource identity is rejected instead of silently moving durable ownership
+- orchestration results preserve selected model, provider, executor, route, output, usage, evidence IDs, and the execution contract that caused the call
+- routed execution retains the lease/effect boundary: claiming work does not bypass external-effect authorization/idempotency semantics
+
+### Architectural significance
+
+- scheduled work no longer stops at an abstract assignment: AASM now has an end-to-end path from task scheduling through model and executor routing to physical execution and durable completion
+- v0.10 captures the task/model/executor/outcome data required for the next milestone: empirical model-strength calibration and adaptive Luna/Terra/Sol-style routing
+
 ## [0.9.0] - 2026-08-08
 
 ### Added
