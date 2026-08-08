@@ -3,10 +3,11 @@ from __future__ import annotations
 import argparse, json
 from dataclasses import asdict
 from .adaptive_routing import ModelOutcomeRecord
+from .collaboration import CollaborationPolicy
 from .codex_telemetry import import_otel_jsonl
 from .definitions import MachineDefinition
 from .governance import GovernanceBudgetPolicy, GovernanceContext
-from .runtime_v13 import AASMEngine
+from .runtime_v14 import AASMEngine
 from .team_protocol import BuilderOutput, PlannerDecision, TeamMember, VerifierReport
 from .model import MachineState, ProblemSpec
 from .model_check import check_machine
@@ -37,6 +38,8 @@ def _memory(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store)
 def _evidence(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); p={"evidence":e.snapshot.evidence}; p.update({"lineage":[asdict(x) for x in e.evidence_lineage(args.lineage)]} if args.lineage else {}); _json(p); store.close()
 def _resources(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"resources":e.list_resources(),"last_schedule":e.last_schedule()}); store.close()
 def _schedule(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.schedule([TaskDemand(**x) for x in _load(args.tasks)]).to_dict()); store.close()
+def _collaboration(args):
+    store=_open(args); e=AASMEngine.resume(args.machine_id,store); policy=CollaborationPolicy(**(_load(args.policy) if args.policy else {})); task_rows=_load(args.tasks) if args.tasks else None; task_list=None if task_rows is None else [TaskDemand(**x) for x in task_rows]; _json(e.analyze_collaboration(task_list,policy)); store.close()
 def _workers(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"workers":e.list_workers(),"quotas":e.list_quotas(),"leases":e.list_leases()}); store.close()
 def _claim(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.claim_task(TaskDemand(**_load(args.task)),args.worker,lease_seconds=args.lease_seconds)); store.close()
 def _models(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"models":e.list_model_profiles(),"last_model_route":e.last_model_route()}); store.close()
@@ -49,7 +52,7 @@ def _governance_budget(args): store=_open(args); e=AASMEngine.resume(args.machin
 def _governance_decide(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.governance_decide(GovernanceContext(**_load(args.context)))); store.close()
 def _governance_complete(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.complete_governance_review(args.decision_id,evidence=_load(args.evidence) if args.evidence else [])); store.close()
 def _team(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.team_report()); store.close()
-def _team_init(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); raw=_load(args.members); _json(e.initialize_team([TeamMember(**x) for x in raw])); store.close()
+def _team_init(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.initialize_team([TeamMember(**x) for x in _load(args.members)])); store.close()
 def _builder_output(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.submit_builder_output(BuilderOutput(**_load(args.record)))); store.close()
 def _verifier_report(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.submit_verifier_report(VerifierReport(**_load(args.record)))); store.close()
 def _planner_decision(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.planner_decide(PlannerDecision(**_load(args.record)))); store.close()
@@ -82,6 +85,7 @@ def build_parser():
     for name,func in [("effects",_effects),("plan",_plan),("memory",_memory),("resources",_resources),("workers",_workers),("models",_models),("economics",_economics),("governance",_governance),("team",_team)]: q=stored(name,name); q.add_argument("machine_id"); _add_store_args(q); q.set_defaults(func=func)
     q=stored("evidence","evidence"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--lineage"); q.set_defaults(func=_evidence)
     q=stored("schedule","schedule"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--tasks",required=True); q.set_defaults(func=_schedule)
+    q=stored("collaboration","analyze useful worker fan-out"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--tasks"); q.add_argument("--policy"); q.set_defaults(func=_collaboration)
     q=stored("claim","claim"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--worker",required=True); q.add_argument("--task",required=True); q.add_argument("--lease-seconds",type=float,default=60); q.set_defaults(func=_claim)
     q=stored("model-route","model route"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--request",required=True); q.set_defaults(func=_model_route)
     q=stored("model-outcome","record evaluated model outcome"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--record",required=True); q.set_defaults(func=_model_outcome)
