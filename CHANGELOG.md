@@ -4,6 +4,35 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.14.0] - 2026-08-08
+
+### Added
+
+- `CollaborationPolicy`, `CollaborationCandidate`, `CollaborationAnalysis`, and `CollaborationPlanner`
+- critical-path and topological-wave analysis over the durable plan graph
+- maximum useful parallel-width calculation instead of assuming every task can run concurrently
+- capability-aware fan-out ceiling based on max-flow-deliverable resource capacity rather than raw fleet size
+- candidate worker-count projections using total work, critical path, and configurable coordination overhead
+- smallest-near-optimal worker-count selection plus minimum marginal-improvement gating
+- min-cut bottleneck, unmet-capability, schedulable-fraction, enabled-capacity, eligible-capacity, and resource-cost evidence in each analysis
+- durable collaboration-analysis history and Control Center visibility
+- remote collaboration analysis endpoint/client and `aasm collaboration` CLI command
+- collaboration policy schema, documentation, example, and regression tests
+
+### Scheduling semantics
+
+- worker count is bounded by configured maximum, runnable task count, DAG parallel width, physical enabled capacity, and capability-eligible max-flow capacity
+- serial critical paths reject useless fan-out even when hundreds of workers are available
+- workers that cannot satisfy task capabilities do not count as useful concurrency
+- coordination overhead can make a smaller team faster than the maximum available team
+- AASM recommends the smallest worker count inside the configured near-optimal makespan band rather than maximizing concurrency
+- v0.14 recommends useful concurrency; it does not silently provision workers or infrastructure
+
+### Architectural significance
+
+- max-flow/min-cut, graph planning, worker capability, and cost accounting now directly govern whether adding more agents can improve wall-clock completion
+- the Planner/Control Center can distinguish a worker shortage from a dependency critical path, capability cut, or coordination-overhead problem before spawning more agents
+
 ## [0.13.0] - 2026-08-08
 
 ### Added
