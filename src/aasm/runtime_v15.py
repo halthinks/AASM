@@ -1,0 +1,90 @@
+from __future__ import annotations
+
+from copy import deepcopy
+from dataclasses import asdict
+
+from .change_impact import ChangeImpactAnalyzer, ChangeKind, ChangeSignal
+from .graph import PlanGraph
+from .model import new_id
+from .runtime_v14 import AASMEngine as V14Engine
+from .team_protocol import PlannerBuilderVerifierPolicy, TeamRole
+
+
+class AASMEngine(V14Engine):
+    """v0.15 runtime: information-change checkpoints and selective steering."""
+
+    def paused_tasks(self):
+        return sorted(set(self.snapshot.resources.get("change_control",{}).get("paused_tasks",[]) or []))
+
+    def impact_history(self):
+        return deepcopy(self.snapshot.resources.get("change_control",{}).get("impacts",[]) or [])
+
+    def last_impact(self):
+        items=self.impact_history()
+        return items[-1] if items else None
+
+    def analyze_change(self,signal:ChangeSignal,*,pause_affected=True,reason="information change analyzed"):
+        active=[x.get("task_id") for x in self.snapshot.resources.get("leases",[]) if x.get("status")=="ACTIVE"]
+        analysis=ChangeImpactAnalyzer().analyze(PlanGraph.from_dict(self.snapshot.graph),signal,active)
+        raw=analysis.to_dict(); raw["impact_id"]=new_id("impact"); raw["status"]="OPEN"; raw["released_lease_ids"]=[]; raw["resolution"]=None
+        resources=deepcopy(self.snapshot.resources); control=resources.setdefault("change_control",{}); control.setdefault("impacts",[]).append(raw)
+        if pause_affected:
+            paused=set(control.get("paused_tasks",[]) or []); paused.update(raw["affected_nodes"]); control["paused_tasks"]=sorted(paused)
+        control["last_impact_id"]=raw["impact_id"]
+        self.patch_snapshot({"resources":resources},reason)
+
+        released=[]
+        if pause_affected:
+            affected=set(raw["affected_active_tasks"])
+            for lease in list(self.snapshot.resources.get("leases",[])):
+                if lease.get("status")=="ACTIVE" and lease.get("task_id") in affected:
+                    self.release_lease(lease["lease_id"])
+                    released.append(lease["lease_id"])
+            if released:
+                resources=deepcopy(self.snapshot.resources); impacts=resources.setdefault("change_control",{}).setdefault("impacts",[])
+                target=next(x for x in impacts if x.get("impact_id")==raw["impact_id"]); target["released_lease_ids"]=released
+                self.patch_snapshot({"resources":resources},"affected active leases released")
+                raw=deepcopy(target)
+        return deepcopy(raw)
+
+    def claim_task(self,task,worker_id,**kwargs):
+        if task.task_id in set(self.paused_tasks()):
+            raise ValueError(f"Task paused by information-change checkpoint: {task.task_id}")
+        return super().claim_task(task,worker_id,**kwargs)
+
+    def resolve_change_impact(self,planner_id:str,impact_id:str,*,resume_nodes:list[str]|None=None,retire_nodes:list[str]|None=None,plan_decision_id:str|None=None,reason="change impact resolved"):
+        resources=deepcopy(self.snapshot.resources); team=resources.get("team_protocol")
+        if team:
+            PlannerBuilderVerifierPolicy.require_role(team["members"],planner_id,TeamRole.PLANNER.value)
+            if planner_id!=team.get("planner_id"):
+                raise PermissionError("only the authoritative Planner may resolve an impact checkpoint")
+        control=resources.setdefault("change_control",{}); impacts=control.setdefault("impacts",[])
+        target=next((x for x in impacts if x.get("impact_id")==impact_id),None)
+        if target is None: raise KeyError(impact_id)
+        if target.get("status")!="OPEN": raise ValueError("impact checkpoint is not OPEN")
+        affected=set(target.get("affected_nodes",[]) or [])
+        resume=set(resume_nodes or [])
+        retire=set(retire_nodes or [])
+        if not resume.issubset(affected) or not retire.issubset(affected):
+            raise ValueError("resume_nodes and retire_nodes must be inside the affected region")
+        if resume & retire: raise ValueError("a node cannot be both resumed and retired")
+        paused=set(control.get("paused_tasks",[]) or []); paused.difference_update(resume); paused.update(affected-resume-retire); paused.difference_update(retire)
+        control["paused_tasks"]=sorted(paused)
+        target["status"]="RESOLVED" if affected.issubset(resume|retire) else "PARTIAL"
+        target["resolution"]={"planner_id":planner_id,"resume_nodes":sorted(resume),"retire_nodes":sorted(retire),"plan_decision_id":plan_decision_id}
+        self.patch_snapshot({"resources":resources},reason)
+        return deepcopy(target)
+
+    def user_interrupt(self,note:str,*,metadata:dict|None=None):
+        control=super().user_interrupt(note,metadata=metadata)
+        metadata=deepcopy(metadata or {})
+        if metadata.get("seed_nodes") is not None:
+            signal=ChangeSignal(ChangeKind.USER_STEERING,note,seed_nodes=list(metadata.pop("seed_nodes") or []),metadata=metadata)
+            impact=self.analyze_change(signal,reason="user steering impact analyzed")
+            return {"control":control,"impact":impact}
+        return control
+
+    def dashboard(self):
+        out=super().dashboard()
+        out["change_control"]={"paused_tasks":self.paused_tasks(),"last_impact":self.last_impact(),"impact_count":len(self.impact_history())}
+        return out
