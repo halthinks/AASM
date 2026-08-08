@@ -10,7 +10,7 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.6.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.7.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
@@ -146,7 +146,7 @@ Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems 
 ### Requirements
 
 - Python **3.11+**
-- No runtime dependencies beyond the Python standard library in v0.6.0
+- No runtime dependencies beyond the Python standard library in v0.7.0
 
 ### Install from a clone
 
@@ -175,7 +175,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.6.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.7.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -214,7 +214,6 @@ engine.transition(MachineState.FORMALIZE, "normalized")
 machine_id = engine.snapshot.machine_id
 store.close()
 
-# A later process can reconstruct the run from the durable event stream.
 store = SQLiteStore("runs.db")
 engine = AASMEngine.resume(machine_id, store)
 ```
@@ -223,40 +222,38 @@ See [`docs/DURABLE_RUNTIME.md`](docs/DURABLE_RUNTIME.md) and [`examples/durable_
 
 ### Durable planning, memory, and evidence
 
-AASM now persists the plan graph, frontier/visited/pruned state, memoized subproblems, and structured evidence lineage in the same replayable history as the state machine. Historical forks receive exactly the cognitive state that existed at their fork boundary and then diverge independently.
+AASM persists the plan graph, frontier/visited/pruned state, memoized subproblems, and structured evidence lineage in the same replayable history as the state machine. Historical forks receive exactly the cognitive state that existed at their fork boundary and then diverge independently.
 
 See [`docs/DURABLE_COGNITION.md`](docs/DURABLE_COGNITION.md).
 
 ### Durable external effects
 
-AASM can now persist externally observable actions separately from model reasoning. Each effect has an authorization state, retry policy, idempotency key, durable result/error record, and crash-recovery semantics. If a process dies while an effect is running, AASM marks the outcome `UNKNOWN` and refuses a blind retry by default.
+AASM persists externally observable actions separately from model reasoning. Each effect has an authorization state, retry policy, idempotency key, durable result/error record, and crash-recovery semantics. If a process dies while an effect is running, AASM marks the outcome `UNKNOWN` and refuses a blind retry by default.
 
 See [`docs/EFFECT_SYSTEM.md`](docs/EFFECT_SYSTEM.md) and [`examples/effect_demo.py`](examples/effect_demo.py).
 
 ### Declarative machines and model checking
 
-AASM machines can now be defined as data rather than hard-coded control flow. `MachineDefinition` supports JSON and TOML with no additional dependency, plus optional YAML when PyYAML is installed. Before execution, `check_machine()` can detect undefined targets, unreachable states, non-terminal dead ends, terminal states with outgoing edges, and reachable regions that cannot reach any terminal state.
+AASM machines can be defined as data rather than hard-coded control flow. `MachineDefinition` supports JSON and TOML with no additional dependency, plus optional YAML when PyYAML is installed.
 
 ```bash
 aasm verify-machine examples/machine.json
 ```
 
-See [`docs/DECLARATIVE_MACHINES.md`](docs/DECLARATIVE_MACHINES.md) and [`examples/machine.json`](examples/machine.json).
+See [`docs/DECLARATIVE_MACHINES.md`](docs/DECLARATIVE_MACHINES.md).
 
 ### Historical replay and forks
-
-Replay can stop at an exact event sequence, and a durable run can fork from that boundary into an independent machine with explicit lineage. Forks do not copy or re-run prior external effects.
 
 ```bash
 aasm replay MACHINE_ID --db runs.db --at 17
 aasm fork MACHINE_ID --db runs.db --at 17
 ```
 
-See [`docs/REPLAY_FORK.md`](docs/REPLAY_FORK.md) and [`examples/fork_demo.py`](examples/fork_demo.py).
+See [`docs/REPLAY_FORK.md`](docs/REPLAY_FORK.md).
 
 ### Durable capability scheduling
 
-AASM can persist a capability registry for agents, tools, humans, services, and constrained compute resources, then allocate task demand through its max-flow/min-cut engine. Schedules expose assignments, utilization, unmet demand, and the current bottleneck instead of simply spawning more workers.
+AASM can persist a capability registry for agents, tools, humans, services, and constrained compute resources, then allocate task demand through its max-flow/min-cut engine.
 
 ```python
 from aasm import ResourceRecord, TaskDemand
@@ -266,10 +263,34 @@ result = engine.schedule([
     TaskDemand("verify-a", ["verify"], priority=10),
     TaskDemand("verify-b", ["verify"], priority=5),
 ])
-print(result.bottlenecks)  # ["verifier"]
+print(result.bottlenecks)
 ```
 
-See [`docs/RESOURCE_SCHEDULER.md`](docs/RESOURCE_SCHEDULER.md) and [`examples/scheduler_demo.py`](examples/scheduler_demo.py).
+See [`docs/RESOURCE_SCHEDULER.md`](docs/RESOURCE_SCHEDULER.md).
+
+## Distributed workers and crash-safe leases
+
+AASM can coordinate multiple worker processes or machines through durable task leases. Workers are linked to capability resources, heartbeat into the runtime, claim tasks through an atomic reservation boundary, and hold time-limited leases that can be renewed, completed, failed, released, or reclaimed after expiry. Quotas can constrain the whole machine, a worker, or a resource.
+
+SQLite uses a dedicated task-claim table to prevent two processes from simultaneously acquiring the same task.
+
+```python
+from aasm import WorkerRecord, TaskDemand
+
+worker = engine.register_worker(WorkerRecord("worker-1", "cpu-pool"))
+lease = engine.claim_task(TaskDemand("build", ["python"]), "worker-1", lease_seconds=60)
+engine.lease_heartbeat(lease["lease_id"], extend_seconds=60)
+engine.complete_lease(lease["lease_id"], result={"artifact": "ok"})
+```
+
+CLI inspection/claiming:
+
+```bash
+aasm workers MACHINE_ID --db runs.db
+aasm claim MACHINE_ID --db runs.db --worker worker-1 --task task.json --lease-seconds 60
+```
+
+See [`docs/DISTRIBUTED_WORKERS.md`](docs/DISTRIBUTED_WORKERS.md) and [`examples/distributed_workers.py`](examples/distributed_workers.py).
 
 ## Orchestration profiles
 
@@ -307,16 +328,15 @@ AASM is **not**:
 - a prompt library
 - a replacement for your agent framework
 - a guarantee that an AI-generated proposal is correct
-- a fully distributed durable workflow engine yet
 - tied to any single agent role topology
 
 It is a control/runtime layer intended to sit around or underneath agent behavior.
 
 ## Project status
 
-**Current version: `0.6.0` — early-stage / experimental.**
+**Current version: `0.7.0` — early-stage / experimental.**
 
-The runtime now includes event-sourced state, SQLite durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, and capability-aware resource scheduling with min-cut bottleneck detection. The next stages focus on distributed execution, leases and quotas, richer policy/verification, observability, and integration adapters.
+The runtime now includes event-sourced state, SQLite durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware max-flow scheduling, durable worker heartbeats, atomic task claims, leases, expiry/reclaim, and quota enforcement.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 
@@ -326,12 +346,10 @@ Contributions are welcome—especially small, well-tested improvements that stre
 
 Please read:
 
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — development workflow and contribution standards
-- [`GOVERNANCE.md`](GOVERNANCE.md) — how project decisions are made
-- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — community expectations
-- [`SECURITY.md`](SECURITY.md) — responsible vulnerability reporting
-
-New pull requests should explain **what problem they solve, why the change belongs in AASM, how it was validated, and whether it changes any state/transition or compatibility contract**.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- [`GOVERNANCE.md`](GOVERNANCE.md)
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
+- [`SECURITY.md`](SECURITY.md)
 
 ## Design principles
 
@@ -348,13 +366,9 @@ New pull requests should explain **what problem they solve, why the change belon
 
 The long-term opportunity is larger than a single orchestration pattern. AASM can become a reusable **algorithmic control plane for intelligent systems**: a layer where agents and tools remain flexible, but execution acquires the same kinds of structure that mature software systems expect from schedulers, workflow engines, state machines, transaction logs, graph planners, and verification pipelines.
 
-That could make agent systems easier to inspect, resume, benchmark, govern, integrate, and trust—not because the model becomes infallible, but because the surrounding system becomes more explicit about uncertainty, authority, state, evidence, and recovery.
-
 ## Acknowledgements
 
 AASM's algorithmic mapping was inspired by Jeff Erickson's excellent open educational materials on algorithms and models of computation. Those materials are not bundled with this project and remain under their respective terms.
-
-This repository began as a first open-source release with the goal of turning a useful systems idea into something other people can inspect, challenge, extend, and improve.
 
 ## License
 
