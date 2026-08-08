@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from aasm import AASMEngine, MachineState, ProblemSpec
 from aasm.persistence import MemoryStore, SQLiteStore
 
@@ -15,6 +17,33 @@ def test_memory_store_replay_matches_live_state():
     assert replayed.version == e.snapshot.version
     assert replayed.metadata == e.snapshot.metadata
     assert replayed.canonical_hash() == e.snapshot.canonical_hash()
+
+
+def test_failed_durable_append_does_not_leave_ghost_local_state():
+    class RejectOnceStore(MemoryStore):
+        def __init__(self):
+            super().__init__()
+            self.reject_next = False
+
+        def append(self, machine_id, event, snapshot):
+            if self.reject_next:
+                self.reject_next = False
+                raise RuntimeError("simulated durable rejection")
+            return super().append(machine_id, event, snapshot)
+
+    store = RejectOnceStore()
+    e = AASMEngine(ProblemSpec("reject one durable write"), store=store)
+    machine_id = e.snapshot.machine_id
+    before = e.snapshot.canonical_hash()
+    store.reject_next = True
+
+    with pytest.raises(RuntimeError, match="simulated durable rejection"):
+        e.transition(MachineState.FORMALIZE, "must not become a ghost transition")
+
+    assert e.state == MachineState.INGEST
+    assert e.snapshot.canonical_hash() == before
+    assert e.snapshot.canonical_hash() == store.load_snapshot(machine_id).canonical_hash()
+    assert e.replay().canonical_hash() == before
 
 
 def test_sqlite_resume_after_engine_is_discarded(tmp_path: Path):
