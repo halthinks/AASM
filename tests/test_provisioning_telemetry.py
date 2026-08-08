@@ -42,6 +42,24 @@ def test_provisioning_cannot_execute_before_explicit_authorization(tmp_path):
     store.close()
 
 
+def test_repeated_provisioning_execution_does_not_duplicate_provider_call_or_history(tmp_path):
+    store = SQLiteStore(tmp_path / "provision-idempotent.db")
+    e = AASMEngine(ProblemSpec("provision idempotent"), store=store)
+    request = ProvisioningRequest("fake-cloud", "pool", ProvisioningAction.PROVISION, 1, "scale")
+    first = e.propose_provisioning(request)
+    second = e.propose_provisioning(request)
+    assert first.spec.effect_id == second.spec.effect_id
+    assert len(e.provisioning_history()) == 1
+    calls = []
+    adapter = FunctionProvisioningAdapter(lambda req, key: calls.append(key) or {"ok": True})
+    e.authorize_effect(first.spec.effect_id)
+    e.execute_provisioning(first.spec.effect_id, adapter)
+    e.execute_provisioning(first.spec.effect_id, adapter)
+    assert len(calls) == 1
+    assert len(e.provisioning_report()["executions"]) == 1
+    store.close()
+
+
 def test_drain_execution_marks_only_targeted_workers_draining(tmp_path):
     store = SQLiteStore(tmp_path / "drain.db")
     e = AASMEngine(ProblemSpec("drain"), store=store)
@@ -77,6 +95,7 @@ def test_telemetry_is_bounded_and_tracks_artifacts_and_durations():
     report = e.telemetry_report()
     assert report["duration_stats"]["by_task_class"]["compile"]["mean_seconds"] == 8.0
     assert report["artifacts"][-1]["refs"] == ["artifact://report"]
+    assert report["recent"] == rows
 
 
 def test_observed_task_class_duration_feeds_next_collaboration_estimate():
