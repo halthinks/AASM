@@ -1,0 +1,10 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/halthinks/AASM/schemas/pbv-message.schema.json",
+  "title":"AASM Planner Builder Verifier Message",
+  "oneOf":[
+    {"type":"object","required":["builder_id","task_id","summary"],"properties":{"builder_id":{"type":"string"},"task_id":{"type":"string"},"summary":{"type":"string"},"output":{"type":"object"},"evidence_ids":{"type":"array","items":{"type":"string"}},"changed_files":{"type":"array","items":{"type":"string"}},"tests":{"type":"object"},"assumptions":{"type":"object"},"metadata":{"type":"object"}}},
+    {"type":"object","required":["verifier_id","task_id","builder_output_id","recommendation"],"properties":{"verifier_id":{"type":"string"},"task_id":{"type":"string"},"builder_output_id":{"type":"string"},"recommendation":{"enum":["CONTINUE","REPAIR","INVESTIGATE","PAUSE","PLAN_INTERRUPT"]},"accepted":{"type":"boolean"},"tests_passed":{"type":["boolean","null"]},"assumption_changed":{"type":"boolean"},"unexpected_output":{"type":"boolean"},"blocking":{"type":"boolean"},"evidence_ids":{"type":"array","items":{"type":"string"}},"findings":{"type":"array","items":{"type":"string"}},"metadata":{"type":"object"}}},
+    {"type":"object","required":["planner_id","task_id","directive","reason"],"properties":{"planner_id":{"type":"string"},"task_id":{"type":"string"},"directive":{"enum":["CONTINUE","REPAIR","INVESTIGATE","PAUSE","PLAN_INTERRUPT"]},"reason":{"type":"string"},"verifier_report_id":{"type":["string","null"]},"plan_patch":{"type":["object","null"]},"metadata":{"type":"object"}}}
+  ]
+}
