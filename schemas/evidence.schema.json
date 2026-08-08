@@ -1,0 +1,23 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://github.com/halthinks/AASM/schemas/evidence.schema.json",
+  "title":"AASM Evidence Record",
+  "type":"object",
+  "required":["evidence_id","kind","statement","status","created_at"],
+  "properties":{
+    "evidence_id":{"type":"string"},
+    "kind":{"enum":["claim","observation","contradiction","assumption"]},
+    "statement":{"type":"string","minLength":1},
+    "source":{"type":"string"},
+    "confidence":{"type":["number","null"],"minimum":0,"maximum":1},
+    "supports":{"type":"array","items":{"type":"string"}},
+    "contradicts":{"type":"array","items":{"type":"string"}},
+    "derived_from":{"type":"array","items":{"type":"string"}},
+    "metadata":{"type":"object"},
+    "status":{"enum":["active","invalidated"]},
+    "created_at":{"type":"number"},
+    "invalidated_at":{"type":["number","null"]},
+    "invalidated_reason":{"type":["string","null"]}
+  },
+  "additionalProperties":false
+}
