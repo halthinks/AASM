@@ -149,6 +149,7 @@
 ./tests/test_memory_flow_adversary.py
 ./tests/test_model_routing_remote.py
 ./tests/test_pbv_coordinator.py
+./tests/test_pbv_plan_indexes.py
 ./tests/test_persistence.py
 ./tests/test_postgres_integration.py
 ./tests/test_replay_fork.py
