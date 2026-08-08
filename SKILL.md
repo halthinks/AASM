@@ -119,3 +119,14 @@ Use `PBVCoordinator` to automate the physical handoff:
 `BuilderOutput → Verifier callable → VerifierReport → Planner callable → PlannerDecision`.
 
 Planner and Verifier callables can be real model executors, remote services, deterministic code, or humans. Preserve the source `verifier_report_id` when the Planner overrides a recommendation. A changed assumption or unexpected output should lead to explicit Planner reasoning and, when the plan must change, an explicit `PLAN_INTERRUPT`; never silently infer and rewrite the plan.
+
+## Massive collaboration and worker fan-out
+Before increasing worker count materially, run `engine.analyze_collaboration()` or the `aasm collaboration` command. Do not equate available workers with useful parallelism.
+
+The collaboration analysis must consider the dependency critical path, topological execution waves, maximum parallel width, physical resource capacity, capability-eligible max-flow capacity, min-cut bottlenecks, resource cost, and coordination overhead. Treat the recommendation as Planner evidence.
+
+A worker that cannot satisfy a task capability does not count as useful capacity. A serial critical path caps useful concurrency even when hundreds of workers are available. Adding workers outside the current min-cut or above the DAG parallel width does not improve throughput.
+
+Prefer the smallest worker count within the configured near-optimal makespan band. Use `min_relative_improvement` to reject extra workers whose marginal speedup is negligible and `coordination_overhead_per_extra_worker` to represent real communication/integration cost.
+
+The collaboration planner does **not** authorize or provision infrastructure. Provisioning workers, cloud resources, external services, or additional model sessions remains a separate deployment/authority decision. Re-run collaboration analysis after a `PLAN_INTERRUPT`, material task-duration change, capability change, or resource-fleet change because those can alter the critical path or useful ceiling.
