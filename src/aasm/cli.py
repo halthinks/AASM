@@ -6,7 +6,8 @@ from .adaptive_routing import ModelOutcomeRecord
 from .codex_telemetry import import_otel_jsonl
 from .definitions import MachineDefinition
 from .governance import GovernanceBudgetPolicy, GovernanceContext
-from .runtime_v12 import AASMEngine
+from .runtime_v13 import AASMEngine
+from .team_protocol import BuilderOutput, PlannerDecision, TeamMember, VerifierReport
 from .model import MachineState, ProblemSpec
 from .model_check import check_machine
 from .persistence.factory import open_store
@@ -47,6 +48,11 @@ def _governance(args): store=_open(args); e=AASMEngine.resume(args.machine_id,st
 def _governance_budget(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.configure_governance_budget(GovernanceBudgetPolicy(**_load(args.policy)))); store.close()
 def _governance_decide(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.governance_decide(GovernanceContext(**_load(args.context)))); store.close()
 def _governance_complete(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.complete_governance_review(args.decision_id,evidence=_load(args.evidence) if args.evidence else [])); store.close()
+def _team(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.team_report()); store.close()
+def _team_init(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); raw=_load(args.members); _json(e.initialize_team([TeamMember(**x) for x in raw])); store.close()
+def _builder_output(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.submit_builder_output(BuilderOutput(**_load(args.record)))); store.close()
+def _verifier_report(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.submit_verifier_report(VerifierReport(**_load(args.record)))); store.close()
+def _planner_decision(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.planner_decide(PlannerDecision(**_load(args.record)))); store.close()
 def _codex_telemetry(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.import_codex_telemetry(import_otel_jsonl(args.jsonl))); store.close()
 def _serve(args):
     from .server import serve
@@ -73,7 +79,7 @@ def build_parser():
     q=stored("replay","replay"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--at",type=int); q.set_defaults(func=_replay)
     q=stored("fork","fork"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--at",type=int,required=True); q.set_defaults(func=_fork)
     q=stored("inspect","inspect"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--events",action="store_true"); q.set_defaults(func=_inspect)
-    for name,func in [("effects",_effects),("plan",_plan),("memory",_memory),("resources",_resources),("workers",_workers),("models",_models),("economics",_economics),("governance",_governance)]: q=stored(name,name); q.add_argument("machine_id"); _add_store_args(q); q.set_defaults(func=func)
+    for name,func in [("effects",_effects),("plan",_plan),("memory",_memory),("resources",_resources),("workers",_workers),("models",_models),("economics",_economics),("governance",_governance),("team",_team)]: q=stored(name,name); q.add_argument("machine_id"); _add_store_args(q); q.set_defaults(func=func)
     q=stored("evidence","evidence"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--lineage"); q.set_defaults(func=_evidence)
     q=stored("schedule","schedule"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--tasks",required=True); q.set_defaults(func=_schedule)
     q=stored("claim","claim"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--worker",required=True); q.add_argument("--task",required=True); q.add_argument("--lease-seconds",type=float,default=60); q.set_defaults(func=_claim)
@@ -83,6 +89,10 @@ def build_parser():
     q=stored("governance-budget","configure governance budget"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--policy",required=True); q.set_defaults(func=_governance_budget)
     q=stored("governance-decide","evaluate semantic-review requirement"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--context",required=True); q.set_defaults(func=_governance_decide)
     q=stored("governance-complete","mark semantic review completed"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--decision-id",required=True); q.add_argument("--evidence"); q.set_defaults(func=_governance_complete)
+    q=stored("team-init","initialize Planner Builder Verifier team"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--members",required=True); q.set_defaults(func=_team_init)
+    q=stored("builder-output","record Builder output"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--record",required=True); q.set_defaults(func=_builder_output)
+    q=stored("verifier-report","record Verifier report"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--record",required=True); q.set_defaults(func=_verifier_report)
+    q=stored("planner-decision","commit Planner directive"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--record",required=True); q.set_defaults(func=_planner_decision)
     q=stored("codex-telemetry","import telemetry"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--jsonl",required=True); q.set_defaults(func=_codex_telemetry)
     q=stored("serve","serve"); q.add_argument("--store",required=True); q.add_argument("--host",default="127.0.0.1"); q.add_argument("--port",type=int,default=8787); q.add_argument("--token"); q.set_defaults(func=_serve)
     q=stored("worker","run executor worker"); q.add_argument("--url",required=True); q.add_argument("--machine-id",required=True); q.add_argument("--worker-id",required=True); q.add_argument("--resource-id",required=True); q.add_argument("--executor",choices=["codex","responses"],required=True); q.add_argument("--executor-id",default="default"); q.add_argument("--provider",default="openai"); q.add_argument("--capability",action="append",default=[]); q.add_argument("--priority",type=int,default=0); q.add_argument("--cwd"); q.add_argument("--token"); q.add_argument("--lease-seconds",type=float,default=120); q.add_argument("--heartbeat-interval",type=float,default=20); q.add_argument("--idle-sleep",type=float,default=2); q.add_argument("--http-timeout",type=float,default=30); q.add_argument("--once",action="store_true"); q.set_defaults(func=_worker)
