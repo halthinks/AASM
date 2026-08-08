@@ -17,6 +17,8 @@ def test_cli_exposes_durable_commands():
         (["evidence", "machine_x", "--db", "x.db"], "evidence"),
         (["resources", "machine_x", "--db", "x.db"], "resources"),
         (["schedule", "machine_x", "--db", "x.db", "--tasks", "tasks.json"], "schedule"),
+        (["collaboration", "machine_x", "--store", "x.db"], "collaboration"),
+        (["collaboration", "machine_x", "--store", "x.db", "--tasks", "tasks.json", "--policy", "policy.json"], "collaboration"),
         (["economics", "machine_x", "--store", "x.db"], "economics"),
         (["governance", "machine_x", "--store", "x.db"], "governance"),
         (["governance-budget", "machine_x", "--store", "x.db", "--policy", "budget.json"], "governance-budget"),
