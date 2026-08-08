@@ -130,3 +130,18 @@ A worker that cannot satisfy a task capability does not count as useful capacity
 Prefer the smallest worker count within the configured near-optimal makespan band. Use `min_relative_improvement` to reject extra workers whose marginal speedup is negligible and `coordination_overhead_per_extra_worker` to represent real communication/integration cost.
 
 The collaboration planner does **not** authorize or provision infrastructure. Provisioning workers, cloud resources, external services, or additional model sessions remains a separate deployment/authority decision. Re-run collaboration analysis after a `PLAN_INTERRUPT`, material task-duration change, capability change, or resource-fleet change because those can alter the critical path or useful ceiling.
+
+## Information-change checkpoints and additive steering
+When user steering, changed assumptions or evidence, failed verification, contradictions, risk escalation, or external dependencies invalidate work, represent the change as a `ChangeSignal`. Anchor `seed_nodes` whenever the affected plan location is known. The affected region is the seed set plus its downstream dependency closure; do not globally pause the run when only one subgraph is invalidated.
+
+Call `engine.analyze_change()`. With selective pause enabled, AASM durably adds the affected nodes to the pause set and releases only affected active leases. Unaffected active leases remain valid. `claim_task()` checks the canonical pause state before and after ownership is created, so a stale worker process must not bypass a newly committed checkpoint.
+
+An unanchored `ChangeSignal` still requires Planner attention, but it must not falsely mark every plan node affected. Assumption and evidence IDs are provenance unless the caller supplies the plan-node anchors that they invalidate.
+
+When the executable PBV profile is configured, only the authoritative Planner may call `resolve_change_impact()`. Resolve incrementally: `resume_nodes` and `retire_nodes` must be subsets of the checkpoint's current `remaining_nodes`. A `PARTIAL` checkpoint stays resolvable, and nodes already resumed in an earlier resolution must not be re-paused by a later one.
+
+If the authoritative plan itself must change, the Planner must commit an explicit `PLAN_INTERRUPT`. Link that Planner decision through `plan_decision_id` when resolving the affected checkpoint. `retire_nodes` only clears task validity in the checkpoint; structural plan removal/pruning still belongs in the Planner's explicit plan mutation.
+
+A `user_interrupt()` with `metadata.seed_nodes` is additive steering: preserve the existing plan and provenance, pause only the impacted dependent region, and continue unaffected work. Do not regenerate the whole plan simply because a new requirement arrived.
+
+Change-impact analysis controls task validity, not permission or security. Sandbox rules, governance review, authority policy, credentials, external-effect authorization, and destructive-operation guards remain separate boundaries.
