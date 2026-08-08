@@ -91,3 +91,16 @@ Treat model calls as resource consumption with purpose. Record productive, verif
 Do **not** weaken sandboxing, network policy, credential boundaries, or destructive-operation guards to save tokens. Use `ReviewGatePolicy` and Codex rules to remove redundant semantic review only where the permission decision is already expressible deterministically. Use model intelligence where changed information genuinely requires judgment.
 
 When using `OpenAIResponsesExecutor` or `CodexCLIExecutor`, record returned usage with `engine.record_model_usage()` or the remote model-usage endpoint so the Control Center can expose cache-adjusted productive-vs-governance cost. If governance overhead grows disproportionately, change checkpoint cadence, deterministic rules, or model routing before simply adding more reviewer agents.
+
+## Governance economics
+Use `GovernanceContext` and `engine.governance_decide()` when deciding whether a *semantic model review* is needed. This decision does not authorize execution. Sandbox policy, authority policy, credentials, effect authorization, network policy, and destructive-operation guards remain separate and must still pass.
+
+A governance fingerprint should identify the material action and the revisions that make a prior review valid: action class, scope, action signature, policy revision, assumption revision, and evidence revision. Prefer a stable diff/artifact/action digest for `action_signature` over a generic label.
+
+A completed low-risk review may be reused only when that fingerprint is unchanged. Never automatically reuse review for destructive, credential, security-sensitive, external-write, unknown-network, irreversible, or unknown actions. `assumption_changed` and `tests_failed` force a fresh review regardless of fingerprint reuse.
+
+Configure soft/hard governance budgets with `GovernanceBudgetPolicy`. Ratio thresholds are sample-aware and should not fire before `min_total_tokens_for_ratio_enforcement`. Soft pressure may route review to a lower-cost eligible reviewer. Hard pressure returns `BUDGET_PAUSE`; it must never convert required review into permission.
+
+After a required review completes, call `complete_governance_review(decision_id, evidence=...)`. Record the actual reviewer model call separately as `CallPurpose.PERMISSION_REVIEW` so governance overhead and cache-adjusted cost remain measurable.
+
+Use `governance_report()` to inspect budget state, deterministic bypasses, reused reviews, and conservative avoided-overhead estimates. Avoided token/cost estimates use the run's observed average permission-review call when available; treat them as counterfactual estimates, not billing facts.
