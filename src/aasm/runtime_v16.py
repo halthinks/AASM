@@ -81,6 +81,33 @@ class AASMEngine(V15Engine):
             return self.refresh_fleet_control(reason="fleet control refreshed after configuration")
         return self.fleet_control_report()
 
+    def _canonical_dependency_blockers(self, task_id: str):
+        snapshot = self.store.load_snapshot(self.snapshot.machine_id)
+        graph = snapshot.graph or {}
+        nodes = {x.get("node_id"): x for x in graph.get("nodes", [])}
+        if task_id not in nodes:
+            return []
+        blockers = []
+        for edge in graph.get("edges", []):
+            if edge.get("dst") != task_id or edge.get("relation", "requires") != "requires":
+                continue
+            src = edge.get("src")
+            predecessor = nodes.get(src)
+            if predecessor is None or predecessor.get("status") != "complete":
+                blockers.append(src)
+        return sorted(set(x for x in blockers if x))
+
+    def claim_task(self, task, worker_id, **kwargs):
+        blockers = self._canonical_dependency_blockers(task.task_id)
+        if blockers:
+            raise ValueError(f"Task dependencies not complete for {task.task_id}: {blockers}")
+        lease = super().claim_task(task, worker_id, **kwargs)
+        blockers = self._canonical_dependency_blockers(task.task_id)
+        if blockers:
+            self.release_lease(lease["lease_id"])
+            raise ValueError(f"Task dependencies changed during claim for {task.task_id}: {blockers}")
+        return lease
+
     def _runnable_scheduled_tasks(self):
         paused = set(self.paused_tasks())
         completed = {x.get("task_id") for x in self.snapshot.resources.get("leases", []) if x.get("status") == "COMPLETED"}
