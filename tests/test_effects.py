@@ -98,6 +98,44 @@ def test_sqlite_effect_execution_has_single_owner_across_connections(tmp_path:Pa
     assert not thread.is_alive()
     assert "error" not in error_box
     assert result_box["record"].status == EffectStatus.SUCCEEDED.value
+    assert result_box["record"].execution_id
+
+
+def test_recovery_cannot_be_overwritten_by_stale_live_executor(tmp_path:Path):
+    from threading import Event, Thread
+
+    db=tmp_path/"recovery-owner.db"
+    first_store=SQLiteStore(db)
+    first=AASMEngine(ProblemSpec("recovery ownership"),store=first_store)
+    rec=first.propose_effect(EffectSpec("external-write",idempotency_key="recovery-owner"))
+    first.authorize_effect(rec.spec.effect_id)
+    mid=first.snapshot.machine_id
+
+    entered=Event(); release=Event(); error_box={}
+    def executor(spec,key):
+        entered.set()
+        if not release.wait(10): raise TimeoutError("test executor was not released")
+        return {"external":"may-have-succeeded"}
+    def run_first():
+        try: first.execute_effect(rec.spec.effect_id,executor)
+        except Exception as exc: error_box["error"]=exc
+
+    thread=Thread(target=run_first,daemon=True); thread.start()
+    recovery_store=SQLiteStore(db)
+    try:
+        assert entered.wait(10), "executor never entered RUNNING"
+        recovered=AASMEngine.resume(mid,recovery_store,recover_effects=True)
+        unknown=recovery_store.load_effect(mid,rec.spec.effect_id)
+        assert unknown.status == EffectStatus.UNKNOWN.value
+        assert unknown.execution_id
+        release.set(); thread.join(10)
+        assert isinstance(error_box.get("error"),EffectExecutionError)
+        assert "lost execution ownership" in str(error_box["error"])
+        assert recovery_store.load_effect(mid,rec.spec.effect_id).status == EffectStatus.UNKNOWN.value
+        reconciled=recovered.reconcile_effect(rec.spec.effect_id,succeeded=True,result={"observed":True})
+        assert reconciled.status == EffectStatus.SUCCEEDED.value
+    finally:
+        release.set(); thread.join(10); first_store.close(); recovery_store.close()
 
 
 def test_passive_resume_does_not_reclassify_live_effect_as_crashed(tmp_path:Path):
@@ -171,4 +209,5 @@ def test_effects_persist_across_restart(tmp_path:Path):
     assert records[0].status == EffectStatus.SUCCEEDED.value
     assert records[0].authority == "quorum"
     assert records[0].result == {"value":7}
+    assert records[0].execution_id
     store.close()
