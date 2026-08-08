@@ -8,9 +8,11 @@ from .checkpoint_triggers import CheckpointTriggerPolicy
 from .collaboration import CollaborationPolicy
 from .codex_telemetry import import_otel_jsonl
 from .definitions import MachineDefinition
+from .execution_telemetry import TelemetryPolicy
 from .fleet_control import FleetControlPolicy
 from .governance import GovernanceBudgetPolicy, GovernanceContext
-from .runtime_v16 import AASMEngine
+from .provisioning import ProvisioningRequest
+from .runtime_v17 import AASMEngine
 from .team_protocol import BuilderOutput, PlannerDecision, TeamMember, VerifierReport
 from .model import MachineState, ProblemSpec
 from .model_check import check_machine
@@ -49,6 +51,10 @@ def _checkpoint_triggers(args): store=_open(args); e=AASMEngine.resume(args.mach
 def _checkpoint_trigger_policy(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.configure_checkpoint_triggers(CheckpointTriggerPolicy(**_load(args.policy)))); store.close()
 def _fleet_control(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.configure_fleet_control(FleetControlPolicy(**_load(args.policy))) if args.policy else e.fleet_control_report()); store.close()
 def _fleet_refresh(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); policy=CollaborationPolicy(**(_load(args.policy) if args.policy else {})); _json(e.refresh_fleet_control(collaboration_policy=policy)); store.close()
+def _telemetry(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.configure_telemetry(TelemetryPolicy(**_load(args.policy))) if args.policy else e.telemetry_report()); store.close()
+def _provisioning(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.provisioning_report()); store.close()
+def _provision_plan(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.plan_fleet_provisioning(args.provider,args.resource_id,desired_workers=args.desired_workers)); store.close()
+def _provision_propose(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(asdict(e.propose_provisioning(ProvisioningRequest(**_load(args.request))))); store.close()
 def _workers(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"workers":e.list_workers(),"quotas":e.list_quotas(),"leases":e.list_leases()}); store.close()
 def _claim(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.claim_task(TaskDemand(**_load(args.task)),args.worker,lease_seconds=args.lease_seconds)); store.close()
 def _models(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"models":e.list_model_profiles(),"last_model_route":e.last_model_route()}); store.close()
@@ -91,7 +97,8 @@ def build_parser():
     q=stored("replay","replay"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--at",type=int); q.set_defaults(func=_replay)
     q=stored("fork","fork"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--at",type=int,required=True); q.set_defaults(func=_fork)
     q=stored("inspect","inspect"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--events",action="store_true"); q.set_defaults(func=_inspect)
-    for name,func in [("effects",_effects),("plan",_plan),("memory",_memory),("resources",_resources),("workers",_workers),("models",_models),("economics",_economics),("governance",_governance),("team",_team),("change-control",_change_control),("checkpoint-triggers",_checkpoint_triggers)]: q=stored(name,name); q.add_argument("machine_id"); _add_store_args(q); q.set_defaults(func=func)
+    for name,func in [("effects",_effects),("plan",_plan),("memory",_memory),("resources",_resources),("workers",_workers),("models",_models),("economics",_economics),("governance",_governance),("team",_team),("change-control",_change_control),("checkpoint-triggers",_checkpoint_triggers),("provisioning",_provisioning)]: q=stored(name,name); q.add_argument("machine_id"); _add_store_args(q); q.set_defaults(func=func)
+    q=stored("telemetry","inspect/configure live execution telemetry"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--policy"); q.set_defaults(func=_telemetry)
     q=stored("evidence","evidence"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--lineage"); q.set_defaults(func=_evidence)
     q=stored("schedule","schedule"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--tasks",required=True); q.set_defaults(func=_schedule)
     q=stored("collaboration","analyze useful worker fan-out"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--tasks"); q.add_argument("--policy"); q.set_defaults(func=_collaboration)
@@ -100,6 +107,8 @@ def build_parser():
     q=stored("checkpoint-trigger-policy","configure automatic Verifier checkpoint triggers"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--policy",required=True); q.set_defaults(func=_checkpoint_trigger_policy)
     q=stored("fleet-control","inspect or configure fleet admission control"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--policy"); q.set_defaults(func=_fleet_control)
     q=stored("fleet-refresh","recompute fleet admission from collaboration evidence"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--policy"); q.set_defaults(func=_fleet_refresh)
+    q=stored("provision-plan","plan physical worker delta from fleet target"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--provider",required=True); q.add_argument("--resource-id",required=True); q.add_argument("--desired-workers",type=int); q.set_defaults(func=_provision_plan)
+    q=stored("provision-propose","create authority-gated provisioning effect"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--request",required=True); q.set_defaults(func=_provision_propose)
     q=stored("claim","claim"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--worker",required=True); q.add_argument("--task",required=True); q.add_argument("--lease-seconds",type=float,default=60); q.set_defaults(func=_claim)
     q=stored("model-route","model route"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--request",required=True); q.set_defaults(func=_model_route)
     q=stored("model-outcome","record evaluated model outcome"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--record",required=True); q.set_defaults(func=_model_outcome)
@@ -111,7 +120,7 @@ def build_parser():
     q=stored("builder-output","record Builder output"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--record",required=True); q.set_defaults(func=_builder_output)
     q=stored("verifier-report","record Verifier report"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--record",required=True); q.set_defaults(func=_verifier_report)
     q=stored("planner-decision","commit Planner directive"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--record",required=True); q.set_defaults(func=_planner_decision)
-    q=stored("codex-telemetry","import telemetry"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--jsonl",required=True); q.set_defaults(func=_codex_telemetry)
+    q=stored("codex-telemetry","import Codex telemetry"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--jsonl",required=True); q.set_defaults(func=_codex_telemetry)
     q=stored("serve","serve"); q.add_argument("--store",required=True); q.add_argument("--host",default="127.0.0.1"); q.add_argument("--port",type=int,default=8787); q.add_argument("--token"); q.set_defaults(func=_serve)
     q=stored("worker","run executor worker"); q.add_argument("--url",required=True); q.add_argument("--machine-id",required=True); q.add_argument("--worker-id",required=True); q.add_argument("--resource-id",required=True); q.add_argument("--executor",choices=["codex","responses"],required=True); q.add_argument("--executor-id",default="default"); q.add_argument("--provider",default="openai"); q.add_argument("--capability",action="append",default=[]); q.add_argument("--priority",type=int,default=0); q.add_argument("--cwd"); q.add_argument("--token"); q.add_argument("--lease-seconds",type=float,default=120); q.add_argument("--heartbeat-interval",type=float,default=20); q.add_argument("--idle-sleep",type=float,default=2); q.add_argument("--http-timeout",type=float,default=30); q.add_argument("--once",action="store_true"); q.set_defaults(func=_worker)
     q=stored("verify-machine","verify machine"); q.add_argument("path"); q.set_defaults(func=_verify_machine)
