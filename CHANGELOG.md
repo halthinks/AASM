@@ -4,6 +4,36 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.12.0] - 2026-08-08
+
+### Added
+
+- durable `GovernanceBudgetPolicy`, `GovernanceContext`, `GovernanceDecision`, and `GovernanceEconomicsController`
+- deterministic semantic-review fingerprints over action, scope, policy, assumption, and evidence revisions
+- explicit `REVIEW_NOT_REQUIRED`, `MODEL_REVIEW_REQUIRED`, `REVIEW_REUSED`, and `BUDGET_PAUSE` outcomes
+- sample-aware soft/hard governance token and cost ratios plus absolute governance token/cost/permission-review-call ceilings
+- durable governance decision history, completed-review evidence, and low-risk review reuse
+- governance overhead report with deterministic bypass counts, reused-review counts, and observed-baseline avoided-token/cost estimates
+- remote governance budget/decision/review-completion endpoints and `AASMRemoteClient` methods
+- `aasm governance`, `governance-budget`, `governance-decide`, and `governance-complete` CLI commands
+- governance budget/context/decision JSON schemas, documentation, example, and acceptance tests
+
+### Safety semantics
+
+- governance optimization controls only whether another semantic model review is needed; it does not authorize execution
+- sandbox policy, authority policy, credentials, network rules, effect authorization/idempotency, and destructive-operation guards remain independent boundaries
+- destructive, credential, security-sensitive, external-write, unknown-network, irreversible, and unknown actions never reuse prior semantic review automatically
+- hard governance budget exhaustion returns `BUDGET_PAUSE`; required review is never silently waived
+- ratio budgets wait for a minimum observed-token floor to avoid cutting work short because the first governance call temporarily represents 100% of usage
+- soft budget pressure suggests a lower-cost eligible reviewer rather than less review
+
+### Auto-review economics
+
+- repeated low-risk semantic reviews can be reused only when their governance fingerprint is unchanged and the prior review was explicitly completed
+- changed assumptions, failed tests, changed policy/evidence revisions, or changed action signatures force a fresh review
+- avoided-overhead estimates use the run's observed average permission-review call when available rather than assuming a fixed reviewer cost
+- Codex telemetry and model usage remain separable into productive, verification, governance, and permission-review purposes for cache-adjusted accounting
+
 ## [0.11.0] - 2026-08-08
 
 ### Added
