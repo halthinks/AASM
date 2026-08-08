@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AASM Fleet Control Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "enabled": {"type": "boolean"},
+    "enforce_admission_limit": {"type": "boolean"},
+    "floor_workers": {"type": "integer", "minimum": 0},
+    "ceiling_workers": {"type": ["integer", "null"], "minimum": 0},
+    "auto_refresh_on_plan_interrupt": {"type": "boolean"},
+    "auto_refresh_on_change_resolution": {"type": "boolean"}
+  }
+}
