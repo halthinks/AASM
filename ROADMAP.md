@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.7.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.8.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -13,10 +13,12 @@ AASM is currently **v0.7.0 / early-stage**. This roadmap describes direction, no
 - ✅ distributed worker registry + leases
 - ✅ crash-safe task claiming + lease expiry/reclaim
 - ✅ worker/resource quota enforcement
+- ✅ remote worker transport/protocol
+- ✅ PostgreSQL-backed coordination and advisory-lock sequencing
+- ✅ model strength/cost/context/latency routing
 - richer event/evidence contracts
 - ✅ declarative machine definitions + initial static model checking
 - improved schema validation
-- async execution primitives
 - configurable retry and recovery policies
 - plugin/provider interfaces
 - ✅ historical CLI replay + durable run forking
@@ -26,9 +28,9 @@ AASM is currently **v0.7.0 / early-stage**. This roadmap describes direction, no
 
 ## Next architecture layer
 
-- remote worker transport/protocol
-- Postgres-backed coordination and advisory-lock claims
-- resumable long-running worker sessions
+- richer operator web UI: create/steer/pause/resume runs, not only inspect them
+- concrete provider executors for OpenAI Responses/Codex and other runtimes
+- resumable long-running worker sessions and streamed worker logs
 - budget accounting beyond active capacity quotas
 - graph visualization and execution tracing
 - ✅ deterministic state replay at explicit event boundaries
@@ -39,10 +41,8 @@ AASM is currently **v0.7.0 / early-stage**. This roadmap describes direction, no
 
 ## Longer-term possibilities
 
-- persistent state stores (SQLite/Postgres/Redis adapters)
-- remote execution protocol
+- Redis/cache adapters around PostgreSQL coordination
 - multi-runtime SDKs
-- web control/inspection UI
 - deeper formal verification / temporal-property checking
 - evidence lineage graphs
 - sandbox integrations
