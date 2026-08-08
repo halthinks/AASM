@@ -12,7 +12,7 @@ Do not assume Planner/Builder. AASM is role-agnostic. Select an orchestration pr
 
 ## Operating rules
 1. Formalize the goal into objective, constraints, invariants, acceptance tests, and structural features.
-2. Instantiate `AASMEngine(ProblemSpec(...))`. When the workflow has a domain-specific control graph, load a `MachineDefinition` and run `check_machine()` before execution. For long-running or recoverable work, provide a durable store such as `SQLiteStore`.
+2. Instantiate `AASMEngine(ProblemSpec(...))`. When the workflow has a domain-specific control graph, load a `MachineDefinition` and run `check_machine()` before execution. For long-running or recoverable work, provide a durable store such as `SQLiteStore` or `PostgresStore`.
 3. Move only through legal machine transitions. Never mutate `snapshot.state` directly.
 4. Run `engine.classify()` in `CLASSIFY` to select applicable algorithmic operators.
 5. Represent nontrivial dependencies as a `PlanGraph`; prefer topological execution for DAGs and shortest path when alternatives have costs.
@@ -58,4 +58,9 @@ Use `engine.plan_add_node`, `plan_add_edge`, `plan_update_node`, `plan_mark_visi
 When work competes for constrained agents, tools, model slots, GPUs, API quotas, or human review capacity, register them with `ResourceRecord` and express work as `TaskDemand`. Use `engine.schedule()` rather than manually assigning workers when capability/capacity constraints matter. Treat `result.bottlenecks` and `result.unmet` as planner evidence: adding workers outside the min-cut does not improve throughput. Resource/schedule state is replayable and fork-aware.
 
 ## Distributed worker rule
-When work may be executed by multiple processes or machines, register workers against durable resources and use `claim_task()` rather than assigning ownership only in conversational state. Heartbeat long-running leases, reap stale workers, and use quotas for bounded concurrency/capacity. SQLite task claims are atomic per `(machine_id, task_id)` so concurrent workers cannot both reserve the same unexpired task. After another process advances a machine, resume from the durable store before continuing from that process.
+When work may be executed by multiple processes or machines, register workers against durable resources and use `claim_task()` rather than assigning ownership only in conversational state. Heartbeat long-running leases, reap stale workers, and use quotas for bounded concurrency/capacity. SQLite task claims are atomic per `(machine_id, task_id)` for multi-process coordination; PostgreSQL provides the shared claim boundary for real multi-host execution. After another process advances a machine, resume from the durable store before continuing from that process.
+
+## Remote execution and model routing
+For multi-host operation, run the AASM control plane against `PostgresStore` and have remote workers use `AASMRemoteClient` for registration, heartbeat, claim, lease renewal, and completion. Preserve the lease/effect distinction: a lease grants task ownership, while externally visible side effects still require effect idempotency/reconciliation.
+
+Treat model choice as resource routing when model classes differ materially in strength, latency, context, or cost. Register `ModelProfile` records and route with `ModelRouteRequest`; do not hard-code expensive models for tasks that meet their quality floor on a cheaper class, and do not route high-risk architecture/review work below its minimum strength contract. The selected model is a control-plane decision; the executor adapter must translate it into the actual provider/Codex/API invocation.
