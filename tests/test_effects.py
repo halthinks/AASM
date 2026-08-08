@@ -7,6 +7,7 @@ import pytest
 
 from aasm import (
     AASMEngine,
+    EffectExecutionError,
     EffectSpec,
     EffectStatus,
     EffectUnknownOutcome,
@@ -54,6 +55,49 @@ def test_failed_effect_retries_with_same_idempotency_key():
     succeeded=e.execute_effect(rec.spec.effect_id,executor)
     assert succeeded.status == EffectStatus.SUCCEEDED.value
     assert keys == ["stable","stable"]
+
+
+def test_sqlite_effect_execution_has_single_owner_across_connections(tmp_path:Path):
+    from threading import Event, Thread
+
+    db=tmp_path/"single-owner.db"
+    first_store=SQLiteStore(db)
+    first=AASMEngine(ProblemSpec("single effect owner"),store=first_store)
+    rec=first.propose_effect(EffectSpec("external-write",idempotency_key="single-owner"))
+    first.authorize_effect(rec.spec.effect_id)
+    mid=first.snapshot.machine_id
+
+    second_store=SQLiteStore(db)
+    second=AASMEngine.resume(mid,second_store)
+    entered=Event(); release=Event(); calls=[]; result_box={}; error_box={}
+
+    def first_executor(spec,key):
+        calls.append("first")
+        entered.set()
+        if not release.wait(10):
+            raise TimeoutError("test executor was not released")
+        return {"owner":"first"}
+
+    def run_first():
+        try:
+            result_box["record"]=first.execute_effect(rec.spec.effect_id,first_executor)
+        except Exception as exc:
+            error_box["error"]=exc
+
+    thread=Thread(target=run_first,daemon=True)
+    thread.start()
+    try:
+        assert entered.wait(10), "first executor never reached the external boundary"
+        with pytest.raises(EffectExecutionError,match="already RUNNING"):
+            second.execute_effect(rec.spec.effect_id,lambda spec,key: calls.append("second") or {})
+        assert calls == ["first"]
+    finally:
+        release.set(); thread.join(10)
+        first_store.close(); second_store.close()
+
+    assert not thread.is_alive()
+    assert "error" not in error_box
+    assert result_box["record"].status == EffectStatus.SUCCEEDED.value
 
 
 def test_passive_resume_does_not_reclassify_live_effect_as_crashed(tmp_path:Path):
