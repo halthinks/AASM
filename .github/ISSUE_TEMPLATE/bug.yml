@@ -1,0 +1,49 @@
+name: Bug report
+description: Report reproducible incorrect behavior in AASM
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve AASM. Please provide the smallest reproducible case you can.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal reproduction
+      description: Include code, commands, and machine state/transition context when relevant.
+      render: python
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "3.11.9"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: AASM version or commit
+      placeholder: "0.1.0 or commit SHA"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Traceback / logs
+      render: shell
+  - type: checkboxes
+    id: security
+    attributes:
+      label: Security check
+      options:
+        - label: This is not a security vulnerability. I will follow SECURITY.md for vulnerabilities.
+          required: true
