@@ -27,6 +27,7 @@
 ./docs/EFFECT_SYSTEM.md
 ./docs/ERICKSON_MAPPING.md
 ./docs/EXECUTOR_ADAPTERS.md
+./docs/EXECUTOR_ORCHESTRATION.md
 ./docs/MODEL_ECONOMICS.md
 ./docs/MODEL_ROUTING.md
 ./docs/REMOTE_EXECUTION.md
@@ -40,6 +41,7 @@
 ./examples/machine.json
 ./examples/model_profiles.json
 ./examples/multi_agent_demo.py
+./examples/orchestrated_worker.py
 ./examples/remote_worker.py
 ./examples/scheduler_demo.py
 ./profiles/expert_swarm.yaml
@@ -53,6 +55,7 @@
 ./schemas/effect.schema.json
 ./schemas/event.schema.json
 ./schemas/evidence.schema.json
+./schemas/execution-contract.schema.json
 ./schemas/lease.schema.json
 ./schemas/machine-definition.schema.json
 ./schemas/memory-entry.schema.json
@@ -85,6 +88,7 @@
 ./src/aasm/effects.py
 ./src/aasm/engine.py
 ./src/aasm/evidence.py
+./src/aasm/executor_orchestration.py
 ./src/aasm/flow.py
 ./src/aasm/graph.py
 ./src/aasm/memory.py
@@ -120,6 +124,7 @@
 ./tests/test_economics_control_center.py
 ./tests/test_effects.py
 ./tests/test_engine.py
+./tests/test_executor_orchestration.py
 ./tests/test_graph.py
 ./tests/test_memory_flow_adversary.py
 ./tests/test_model_routing_remote.py
