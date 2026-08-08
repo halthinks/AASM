@@ -57,6 +57,18 @@ def test_selective_pause_releases_only_affected_active_lease_and_blocks_reclaim(
     store.close()
 
 
+def test_stale_engine_cannot_claim_task_paused_by_another_engine(tmp_path):
+    db=tmp_path/"stale-pause.db"; store1=SQLiteStore(db); e1=AASMEngine(ProblemSpec("stale pause"),store=store1)
+    e1.register_resource(ResourceRecord("pool","agent",["code"],capacity=1)); e1.register_worker(WorkerRecord("w","pool"))
+    e1.plan_add_node(PlanNode("b","task")); mid=e1.snapshot.machine_id
+    store2=SQLiteStore(db); e2=AASMEngine.resume(mid,store2)
+    assert e2.paused_tasks()==[]
+    e1.analyze_change(ChangeSignal(ChangeKind.VERIFICATION_FAILED,"failed",seed_nodes=["b"]))
+    with pytest.raises(ValueError,match="paused by information-change checkpoint"):
+        e2.claim_task(TaskDemand("b",["code"]),"w",lease_seconds=120)
+    store2.close(); store1.close()
+
+
 def test_only_authoritative_planner_can_resolve_and_partial_resume_is_preserved(tmp_path):
     store=SQLiteStore(tmp_path/"resolve.db"); e=AASMEngine(ProblemSpec("resolve"),store=store)
     for node in _graph().nodes.values(): e.plan_add_node(node)
