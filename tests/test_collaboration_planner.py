@@ -79,3 +79,24 @@ def test_engine_persists_collaboration_analysis_across_restart(tmp_path):
     assert resumed.last_collaboration_analysis()["recommended_workers"]==4
     assert resumed.dashboard()["collaboration"]["max_parallel_width"]==4
     store.close()
+
+
+def test_remote_collaboration_analysis_round_trip(tmp_path):
+    import threading
+    from http.server import ThreadingHTTPServer
+    from aasm import AASMRemoteClient
+    from aasm.server import make_handler
+
+    db=str(tmp_path/"remote-collab.db"); store=SQLiteStore(db); e=AASMEngine(ProblemSpec("remote parallel"),store=store)
+    e.register_resource(ResourceRecord("fleet","agent",["code"],capacity=3))
+    for i in range(3): e.plan_add_node(PlanNode(f"t{i}","task"))
+    e.schedule(tasks([f"t{i}" for i in range(3)]))
+    mid=e.snapshot.machine_id; store.close()
+    server=ThreadingHTTPServer(("127.0.0.1",0),make_handler(db,"secret")); threading.Thread(target=server.serve_forever,daemon=True).start()
+    try:
+        client=AASMRemoteClient(f"http://127.0.0.1:{server.server_port}","secret")
+        result=client.analyze_collaboration(mid,CollaborationPolicy(coordination_overhead_per_extra_worker=0,min_relative_improvement=0,near_optimal_tolerance=0))
+        assert result["recommended_workers"]==3
+        assert client.collaboration(mid)["recommended_workers"]==3
+    finally:
+        server.shutdown(); server.server_close()
