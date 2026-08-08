@@ -24,6 +24,8 @@ class AASMEngine(V12Engine):
         return deepcopy(self.snapshot.resources.get("team_protocol", {}))
 
     def initialize_team(self, members: list[TeamMember], *, reason: str = "Planner Builder Verifier team initialized"):
+        if self.snapshot.resources.get("team_protocol"):
+            raise ValueError("PBV team is already initialized")
         raw = [asdict(member) for member in members]
         ids = [x["member_id"] for x in raw]
         if len(ids) != len(set(ids)):
@@ -106,12 +108,13 @@ class AASMEngine(V12Engine):
             item = deepcopy(item)
             node_id = item.pop("node_id")
             graph.update_node(node_id, **item)
+        pruned = []
         for node_id in patch.get("prune_nodes", []) or []:
             graph.update_node(node_id, status="pruned", owner=None)
-        # A plan remains a legal dependency graph after the proposed mutation.
+            pruned.append(node_id)
         if graph.nodes:
             graph.topological_order()
-        return graph.to_dict()
+        return graph.to_dict(), pruned
 
     def planner_decide(
         self,
@@ -136,9 +139,15 @@ class AASMEngine(V12Engine):
 
         before = int(team.get("plan_revision", 0) or 0)
         new_graph = deepcopy(self.snapshot.graph)
+        new_pruned = deepcopy(self.snapshot.pruned)
+        new_frontier = deepcopy(self.snapshot.frontier)
         after = before
         if decision.directive == PlannerDirective.PLAN_INTERRUPT.value:
-            new_graph = self._apply_plan_patch(self.snapshot.graph, decision.plan_patch or {})
+            new_graph, pruned_now = self._apply_plan_patch(self.snapshot.graph, decision.plan_patch or {})
+            for node_id in pruned_now:
+                if node_id not in new_pruned:
+                    new_pruned.append(node_id)
+                new_frontier = [x for x in new_frontier if x != node_id]
             after = before + 1
 
         raw = asdict(decision)
@@ -153,6 +162,10 @@ class AASMEngine(V12Engine):
         patch = {"resources": resources}
         if new_graph != self.snapshot.graph:
             patch["graph"] = new_graph
+        if new_pruned != self.snapshot.pruned:
+            patch["pruned"] = new_pruned
+        if new_frontier != self.snapshot.frontier:
+            patch["frontier"] = new_frontier
         self.patch_snapshot(patch, reason)
         return deepcopy(raw)
 
