@@ -10,7 +10,7 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.10.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.11.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
@@ -65,6 +65,7 @@ AASM is an attempt to make those properties first-class.
 | **Authority policies** | Supports controller, autonomous, quorum, and hierarchical governance models. |
 | **Agent protocols** | Provides generic agent contracts plus adapters for common orchestration patterns. |
 | **Executor orchestration** | Turns a claimed lease into a model route, physical executor invocation, usage/evidence capture, and durable completion. |
+| **Adaptive model routing** | Learns task-class-specific model quality/cost/latency from explicit evaluated outcomes while preserving hard static eligibility floors. |
 | **Provenance** | Emits state-change and execution events so the run can be inspected after the fact. |
 
 ## Architecture
@@ -147,7 +148,7 @@ Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems 
 ### Requirements
 
 - Python **3.11+**
-- No mandatory runtime dependencies beyond the Python standard library in v0.10.0; PostgreSQL support is an optional extra
+- No mandatory runtime dependencies beyond the Python standard library in v0.11.0; PostgreSQL support is an optional extra
 
 ### Install from a clone
 
@@ -176,7 +177,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.10.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.11.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -284,13 +285,15 @@ Remote workers use `AASMRemoteClient` to register, heartbeat, claim leases, rene
 
 ### Model strength / cost routing
 
-Model choice is a first-class resource decision. Register model profiles with capability, strength, cost, latency, and context metadata, then route each task against hard quality/cost constraints and an optimization objective. Luna/Terra/Sol-class routing can therefore spend stronger models where the quality floor requires them instead of treating all work as equivalent.
+Model choice is a first-class resource decision. Register model profiles with capability, strength, cost, latency, and context metadata, then route each task against hard quality/cost constraints and an optimization objective.
+
+The static router remains the eligibility boundary even when adaptive routing is enabled.
 
 See [`docs/MODEL_ROUTING.md`](docs/MODEL_ROUTING.md) and [`examples/model_profiles.json`](examples/model_profiles.json).
 
 ### End-to-end executor orchestration
 
-v0.10 closes the physical execution loop. A scheduled task can carry an `execution` contract; an `OrchestratedRemoteWorker` claims its lease, routes the model, selects a compatible worker-local executor, invokes the real Codex CLI / Responses API / custom adapter, reports model usage, and durably completes or fails the lease.
+v0.10 closed the physical execution loop. A scheduled task can carry an `execution` contract; an `OrchestratedRemoteWorker` claims its lease, routes the model, selects a compatible worker-local executor, invokes the real Codex CLI / Responses API / custom adapter, reports model usage, and durably completes or fails the lease.
 
 ```bash
 aasm worker \
@@ -307,6 +310,40 @@ aasm worker \
 ```
 
 See [`docs/EXECUTOR_ORCHESTRATION.md`](docs/EXECUTOR_ORCHESTRATION.md) and [`examples/orchestrated_worker.py`](examples/orchestrated_worker.py).
+
+### Adaptive model routing
+
+v0.11 adds an explicit evaluated-outcome feedback loop. AASM can learn that one eligible model is sufficient for `routine_backend` work while a stronger static floor is still required for `architecture`, without hard-coding either conclusion globally.
+
+```python
+from aasm import ModelOutcomeRecord, ModelRouteRequest
+
+engine.record_model_outcome(ModelOutcomeRecord(
+    task_id="backend-42",
+    task_class="routine_backend",
+    model_id="luna",
+    accepted=True,
+    repair_required=False,
+    verification_score=.95,
+    latency_seconds=32.0,
+    estimated_cost=.15,
+))
+
+route = engine.route_model(ModelRouteRequest(
+    "next-backend-task",
+    ["code"],
+    min_strength=.5,
+    metadata={
+        "task_class":"routine_backend",
+        "min_empirical_samples":5,
+        "empirical_optimize":"cost_per_quality",
+    },
+))
+```
+
+AASM uses Wilson acceptance bounds rather than raw success rates; `confidence` is interval concentration rather than a probability-of-correctness claim. Execution success alone is not training evidence—the work must be explicitly evaluated first.
+
+See [`docs/ADAPTIVE_MODEL_ROUTING.md`](docs/ADAPTIVE_MODEL_ROUTING.md) and [`examples/adaptive_routing.py`](examples/adaptive_routing.py).
 
 ### Real model executors and governance economics
 
@@ -382,9 +419,9 @@ See [`docs/DISTRIBUTED_WORKERS.md`](docs/DISTRIBUTED_WORKERS.md) and [`docs/REMO
 
 ## Project status
 
-**Current version: `0.10.0` — early-stage / experimental.**
+**Current version: `0.11.0` — early-stage / experimental.**
 
-The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, a browser Control Center, and cache-adjusted governance economics.
+The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, static model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, evaluated-outcome adaptive model routing, a browser Control Center, and cache-adjusted governance economics.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 
