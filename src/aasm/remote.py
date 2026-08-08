@@ -65,3 +65,5 @@ class AASMRemoteClient:
     def configure_telemetry(self,machine_id,policy): return self._request("POST",f"/v1/machines/{machine_id}/telemetry/configure",{"policy":self._payload(policy)})
     def plan_provisioning(self,machine_id,provider,resource_id,desired_workers=None): return self._request("POST",f"/v1/machines/{machine_id}/provisioning/plan",{"provider":provider,"resource_id":resource_id,"desired_workers":desired_workers})
     def propose_provisioning(self,machine_id,request): return self._request("POST",f"/v1/machines/{machine_id}/provisioning/propose",{"request":self._payload(request)})
+    def authorize_provisioning(self,machine_id,effect_id,authority="controller"): return self._request("POST",f"/v1/machines/{machine_id}/provisioning/{effect_id}/authorize",{"authority":authority})
+    def execute_provisioning(self,machine_id,effect_id): return self._request("POST",f"/v1/machines/{machine_id}/provisioning/{effect_id}/execute",{})
