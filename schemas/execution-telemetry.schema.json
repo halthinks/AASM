@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/execution-telemetry.schema.json",
+  "title": "AASM Execution Telemetry Record",
+  "type": "object",
+  "required": ["worker_id", "task_id", "lease_id", "kind"],
+  "properties": {
+    "worker_id": {"type": "string", "minLength": 1},
+    "task_id": {"type": "string", "minLength": 1},
+    "lease_id": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["STARTED", "LOG", "PROGRESS", "ARTIFACT", "COMPLETED", "FAILED", "HEARTBEAT"]},
+    "ts": {"type": "number"},
+    "duration_seconds": {"type": ["number", "null"], "minimum": 0},
+    "message": {"type": ["string", "null"]},
+    "progress": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "artifact_refs": {"type": "array", "items": {"type": "string"}},
+    "metrics": {"type": "object", "additionalProperties": {"type": "number"}},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": false
+}
