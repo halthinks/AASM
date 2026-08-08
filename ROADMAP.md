@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.13.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.14.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -36,6 +36,11 @@ AASM is currently **v0.13.0 / early-stage**. This roadmap describes direction, n
 - ✅ automatic Builder → Verifier → Planner handoff coordinator
 - ✅ atomic validated `PLAN_INTERRUPT` graph patches and Planner override provenance
 - ✅ remote/CLI PBV surfaces and live Control Center team state
+- ✅ massive-collaboration analysis using dependency critical path and topological parallel width
+- ✅ useful worker ceilings from physical capacity plus capability-eligible max-flow capacity
+- ✅ coordination-overhead and marginal-improvement worker-count optimization
+- ✅ min-cut/capability bottleneck evidence and durable collaboration history
+- ✅ remote/CLI collaboration analysis and live Control Center fan-out status
 - richer event/evidence contracts
 - ✅ declarative machine definitions + initial static model checking
 - improved schema validation
@@ -48,9 +53,9 @@ AASM is currently **v0.13.0 / early-stage**. This roadmap describes direction, n
 
 ## Next architecture layer
 
-- massive-collaboration scheduler using dependency critical path, parallel width, coordination cost, and max-flow/min-cut evidence before spawning workers
 - information-change checkpoint policy that invokes expensive planning/review on changed assumptions, failed verification, contradictions, risk escalation, or material plan change
 - additive user steering that maps interrupts to affected plan subgraphs and resumes unaffected workers
+- executor-fleet provisioning adapters that consume collaboration recommendations without bypassing deployment authority
 - streamed worker logs and artifacts in the Control Center
 - create/pause/resume/approve/fork controls with authority-policy enforcement
 - richer executor adapters and provider-neutral structured result contract
