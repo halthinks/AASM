@@ -4,6 +4,23 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.9.0] - 2026-08-08
+
+### Added
+
+- browser Control Center with live run, worker, lease, plan, model, evidence, and economics inspection
+- OpenAI Responses API executor adapter with cache-aware token usage capture
+- headless Codex CLI executor adapter using `codex exec --json` without changing Codex sandbox posture
+- durable model-call economics ledger separating productive, verification, governance, permission-review, synthesis, and retry usage
+- deterministic `ReviewGatePolicy` for routine benign actions with escalation on risk, changed assumptions, failed tests, or material diffs
+- conservative Codex rules/requirements generator through `CodexGovernancePolicy`
+- provenance-preserving user steering/interrupt API and Control Center action
+- dashboard, model-usage, review-gate, and interrupt HTTP endpoints plus `aasm economics` CLI inspection
+
+### Design principle
+
+- preserve sandboxing and technical boundaries; express repeatable permission decisions as deterministic policy and spend model reasoning on substantive review or genuinely ambiguous/risky actions
+
 ## [0.8.0] - 2026-08-07
 
 ### Added
