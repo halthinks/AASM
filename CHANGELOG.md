@@ -4,6 +4,35 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.11.0] - 2026-08-08
+
+### Added
+
+- durable `ModelOutcomeRecord` feedback for explicitly evaluated model results by task class
+- `ModelOutcomeLedger` aggregation of acceptance, repair, verification, latency, cost, and sample evidence
+- Wilson lower/upper acceptance bounds and an auditable interval-concentration confidence metric
+- `AdaptiveModelRouter` that re-ranks only models already eligible under the static capability/strength/context/cost contract
+- adaptive objectives for conservative quality, latency, and cost-per-quality
+- deterministic calibration of eligible under-sampled model classes when explicitly enabled
+- durable `record_model_outcome()` and `model_performance()` engine APIs
+- remote `/model-outcome` feedback plus `AASMRemoteClient.model_outcome()`
+- `aasm model-outcome` and `aasm model-performance` CLI commands
+- model-performance state in the Control Center/dashboard payload
+- adaptive-routing schema extensions, outcome schema, documentation, example, and tests
+
+### Routing semantics
+
+- a successful API/executor call is not automatically treated as a successful model outcome; adaptive evidence must come from an explicit evaluator/verifier result
+- static minimum strength, capability, context, enabled-state, candidate-set, and cost-ceiling constraints remain hard gates and cannot be weakened by empirical history
+- empirical acceptance floors use the Wilson lower bound rather than raw observed acceptance
+- when evidence is insufficient, routing falls back to the deterministic static router unless calibration is explicitly requested
+- task-class-specific history prevents a globally cheap model from being treated as sufficient for every kind of work
+
+### Architectural significance
+
+- Luna/Terra/Sol-style routing can now evolve from configured priors into measured task-class behavior while retaining deterministic safety/quality floors
+- v0.11 provides the evaluated outcome signal needed to optimize governance-model spend in the next milestone without confusing execution success with engineering acceptance
+
 ## [0.10.0] - 2026-08-08
 
 ### Added
