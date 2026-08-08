@@ -4,6 +4,22 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.5.0] - 2026-08-07
+
+### Added
+
+- event-sourced durable planning graph nodes, edges, node updates, visited/frontier state, and branch pruning
+- persistent DP memory with validity scopes, proof references, metadata, and durable invalidation
+- evidence ledger for claims, observations, assumptions, and contradictions with derivation/support/contradiction links
+- durable evidence invalidation that preserves provenance
+- fork-aware planning, memory, and evidence state at historical event boundaries
+- CLI inspection commands for plan, memory, evidence, and evidence lineage
+- plan-node, plan-edge, memory-entry, and evidence JSON schemas plus durable-cognition documentation
+
+### Compatibility
+
+- existing graph and DPMemory APIs remain available; engine-level durable wrappers add persistence without requiring custom stores
+
 ## [0.4.0] - 2026-08-07
 
 ### Added
