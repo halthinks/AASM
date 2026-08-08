@@ -20,7 +20,7 @@ CSP="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; 
 
 def make_handler(store_target:str,token:str|None=None):
     class Handler(BaseHTTPRequestHandler):
-        server_version="AASM/0.9"
+        server_version="AASM/0.10"
         def log_message(self,fmt,*args): pass
         def _auth(self):
             if not token: return True
@@ -56,7 +56,7 @@ def make_handler(store_target:str,token:str|None=None):
 
         def do_GET(self):
             parsed=urlparse(self.path)
-            if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.9.0"})
+            if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.10.0"})
             if parsed.path=="/ui":
                 raw=html_document().encode(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self._security_headers(html=True); self.send_header("Content-Length",str(len(raw))); self.end_headers(); return self.wfile.write(raw)
             if not self._auth(): return self._json(401,{"error":"unauthorized"})
