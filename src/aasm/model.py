@@ -11,6 +11,8 @@ class MachineState(str, Enum):
     PAUSE="PAUSE"; COMPLETE="COMPLETE"; FAIL="FAIL"
 
 class EventType(str, Enum):
+    MACHINE_CREATED="machine_created"; TRANSITION_COMMITTED="transition_committed"; SNAPSHOT_PATCHED="snapshot_patched"
+    CHECKPOINT_CREATED="checkpoint_created"; CHECKPOINT_RESTORED="checkpoint_restored"
     GOAL_RECEIVED="goal_received"; PROPOSAL="proposal"; AUTHORIZED="authorized"; RESULT="result"
     TEST_PASSED="test_passed"; TEST_FAILED="test_failed"; INVARIANT_FAILED="invariant_failed"
     ASSUMPTION_INVALIDATED="assumption_invalidated"; DEPENDENCY_DISCOVERED="dependency_discovered"
@@ -73,6 +75,9 @@ class Event:
     reason: str
     evidence: list[str] = field(default_factory=list)
     data: dict[str, Any] = field(default_factory=dict)
+    machine_id: str = ""
+    sequence: int = 0
+    schema_version: int = 1
 
 @dataclass
 class MachineSnapshot:

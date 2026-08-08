@@ -10,10 +10,10 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.1.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.2.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-[**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#minimal-example) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
+[**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
 
 </div>
 
@@ -141,14 +141,12 @@ Treat candidate solutions as branches, prune invalid states, reuse equivalent su
 ### Tool-heavy automation
 Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems through one state-and-evidence contract.
 
-See [`docs/USE_CASES.md`](docs/USE_CASES.md) for more detail.
-
 ## Quick start
 
 ### Requirements
 
 - Python **3.11+**
-- No runtime dependencies beyond the Python standard library in v0.1.0
+- No runtime dependencies beyond the Python standard library in v0.2.0
 
 ### Install from a clone
 
@@ -177,7 +175,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.1.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.2.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -204,6 +202,24 @@ print(engine.classify())
 ```
 
 A larger multi-agent example is available at [`examples/multi_agent_demo.py`](examples/multi_agent_demo.py).
+
+### Durable runs and crash recovery
+
+```python
+from aasm import AASMEngine, MachineState, ProblemSpec, SQLiteStore
+
+store = SQLiteStore("runs.db")
+engine = AASMEngine(ProblemSpec("Long-running verified work"), store=store)
+engine.transition(MachineState.FORMALIZE, "normalized")
+machine_id = engine.snapshot.machine_id
+store.close()
+
+# A later process can reconstruct the run from the durable event stream.
+store = SQLiteStore("runs.db")
+engine = AASMEngine.resume(machine_id, store)
+```
+
+See [`docs/DURABLE_RUNTIME.md`](docs/DURABLE_RUNTIME.md) and [`examples/durable_run.py`](examples/durable_run.py).
 
 ## Orchestration profiles
 
@@ -248,9 +264,9 @@ It is a control/runtime layer intended to sit around or underneath agent behavio
 
 ## Project status
 
-**Current version: `0.1.0` — early-stage / experimental.**
+**Current version: `0.2.0` — early-stage / experimental.**
 
-The initial implementation establishes the core concepts and runnable interfaces. The next stages are focused on persistence, richer recovery semantics, async/distributed execution, stronger evidence contracts, observability, plugin interfaces, and integration adapters.
+The runtime now includes an event-sourced state path, SQLite durability, deterministic replay for event-sourced fields, persisted checkpoints, and crash/restart recovery. The next stages focus on durable external effects, richer recovery semantics, async/distributed execution, declarative machine definitions, model checking, observability, and integration adapters.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 

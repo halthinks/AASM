@@ -12,7 +12,7 @@ Do not assume Planner/Builder. AASM is role-agnostic. Select an orchestration pr
 
 ## Operating rules
 1. Formalize the goal into objective, constraints, invariants, acceptance tests, and structural features.
-2. Instantiate `AASMEngine(ProblemSpec(...))`.
+2. Instantiate `AASMEngine(ProblemSpec(...))`. For long-running or recoverable work, provide a durable store such as `SQLiteStore`.
 3. Move only through legal machine transitions. Never mutate `snapshot.state` directly.
 4. Run `engine.classify()` in `CLASSIFY` to select applicable algorithmic operators.
 5. Represent nontrivial dependencies as a `PlanGraph`; prefer topological execution for DAGs and shortest path when alternatives have costs.
@@ -21,8 +21,9 @@ Do not assume Planner/Builder. AASM is role-agnostic. Select an orchestration pr
 8. Use `ResourceFlowAllocator` when work competes for bounded agents, tools, concurrency, or budget; inspect minimum-cut edges before adding workers.
 9. Before COMMIT or irreversible action, call adversarial verification and resolve blocking counterexamples.
 10. Agents may propose actions. The configured `AuthorityPolicy` decides who can authorize them. The runtime, not generated prose, owns authoritative state.
-11. Emit evidence and provenance for every material transition.
-12. COMPLETE only when acceptance tests are satisfied; FAIL is terminal and must state why.
+11. Emit evidence and provenance for every material transition. Do not bypass the event-sourced transition/patch APIs by mutating durable snapshot fields directly.
+12. For durable runs, recover with `AASMEngine.resume(machine_id, store)` or `recover_unfinished(store)` and verify replay before resuming risky external work.
+13. COMPLETE only when acceptance tests are satisfied; FAIL is terminal and must state why.
 
 ## Profiles
 - `single_agent.yaml`: one agent, reversible autonomous actions.
