@@ -49,13 +49,15 @@ class RemoteWorkerLoop:
         try:
             result=self.executor(lease) or {}
             duration=time.monotonic()-started
+            self.client.complete(self.machine_id,lease["lease_id"],result)
             artifacts=list(result.get("artifact_refs",[]) or []) if isinstance(result,dict) else []
             self._telemetry(lease,"COMPLETED",duration_seconds=duration,artifact_refs=artifacts,metrics={"wall_seconds":duration})
-            self.client.complete(self.machine_id,lease["lease_id"],result); return True
+            return True
         except Exception as exc:
             duration=time.monotonic()-started
+            self.client.fail(self.machine_id,lease["lease_id"],f"{type(exc).__name__}: {exc}")
             self._telemetry(lease,"FAILED",duration_seconds=duration,message=f"{type(exc).__name__}: {exc}",metrics={"wall_seconds":duration})
-            self.client.fail(self.machine_id,lease["lease_id"],f"{type(exc).__name__}: {exc}"); return True
+            return True
         finally:
             stop.set(); keeper.join(timeout=max(1.0,self.heartbeat_interval))
 
