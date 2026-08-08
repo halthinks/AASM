@@ -5,18 +5,11 @@
   "type":"object",
   "required":["machine_id","version","state","problem","graph","frontier","visited","pruned","memory","resources","evidence"],
   "properties":{
-    "machine_id":{"type":"string"},
-    "version":{"type":"integer","minimum":0},
-    "state":{"enum":["INGEST","FORMALIZE","CLASSIFY","DECOMPOSE","PLAN","SELECT","EXECUTE","OBSERVE","VERIFY","REPAIR","BACKTRACK","INVESTIGATE","COMMIT","PAUSE","COMPLETE","FAIL"]},
-    "problem":{"$ref":"problem.schema.json"},
-    "graph":{"type":"object","required":["nodes","edges"],"properties":{"nodes":{"type":"array"},"edges":{"type":"array"}}},
-    "frontier":{"type":"array","items":{"type":"string"}},
-    "visited":{"type":"array","items":{"type":"string"}},
-    "pruned":{"type":"array","items":{"type":"string"}},
-    "memory":{"type":"object"},
-    "resources":{"type":"object"},
-    "evidence":{"type":"object"},
+    "machine_id":{"type":"string"},"version":{"type":"integer","minimum":0},"state":{"type":"string","minLength":1},"problem":{"$ref":"problem.schema.json"},
+    "graph":{"type":"object","required":["nodes","edges"],"properties":{"nodes":{"type":"array","items":{"$ref":"plan-node.schema.json"}},"edges":{"type":"array","items":{"$ref":"plan-edge.schema.json"}}},"additionalProperties":false},
+    "frontier":{"type":"array","items":{"type":"string"}},"visited":{"type":"array","items":{"type":"string"}},"pruned":{"type":"array","items":{"type":"string"}},
+    "memory":{"type":"object","additionalProperties":{"$ref":"memory-entry.schema.json"}},"resources":{"type":"object"},
+    "evidence":{"type":"object","required":["claims","observations","contradictions"],"properties":{"claims":{"type":"array","items":{"type":"string"}},"observations":{"type":"array","items":{"type":"string"}},"contradictions":{"type":"array","items":{"type":"string"}},"assumptions":{"type":"array","items":{"type":"string"}},"records":{"type":"array","items":{"$ref":"evidence.schema.json"}}},"additionalProperties":false},
     "metadata":{"type":"object"}
-  },
-  "additionalProperties":false
+  },"additionalProperties":false
 }

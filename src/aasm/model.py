@@ -21,6 +21,9 @@ class EventType(str, Enum):
     EFFECT_PROPOSED="effect_proposed"; EFFECT_AUTHORIZED="effect_authorized"
     EFFECT_STARTED="effect_started"; EFFECT_SUCCEEDED="effect_succeeded"; EFFECT_FAILED="effect_failed"
     EFFECT_UNKNOWN="effect_unknown"; EFFECT_CANCELLED="effect_cancelled"; EFFECT_RECONCILED="effect_reconciled"
+    PLAN_NODE_ADDED="plan_node_added"; PLAN_EDGE_ADDED="plan_edge_added"; PLAN_NODE_UPDATED="plan_node_updated"; PLAN_NODE_PRUNED="plan_node_pruned"
+    MEMORY_PUT="memory_put"; MEMORY_INVALIDATED="memory_invalidated"
+    EVIDENCE_ADDED="evidence_added"; EVIDENCE_INVALIDATED="evidence_invalidated"
 
 @dataclass(frozen=True)
 class CapabilitySet:
@@ -94,15 +97,13 @@ class MachineSnapshot:
     pruned: list[str] = field(default_factory=list)
     memory: dict[str, Any] = field(default_factory=dict)
     resources: dict[str, Any] = field(default_factory=dict)
-    evidence: dict[str, Any] = field(default_factory=lambda:{"claims":[],"observations":[],"contradictions":[]})
+    evidence: dict[str, Any] = field(default_factory=lambda:{"claims":[],"observations":[],"contradictions":[],"assumptions":[],"records":[]})
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def canonical_hash(self) -> str:
-        payload = asdict(self)
-        payload.pop("version", None)
+        payload = asdict(self); payload.pop("version", None)
         raw=json.dumps(payload, sort_keys=True, separators=(",",":"), default=str).encode()
         return hashlib.sha256(raw).hexdigest()
-
 
 def new_id(prefix: str) -> str: return f"{prefix}_{uuid.uuid4().hex[:12]}"
 def now() -> float: return time.time()
