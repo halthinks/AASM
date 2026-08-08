@@ -15,6 +15,7 @@ class MemoryStore:
         self._events: dict[str, list[Event]] = {}
         self._checkpoints: dict[tuple[str, str], Checkpoint] = {}
         self._effects: dict[tuple[str, str], EffectRecord] = {}
+        self._task_claims: dict[tuple[str, str], dict] = {}
 
     def initialize_run(self, snapshot: MachineSnapshot) -> None:
         self._snapshots[snapshot.machine_id] = deepcopy(snapshot)
@@ -55,6 +56,7 @@ class MemoryStore:
         except KeyError:
             raise KeyError(checkpoint_id) from None
 
+
     def save_effect(self, record: EffectRecord) -> None:
         self._effects[(record.machine_id, record.spec.effect_id)] = deepcopy(record)
 
@@ -72,6 +74,27 @@ class MemoryStore:
 
     def list_effects(self, machine_id: str) -> list[EffectRecord]:
         return [deepcopy(r) for (mid, _), r in self._effects.items() if mid == machine_id]
+
+
+    def acquire_task_claim(self, machine_id: str, task_id: str, lease_id: str, worker_id: str, expires_at: float, at_time: float) -> bool:
+        key=(machine_id, task_id)
+        current=self._task_claims.get(key)
+        if current and current["expires_at"] > at_time:
+            return False
+        self._task_claims[key]={"lease_id":lease_id,"worker_id":worker_id,"expires_at":expires_at}
+        return True
+
+    def renew_task_claim(self, machine_id: str, lease_id: str, expires_at: float) -> bool:
+        for key, claim in self._task_claims.items():
+            if key[0] == machine_id and claim["lease_id"] == lease_id:
+                claim["expires_at"] = expires_at
+                return True
+        return False
+
+    def release_task_claim(self, machine_id: str, lease_id: str) -> None:
+        for key, claim in list(self._task_claims.items()):
+            if key[0] == machine_id and claim["lease_id"] == lease_id:
+                del self._task_claims[key]
 
     def close(self) -> None:
         return None
