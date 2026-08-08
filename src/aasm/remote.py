@@ -29,6 +29,7 @@ class AASMRemoteClient:
     def state(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/state")
     def team(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/team")
     def collaboration(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/collaboration")
+    def change_control(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/change-control")
     def register_worker(self,machine_id,worker:WorkerRecord): return self._request("POST",f"/v1/machines/{machine_id}/workers/register",{"worker":asdict(worker)})
     def heartbeat(self,machine_id,worker_id): return self._request("POST",f"/v1/machines/{machine_id}/workers/{worker_id}/heartbeat",{})
     def claim(self,machine_id,worker_id,task:TaskDemand,lease_seconds=60.0): return self._request("POST",f"/v1/machines/{machine_id}/claim",{"worker_id":worker_id,"task":asdict(task),"lease_seconds":lease_seconds})
@@ -50,3 +51,6 @@ class AASMRemoteClient:
         body={"policy":self._payload(policy) if policy is not None else {}}
         if tasks is not None: body["tasks"]=[self._payload(x) for x in tasks]
         return self._request("POST",f"/v1/machines/{machine_id}/collaboration/analyze",body)
+    def analyze_change(self,machine_id,signal,pause_affected=True): return self._request("POST",f"/v1/machines/{machine_id}/change-control/analyze",{"signal":self._payload(signal),"pause_affected":bool(pause_affected)})
+    def resolve_change_impact(self,machine_id,impact_id,planner_id,*,resume_nodes=None,retire_nodes=None,plan_decision_id=None):
+        return self._request("POST",f"/v1/machines/{machine_id}/change-control/{impact_id}/resolve",{"planner_id":planner_id,"resume_nodes":list(resume_nodes or []),"retire_nodes":list(retire_nodes or []),"plan_decision_id":plan_decision_id})
