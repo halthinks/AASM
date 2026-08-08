@@ -73,7 +73,18 @@ class SQLiteStore:
                 );
                 CREATE INDEX IF NOT EXISTS idx_events_machine ON events(machine_id, sequence);
                 CREATE INDEX IF NOT EXISTS idx_runs_state ON runs(state);
+                CREATE TABLE IF NOT EXISTS task_claims (
+                    machine_id TEXT NOT NULL,
+                    task_id TEXT NOT NULL,
+                    lease_id TEXT NOT NULL,
+                    worker_id TEXT NOT NULL,
+                    expires_at REAL NOT NULL,
+                    PRIMARY KEY (machine_id, task_id),
+                    UNIQUE(machine_id, lease_id),
+                    FOREIGN KEY (machine_id) REFERENCES runs(machine_id) ON DELETE CASCADE
+                );
                 CREATE INDEX IF NOT EXISTS idx_effects_machine ON effects(machine_id, status);
+                CREATE INDEX IF NOT EXISTS idx_claims_expiry ON task_claims(machine_id, expires_at);
                 """
             )
 
@@ -155,6 +166,7 @@ class SQLiteStore:
             raise KeyError(checkpoint_id)
         return Checkpoint(checkpoint_id, snapshot_from_dict(json.loads(row["snapshot_json"])), row["reason"])
 
+
     def save_effect(self, record: EffectRecord) -> None:
         payload = json.dumps(effect_to_dict(record), sort_keys=True)
         with self._lock, self._conn:
@@ -199,6 +211,29 @@ class SQLiteStore:
                 self.save_effect(record)
                 changed.append(record)
         return changed
+
+
+    def acquire_task_claim(self, machine_id: str, task_id: str, lease_id: str, worker_id: str, expires_at: float, at_time: float) -> bool:
+        """Atomically reserve a task across processes. Expired claims are reclaimed."""
+        with self._lock, self._conn:
+            self._conn.execute("DELETE FROM task_claims WHERE machine_id=? AND task_id=? AND expires_at<=?", (machine_id, task_id, at_time))
+            try:
+                self._conn.execute(
+                    "INSERT INTO task_claims(machine_id, task_id, lease_id, worker_id, expires_at) VALUES (?, ?, ?, ?, ?)",
+                    (machine_id, task_id, lease_id, worker_id, expires_at),
+                )
+            except sqlite3.IntegrityError:
+                return False
+        return True
+
+    def renew_task_claim(self, machine_id: str, lease_id: str, expires_at: float) -> bool:
+        with self._lock, self._conn:
+            cur=self._conn.execute("UPDATE task_claims SET expires_at=? WHERE machine_id=? AND lease_id=?", (expires_at, machine_id, lease_id))
+            return cur.rowcount == 1
+
+    def release_task_claim(self, machine_id: str, lease_id: str) -> None:
+        with self._lock, self._conn:
+            self._conn.execute("DELETE FROM task_claims WHERE machine_id=? AND lease_id=?", (machine_id, lease_id))
 
     def close(self) -> None:
         self._conn.close()
