@@ -27,6 +27,7 @@
 ./docs/DURABLE_RUNTIME.md
 ./docs/EFFECT_SYSTEM.md
 ./docs/ERICKSON_MAPPING.md
+./docs/EXECUTABLE_PBV.md
 ./docs/EXECUTOR_ADAPTERS.md
 ./docs/EXECUTOR_ORCHESTRATION.md
 ./docs/GOVERNANCE_ECONOMICS.md
@@ -46,6 +47,7 @@
 ./examples/model_profiles.json
 ./examples/multi_agent_demo.py
 ./examples/orchestrated_worker.py
+./examples/pbv_cycle.py
 ./examples/remote_worker.py
 ./examples/scheduler_demo.py
 ./profiles/expert_swarm.yaml
@@ -69,6 +71,7 @@
 ./schemas/model-outcome.schema.json
 ./schemas/model-profile.schema.json
 ./schemas/model-route.schema.json
+./schemas/pbv-message.schema.json
 ./schemas/plan-edge.schema.json
 ./schemas/plan-node.schema.json
 ./schemas/problem.schema.json
@@ -106,6 +109,7 @@
 ./src/aasm/model_check.py
 ./src/aasm/model_routing.py
 ./src/aasm/openai_executor.py
+./src/aasm/pbv_orchestrator.py
 ./src/aasm/persistence/__init__.py
 ./src/aasm/persistence/base.py
 ./src/aasm/persistence/effect_serde.py
@@ -123,8 +127,10 @@
 ./src/aasm/runtime_v09.py
 ./src/aasm/runtime_v11.py
 ./src/aasm/runtime_v12.py
+./src/aasm/runtime_v13.py
 ./src/aasm/scheduler.py
 ./src/aasm/server.py
+./src/aasm/team_protocol.py
 ./src/aasm/worker_loop.py
 ./src/aasm/workers.py
 ./tests/scenarios/crash_and_resume/README.md
@@ -142,9 +148,11 @@
 ./tests/test_graph.py
 ./tests/test_memory_flow_adversary.py
 ./tests/test_model_routing_remote.py
+./tests/test_pbv_coordinator.py
 ./tests/test_persistence.py
 ./tests/test_postgres_integration.py
 ./tests/test_replay_fork.py
 ./tests/test_scheduler.py
 ./tests/test_schemas.py
+./tests/test_team_protocol.py
 ./tests/test_workers_leases.py
