@@ -14,8 +14,15 @@ class RemoteWorkerLoop:
         self.lease_seconds=float(lease_seconds); self.heartbeat_interval=float(heartbeat_interval); self.idle_sleep=float(idle_sleep); self._registered=False
 
     def ensure_registered(self):
-        if not self._registered:
-            self.client.register_worker(self.machine_id,self.worker); self._registered=True
+        if self._registered: return
+        state=self.client.state(self.machine_id)
+        existing=next((w for w in state.get("workers",[]) if w.get("worker_id")==self.worker.worker_id),None)
+        if existing is None:
+            self.client.register_worker(self.machine_id,self.worker)
+        elif existing.get("resource_id") != self.worker.resource_id:
+            raise ValueError(f"Worker {self.worker.worker_id} already exists on resource {existing.get('resource_id')}, expected {self.worker.resource_id}")
+        self.client.heartbeat(self.machine_id,self.worker.worker_id)
+        self._registered=True
 
     def _keepalive(self,lease_id:str,stop:threading.Event):
         while not stop.wait(self.heartbeat_interval):
