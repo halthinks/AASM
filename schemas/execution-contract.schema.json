@@ -6,6 +6,7 @@
   "required": ["prompt"],
   "properties": {
     "prompt": {"type": "string", "minLength": 1},
+    "task_class": {"type": ["string", "null"], "minLength": 1},
     "purpose": {"type": "string"},
     "instructions": {"type": ["string", "null"]},
     "reasoning_effort": {"type": ["string", "null"]},
@@ -18,6 +19,10 @@
     "max_cost_per_1k_output": {"type": ["number", "null"], "minimum": 0},
     "optimize": {"enum": ["balanced", "strength", "cost", "latency"]},
     "candidate_model_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "min_empirical_samples": {"type": "integer", "minimum": 0},
+    "min_empirical_acceptance": {"type": "number", "minimum": 0, "maximum": 1},
+    "explore_under_sampled": {"type": "boolean"},
+    "empirical_optimize": {"enum": ["cost_per_quality", "quality", "latency"]},
     "metadata": {"type": "object"}
   },
   "additionalProperties": false
