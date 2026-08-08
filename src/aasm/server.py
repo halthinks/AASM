@@ -1,19 +1,21 @@
 from __future__ import annotations
-import argparse, html, json
+import argparse, json
 from dataclasses import asdict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlparse
+from .control_center import html_document
+from .economics import ModelUsageRecord
 from .model import ProblemSpec
 from .model_routing import ModelRouteRequest
 from .persistence.factory import open_store
 from .resources import TaskDemand
-from .runtime_v08 import AASMEngine
+from .runtime_v09 import AASMEngine
 from .workers import WorkerRecord
 
 
 def make_handler(store_target:str,token:str|None=None):
     class Handler(BaseHTTPRequestHandler):
-        server_version="AASM/0.8"
+        server_version="AASM/0.9"
         def log_message(self,fmt,*args): pass
         def _auth(self): return True if not token else self.headers.get("Authorization")==f"Bearer {token}"
         def _json(self,status,payload):
@@ -28,19 +30,17 @@ def make_handler(store_target:str,token:str|None=None):
         def _error(self,exc): self._json(400,{"error":type(exc).__name__,"message":str(exc)})
 
         def do_GET(self):
-            if self.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1"})
+            parsed=urlparse(self.path)
+            if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.9.0"})
+            if parsed.path=="/ui":
+                raw=html_document().encode(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(raw))); self.end_headers(); return self.wfile.write(raw)
             if not self._auth(): return self._json(401,{"error":"unauthorized"})
-            parsed=urlparse(self.path); parts=[p for p in parsed.path.split('/') if p]
+            parts=[p for p in parsed.path.split('/') if p]
             try:
-                if parsed.path=="/ui":
-                    mid=parse_qs(parsed.query).get("machine_id",[""])[0]
-                    body="<h1>AASM Control Plane</h1><form><input name='machine_id' placeholder='machine id' value='%s'><button>Inspect</button></form>"%html.escape(mid)
-                    if mid:
-                        store,engine=self._machine(mid)
-                        body += "<h2>State</h2><pre>%s</pre>"%html.escape(json.dumps({"state":engine.state_value,"workers":engine.list_workers(),"leases":engine.list_leases(),"models":engine.list_model_profiles()},indent=2,default=str)); store.close()
-                    raw=("<!doctype html><meta name='viewport' content='width=device-width'><title>AASM</title><style>body{font-family:system-ui;max-width:1100px;margin:2rem auto;padding:0 1rem}pre{white-space:pre-wrap;background:#111;color:#eee;padding:1rem;border-radius:8px}input{width:60%;padding:.6rem}button{padding:.6rem}</style>"+body).encode(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(raw))); self.end_headers(); return self.wfile.write(raw)
                 if len(parts)==4 and parts[:2]==["v1","machines"] and parts[3]=="state":
                     store,engine=self._machine(parts[2]); payload={"snapshot":asdict(engine.snapshot),"workers":engine.list_workers(),"leases":engine.list_leases(),"models":engine.list_model_profiles(),"last_model_route":engine.last_model_route()}; store.close(); return self._json(200,payload)
+                if len(parts)==4 and parts[:2]==["v1","machines"] and parts[3]=="dashboard":
+                    store,engine=self._machine(parts[2]); payload=engine.dashboard(); store.close(); return self._json(200,payload)
                 return self._json(404,{"error":"not_found"})
             except Exception as exc: return self._error(exc)
 
@@ -64,6 +64,9 @@ def make_handler(store_target:str,token:str|None=None):
                     elif len(parts)==6 and parts[3]=="leases" and parts[5]=="complete": out=engine.complete_lease(parts[4],result=payload.get("result"))
                     elif len(parts)==6 and parts[3]=="leases" and parts[5]=="fail": out=engine.fail_lease(parts[4],error=payload.get("error"))
                     elif parts[3:]==["model-route"]: out=engine.route_model(ModelRouteRequest(**payload["request"])).to_dict()
+                    elif parts[3:]==["model-usage"]: out=engine.record_model_usage(ModelUsageRecord(**payload["record"]))
+                    elif parts[3:]==["review-gate"]: out=engine.review_gate(payload["action_class"],**payload.get("signals",{}))
+                    elif parts[3:]==["interrupt"]: out=engine.user_interrupt(payload["note"],metadata=payload.get("metadata"))
                     else: store.close(); return self._json(404,{"error":"not_found"})
                     store.close(); return self._json(200,out if isinstance(out,dict) else asdict(out))
                 except Exception: store.close(); raise
