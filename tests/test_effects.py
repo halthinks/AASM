@@ -56,6 +56,25 @@ def test_failed_effect_retries_with_same_idempotency_key():
     assert keys == ["stable","stable"]
 
 
+def test_passive_resume_does_not_reclassify_live_effect_as_crashed(tmp_path:Path):
+    db=tmp_path/"passive-resume.db"
+    store=SQLiteStore(db)
+    e=AASMEngine(ProblemSpec("live effect"),store=store)
+    rec=e.propose_effect(EffectSpec("external-write",idempotency_key="live-op"))
+    e.authorize_effect(rec.spec.effect_id)
+    running=store.load_effect(e.snapshot.machine_id,rec.spec.effect_id)
+    running.status=EffectStatus.RUNNING.value
+    store.save_effect(running)
+    mid=e.snapshot.machine_id
+
+    passive=AASMEngine.resume(mid,store)
+    assert passive.list_effects()[0].status == EffectStatus.RUNNING.value
+
+    recovered=AASMEngine.resume(mid,store,recover_effects=True)
+    assert recovered.list_effects()[0].status == EffectStatus.UNKNOWN.value
+    store.close()
+
+
 def test_running_effect_becomes_unknown_after_unclean_exit(tmp_path:Path):
     db=tmp_path/"effects.db"
     marker=tmp_path/"mid.txt"
@@ -81,7 +100,7 @@ e.execute_effect(r.spec.effect_id,executor)
     assert external.read_text().splitlines() == ["performed"]
 
     store=SQLiteStore(db)
-    recovered=AASMEngine.resume(machine_id,store)
+    recovered=AASMEngine.resume(machine_id,store,recover_effects=True)
     effect=store.load_effect(machine_id,effect_id)
     assert effect.status == EffectStatus.UNKNOWN.value
     with pytest.raises(EffectUnknownOutcome):
