@@ -10,18 +10,13 @@ from pathlib import Path
 from ..checkpoint import Checkpoint
 from ..core.reducer import reduce_event, replay_events
 from ..model import Event, MachineSnapshot, MachineState
-from ..effects import EffectRecord, EffectStatus
+from ..effects import EffectExecutionError, EffectRecord, EffectStatus, EffectUnknownOutcome
 from .serde import event_from_dict, event_to_dict, snapshot_from_dict, snapshot_to_dict
 from .effect_serde import effect_from_dict, effect_to_dict
 
 
 class SQLiteStore:
-    """Crash-safe local persistence using only Python's standard library.
-
-    Event append and snapshot reduction occur in one `BEGIN IMMEDIATE`
-    transaction. That makes the event stream authoritative even when multiple
-    local processes advance the same machine concurrently.
-    """
+    """Crash-safe local persistence using only Python's standard library."""
 
     def __init__(self, path: str | Path):
         self.path = str(path)
@@ -125,20 +120,16 @@ class SQLiteStore:
                 ).fetchall()
                 existing = [event_from_dict(json.loads(row["event_json"])) for row in rows]
                 canonical = replay_events(existing) if existing else None
-                sequence = len(existing) + 1
                 event.machine_id = machine_id
-                event.sequence = sequence
+                event.sequence = len(existing) + 1
                 canonical = reduce_event(canonical, event)
-                event_json = json.dumps(event_to_dict(event), sort_keys=True)
-                snapshot_json = json.dumps(snapshot_to_dict(canonical), sort_keys=True)
                 self._conn.execute(
                     "INSERT INTO events(machine_id, sequence, event_id, event_json, created_at) VALUES (?, ?, ?, ?, ?)",
-                    (machine_id, sequence, event.event_id, event_json, event.ts),
+                    (machine_id, event.sequence, event.event_id, json.dumps(event_to_dict(event), sort_keys=True), event.ts),
                 )
                 self._conn.execute(
-                    """UPDATE runs SET snapshot_json=?, state=?, version=?, updated_at=?
-                       WHERE machine_id=?""",
-                    (snapshot_json, canonical.state, canonical.version, time.time(), machine_id),
+                    "UPDATE runs SET snapshot_json=?, state=?, version=?, updated_at=? WHERE machine_id=?",
+                    (json.dumps(snapshot_to_dict(canonical), sort_keys=True), canonical.state, canonical.version, time.time(), machine_id),
                 )
                 self._conn.commit()
             except Exception:
@@ -149,8 +140,7 @@ class SQLiteStore:
 
     def load_snapshot(self, machine_id: str) -> MachineSnapshot:
         row = self._conn.execute("SELECT snapshot_json FROM runs WHERE machine_id=?", (machine_id,)).fetchone()
-        if row is None:
-            raise KeyError(machine_id)
+        if row is None: raise KeyError(machine_id)
         return snapshot_from_dict(json.loads(row["snapshot_json"]))
 
     def load_events(self, machine_id: str, after_sequence: int = 0) -> list[Event]:
@@ -165,19 +155,15 @@ class SQLiteStore:
         unfinished=[]
         for row in rows:
             snap=snapshot_from_dict(json.loads(row["snapshot_json"]))
-            definition=snap.metadata.get("machine_definition", {})
-            terminal=set(definition.get("terminal_states", [MachineState.COMPLETE.value, MachineState.FAIL.value]))
-            if row["state"] not in terminal:
-                unfinished.append(row["machine_id"])
+            terminal=set(snap.metadata.get("machine_definition", {}).get("terminal_states", [MachineState.COMPLETE.value, MachineState.FAIL.value]))
+            if row["state"] not in terminal: unfinished.append(row["machine_id"])
         return unfinished
 
     def save_checkpoint(self, machine_id: str, checkpoint: Checkpoint) -> None:
         payload = json.dumps(snapshot_to_dict(checkpoint.snapshot), sort_keys=True)
         with self._lock, self._conn:
             self._conn.execute(
-                """INSERT OR REPLACE INTO checkpoints
-                   (checkpoint_id, machine_id, snapshot_json, reason, created_at)
-                   VALUES (?, ?, ?, ?, ?)""",
+                "INSERT OR REPLACE INTO checkpoints(checkpoint_id, machine_id, snapshot_json, reason, created_at) VALUES (?, ?, ?, ?, ?)",
                 (checkpoint.checkpoint_id, machine_id, payload, checkpoint.reason, time.time()),
             )
 
@@ -186,8 +172,7 @@ class SQLiteStore:
             "SELECT snapshot_json, reason FROM checkpoints WHERE machine_id=? AND checkpoint_id=?",
             (machine_id, checkpoint_id),
         ).fetchone()
-        if row is None:
-            raise KeyError(checkpoint_id)
+        if row is None: raise KeyError(checkpoint_id)
         return Checkpoint(checkpoint_id, snapshot_from_dict(json.loads(row["snapshot_json"])), row["reason"])
 
     def save_effect(self, record: EffectRecord) -> None:
@@ -196,18 +181,13 @@ class SQLiteStore:
             self._conn.execute(
                 """INSERT INTO effects(effect_id, machine_id, idempotency_key, status, effect_json, created_at, updated_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                   ON CONFLICT(effect_id) DO UPDATE SET
-                     status=excluded.status, effect_json=excluded.effect_json, updated_at=excluded.updated_at""",
+                   ON CONFLICT(effect_id) DO UPDATE SET status=excluded.status, effect_json=excluded.effect_json, updated_at=excluded.updated_at""",
                 (record.spec.effect_id, record.machine_id, record.spec.idempotency_key, record.status, payload, record.created_at, record.updated_at),
             )
 
     def load_effect(self, machine_id: str, effect_id: str) -> EffectRecord:
-        row = self._conn.execute(
-            "SELECT effect_json FROM effects WHERE machine_id=? AND effect_id=?",
-            (machine_id, effect_id),
-        ).fetchone()
-        if row is None:
-            raise KeyError(effect_id)
+        row = self._conn.execute("SELECT effect_json FROM effects WHERE machine_id=? AND effect_id=?", (machine_id, effect_id)).fetchone()
+        if row is None: raise KeyError(effect_id)
         return effect_from_dict(json.loads(row["effect_json"]))
 
     def find_effect_by_idempotency(self, machine_id: str, idempotency_key: str) -> EffectRecord | None:
@@ -218,11 +198,53 @@ class SQLiteStore:
         return None if row is None else effect_from_dict(json.loads(row["effect_json"]))
 
     def list_effects(self, machine_id: str) -> list[EffectRecord]:
-        rows = self._conn.execute(
-            "SELECT effect_json FROM effects WHERE machine_id=? ORDER BY created_at, effect_id",
-            (machine_id,),
-        ).fetchall()
+        rows = self._conn.execute("SELECT effect_json FROM effects WHERE machine_id=? ORDER BY created_at, effect_id", (machine_id,)).fetchall()
         return [effect_from_dict(json.loads(r["effect_json"])) for r in rows]
+
+    @staticmethod
+    def _prepare_effect_attempt(record: EffectRecord) -> EffectRecord:
+        if record.status == EffectStatus.SUCCEEDED.value:
+            return record
+        if record.status == EffectStatus.UNKNOWN.value:
+            if not record.spec.retry_policy.retry_on_unknown:
+                raise EffectUnknownOutcome(f"Effect {record.spec.effect_id} has an unknown prior outcome; reconcile before retry")
+            record.status=EffectStatus.AUTHORIZED.value
+        if record.status == EffectStatus.FAILED.value:
+            if not record.spec.retry_policy.retry_on_failure:
+                raise EffectExecutionError(f"Effect {record.spec.effect_id} failed and retry_on_failure is disabled")
+            record.status=EffectStatus.AUTHORIZED.value
+        if record.status == EffectStatus.RUNNING.value:
+            raise EffectExecutionError(f"Effect {record.spec.effect_id} is already RUNNING on another executor")
+        if record.status != EffectStatus.AUTHORIZED.value:
+            raise ValueError(f"Effect {record.spec.effect_id} is not authorized (status={record.status})")
+        if record.attempts >= max(1,record.spec.retry_policy.max_attempts):
+            raise EffectExecutionError(f"Effect {record.spec.effect_id} exhausted retry attempts")
+        record.attempts += 1
+        record.status=EffectStatus.RUNNING.value
+        record.updated_at=time.time()
+        return record
+
+    def claim_effect_attempt(self, machine_id: str, effect_id: str) -> EffectRecord:
+        """Atomically claim one local effect attempt across SQLite processes."""
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                row=self._conn.execute(
+                    "SELECT effect_json FROM effects WHERE machine_id=? AND effect_id=?",
+                    (machine_id,effect_id),
+                ).fetchone()
+                if row is None: raise KeyError(effect_id)
+                record=self._prepare_effect_attempt(effect_from_dict(json.loads(row["effect_json"])))
+                if record.status != EffectStatus.SUCCEEDED.value:
+                    self._conn.execute(
+                        "UPDATE effects SET status=?, effect_json=?, updated_at=? WHERE machine_id=? AND effect_id=?",
+                        (record.status,json.dumps(effect_to_dict(record),sort_keys=True),record.updated_at,machine_id,effect_id),
+                    )
+                self._conn.commit()
+                return record
+            except Exception:
+                self._conn.rollback()
+                raise
 
     def mark_running_effects_unknown(self, machine_id: str) -> list[EffectRecord]:
         changed=[]
@@ -239,77 +261,34 @@ class SQLiteStore:
     def _check_claim_limits(active, *, worker_id, resource_id, demand, resource_capacity, quotas):
         if resource_id is not None and resource_capacity is not None:
             used=sum(float(row["demand"] or 0) for row in active if row["resource_id"] == resource_id)
-            if used + demand > float(resource_capacity) + 1e-12:
-                raise ValueError(f"Resource capacity exhausted: {resource_id}")
+            if used + demand > float(resource_capacity) + 1e-12: raise ValueError(f"Resource capacity exhausted: {resource_id}")
         for raw in quotas or []:
-            if not raw.get("enabled", True):
-                continue
-            scope=raw.get("scope", "machine")
-            target=raw.get("target_id")
+            if not raw.get("enabled", True): continue
+            scope=raw.get("scope", "machine"); target=raw.get("target_id")
             relevant = scope == "machine" or (scope == "worker" and target == worker_id) or (scope == "resource" and target == resource_id)
-            if not relevant:
-                continue
-            selected=[
-                row for row in active
-                if scope == "machine"
-                or (scope == "worker" and row["worker_id"] == worker_id)
-                or (scope == "resource" and row["resource_id"] == resource_id)
-            ]
+            if not relevant: continue
+            selected=[row for row in active if scope == "machine" or (scope == "worker" and row["worker_id"] == worker_id) or (scope == "resource" and row["resource_id"] == resource_id)]
             max_leases=raw.get("max_active_leases")
-            if max_leases is not None and len(selected) >= int(max_leases):
-                raise ValueError(f"Quota exceeded: {raw.get('quota_id')}")
+            if max_leases is not None and len(selected) >= int(max_leases): raise ValueError(f"Quota exceeded: {raw.get('quota_id')}")
             max_units=raw.get("max_capacity_units")
-            if max_units is not None and sum(float(row["demand"] or 0) for row in selected) + demand > float(max_units) + 1e-12:
-                raise ValueError(f"Quota exceeded: {raw.get('quota_id')}")
+            if max_units is not None and sum(float(row["demand"] or 0) for row in selected) + demand > float(max_units) + 1e-12: raise ValueError(f"Quota exceeded: {raw.get('quota_id')}")
 
-    def acquire_task_claim(
-        self,
-        machine_id: str,
-        task_id: str,
-        lease_id: str,
-        worker_id: str,
-        expires_at: float,
-        at_time: float,
-        *,
-        resource_id: str | None = None,
-        demand: float = 0.0,
-        resource_capacity: float | None = None,
-        quotas: list[dict] | None = None,
-    ) -> bool:
-        """Atomically reserve task ownership and enforce shared capacity/quotas."""
+    def acquire_task_claim(self,machine_id: str,task_id: str,lease_id: str,worker_id: str,expires_at: float,at_time: float,*,resource_id: str | None = None,demand: float = 0.0,resource_capacity: float | None = None,quotas: list[dict] | None = None) -> bool:
         with self._lock:
             self._conn.execute("BEGIN IMMEDIATE")
             try:
                 self._conn.execute("DELETE FROM task_claims WHERE machine_id=? AND expires_at<=?", (machine_id, at_time))
-                existing=self._conn.execute(
-                    "SELECT 1 FROM task_claims WHERE machine_id=? AND task_id=?",
-                    (machine_id, task_id),
-                ).fetchone()
-                if existing is not None:
-                    self._conn.rollback()
-                    return False
-                active=self._conn.execute(
-                    "SELECT worker_id, resource_id, demand FROM task_claims WHERE machine_id=? AND expires_at>?",
-                    (machine_id, at_time),
-                ).fetchall()
-                self._check_claim_limits(
-                    active,
-                    worker_id=worker_id,
-                    resource_id=resource_id,
-                    demand=float(demand),
-                    resource_capacity=resource_capacity,
-                    quotas=quotas,
-                )
+                if self._conn.execute("SELECT 1 FROM task_claims WHERE machine_id=? AND task_id=?", (machine_id, task_id)).fetchone() is not None:
+                    self._conn.rollback(); return False
+                active=self._conn.execute("SELECT worker_id, resource_id, demand FROM task_claims WHERE machine_id=? AND expires_at>?", (machine_id, at_time)).fetchall()
+                self._check_claim_limits(active,worker_id=worker_id,resource_id=resource_id,demand=float(demand),resource_capacity=resource_capacity,quotas=quotas)
                 self._conn.execute(
-                    """INSERT INTO task_claims(machine_id, task_id, lease_id, worker_id, expires_at, resource_id, demand)
-                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    "INSERT INTO task_claims(machine_id, task_id, lease_id, worker_id, expires_at, resource_id, demand) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     (machine_id, task_id, lease_id, worker_id, expires_at, resource_id, float(demand)),
                 )
-                self._conn.commit()
-                return True
+                self._conn.commit(); return True
             except Exception:
-                self._conn.rollback()
-                raise
+                self._conn.rollback(); raise
 
     def renew_task_claim(self, machine_id: str, lease_id: str, expires_at: float) -> bool:
         with self._lock, self._conn:
