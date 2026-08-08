@@ -47,3 +47,9 @@ class AASMEngine(V10Engine):
         resources["last_model_route"]={"request":asdict(request),"result":result.to_dict()}
         self.patch_snapshot({"resources":resources},reason)
         return result
+
+    def dashboard(self):
+        out=super().dashboard()
+        out["model_performance"]=self.model_performance()
+        out["model_outcome_count"]=len(self.snapshot.resources.get("model_outcomes",[]))
+        return out
