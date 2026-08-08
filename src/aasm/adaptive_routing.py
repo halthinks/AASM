@@ -40,6 +40,7 @@ class ModelPerformance:
     repairs: int
     acceptance_rate: float
     acceptance_lower_bound: float
+    acceptance_upper_bound: float
     repair_rate: float
     avg_verification_score: float | None
     avg_latency_seconds: float | None
@@ -53,12 +54,16 @@ class ModelOutcomeLedger:
     def __init__(self, records: list[dict[str, Any]] | None = None):
         self.records=[ModelOutcomeRecord(**raw) for raw in (records or [])]
     def add(self,record:ModelOutcomeRecord): self.records.append(record); return record
+
     @staticmethod
-    def _wilson_lower(successes:int,n:int,z:float=1.96):
-        if n<=0: return 0.0
+    def _wilson_interval(successes:int,n:int,z:float=1.96):
+        """Return a 95%-style Wilson score interval for a binomial rate."""
+        if n<=0: return 0.0,1.0
         p=successes/n; zz=z*z; denom=1+zz/n
-        center=p+zz/(2*n); margin=z*sqrt((p*(1-p)+zz/(4*n))/n)
-        return max(0.0,(center-margin)/denom)
+        center=(p+zz/(2*n))/denom
+        margin=(z/denom)*sqrt((p*(1-p)+zz/(4*n))/n)
+        return max(0.0,center-margin),min(1.0,center+margin)
+
     def performance(self,task_class:str|None=None):
         groups={}
         for r in self.records:
@@ -70,7 +75,15 @@ class ModelOutcomeLedger:
             scores=[float(r.verification_score) for r in rows if r.verification_score is not None]
             latencies=[float(r.latency_seconds) for r in rows if r.latency_seconds is not None]
             costs=[float(r.estimated_cost) for r in rows if r.estimated_cost is not None]
-            out.append(ModelPerformance(tc,mid,n,accepted,repairs,accepted/n,self._wilson_lower(accepted,n),repairs/n,sum(scores)/len(scores) if scores else None,sum(latencies)/len(latencies) if latencies else None,sum(costs)/len(costs) if costs else None,n/(n+5.0)))
+            lower,upper=self._wilson_interval(accepted,n)
+            confidence=max(0.0,min(1.0,1.0-(upper-lower)))
+            out.append(ModelPerformance(
+                tc,mid,n,accepted,repairs,accepted/n,lower,upper,repairs/n,
+                sum(scores)/len(scores) if scores else None,
+                sum(latencies)/len(latencies) if latencies else None,
+                sum(costs)/len(costs) if costs else None,
+                confidence,
+            ))
         return out
     def to_dict(self): return [asdict(r) for r in self.records]
 
