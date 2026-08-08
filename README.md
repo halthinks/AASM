@@ -10,7 +10,7 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.16.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.17.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
@@ -71,6 +71,7 @@ AASM is an attempt to make those properties first-class.
 | **Massive collaboration** | Computes useful worker fan-out from critical path, DAG width, eligible max-flow capacity, coordination overhead, cost, and min-cut bottlenecks instead of blindly spawning agents. |
 | **Selective change checkpoints** | Maps changed information onto the affected dependency subgraph, pauses only invalidated work, preserves unaffected leases, and lets the Planner resume repaired nodes incrementally. |
 | **Automatic checkpoint + fleet loop** | Turns material Verifier findings into selective checkpoints and optionally converts collaboration recommendations into an atomically enforced worker-admission quota. |
+| **Physical fleet + telemetry** | Converts a fleet target into authority-gated provider effects and feeds observed execution durations/artifact references back into scheduling evidence. |
 | **Provenance** | Emits state-change and execution events so the run can be inspected after the fact. |
 
 ## Architecture
@@ -153,7 +154,7 @@ Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems 
 ### Requirements
 
 - Python **3.11+**
-- No mandatory runtime dependencies beyond the Python standard library in v0.16.0; PostgreSQL support is an optional extra
+- No mandatory runtime dependencies beyond the Python standard library in v0.17.0; PostgreSQL support is an optional extra
 
 ### Install from a clone
 
@@ -182,7 +183,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.16.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.17.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -504,6 +505,44 @@ Fleet control does not provision machines, model sessions, or cloud resources an
 
 See [`docs/AUTOMATIC_CHECKPOINTS_FLEET_CONTROL.md`](docs/AUTOMATIC_CHECKPOINTS_FLEET_CONTROL.md) and [`examples/automatic_checkpoint_fleet.py`](examples/automatic_checkpoint_fleet.py).
 
+### Physical fleet provisioning and live execution telemetry
+
+v0.17 adds the physical-lifecycle layer without collapsing scheduling into deployment authority. `plan_fleet_provisioning()` compares a desired fleet target with registered ACTIVE workers and emits provider-neutral `PROVISION` or idle-worker `DRAIN` requests.
+
+Provisioning remains an external side effect:
+
+```text
+collaboration recommendation
+        ↓
+optional fleet admission quota
+        ↓
+provisioning plan
+        ↓
+proposed EffectSpec
+        ↓
+explicit authorization
+        ↓
+ProvisioningAdapter
+        ↓
+provider result
+        ↓
+worker must still register + heartbeat
+```
+
+A control plane can receive a `ProvisioningRegistry` containing real provider adapters. Without a matching registry/adapter, provider execution fails closed. AASM does not bundle or infer cloud credentials/provider behavior from a provider name.
+
+Remote workers now emit `STARTED`, `COMPLETED`, and `FAILED` telemetry around every lease. Custom workers can also send `LOG`, `PROGRESS`, `ARTIFACT`, and `HEARTBEAT` records. The durable telemetry ledger is bounded; large logs and binaries should be stored externally and referenced by stable artifact IDs or URIs.
+
+Completed telemetry provides observed task/task-class durations. When enabled, those measurements feed the next critical-path and fleet calculation unless a task locks its declared estimate with `metadata.lock_estimated_duration=true`.
+
+```bash
+aasm telemetry MACHINE_ID --store runs.db
+aasm provision-plan MACHINE_ID --store runs.db --provider my-provider --resource-id coding-pool
+aasm provision-propose MACHINE_ID --store runs.db --request provision.json
+```
+
+See [`docs/FLEET_PROVISIONING_TELEMETRY.md`](docs/FLEET_PROVISIONING_TELEMETRY.md) and [`examples/provisioning_telemetry.py`](examples/provisioning_telemetry.py).
+
 ## Orchestration profiles
 
 AASM ships with multiple profiles to demonstrate that governance and role structure are independent of the core runtime:
@@ -555,9 +594,9 @@ See [`docs/DISTRIBUTED_WORKERS.md`](docs/DISTRIBUTED_WORKERS.md) and [`docs/REMO
 
 ## Project status
 
-**Current version: `0.16.0` — early-stage / experimental.**
+**Current version: `0.17.0` — early-stage / experimental.**
 
-The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, static model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, evaluated-outcome adaptive model routing, governance-review budgets/reuse, executable Planner/Builder/Verifier orchestration, evidence-based massive-collaboration planning, selective information-change checkpointing/additive steering, automatic Verifier checkpoint triggers, opt-in collaboration-driven fleet admission, a browser Control Center, and cache-adjusted model economics.
+The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, static model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, evaluated-outcome adaptive model routing, governance-review budgets/reuse, executable Planner/Builder/Verifier orchestration, evidence-based massive-collaboration planning, selective information-change checkpointing/additive steering, automatic Verifier checkpoint triggers, opt-in collaboration-driven fleet admission, authority-gated provider-neutral fleet provisioning, bounded live execution telemetry with observed-duration feedback, a browser Control Center, and cache-adjusted model economics.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 
