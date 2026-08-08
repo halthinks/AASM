@@ -160,3 +160,24 @@ Fleet control limits active admitted work; it does not provision machines, model
 Recalculate fleet admission after an automatic checkpoint, Planner `PLAN_INTERRUPT`, or change-impact resolution when the policy enables those refreshes. Avoid duplicate recalculation when one Planner decision both resolves a checkpoint and changes the plan.
 
 Inspect this loop through `checkpoint-triggers`, `checkpoint-trigger-policy`, `fleet-control`, and `fleet-refresh`, or the equivalent remote endpoints. The Control Center should make recommendation vs enforcement visibly distinct.
+
+## Physical fleet provisioning and live telemetry
+Treat physical provisioning as a separate external-effect layer after collaboration analysis and fleet admission. `plan_fleet_provisioning()` may compute a desired worker delta, but that plan is evidence only and must not create, destroy, or drain infrastructure by itself.
+
+Convert a chosen `ProvisioningRequest` into a durable effect with `propose_provisioning()`. An authority must explicitly call `authorize_effect()` before `execute_provisioning()` may invoke a `ProvisioningAdapter`. Provider credentials, cloud IAM, network policy, billing controls, and provider-specific safeguards remain outside and in addition to AASM authorization.
+
+Use a stable provider adapter through `ProvisioningRegistry` for server-side execution. If the control plane has no registry or no matching provider, provisioning execution must fail closed. Do not infer provider behavior from a string name.
+
+A successful PROVISION effect does not prove that an AASM worker exists or is healthy. The actual worker process must connect, register, and heartbeat before it is usable. A successful DRAIN effect may move only explicitly targeted registered workers into `DRAINING`; do not silently drain busy workers merely to satisfy a numerical target.
+
+Remote workers automatically emit `STARTED`, `COMPLETED`, and `FAILED` execution telemetry. Custom workers/executors may also stream `LOG`, `PROGRESS`, `ARTIFACT`, and `HEARTBEAT` records. Keep large log bodies and artifacts outside the bounded telemetry ledger and record stable references instead.
+
+Use completed telemetry duration as scheduling evidence. When `TelemetryPolicy.use_observed_durations` is enabled, observed task/task-class mean duration may replace future `estimated_duration` before collaboration/fleet analysis. Set `metadata.lock_estimated_duration=true` when a task's declared estimate must remain authoritative.
+
+Record completion telemetry only after the lease is durably completed. This ensures telemetry-driven fleet refresh sees canonical finished state and does not re-count the just-completed task as runnable.
+
+Keep recommendation, enforcement, and physical provisioning visibly distinct:
+
+`collaboration recommendation → optional fleet admission quota → explicit provisioning plan → authorized provider effect → worker registration/heartbeat`.
+
+Telemetry is evidence, not authority. Observed timing may change scheduling/fleet recommendations, but it must never authorize deployment, plan mutation, credentials, external effects, or destructive actions.
