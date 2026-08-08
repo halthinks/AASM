@@ -32,7 +32,7 @@ def test_model_routes_are_durable_and_fork_aware(tmp_path):
 def test_remote_worker_can_claim_and_complete_over_http(tmp_path):
     db=str(tmp_path/'remote.db'); store=SQLiteStore(db); e=AASMEngine(ProblemSpec('remote work'),store=store)
     e.register_resource(ResourceRecord('cpu','worker',['code'],capacity=2)); mid=e.snapshot.machine_id; store.close()
-    server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(db,'secret')); t=threading.Thread(target=server.serve_forever,daemon=True); t.start()
+    server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(db,'secret')); threading.Thread(target=server.serve_forever,daemon=True).start()
     try:
         client=AASMRemoteClient(f'http://127.0.0.1:{server.server_port}','secret'); assert client.health()['ok'] is True
         client.register_worker(mid,WorkerRecord('w1','cpu')); lease=client.claim(mid,'w1',TaskDemand('task-1',['code'],demand=1),lease_seconds=30); assert lease['status']=='ACTIVE'
@@ -54,3 +54,17 @@ def test_claim_next_uses_scheduled_priority(tmp_path):
     e.schedule([TaskDemand('low',['code'],priority=1),TaskDemand('high',['code'],priority=10)])
     lease=e.claim_next_task('w',lease_seconds=20)
     assert lease['task_id']=='high'; store.close()
+
+
+def test_remote_worker_loop_pulls_scheduled_task(tmp_path):
+    from aasm import RemoteWorkerLoop
+    db=str(tmp_path/'loop.db'); store=SQLiteStore(db); e=AASMEngine(ProblemSpec('loop'),store=store)
+    e.register_resource(ResourceRecord('cpu','worker',['code'],capacity=1)); e.schedule([TaskDemand('job',['code'],priority=5,metadata={'prompt':'do it'})]); mid=e.snapshot.machine_id; store.close()
+    server=ThreadingHTTPServer(('127.0.0.1',0),make_handler(db,'secret')); threading.Thread(target=server.serve_forever,daemon=True).start()
+    try:
+        client=AASMRemoteClient(f'http://127.0.0.1:{server.server_port}','secret')
+        loop=RemoteWorkerLoop(client,mid,WorkerRecord('loop-worker','cpu'),lambda lease:{'seen':lease['metadata']['prompt']},lease_seconds=30,heartbeat_interval=5)
+        assert loop.run_once() is True
+        assert client.state(mid)['leases'][-1]['status']=='COMPLETED'
+    finally:
+        server.shutdown(); server.server_close()
