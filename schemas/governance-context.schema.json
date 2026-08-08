@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/governance-context.schema.json",
+  "title": "AASM Governance Context",
+  "type": "object",
+  "required": ["action_class"],
+  "properties": {
+    "action_class": {"type": "string", "minLength": 1},
+    "scope": {"type": "string"},
+    "action_signature": {"type": "string"},
+    "policy_revision": {"type": "string"},
+    "assumption_revision": {"type": "string"},
+    "evidence_revision": {"type": "string"},
+    "assumption_changed": {"type": "boolean"},
+    "tests_failed": {"type": "boolean"},
+    "diff_lines": {"type": "integer", "minimum": 0},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": false
+}
