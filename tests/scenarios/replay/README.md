@@ -1,5 +1,5 @@
-# Deterministic replay scenario
+# Replay and fork acceptance scenario
 
-Acceptance property: reducing the persisted event stream produces the same canonical machine snapshot as live execution for all state and metadata changes covered by the v0.2 event core.
+AASM can reconstruct a historical snapshot at an exact durable event sequence and create a new machine from that boundary.
 
-Automated by `tests/test_persistence.py::test_memory_store_replay_matches_live_state`.
+The fork has a new machine ID and an explicit `metadata.lineage` record containing the source machine, source sequence, and source event ID. External effects are not copied or re-executed by default.

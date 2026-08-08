@@ -4,6 +4,24 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.4.0] - 2026-08-07
+
+### Added
+
+- declarative `MachineDefinition` runtime with JSON/TOML loading and optional YAML loading
+- static transition-graph model checker for undefined targets, unreachable states, dead ends, invalid terminal edges, and non-terminating reachable regions
+- `aasm verify-machine` CLI command and versioned machine-definition JSON schema
+- historical replay at an exact machine-local event sequence
+- durable machine forking with new machine IDs and explicit source lineage
+- `aasm fork` CLI command and fork demonstration
+- custom terminal-state awareness in unfinished-run recovery
+
+### Compatibility and safety
+
+- the original AASM lifecycle is still the default machine definition, preserving existing call sites
+- forks never copy or re-execute source-run external effects
+- machine-definition identity and terminal-state semantics are persisted in the event stream
+
 ## [0.3.0] - 2026-08-07
 
 ### Added

@@ -38,8 +38,13 @@ class MemoryStore:
         return [deepcopy(e) for e in self._events.get(machine_id, []) if e.sequence > after_sequence]
 
     def list_unfinished(self) -> list[str]:
-        terminal = {MachineState.COMPLETE.value, MachineState.FAIL.value}
-        return sorted(mid for mid, snap in self._snapshots.items() if snap.state not in terminal)
+        result=[]
+        for mid, snap in self._snapshots.items():
+            definition=snap.metadata.get("machine_definition", {})
+            terminal=set(definition.get("terminal_states", [MachineState.COMPLETE.value, MachineState.FAIL.value]))
+            if snap.state not in terminal:
+                result.append(mid)
+        return sorted(result)
 
     def save_checkpoint(self, machine_id: str, checkpoint: Checkpoint) -> None:
         self._checkpoints[(machine_id, checkpoint.checkpoint_id)] = deepcopy(checkpoint)

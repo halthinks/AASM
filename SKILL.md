@@ -12,7 +12,7 @@ Do not assume Planner/Builder. AASM is role-agnostic. Select an orchestration pr
 
 ## Operating rules
 1. Formalize the goal into objective, constraints, invariants, acceptance tests, and structural features.
-2. Instantiate `AASMEngine(ProblemSpec(...))`. For long-running or recoverable work, provide a durable store such as `SQLiteStore`.
+2. Instantiate `AASMEngine(ProblemSpec(...))`. When the workflow has a domain-specific control graph, load a `MachineDefinition` and run `check_machine()` before execution. For long-running or recoverable work, provide a durable store such as `SQLiteStore`.
 3. Move only through legal machine transitions. Never mutate `snapshot.state` directly.
 4. Run `engine.classify()` in `CLASSIFY` to select applicable algorithmic operators.
 5. Represent nontrivial dependencies as a `PlanGraph`; prefer topological execution for DAGs and shortest path when alternatives have costs.
@@ -23,7 +23,8 @@ Do not assume Planner/Builder. AASM is role-agnostic. Select an orchestration pr
 10. Agents may propose actions. The configured `AuthorityPolicy` decides who can authorize them. The runtime, not generated prose, owns authoritative state.
 11. Emit evidence and provenance for every material transition. Do not bypass the event-sourced transition/patch APIs by mutating durable snapshot fields directly.
 12. For durable runs, recover with `AASMEngine.resume(machine_id, store)` or `recover_unfinished(store)` and verify replay before resuming risky external work.
-13. COMPLETE only when acceptance tests are satisfied; FAIL is terminal and must state why.
+13. Use `engine.replay(at_sequence=N)` to inspect historical state without re-running effects. Use `engine.fork(N)` for alternate futures; treat the fork as a new machine and explicitly propose any new external effects.
+14. COMPLETE only when acceptance tests are satisfied; FAIL is terminal and must state why.
 
 ## Profiles
 - `single_agent.yaml`: one agent, reversible autonomous actions.

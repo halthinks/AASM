@@ -10,7 +10,7 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.3.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.4.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
@@ -146,7 +146,7 @@ Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems 
 ### Requirements
 
 - Python **3.11+**
-- No runtime dependencies beyond the Python standard library in v0.3.0
+- No runtime dependencies beyond the Python standard library in v0.4.0
 
 ### Install from a clone
 
@@ -175,7 +175,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.3.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.4.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -227,6 +227,27 @@ AASM can now persist externally observable actions separately from model reasoni
 
 See [`docs/EFFECT_SYSTEM.md`](docs/EFFECT_SYSTEM.md) and [`examples/effect_demo.py`](examples/effect_demo.py).
 
+### Declarative machines and model checking
+
+AASM machines can now be defined as data rather than hard-coded control flow. `MachineDefinition` supports JSON and TOML with no additional dependency, plus optional YAML when PyYAML is installed. Before execution, `check_machine()` can detect undefined targets, unreachable states, non-terminal dead ends, terminal states with outgoing edges, and reachable regions that cannot reach any terminal state.
+
+```bash
+aasm verify-machine examples/machine.json
+```
+
+See [`docs/DECLARATIVE_MACHINES.md`](docs/DECLARATIVE_MACHINES.md) and [`examples/machine.json`](examples/machine.json).
+
+### Historical replay and forks
+
+Replay can stop at an exact event sequence, and a durable run can fork from that boundary into an independent machine with explicit lineage. Forks do not copy or re-run prior external effects.
+
+```bash
+aasm replay MACHINE_ID --db runs.db --at 17
+aasm fork MACHINE_ID --db runs.db --at 17
+```
+
+See [`docs/REPLAY_FORK.md`](docs/REPLAY_FORK.md) and [`examples/fork_demo.py`](examples/fork_demo.py).
+
 ## Orchestration profiles
 
 AASM ships with multiple profiles to demonstrate that governance and role structure are independent of the core runtime:
@@ -270,9 +291,9 @@ It is a control/runtime layer intended to sit around or underneath agent behavio
 
 ## Project status
 
-**Current version: `0.3.0` — early-stage / experimental.**
+**Current version: `0.4.0` — early-stage / experimental.**
 
-The runtime now includes an event-sourced state path, SQLite durability, deterministic replay for event-sourced fields, persisted checkpoints, crash/restart recovery, and a durable external-effect lifecycle with idempotency and unknown-outcome reconciliation. The next stages focus on richer recovery semantics, async/distributed execution, declarative machine definitions, model checking, observability, and integration adapters.
+The runtime now includes event-sourced state, SQLite durability, persisted checkpoints, crash/restart recovery, a durable external-effect lifecycle, declarative machine definitions, static transition-graph model checking, historical replay, and durable run forking with explicit lineage. The next stages focus on persistent planning/memory state, richer recovery semantics, async/distributed execution, observability, and integration adapters.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 

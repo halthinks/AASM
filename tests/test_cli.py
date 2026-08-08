@@ -7,6 +7,9 @@ def test_cli_exposes_durable_commands():
         (["demo"], "demo"),
         (["runs", "--db", "x.db"], "runs"),
         (["replay", "machine_x", "--db", "x.db"], "replay"),
+        (["replay", "machine_x", "--db", "x.db", "--at", "3"], "replay"),
+        (["fork", "machine_x", "--db", "x.db", "--at", "3"], "fork"),
+        (["verify-machine", "machine.json"], "verify-machine"),
         (["inspect", "machine_x", "--db", "x.db"], "inspect"),
     ]:
         assert parser.parse_args(argv).command == command
@@ -33,3 +36,18 @@ def test_cli_effects_lists_persisted_effect(tmp_path, capsys):
     out=capsys.readouterr().out
     assert '"status": "SUCCEEDED"' in out
     assert '"idempotency_key": "cli-key"' in out
+
+
+def test_cli_verify_machine_reports_valid(tmp_path, capsys):
+    from aasm.cli import main
+    import json, sys
+    path=tmp_path/"machine.json"
+    path.write_text(json.dumps({"name":"ok","start_state":"A","terminal_states":["DONE"],"transitions":{"A":["DONE"],"DONE":[]}}))
+    old=sys.argv
+    try:
+        sys.argv=["aasm","verify-machine",str(path)]
+        main()
+    finally:
+        sys.argv=old
+    out=capsys.readouterr().out
+    assert '"valid": true' in out

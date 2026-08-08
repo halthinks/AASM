@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "name": "verified-build",
+  "description": "Minimal declarative build/verify loop",
+  "start_state": "INGEST",
+  "terminal_states": ["COMPLETE", "FAIL"],
+  "transitions": {
+    "INGEST": ["PLAN", "FAIL"],
+    "PLAN": ["EXECUTE", "FAIL"],
+    "EXECUTE": ["VERIFY", "FAIL"],
+    "VERIFY": ["EXECUTE", "COMPLETE", "FAIL"],
+    "COMPLETE": [],
+    "FAIL": []
+  }
+}

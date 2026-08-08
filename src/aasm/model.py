@@ -11,7 +11,7 @@ class MachineState(str, Enum):
     PAUSE="PAUSE"; COMPLETE="COMPLETE"; FAIL="FAIL"
 
 class EventType(str, Enum):
-    MACHINE_CREATED="machine_created"; TRANSITION_COMMITTED="transition_committed"; SNAPSHOT_PATCHED="snapshot_patched"
+    MACHINE_CREATED="machine_created"; MACHINE_FORKED="machine_forked"; TRANSITION_COMMITTED="transition_committed"; SNAPSHOT_PATCHED="snapshot_patched"
     CHECKPOINT_CREATED="checkpoint_created"; CHECKPOINT_RESTORED="checkpoint_restored"
     GOAL_RECEIVED="goal_received"; PROPOSAL="proposal"; AUTHORIZED="authorized"; RESULT="result"
     TEST_PASSED="test_passed"; TEST_FAILED="test_failed"; INVARIANT_FAILED="invariant_failed"

@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.3.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.4.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -9,11 +9,12 @@ AASM is currently **v0.3.0 / early-stage**. This roadmap describes direction, no
 - persistent DP-memory backend
 - ✅ durable effect lifecycle + idempotency boundary
 - richer event/evidence contracts
+- ✅ declarative machine definitions + initial static model checking
 - improved schema validation
 - async execution primitives
 - configurable retry and recovery policies
 - plugin/provider interfaces
-- ✅ initial CLI inspection and replay tools
+- ✅ historical CLI replay + durable run forking
 - more worked examples
 - integration adapters for popular agent runtimes
 - versioned release packaging
@@ -25,7 +26,7 @@ AASM is currently **v0.3.0 / early-stage**. This roadmap describes direction, no
 - resumable long-running runs
 - resource quotas and budget accounting
 - graph visualization and execution tracing
-- deterministic replay where external side effects permit it
+- ✅ deterministic state replay at explicit event boundaries
 - human approval surfaces
 - policy-as-data for authority rules
 - pluggable adversarial/verifier agents
@@ -37,7 +38,7 @@ AASM is currently **v0.3.0 / early-stage**. This roadmap describes direction, no
 - remote execution protocol
 - multi-runtime SDKs
 - web control/inspection UI
-- formal transition/model checking
+- deeper formal verification / temporal-property checking
 - evidence lineage graphs
 - sandbox integrations
 - simulation-driven plan validation

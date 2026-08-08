@@ -4,13 +4,14 @@ import argparse
 import json
 from dataclasses import asdict
 
+from .definitions import MachineDefinition
 from .engine import AASMEngine
 from .model import MachineState, ProblemSpec
+from .model_check import check_machine
 from .persistence import SQLiteStore
 
 
-def _json(data):
-    print(json.dumps(data, indent=2, sort_keys=True, default=str))
+def _json(data): print(json.dumps(data, indent=2, sort_keys=True, default=str))
 
 
 def _demo(args):
@@ -22,60 +23,50 @@ def _demo(args):
 
 
 def _runs(args):
-    store=SQLiteStore(args.db)
-    _json({"unfinished_runs":store.list_unfinished()})
-    store.close()
+    store=SQLiteStore(args.db); _json({"unfinished_runs":store.list_unfinished()}); store.close()
 
 
 def _replay(args):
-    store=SQLiteStore(args.db)
-    engine=AASMEngine.resume(args.machine_id,store)
-    _json({"machine_id":args.machine_id,"snapshot":asdict(engine.replay()),"event_count":len(engine.events)})
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
+    snap=engine.replay(at_sequence=args.at)
+    _json({"machine_id":args.machine_id,"at_sequence":args.at,"snapshot":asdict(snap),"event_count":len(engine.events)})
+    store.close()
+
+
+def _fork(args):
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); forked=engine.fork(args.at)
+    _json({"source_machine_id":args.machine_id,"source_sequence":args.at,"fork_machine_id":forked.snapshot.machine_id,"snapshot":asdict(forked.snapshot)})
     store.close()
 
 
 def _inspect(args):
-    store=SQLiteStore(args.db)
-    engine=AASMEngine.resume(args.machine_id,store)
-    payload=engine.export()
-    if not args.events:
-        payload.pop("events",None)
-    _json(payload)
-    store.close()
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); payload=engine.export()
+    if not args.events: payload.pop("events",None)
+    _json(payload); store.close()
 
 
 def _effects(args):
-    store=SQLiteStore(args.db)
-    engine=AASMEngine.resume(args.machine_id,store)
-    _json({"machine_id":args.machine_id,"effects":[asdict(e) for e in engine.list_effects()]})
-    store.close()
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
+    _json({"machine_id":args.machine_id,"effects":[asdict(e) for e in engine.list_effects()]}); store.close()
+
+
+def _verify_machine(args):
+    definition=MachineDefinition.load(args.path); report=check_machine(definition); _json(report.to_dict())
+    if not report.valid: raise SystemExit(2)
 
 
 def build_parser():
     parser=argparse.ArgumentParser(prog="aasm",description="Algorithmic Agent State Machine runtime")
     sub=parser.add_subparsers(dest="command",required=True)
-    demo=sub.add_parser("demo",help="run the built-in demonstration")
-    demo.add_argument("--db",help="optional SQLite database path for a durable demo")
-    demo.set_defaults(func=_demo)
-    runs=sub.add_parser("runs",help="list unfinished durable runs")
-    runs.add_argument("--db",required=True,help="SQLite database path")
-    runs.set_defaults(func=_runs)
-    replay=sub.add_parser("replay",help="rebuild a machine snapshot from its event stream")
-    replay.add_argument("machine_id")
-    replay.add_argument("--db",required=True,help="SQLite database path")
-    replay.set_defaults(func=_replay)
-    inspect=sub.add_parser("inspect",help="inspect a persisted machine snapshot")
-    inspect.add_argument("machine_id")
-    inspect.add_argument("--db",required=True,help="SQLite database path")
-    inspect.add_argument("--events",action="store_true",help="include the full event stream")
-    inspect.set_defaults(func=_inspect)
-    effects=sub.add_parser("effects",help="list durable external effects for a run")
-    effects.add_argument("machine_id")
-    effects.add_argument("--db",required=True,help="SQLite database path")
-    effects.set_defaults(func=_effects)
+    demo=sub.add_parser("demo",help="run the built-in demonstration"); demo.add_argument("--db",help="optional SQLite database path for a durable demo"); demo.set_defaults(func=_demo)
+    runs=sub.add_parser("runs",help="list unfinished durable runs"); runs.add_argument("--db",required=True,help="SQLite database path"); runs.set_defaults(func=_runs)
+    replay=sub.add_parser("replay",help="rebuild a machine snapshot from its event stream"); replay.add_argument("machine_id"); replay.add_argument("--db",required=True,help="SQLite database path"); replay.add_argument("--at",type=int,help="replay only through this event sequence"); replay.set_defaults(func=_replay)
+    fork=sub.add_parser("fork",help="fork a durable run from an earlier event sequence"); fork.add_argument("machine_id"); fork.add_argument("--db",required=True,help="SQLite database path"); fork.add_argument("--at",type=int,required=True,help="source event sequence to fork from"); fork.set_defaults(func=_fork)
+    inspect=sub.add_parser("inspect",help="inspect a persisted machine snapshot"); inspect.add_argument("machine_id"); inspect.add_argument("--db",required=True,help="SQLite database path"); inspect.add_argument("--events",action="store_true",help="include the full event stream"); inspect.set_defaults(func=_inspect)
+    effects=sub.add_parser("effects",help="list durable external effects for a run"); effects.add_argument("machine_id"); effects.add_argument("--db",required=True,help="SQLite database path"); effects.set_defaults(func=_effects)
+    verify=sub.add_parser("verify-machine",help="statically validate a declarative machine definition"); verify.add_argument("path",help="JSON/TOML machine definition; YAML when PyYAML is installed"); verify.set_defaults(func=_verify_machine)
     return parser
 
 
 def main():
-    args=build_parser().parse_args()
-    args.func(args)
+    args=build_parser().parse_args(); args.func(args)

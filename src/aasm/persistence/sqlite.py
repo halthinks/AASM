@@ -124,12 +124,17 @@ class SQLiteStore:
         return [event_from_dict(json.loads(row["event_json"])) for row in rows]
 
     def list_unfinished(self) -> list[str]:
-        terminal = (MachineState.COMPLETE.value, MachineState.FAIL.value)
         rows = self._conn.execute(
-            "SELECT machine_id FROM runs WHERE state NOT IN (?, ?) ORDER BY updated_at",
-            terminal,
+            "SELECT machine_id, snapshot_json, state FROM runs ORDER BY updated_at"
         ).fetchall()
-        return [row["machine_id"] for row in rows]
+        unfinished=[]
+        for row in rows:
+            snap=snapshot_from_dict(json.loads(row["snapshot_json"]))
+            definition=snap.metadata.get("machine_definition", {})
+            terminal=set(definition.get("terminal_states", [MachineState.COMPLETE.value, MachineState.FAIL.value]))
+            if row["state"] not in terminal:
+                unfinished.append(row["machine_id"])
+        return unfinished
 
     def save_checkpoint(self, machine_id: str, checkpoint: Checkpoint) -> None:
         payload = json.dumps(snapshot_to_dict(checkpoint.snapshot), sort_keys=True)

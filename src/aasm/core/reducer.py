@@ -10,15 +10,28 @@ from ..persistence.serde import problem_from_dict
 def reduce_event(snapshot: MachineSnapshot | None, event: Event) -> MachineSnapshot:
     """Pure reducer from an event stream to authoritative machine state."""
     if snapshot is None:
-        if event.event_type != EventType.MACHINE_CREATED.value:
-            raise ValueError("First event must be machine_created")
-        problem = problem_from_dict(event.data["problem"])
-        return MachineSnapshot(
-            machine_id=event.machine_id or event.data["machine_id"],
-            version=0,
-            state=event.to_state or event.data["state"],
-            problem=problem,
-        )
+        if event.event_type == EventType.MACHINE_CREATED.value:
+            problem = problem_from_dict(event.data["problem"])
+            snapshot = MachineSnapshot(
+                machine_id=event.machine_id or event.data["machine_id"],
+                version=0,
+                state=event.to_state or event.data["state"],
+                problem=problem,
+            )
+            definition = event.data.get("machine_definition")
+            if definition:
+                snapshot.metadata["machine_definition"] = {
+                    "name": definition.get("name", "unnamed-machine"),
+                    "schema_version": definition.get("schema_version", 1),
+                    "terminal_states": list(definition.get("terminal_states", ["COMPLETE", "FAIL"])),
+                }
+            return snapshot
+        if event.event_type == EventType.MACHINE_FORKED.value:
+            from ..persistence.serde import snapshot_from_dict
+            restored = snapshot_from_dict(event.data["snapshot"])
+            restored.machine_id = event.machine_id or restored.machine_id
+            return restored
+        raise ValueError("First event must be machine_created or machine_forked")
 
     next_snapshot = deepcopy(snapshot)
     if event.event_type == EventType.TRANSITION_COMMITTED.value:
