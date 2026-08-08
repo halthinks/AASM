@@ -4,6 +4,46 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.17.0] - 2026-08-08
+
+### Added
+
+- `ExecutionTelemetryRecord`, `TelemetryPolicy`, and bounded durable execution telemetry
+- automatic remote-worker `STARTED`, `COMPLETED`, and `FAILED` lifecycle telemetry around every lease
+- explicit `LOG`, `PROGRESS`, `ARTIFACT`, and `HEARTBEAT` telemetry kinds for custom workers/executors
+- artifact-reference and duration aggregation in the Control Center and telemetry report
+- observed task/task-class duration statistics that feed subsequent collaboration/fleet calculations
+- `ProvisioningRequest`, `ProvisioningPlan`, `ProvisioningAdapter`, `FunctionProvisioningAdapter`, and `ProvisioningRegistry`
+- fleet provisioning plans derived from enforced fleet targets versus currently registered ACTIVE workers
+- idle-worker preference for drain requests
+- provisioning proposal/execution history and pending-effect visibility
+- optional server-side provider registry for physically executing already-authorized provisioning effects
+- remote and CLI telemetry/provisioning inspection and planning/proposal surfaces
+- execution-telemetry and provisioning-request JSON schemas, documentation, worked example, and regression tests
+
+### Authority and lifecycle semantics
+
+- collaboration recommendation, lease admission, and physical provisioning are three distinct control layers
+- `plan_fleet_provisioning()` only computes a provider-neutral delta; it does not create or destroy infrastructure
+- `propose_provisioning()` turns that intent into the existing durable external-effect system
+- a provisioning adapter is never called until the provisioning effect is explicitly authorized
+- provisioning requests use stable effect idempotency keys and inherit UNKNOWN/reconciliation semantics from the effect system
+- a successful provider-side provision does not automatically register an AASM worker; the actual worker process must connect and heartbeat
+- successful drain effects transition only targeted registered workers to `DRAINING`
+- a control plane with no provisioning registry fails closed on provider execution
+
+### Live feedback semantics
+
+- completion telemetry is recorded only after the lease is durably completed, so telemetry-driven fleet refresh does not count the just-finished task as runnable
+- completed-duration evidence may replace future task estimates unless `metadata.lock_estimated_duration=true`
+- task-class duration evidence is preferred when configured, allowing repeated work classes to self-calibrate
+- telemetry retention is bounded; large logs and artifacts should live externally and be referenced by stable IDs/URIs
+
+### Architectural significance
+
+- v0.17 closes the loop from observed execution time to critical-path estimation, fleet admission, and authority-gated provider provisioning
+- physical infrastructure can now respond to AASM scheduling evidence without collapsing scheduling, authorization, credentials, or provider lifecycle into one opaque agent decision
+
 ## [0.16.0] - 2026-08-08
 
 ### Added
@@ -281,7 +321,7 @@ The project uses semantic-versioning intent while the public API remains experim
 ### Added
 
 - durable resource/capability registry for agents, tools, humans, services, and constrained execution slots
-- capability-aware max-flow scheduling with priorities, reliability/cost filters, durable assignments, utilization, and unmet demand
+- capability-aware max-flow scheduling with priorities, reliability/cost filters, durable assignments, utilization, unmet demand
 - min-cut bottleneck reporting and explicit missing-capability diagnostics
 - automatic durable plan-node ownership updates when task IDs match plan nodes
 - restart/replay/fork-safe resource and scheduling state
