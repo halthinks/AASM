@@ -14,11 +14,11 @@ An effect represents an externally observable operation such as writing a file, 
 
 Every effect has an `idempotency_key`. Re-proposing the same key for one machine returns the original durable effect record instead of creating a second operation. Every retry receives the same key.
 
-AASM prevents duplicate invocation after a recorded success. For systems that support provider-side idempotency, executors should also forward the AASM idempotency key to the provider. This combination provides the strongest practical duplicate protection.
+AASM prevents duplicate invocation after a recorded success. SQLite and PostgreSQL atomically claim an effect attempt before the executor is invoked, preventing two local processes or remote hosts from simultaneously crossing the same authorized effect boundary. For systems that support provider-side idempotency, executors should also forward the AASM idempotency key to the provider.
 
 ## Crash semantics
 
-A normal `AASMEngine.resume(machine_id, store)` is now **passive**: it reconstructs the run without reclassifying live effects. This matters for stateless HTTP/control-plane inspection, where another host may still be legitimately executing a `RUNNING` effect.
+A normal `AASMEngine.resume(machine_id, store)` is **passive**: it reconstructs the run without reclassifying live effects. This matters for stateless HTTP/control-plane inspection, where another host may still be legitimately executing a `RUNNING` effect.
 
 When a process actually died and its in-flight effects must be reconciled, use:
 
@@ -26,14 +26,20 @@ When a process actually died and its in-flight effects must be reconciled, use:
 engine = AASMEngine.resume(machine_id, store, recover_effects=True)
 ```
 
-or `AASMEngine.recover_unfinished(store)`, which opts into effect recovery for unfinished runs.
+For multiple unfinished runs, recovery must still be explicit:
 
-That recovery path converts unresolved `RUNNING` effects to `UNKNOWN`. By default, `execute_effect()` refuses to retry an `UNKNOWN` effect. The caller must reconcile the external outcome using `reconcile_effect()` or explicitly opt into `retry_on_unknown` when the executor is known to be retry-safe.
+```python
+engines = AASMEngine.recover_unfinished(store, recover_effects=True)
+```
+
+Calling `recover_unfinished(store)` without that flag is passive discovery/rehydration and does **not** declare healthy remote work crashed.
+
+The explicit recovery path converts unresolved `RUNNING` effects to `UNKNOWN`. By default, `execute_effect()` refuses to retry an `UNKNOWN` effect. The caller must reconcile the external outcome using `reconcile_effect()` or explicitly opt into `retry_on_unknown` when the executor is known to be retry-safe.
 
 This prevents both dangerous patterns:
 
 1. external operation succeeds; the process dies before local success is recorded; restart blindly repeats the operation;
-2. a healthy remote worker is still executing; a read-only dashboard/API request resumes the run and incorrectly declares its effect `UNKNOWN`.
+2. a healthy remote worker is still executing; a dashboard, maintenance scan, or read-only API request incorrectly declares its effect `UNKNOWN`.
 
 ## Retry semantics
 
@@ -41,4 +47,4 @@ This prevents both dangerous patterns:
 
 ## Current boundary
 
-AASM persists effect intent, authorization, attempts, status, results, errors, evidence, and idempotency metadata. It does not claim that arbitrary external systems themselves are transactional. Exactly-once behavior across a network boundary requires either provider-side idempotency or reconciliation.
+AASM persists effect intent, authorization, attempts, status, results, errors, evidence, and idempotency metadata. It does not claim that arbitrary external systems themselves are transactional. Exactly-once behavior across a network boundary requires provider-side idempotency, an atomic AASM execution owner, and/or explicit reconciliation of ambiguous outcomes.
