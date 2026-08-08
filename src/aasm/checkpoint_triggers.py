@@ -49,13 +49,13 @@ class CheckpointTriggerEngine:
         kind = None
         reason = None
         if policy.on_blocking and bool(report.get("blocking")):
-            kind = ChangeKind.RISK_ESCALATED
+            kind = ChangeKind.RISK_ESCALATION
             reason = "Verifier reported a blocking finding"
         elif policy.on_assumption_changed and bool(report.get("assumption_changed")):
             kind = ChangeKind.ASSUMPTION_CHANGED
             reason = "Verifier reported a changed assumption"
         elif policy.on_unexpected_output and bool(report.get("unexpected_output")):
-            kind = ChangeKind.MATERIAL_PLAN_CHANGE
+            kind = ChangeKind.EVIDENCE_CHANGED
             reason = "Verifier reported unexpected output"
         elif policy.on_tests_failed and report.get("tests_passed") is False:
             kind = ChangeKind.VERIFICATION_FAILED
@@ -66,11 +66,11 @@ class CheckpointTriggerEngine:
 
         signal = ChangeSignal(
             kind=kind,
-            summary=reason,
+            note=reason,
             seed_nodes=[task_id] if task_id else [],
             evidence_ids=list(report.get("evidence_ids", []) or []),
-            source="verifier",
             metadata={
+                "source": "verifier",
                 "verifier_report_id": report_id,
                 "policy_recommendation": report.get("policy_recommendation"),
                 "findings": list(report.get("findings", []) or []),
