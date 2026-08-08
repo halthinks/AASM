@@ -61,8 +61,6 @@ def test_postgres_claim_uses_latest_capacity_not_stale_worker_snapshot():
     try:
         assert stale.list_resources()[0]["capacity"] == 2
         e.update_resource("cpu",{"capacity":0})
-        # The stale engine still believes capacity is 2. PostgreSQL must apply
-        # the canonical capacity=0 configuration written by the other host.
         with pytest.raises(ValueError,match="Resource capacity exhausted"):
             stale.claim_task(TaskDemand("stale-cap-task",["code"],demand=1),"w1",lease_seconds=60)
     finally:
@@ -100,8 +98,6 @@ def test_postgres_claim_uses_latest_quota_not_stale_worker_snapshot():
         assert stale.list_quotas() == []
         e.set_quota(QuotaPolicy("new-one-at-a-time",scope="machine",max_active_leases=1))
         e.claim_task(TaskDemand("task-a",["code"]),"w1",lease_seconds=60)
-        # `stale` has no local copy of the new quota, so only DB-canonical
-        # enforcement can reject this different task.
         with pytest.raises(ValueError,match="Quota exceeded: new-one-at-a-time"):
             stale.claim_task(TaskDemand("task-b",["code"]),"w2",lease_seconds=60)
     finally:
@@ -130,3 +126,57 @@ def test_postgres_stale_hosts_do_not_overwrite_canonical_state():
             c.close()
     finally:
         a.close(); b.close()
+
+
+def test_postgres_effect_execution_has_single_owner_across_hosts():
+    from threading import Event, Thread
+    from aasm import AASMEngine, EffectExecutionError, EffectSpec, EffectStatus
+    from aasm.persistence.postgres import PostgresStore
+
+    a,e=_engine("effect-owner",capacity=1)
+    rec=e.propose_effect(EffectSpec("external-write",idempotency_key="shared-effect"))
+    e.authorize_effect(rec.spec.effect_id)
+    mid=e.snapshot.machine_id
+    b=PostgresStore(DSN)
+    other=AASMEngine.resume(mid,b)
+
+    entered=Event()
+    release=Event()
+    calls=[]
+    result_box={}
+    error_box={}
+
+    def first_executor(spec,key):
+        calls.append("first")
+        entered.set()
+        if not release.wait(10):
+            raise TimeoutError("test executor was not released")
+        return {"owner":"first"}
+
+    def run_first():
+        try:
+            result_box["record"]=e.execute_effect(rec.spec.effect_id,first_executor)
+        except Exception as exc:  # surfaced in the main test thread below
+            error_box["error"]=exc
+
+    thread=Thread(target=run_first,daemon=True)
+    thread.start()
+    try:
+        assert entered.wait(10), "first executor never reached the external boundary"
+
+        def forbidden_second_executor(spec,key):
+            calls.append("second")
+            return {"owner":"second"}
+
+        with pytest.raises(EffectExecutionError,match="already RUNNING"):
+            other.execute_effect(rec.spec.effect_id,forbidden_second_executor)
+        assert calls == ["first"]
+    finally:
+        release.set()
+        thread.join(10)
+        a.close(); b.close()
+
+    assert not thread.is_alive()
+    assert "error" not in error_box
+    assert result_box["record"].status == EffectStatus.SUCCEEDED.value
+    assert result_box["record"].result == {"owner":"first"}
