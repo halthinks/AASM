@@ -45,7 +45,8 @@ def _schedule(args): store=_open(args); engine=AASMEngine.resume(args.machine_id
 def _workers(args): store=_open(args); engine=AASMEngine.resume(args.machine_id,store); _json({"machine_id":args.machine_id,"workers":engine.list_workers(),"quotas":engine.list_quotas(),"leases":engine.list_leases()}); store.close()
 def _claim(args): store=_open(args); engine=AASMEngine.resume(args.machine_id,store); task=TaskDemand(**json.loads(open(args.task,"r",encoding="utf-8").read())); lease=engine.claim_task(task,args.worker,lease_seconds=args.lease_seconds); _json({"machine_id":args.machine_id,"lease":lease}); store.close()
 def _models(args): store=_open(args); engine=AASMEngine.resume(args.machine_id,store); _json({"machine_id":args.machine_id,"models":engine.list_model_profiles(),"last_model_route":engine.last_model_route()}); store.close()
-def _model_route(args): store=_open(args); engine=AASMEngine.resume(args.machine_id,store); result=engine.route_model(ModelRouteRequest(**json.loads(open(args.request,"r",encoding="utf-8").read())); _json(result.to_dict()); store.close()
+def _model_route(args):
+    store=_open(args); engine=AASMEngine.resume(args.machine_id,store); raw=json.loads(open(args.request,"r",encoding="utf-8").read()); result=engine.route_model(ModelRouteRequest(**raw)); _json(result.to_dict()); store.close()
 def _economics(args):
     store=_open(args); engine=AASMEngine.resume(args.machine_id,store); _json({"machine_id":args.machine_id,"economics":engine.economics_summary(),"review_decisions":engine.snapshot.resources.get("economics",{}).get("review_decisions",[]),"telemetry_imports":engine.snapshot.resources.get("economics",{}).get("telemetry_imports",[])}); store.close()
 def _codex_telemetry(args): store=_open(args); engine=AASMEngine.resume(args.machine_id,store); batch=import_otel_jsonl(args.jsonl); _json({"machine_id":args.machine_id,**engine.import_codex_telemetry(batch)}); store.close()
