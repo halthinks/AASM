@@ -22,9 +22,12 @@ class AASMRemoteClient:
         except HTTPError as exc:
             if exc.code==204: return {}
             body=exc.read().decode(errors='replace'); raise RemoteProtocolError(f"HTTP {exc.code}: {body}") from exc
+    @staticmethod
+    def _payload(value): return asdict(value) if hasattr(value,"__dataclass_fields__") else dict(value)
     def health(self): return self._request("GET","/health")
     def create_machine(self,problem:dict): return self._request("POST","/v1/machines",{"problem":problem})
     def state(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/state")
+    def team(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/team")
     def register_worker(self,machine_id,worker:WorkerRecord): return self._request("POST",f"/v1/machines/{machine_id}/workers/register",{"worker":asdict(worker)})
     def heartbeat(self,machine_id,worker_id): return self._request("POST",f"/v1/machines/{machine_id}/workers/{worker_id}/heartbeat",{})
     def claim(self,machine_id,worker_id,task:TaskDemand,lease_seconds=60.0): return self._request("POST",f"/v1/machines/{machine_id}/claim",{"worker_id":worker_id,"task":asdict(task),"lease_seconds":lease_seconds})
@@ -33,12 +36,12 @@ class AASMRemoteClient:
     def complete(self,machine_id,lease_id,result=None): return self._request("POST",f"/v1/machines/{machine_id}/leases/{lease_id}/complete",{"result":result or {}})
     def fail(self,machine_id,lease_id,error): return self._request("POST",f"/v1/machines/{machine_id}/leases/{lease_id}/fail",{"error":error})
     def route_model(self,machine_id,request:ModelRouteRequest): return self._request("POST",f"/v1/machines/{machine_id}/model-route",{"request":asdict(request)})
-    def model_usage(self,machine_id,record):
-        payload=asdict(record) if hasattr(record,"__dataclass_fields__") else dict(record); return self._request("POST",f"/v1/machines/{machine_id}/model-usage",{"record":payload})
-    def model_outcome(self,machine_id,record):
-        payload=asdict(record) if hasattr(record,"__dataclass_fields__") else dict(record); return self._request("POST",f"/v1/machines/{machine_id}/model-outcome",{"record":payload})
-    def configure_governance_budget(self,machine_id,policy):
-        payload=asdict(policy) if hasattr(policy,"__dataclass_fields__") else dict(policy); return self._request("POST",f"/v1/machines/{machine_id}/governance-budget",{"policy":payload})
-    def governance_decide(self,machine_id,context):
-        payload=asdict(context) if hasattr(context,"__dataclass_fields__") else dict(context); return self._request("POST",f"/v1/machines/{machine_id}/governance-decision",{"context":payload})
+    def model_usage(self,machine_id,record): return self._request("POST",f"/v1/machines/{machine_id}/model-usage",{"record":self._payload(record)})
+    def model_outcome(self,machine_id,record): return self._request("POST",f"/v1/machines/{machine_id}/model-outcome",{"record":self._payload(record)})
+    def configure_governance_budget(self,machine_id,policy): return self._request("POST",f"/v1/machines/{machine_id}/governance-budget",{"policy":self._payload(policy)})
+    def governance_decide(self,machine_id,context): return self._request("POST",f"/v1/machines/{machine_id}/governance-decision",{"context":self._payload(context)})
     def complete_governance_review(self,machine_id,decision_id,evidence=None): return self._request("POST",f"/v1/machines/{machine_id}/governance-review/{decision_id}/complete",{"evidence":list(evidence or [])})
+    def initialize_team(self,machine_id,members): return self._request("POST",f"/v1/machines/{machine_id}/team/initialize",{"members":[self._payload(x) for x in members]})
+    def builder_output(self,machine_id,output): return self._request("POST",f"/v1/machines/{machine_id}/team/builder-output",{"output":self._payload(output)})
+    def verifier_report(self,machine_id,report): return self._request("POST",f"/v1/machines/{machine_id}/team/verifier-report",{"report":self._payload(report)})
+    def planner_decision(self,machine_id,decision): return self._request("POST",f"/v1/machines/{machine_id}/team/planner-decision",{"decision":self._payload(decision)})
