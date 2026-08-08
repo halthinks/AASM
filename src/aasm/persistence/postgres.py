@@ -7,7 +7,7 @@ import time
 from ..checkpoint import Checkpoint
 from ..core.reducer import reduce_event
 from ..effects import EffectExecutionError, EffectRecord, EffectStatus, EffectUnknownOutcome
-from ..model import Event, EventType, MachineSnapshot, MachineState
+from ..model import Event, EventType, MachineSnapshot, MachineState, new_id
 from .serde import event_from_dict, event_to_dict, snapshot_from_dict, snapshot_to_dict
 from .effect_serde import effect_from_dict, effect_to_dict
 
@@ -87,7 +87,8 @@ class PostgresStore:
         CREATE INDEX IF NOT EXISTS aasm_claim_resource_idx ON aasm_task_claims(machine_id,resource_id,expires_at);
         """
         with self._conn.transaction():
-            with self._conn.cursor() as cur: cur.execute(ddl)
+            with self._conn.cursor() as cur:
+                cur.execute(ddl)
 
     @staticmethod
     def _j(data): return json.dumps(data, sort_keys=True)
@@ -111,7 +112,6 @@ class PostgresStore:
                 )
 
     def append(self, machine_id: str, event: Event, snapshot: MachineSnapshot) -> Event:
-        """Reduce one event against the locked canonical materialized snapshot."""
         with self._conn.transaction():
             with self._conn.cursor() as cur:
                 cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))",(self._event_lock_key(machine_id),))
@@ -132,18 +132,15 @@ class PostgresStore:
             cur.execute("SELECT snapshot_json FROM aasm_runs WHERE machine_id=%s",(machine_id,)); row=cur.fetchone()
         if row is None: raise KeyError(machine_id)
         return snapshot_from_dict(self._obj(row[0]))
-
     def load_events(self,machine_id,after_sequence=0):
         with self._conn.cursor() as cur:
             cur.execute("SELECT event_json FROM aasm_events WHERE machine_id=%s AND sequence>%s ORDER BY sequence",(machine_id,after_sequence)); rows=cur.fetchall()
         return [event_from_dict(self._obj(r[0])) for r in rows]
-
     def load_first_event(self,machine_id):
         with self._conn.cursor() as cur:
             cur.execute("SELECT event_json FROM aasm_events WHERE machine_id=%s ORDER BY sequence LIMIT 1",(machine_id,)); row=cur.fetchone()
         if row is None: raise KeyError(machine_id)
         return event_from_dict(self._obj(row[0]))
-
     def last_event_sequence(self,machine_id):
         with self._conn.cursor() as cur:
             cur.execute("SELECT COALESCE(MAX(sequence),0) FROM aasm_events WHERE machine_id=%s",(machine_id,)); return int(cur.fetchone()[0])
@@ -197,7 +194,7 @@ class PostgresStore:
         if record.status==EffectStatus.RUNNING.value: raise EffectExecutionError(f"Effect {record.spec.effect_id} is already RUNNING on another executor")
         if record.status!=EffectStatus.AUTHORIZED.value: raise ValueError(f"Effect {record.spec.effect_id} is not authorized (status={record.status})")
         if record.attempts>=max(1,record.spec.retry_policy.max_attempts): raise EffectExecutionError(f"Effect {record.spec.effect_id} exhausted retry attempts")
-        record.attempts+=1; record.status=EffectStatus.RUNNING.value; record.updated_at=time.time(); return record
+        record.attempts+=1; record.execution_id=new_id("exec"); record.status=EffectStatus.RUNNING.value; record.updated_at=time.time(); return record
 
     def claim_effect_attempt(self,machine_id,effect_id):
         with self._conn.transaction():
@@ -207,6 +204,18 @@ class PostgresStore:
                 record=self._prepare_effect_attempt(effect_from_dict(self._obj(row[0])))
                 if record.status!=EffectStatus.SUCCEEDED.value: cur.execute("UPDATE aasm_effects SET status=%s,effect_json=%s::jsonb,updated_at=%s WHERE machine_id=%s AND effect_id=%s",(record.status,self._j(effect_to_dict(record)),record.updated_at,machine_id,effect_id))
                 return record
+
+    def finish_effect_attempt(self,record:EffectRecord,execution_id:str)->EffectRecord:
+        if record.status not in {EffectStatus.SUCCEEDED.value,EffectStatus.FAILED.value}: raise ValueError("effect finalization requires SUCCEEDED or FAILED")
+        with self._conn.transaction():
+            with self._conn.cursor() as cur:
+                cur.execute("SELECT effect_json FROM aasm_effects WHERE machine_id=%s AND effect_id=%s FOR UPDATE",(record.machine_id,record.spec.effect_id)); row=cur.fetchone()
+                if row is None: raise KeyError(record.spec.effect_id)
+                current=effect_from_dict(self._obj(row[0]))
+                if current.status!=EffectStatus.RUNNING.value or current.execution_id!=execution_id or current.attempts!=record.attempts:
+                    raise EffectExecutionError(f"Effect {record.spec.effect_id} lost execution ownership before durable finalization; reconcile external outcome")
+                current.status=record.status; current.result=deepcopy(record.result); current.error=record.error; current.evidence=deepcopy(record.evidence); current.updated_at=record.updated_at
+                cur.execute("UPDATE aasm_effects SET status=%s,effect_json=%s::jsonb,updated_at=%s WHERE machine_id=%s AND effect_id=%s",(current.status,self._j(effect_to_dict(current)),current.updated_at,current.machine_id,current.spec.effect_id)); return current
 
     def mark_running_effects_unknown(self,machine_id):
         changed=[]
