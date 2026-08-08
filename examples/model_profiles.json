@@ -1,0 +1,5 @@
+[
+  {"model_id":"luna","provider":"example","capabilities":["scan","simple_code"],"strength":0.45,"cost_per_1k_output":0.2,"latency_score":0.95,"context_window":100000},
+  {"model_id":"terra","provider":"example","capabilities":["scan","code","test"],"strength":0.72,"cost_per_1k_output":1.0,"latency_score":0.75,"context_window":200000},
+  {"model_id":"sol","provider":"example","capabilities":["code","test","review","architecture"],"strength":0.96,"cost_per_1k_output":4.0,"latency_score":0.45,"context_window":300000}
+]
