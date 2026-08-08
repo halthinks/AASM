@@ -44,6 +44,13 @@ def _inspect(args):
     store.close()
 
 
+def _effects(args):
+    store=SQLiteStore(args.db)
+    engine=AASMEngine.resume(args.machine_id,store)
+    _json({"machine_id":args.machine_id,"effects":[asdict(e) for e in engine.list_effects()]})
+    store.close()
+
+
 def build_parser():
     parser=argparse.ArgumentParser(prog="aasm",description="Algorithmic Agent State Machine runtime")
     sub=parser.add_subparsers(dest="command",required=True)
@@ -62,6 +69,10 @@ def build_parser():
     inspect.add_argument("--db",required=True,help="SQLite database path")
     inspect.add_argument("--events",action="store_true",help="include the full event stream")
     inspect.set_defaults(func=_inspect)
+    effects=sub.add_parser("effects",help="list durable external effects for a run")
+    effects.add_argument("machine_id")
+    effects.add_argument("--db",required=True,help="SQLite database path")
+    effects.set_defaults(func=_effects)
     return parser
 
 

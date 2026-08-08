@@ -1,12 +1,13 @@
 # AASM Roadmap
 
-AASM is currently **v0.2.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.3.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
 - ✅ durable machine-state persistence (event stream + SQLite)
 - ✅ persistent checkpoint backend (SQLite)
 - persistent DP-memory backend
+- ✅ durable effect lifecycle + idempotency boundary
 - richer event/evidence contracts
 - improved schema validation
 - async execution primitives

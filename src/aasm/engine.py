@@ -12,6 +12,7 @@ from .authority import SingleControllerAuthority
 from .core.reducer import reduce_event, replay_events
 from .persistence import MemoryStore
 from .persistence.serde import problem_to_dict, snapshot_to_dict
+from .effects import EffectRecord, EffectSpec, EffectStatus, EffectExecutionError, EffectUnknownOutcome
 
 TRANSITIONS={
  MachineState.INGEST:{MachineState.FORMALIZE,MachineState.PAUSE,MachineState.FAIL},
@@ -60,6 +61,10 @@ class AASMEngine:
         self.store=store; self.events=list(events); self.snapshot=snapshot
         self.router=AlgorithmRouter(); self.graph=PlanGraph(); self.memory=DPMemory(); self.checkpoints=CheckpointStore()
         self.flow=ResourceFlowAllocator(); self.adversary=default_verifier(); self.authority=authority or SingleControllerAuthority(); self.agents={}
+        marker=getattr(store, "mark_running_effects_unknown", None)
+        if marker:
+            for record in marker(machine_id):
+                self.emit(EventType.EFFECT_UNKNOWN.value,self.state.value,self.state.value,"recovered unresolved effect",data={"effect_id":record.spec.effect_id,"idempotency_key":record.spec.idempotency_key})
         return self
 
     @classmethod
@@ -120,6 +125,66 @@ class AASMEngine:
         event=Event(new_id("evt"),now(),EventType.CHECKPOINT_RESTORED.value,MachineState.BACKTRACK.value,restored.state,reason,data={"checkpoint_id":checkpoint_id,"snapshot":snapshot_to_dict(restored)},machine_id=self.snapshot.machine_id)
         self._commit(event)
         return self.snapshot
+
+    def propose_effect(self, spec:EffectSpec) -> EffectRecord:
+        existing=self.store.find_effect_by_idempotency(self.snapshot.machine_id,spec.idempotency_key)
+        if existing is not None:
+            return existing
+        record=EffectRecord(self.snapshot.machine_id,spec)
+        self.store.save_effect(record)
+        self.emit(EventType.EFFECT_PROPOSED.value,self.state.value,self.state.value,"effect proposed",data={"effect_id":spec.effect_id,"effect_type":spec.effect_type,"idempotency_key":spec.idempotency_key})
+        return record
+
+    def authorize_effect(self,effect_id:str,authority:str="controller") -> EffectRecord:
+        record=self.store.load_effect(self.snapshot.machine_id,effect_id)
+        if record.status == EffectStatus.SUCCEEDED.value:
+            return record
+        if record.status not in {EffectStatus.PROPOSED.value,EffectStatus.FAILED.value}:
+            raise ValueError(f"Cannot authorize effect from status {record.status}")
+        record.status=EffectStatus.AUTHORIZED.value; record.authorization_id=new_id("auth"); record.authority=authority; record.updated_at=now()
+        self.store.save_effect(record)
+        self.emit(EventType.EFFECT_AUTHORIZED.value,self.state.value,self.state.value,"effect authorized",data={"effect_id":effect_id,"authorization_id":record.authorization_id,"authority":authority})
+        return record
+
+    def execute_effect(self,effect_id:str,executor) -> EffectRecord:
+        record=self.store.load_effect(self.snapshot.machine_id,effect_id)
+        if record.status == EffectStatus.SUCCEEDED.value:
+            return record
+        if record.status == EffectStatus.UNKNOWN.value:
+            if not record.spec.retry_policy.retry_on_unknown:
+                raise EffectUnknownOutcome(f"Effect {effect_id} has an unknown prior outcome; reconcile before retry")
+            record.status=EffectStatus.AUTHORIZED.value
+        if record.status == EffectStatus.FAILED.value:
+            if not record.spec.retry_policy.retry_on_failure:
+                raise EffectExecutionError(f"Effect {effect_id} failed and retry_on_failure is disabled")
+            record.status=EffectStatus.AUTHORIZED.value
+        if record.status != EffectStatus.AUTHORIZED.value:
+            raise ValueError(f"Effect {effect_id} is not authorized (status={record.status})")
+        if record.attempts >= max(1,record.spec.retry_policy.max_attempts):
+            raise EffectExecutionError(f"Effect {effect_id} exhausted retry attempts")
+        record.attempts += 1; record.status=EffectStatus.RUNNING.value; record.updated_at=now(); self.store.save_effect(record)
+        self.emit(EventType.EFFECT_STARTED.value,self.state.value,self.state.value,"effect started",data={"effect_id":effect_id,"attempt":record.attempts,"idempotency_key":record.spec.idempotency_key})
+        try:
+            result=executor(record.spec,record.spec.idempotency_key)
+        except Exception as exc:
+            record.status=EffectStatus.FAILED.value; record.error=f"{type(exc).__name__}: {exc}"; record.updated_at=now(); self.store.save_effect(record)
+            self.emit(EventType.EFFECT_FAILED.value,self.state.value,self.state.value,"effect failed",data={"effect_id":effect_id,"attempt":record.attempts,"error":record.error})
+            return record
+        record.status=EffectStatus.SUCCEEDED.value; record.result=dict(result or {}); record.error=None; record.updated_at=now(); self.store.save_effect(record)
+        self.emit(EventType.EFFECT_SUCCEEDED.value,self.state.value,self.state.value,"effect succeeded",data={"effect_id":effect_id,"attempt":record.attempts,"result":record.result})
+        return record
+
+    def reconcile_effect(self,effect_id:str,*,succeeded:bool,result:dict|None=None,evidence:list[str]|None=None,error:str|None=None) -> EffectRecord:
+        record=self.store.load_effect(self.snapshot.machine_id,effect_id)
+        if record.status != EffectStatus.UNKNOWN.value:
+            raise ValueError("Only UNKNOWN effects require reconciliation")
+        record.status=EffectStatus.SUCCEEDED.value if succeeded else EffectStatus.FAILED.value
+        record.result=dict(result or {}) if succeeded else None; record.error=error; record.evidence=list(evidence or []); record.updated_at=now(); self.store.save_effect(record)
+        self.emit(EventType.EFFECT_RECONCILED.value,self.state.value,self.state.value,"effect reconciled",record.evidence,{"effect_id":effect_id,"status":record.status,"result":record.result,"error":record.error})
+        return record
+
+    def list_effects(self):
+        return self.store.list_effects(self.snapshot.machine_id)
 
     def propose_and_execute(self,agent_id,*,votes=None):
         agent=self.agents[agent_id]; proposal=agent.propose(deepcopy(self.snapshot)); self.emit(EventType.PROPOSAL.value,self.state.value,self.state.value,proposal.rationale,data=asdict(proposal))

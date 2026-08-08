@@ -4,6 +4,23 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.3.0] - 2026-08-07
+
+### Added
+
+- durable external-effect records with explicit proposal, authorization, execution, failure, unknown-outcome, and reconciliation lifecycle
+- machine-scoped idempotency keys and duplicate-proposal suppression
+- persisted effect attempts, results, errors, evidence, authority, and retry policy
+- crash recovery that converts in-flight effects to `UNKNOWN` instead of blindly retrying
+- explicit reconciliation API for ambiguous external outcomes
+- `aasm effects` CLI inspection, effect JSON schema, documentation, and example
+
+### Safety semantics
+
+- recorded successful effects are never re-invoked by AASM
+- retries reuse the original idempotency key
+- unknown outcomes require reconciliation unless retry-on-unknown is explicitly enabled
+
 ## [0.2.0] - 2026-08-07
 
 ### Added

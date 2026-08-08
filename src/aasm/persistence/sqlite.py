@@ -8,7 +8,9 @@ from pathlib import Path
 
 from ..checkpoint import Checkpoint
 from ..model import Event, MachineSnapshot, MachineState
+from ..effects import EffectRecord, EffectStatus
 from .serde import event_from_dict, event_to_dict, snapshot_from_dict, snapshot_to_dict
+from .effect_serde import effect_from_dict, effect_to_dict
 
 
 class SQLiteStore:
@@ -58,8 +60,20 @@ class SQLiteStore:
                     created_at REAL NOT NULL,
                     FOREIGN KEY (machine_id) REFERENCES runs(machine_id) ON DELETE CASCADE
                 );
+                CREATE TABLE IF NOT EXISTS effects (
+                    effect_id TEXT PRIMARY KEY,
+                    machine_id TEXT NOT NULL,
+                    idempotency_key TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    effect_json TEXT NOT NULL,
+                    created_at REAL NOT NULL,
+                    updated_at REAL NOT NULL,
+                    UNIQUE(machine_id, idempotency_key),
+                    FOREIGN KEY (machine_id) REFERENCES runs(machine_id) ON DELETE CASCADE
+                );
                 CREATE INDEX IF NOT EXISTS idx_events_machine ON events(machine_id, sequence);
                 CREATE INDEX IF NOT EXISTS idx_runs_state ON runs(state);
+                CREATE INDEX IF NOT EXISTS idx_effects_machine ON effects(machine_id, status);
                 """
             )
 
@@ -135,6 +149,51 @@ class SQLiteStore:
         if row is None:
             raise KeyError(checkpoint_id)
         return Checkpoint(checkpoint_id, snapshot_from_dict(json.loads(row["snapshot_json"])), row["reason"])
+
+    def save_effect(self, record: EffectRecord) -> None:
+        payload = json.dumps(effect_to_dict(record), sort_keys=True)
+        with self._lock, self._conn:
+            self._conn.execute(
+                """INSERT INTO effects(effect_id, machine_id, idempotency_key, status, effect_json, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(effect_id) DO UPDATE SET
+                     status=excluded.status, effect_json=excluded.effect_json, updated_at=excluded.updated_at""",
+                (record.spec.effect_id, record.machine_id, record.spec.idempotency_key, record.status, payload, record.created_at, record.updated_at),
+            )
+
+    def load_effect(self, machine_id: str, effect_id: str) -> EffectRecord:
+        row = self._conn.execute(
+            "SELECT effect_json FROM effects WHERE machine_id=? AND effect_id=?",
+            (machine_id, effect_id),
+        ).fetchone()
+        if row is None:
+            raise KeyError(effect_id)
+        return effect_from_dict(json.loads(row["effect_json"]))
+
+    def find_effect_by_idempotency(self, machine_id: str, idempotency_key: str) -> EffectRecord | None:
+        row = self._conn.execute(
+            "SELECT effect_json FROM effects WHERE machine_id=? AND idempotency_key=?",
+            (machine_id, idempotency_key),
+        ).fetchone()
+        return None if row is None else effect_from_dict(json.loads(row["effect_json"]))
+
+    def list_effects(self, machine_id: str) -> list[EffectRecord]:
+        rows = self._conn.execute(
+            "SELECT effect_json FROM effects WHERE machine_id=? ORDER BY created_at, effect_id",
+            (machine_id,),
+        ).fetchall()
+        return [effect_from_dict(json.loads(r["effect_json"])) for r in rows]
+
+    def mark_running_effects_unknown(self, machine_id: str) -> list[EffectRecord]:
+        changed=[]
+        for record in self.list_effects(machine_id):
+            if record.status == EffectStatus.RUNNING.value:
+                record.status = EffectStatus.UNKNOWN.value
+                record.error = "process ended while effect outcome was unresolved"
+                record.updated_at = time.time()
+                self.save_effect(record)
+                changed.append(record)
+        return changed
 
     def close(self) -> None:
         self._conn.close()

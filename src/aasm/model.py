@@ -18,6 +18,9 @@ class EventType(str, Enum):
     ASSUMPTION_INVALIDATED="assumption_invalidated"; DEPENDENCY_DISCOVERED="dependency_discovered"
     BETTER_PATH_FOUND="better_path_found"; RESOURCE_EXHAUSTED="resource_exhausted"
     USER_INTERRUPT="user_interrupt"; ACCEPTANCE_SATISFIED="acceptance_satisfied"
+    EFFECT_PROPOSED="effect_proposed"; EFFECT_AUTHORIZED="effect_authorized"
+    EFFECT_STARTED="effect_started"; EFFECT_SUCCEEDED="effect_succeeded"; EFFECT_FAILED="effect_failed"
+    EFFECT_UNKNOWN="effect_unknown"; EFFECT_CANCELLED="effect_cancelled"; EFFECT_RECONCILED="effect_reconciled"
 
 @dataclass(frozen=True)
 class CapabilitySet:

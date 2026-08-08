@@ -10,7 +10,7 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.2.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.3.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
@@ -146,7 +146,7 @@ Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems 
 ### Requirements
 
 - Python **3.11+**
-- No runtime dependencies beyond the Python standard library in v0.2.0
+- No runtime dependencies beyond the Python standard library in v0.3.0
 
 ### Install from a clone
 
@@ -175,7 +175,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.2.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.3.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -221,6 +221,12 @@ engine = AASMEngine.resume(machine_id, store)
 
 See [`docs/DURABLE_RUNTIME.md`](docs/DURABLE_RUNTIME.md) and [`examples/durable_run.py`](examples/durable_run.py).
 
+### Durable external effects
+
+AASM can now persist externally observable actions separately from model reasoning. Each effect has an authorization state, retry policy, idempotency key, durable result/error record, and crash-recovery semantics. If a process dies while an effect is running, AASM marks the outcome `UNKNOWN` and refuses a blind retry by default.
+
+See [`docs/EFFECT_SYSTEM.md`](docs/EFFECT_SYSTEM.md) and [`examples/effect_demo.py`](examples/effect_demo.py).
+
 ## Orchestration profiles
 
 AASM ships with multiple profiles to demonstrate that governance and role structure are independent of the core runtime:
@@ -264,9 +270,9 @@ It is a control/runtime layer intended to sit around or underneath agent behavio
 
 ## Project status
 
-**Current version: `0.2.0` — early-stage / experimental.**
+**Current version: `0.3.0` — early-stage / experimental.**
 
-The runtime now includes an event-sourced state path, SQLite durability, deterministic replay for event-sourced fields, persisted checkpoints, and crash/restart recovery. The next stages focus on durable external effects, richer recovery semantics, async/distributed execution, declarative machine definitions, model checking, observability, and integration adapters.
+The runtime now includes an event-sourced state path, SQLite durability, deterministic replay for event-sourced fields, persisted checkpoints, crash/restart recovery, and a durable external-effect lifecycle with idempotency and unknown-outcome reconciliation. The next stages focus on richer recovery semantics, async/distributed execution, declarative machine definitions, model checking, observability, and integration adapters.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 

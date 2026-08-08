@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/effect.schema.json",
+  "title": "AASM Effect Record",
+  "type": "object",
+  "required": ["machine_id", "spec", "status", "attempts", "created_at", "updated_at"],
+  "properties": {
+    "machine_id": {"type": "string"},
+    "status": {"enum": ["PROPOSED", "AUTHORIZED", "RUNNING", "SUCCEEDED", "FAILED", "UNKNOWN", "CANCELLED"]},
+    "attempts": {"type": "integer", "minimum": 0},
+    "authorization_id": {"type": ["string", "null"]},
+    "authority": {"type": ["string", "null"]},
+    "result": {"type": ["object", "null"]},
+    "error": {"type": ["string", "null"]},
+    "evidence": {"type": "array", "items": {"type": "string"}},
+    "created_at": {"type": "number"},
+    "updated_at": {"type": "number"},
+    "spec": {
+      "type": "object",
+      "required": ["effect_id", "effect_type", "payload", "idempotency_key", "retry_policy", "reversible"],
+      "properties": {
+        "effect_id": {"type": "string"},
+        "effect_type": {"type": "string", "minLength": 1},
+        "payload": {"type": "object"},
+        "idempotency_key": {"type": "string", "minLength": 1},
+        "preconditions": {"type": "array"},
+        "postconditions": {"type": "array"},
+        "retry_policy": {
+          "type": "object",
+          "required": ["max_attempts", "retry_on_failure", "retry_on_unknown"],
+          "properties": {
+            "max_attempts": {"type": "integer", "minimum": 1},
+            "retry_on_failure": {"type": "boolean"},
+            "retry_on_unknown": {"type": "boolean"}
+          },
+          "additionalProperties": false
+        },
+        "reversible": {"type": "boolean"},
+        "compensation": {"type": ["object", "null"]}
+      }
+    }
+  }
+}
