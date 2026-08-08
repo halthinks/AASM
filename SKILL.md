@@ -72,7 +72,18 @@ Run physical workers with `OrchestratedRemoteWorker` or `aasm worker`. Register 
 
 `lease → execution contract → model route → executor selection → provider/Codex invocation → usage/evidence capture → durable completion/failure`.
 
-Report returned `ModelUsageRecord` through the control plane before lease completion so later adaptive routing has empirical task/model/executor/outcome data. Worker restarts may reuse a durable `worker_id` only when the resource binding is unchanged.
+Report returned `ModelUsageRecord` through the control plane before lease completion. Worker restarts may reuse a durable `worker_id` only when the resource binding is unchanged.
+
+## Adaptive model routing
+Use adaptive routing only from **explicit evaluated outcomes**. Execution success, a non-error API response, or a completed lease is not by itself evidence that the model's work was accepted.
+
+Classify repeatable work with a stable `task_class`. After verification, record `ModelOutcomeRecord` with the model used plus accepted/rejected status, repair requirement, verification score, latency, cost, executor, and relevant provenance. Use `record_model_outcome()` locally or `AASMRemoteClient.model_outcome()` remotely.
+
+Static routing remains authoritative for eligibility. Empirical history may re-rank eligible models but must never weaken configured capability, minimum-strength, context, enabled-state, candidate-set, or cost-ceiling constraints. Apply empirical acceptance floors to the Wilson lower bound, not the raw observed rate. `ModelPerformance.confidence` means concentration of the Wilson acceptance interval (`1 - interval width`), not probability that the model is correct.
+
+When evidence is insufficient, retain the deterministic static route. Enable `explore_under_sampled` only when deliberate calibration is wanted; calibration deterministically selects an eligible under-sampled model rather than randomizing production work.
+
+Use `empirical_optimize=cost_per_quality` when the goal is the least-cost model with demonstrated conservative quality, `quality` for the strongest measured acceptance, or `latency` for measured speed among statically eligible models. Keep task classes narrow enough that their outcomes are meaningfully comparable.
 
 ## Model economics and review efficiency
 Treat model calls as resource consumption with purpose. Record productive, verification, governance, permission-review, synthesis, and retry usage separately, including cached-input reads and explicit cache-write tokens when the provider exposes them. Prefer deterministic rules for routine benign permission decisions; escalate to model review when assumptions change, tests fail, the change is materially large, or the operation is destructive, credential-related, security-sensitive, externally mutating, or irreversible.
