@@ -3,11 +3,12 @@ from __future__ import annotations
 import argparse, json
 from dataclasses import asdict
 from .adaptive_routing import ModelOutcomeRecord
+from .change_impact import ChangeSignal
 from .collaboration import CollaborationPolicy
 from .codex_telemetry import import_otel_jsonl
 from .definitions import MachineDefinition
 from .governance import GovernanceBudgetPolicy, GovernanceContext
-from .runtime_v14 import AASMEngine
+from .runtime_v15 import AASMEngine
 from .team_protocol import BuilderOutput, PlannerDecision, TeamMember, VerifierReport
 from .model import MachineState, ProblemSpec
 from .model_check import check_machine
@@ -38,8 +39,10 @@ def _memory(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store)
 def _evidence(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); p={"evidence":e.snapshot.evidence}; p.update({"lineage":[asdict(x) for x in e.evidence_lineage(args.lineage)]} if args.lineage else {}); _json(p); store.close()
 def _resources(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"resources":e.list_resources(),"last_schedule":e.last_schedule()}); store.close()
 def _schedule(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.schedule([TaskDemand(**x) for x in _load(args.tasks)]).to_dict()); store.close()
-def _collaboration(args):
-    store=_open(args); e=AASMEngine.resume(args.machine_id,store); policy=CollaborationPolicy(**(_load(args.policy) if args.policy else {})); task_rows=_load(args.tasks) if args.tasks else None; task_list=None if task_rows is None else [TaskDemand(**x) for x in task_rows]; _json(e.analyze_collaboration(task_list,policy)); store.close()
+def _collaboration(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); policy=CollaborationPolicy(**(_load(args.policy) if args.policy else {})); rows=_load(args.tasks) if args.tasks else None; tasks=None if rows is None else [TaskDemand(**x) for x in rows]; _json(e.analyze_collaboration(tasks,policy)); store.close()
+def _change_control(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"paused_tasks":e.paused_tasks(),"last_impact":e.last_impact(),"impacts":e.impact_history()}); store.close()
+def _change_analyze(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.analyze_change(ChangeSignal(**_load(args.signal)),pause_affected=not args.no_pause)); store.close()
+def _change_resolve(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); resume=_load(args.resume_nodes) if args.resume_nodes else []; retire=_load(args.retire_nodes) if args.retire_nodes else []; _json(e.resolve_change_impact(args.planner_id,args.impact_id,resume_nodes=resume,retire_nodes=retire,plan_decision_id=args.plan_decision_id)); store.close()
 def _workers(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"workers":e.list_workers(),"quotas":e.list_quotas(),"leases":e.list_leases()}); store.close()
 def _claim(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.claim_task(TaskDemand(**_load(args.task)),args.worker,lease_seconds=args.lease_seconds)); store.close()
 def _models(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"models":e.list_model_profiles(),"last_model_route":e.last_model_route()}); store.close()
@@ -82,10 +85,12 @@ def build_parser():
     q=stored("replay","replay"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--at",type=int); q.set_defaults(func=_replay)
     q=stored("fork","fork"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--at",type=int,required=True); q.set_defaults(func=_fork)
     q=stored("inspect","inspect"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--events",action="store_true"); q.set_defaults(func=_inspect)
-    for name,func in [("effects",_effects),("plan",_plan),("memory",_memory),("resources",_resources),("workers",_workers),("models",_models),("economics",_economics),("governance",_governance),("team",_team)]: q=stored(name,name); q.add_argument("machine_id"); _add_store_args(q); q.set_defaults(func=func)
+    for name,func in [("effects",_effects),("plan",_plan),("memory",_memory),("resources",_resources),("workers",_workers),("models",_models),("economics",_economics),("governance",_governance),("team",_team),("change-control",_change_control)]: q=stored(name,name); q.add_argument("machine_id"); _add_store_args(q); q.set_defaults(func=func)
     q=stored("evidence","evidence"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--lineage"); q.set_defaults(func=_evidence)
     q=stored("schedule","schedule"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--tasks",required=True); q.set_defaults(func=_schedule)
     q=stored("collaboration","analyze useful worker fan-out"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--tasks"); q.add_argument("--policy"); q.set_defaults(func=_collaboration)
+    q=stored("change-analyze","analyze and selectively pause affected plan region"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--signal",required=True); q.add_argument("--no-pause",action="store_true"); q.set_defaults(func=_change_analyze)
+    q=stored("change-resolve","resolve an impact checkpoint as Planner"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--impact-id",required=True); q.add_argument("--planner-id",required=True); q.add_argument("--resume-nodes"); q.add_argument("--retire-nodes"); q.add_argument("--plan-decision-id"); q.set_defaults(func=_change_resolve)
     q=stored("claim","claim"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--worker",required=True); q.add_argument("--task",required=True); q.add_argument("--lease-seconds",type=float,default=60); q.set_defaults(func=_claim)
     q=stored("model-route","model route"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--request",required=True); q.set_defaults(func=_model_route)
     q=stored("model-outcome","record evaluated model outcome"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--record",required=True); q.set_defaults(func=_model_outcome)
