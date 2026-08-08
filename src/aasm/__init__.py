@@ -1,4 +1,4 @@
-from .runtime import AASMEngine
+from .runtime_v08 import AASMEngine
 from .model import MachineState, ProblemSpec, TaskEnvelope, Proposal, Result, CapabilitySet
 from .agents import AASMAgent, FunctionAgent
 from .authority import SingleControllerAuthority, AutonomousAuthority, QuorumAuthority, HierarchicalAuthority
@@ -7,6 +7,8 @@ from .definitions import MachineDefinition, default_machine_definition
 from .model_check import ModelCheckIssue, ModelCheckReport, check_machine
 from .persistence import MemoryStore, SQLiteStore
 from .workers import WorkerRecord, WorkerStatus, TaskLease, LeaseStatus, QuotaPolicy
+from .model_routing import ModelProfile, ModelRouteRequest, ModelRouteResult, ModelStrengthRouter
+from .remote import AASMRemoteClient, RemoteProtocolError
 
 __all__=[
     "AASMEngine","MachineState","ProblemSpec","TaskEnvelope","Proposal","Result","CapabilitySet",
@@ -14,7 +16,8 @@ __all__=[
     "MemoryStore","SQLiteStore","EffectSpec","EffectRecord","EffectStatus","RetryPolicy","EffectExecutionError","EffectUnknownOutcome",
     "MachineDefinition","default_machine_definition","ModelCheckIssue","ModelCheckReport","check_machine",
     "ResourceRecord","TaskDemand","Assignment","ScheduleResult","CapabilityScheduler",
-    "WorkerRecord","WorkerStatus","TaskLease","LeaseStatus","QuotaPolicy"
+    "WorkerRecord","WorkerStatus","TaskLease","LeaseStatus","QuotaPolicy",
+    "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","AASMRemoteClient","RemoteProtocolError"
 ]
 
 from .graph import PlanNode, PlanEdge, PlanGraph
