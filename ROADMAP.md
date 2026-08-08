@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.6.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.7.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -10,6 +10,9 @@ AASM is currently **v0.6.0 / early-stage**. This roadmap describes direction, no
 - ✅ durable plan graph + evidence lineage
 - ✅ durable effect lifecycle + idempotency boundary
 - ✅ durable capability registry + resource scheduler
+- ✅ distributed worker registry + leases
+- ✅ crash-safe task claiming + lease expiry/reclaim
+- ✅ worker/resource quota enforcement
 - richer event/evidence contracts
 - ✅ declarative machine definitions + initial static model checking
 - improved schema validation
@@ -23,10 +26,10 @@ AASM is currently **v0.6.0 / early-stage**. This roadmap describes direction, no
 
 ## Next architecture layer
 
-- distributed workers and leases
-- crash-safe orchestration
-- resumable long-running runs
-- resource quotas and budget accounting
+- remote worker transport/protocol
+- Postgres-backed coordination and advisory-lock claims
+- resumable long-running worker sessions
+- budget accounting beyond active capacity quotas
 - graph visualization and execution tracing
 - ✅ deterministic state replay at explicit event boundaries
 - human approval surfaces
