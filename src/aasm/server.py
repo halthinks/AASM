@@ -42,15 +42,14 @@ def make_handler(store_target:str,token:str|None=None):
             self.end_headers(); self.wfile.write(raw)
         def _read(self):
             n=int(self.headers.get("Content-Length","0") or 0)
-            if n < 0 or n > MAX_BODY_BYTES:
-                raise ValueError(f"request body exceeds {MAX_BODY_BYTES} bytes")
+            if n < 0 or n > MAX_BODY_BYTES: raise ValueError(f"request body exceeds {MAX_BODY_BYTES} bytes")
             raw=self.rfile.read(n) if n else b"{}"
             value=json.loads(raw)
             if not isinstance(value,dict): raise ValueError("JSON request body must be an object")
             return value
         def _machine(self,mid):
             store=open_store(store_target)
-            try: engine=AASMEngine.resume(mid,store)
+            try: engine=AASMEngine.resume(mid,store,load_history=False)
             except Exception: store.close(); raise
             return store,engine
         def _error(self,exc): self._json(400,{"error":type(exc).__name__,"message":str(exc)})
@@ -59,12 +58,7 @@ def make_handler(store_target:str,token:str|None=None):
             parsed=urlparse(self.path)
             if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.9.0"})
             if parsed.path=="/ui":
-                raw=html_document().encode()
-                self.send_response(200)
-                self.send_header("Content-Type","text/html; charset=utf-8")
-                self._security_headers(html=True)
-                self.send_header("Content-Length",str(len(raw)))
-                self.end_headers(); return self.wfile.write(raw)
+                raw=html_document().encode(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self._security_headers(html=True); self.send_header("Content-Length",str(len(raw))); self.end_headers(); return self.wfile.write(raw)
             if not self._auth(): return self._json(401,{"error":"unauthorized"})
             parts=[p for p in parsed.path.split('/') if p]
             try:
@@ -86,8 +80,7 @@ def make_handler(store_target:str,token:str|None=None):
                 if parts==["v1","machines"]:
                     store=open_store(store_target)
                     try:
-                        engine=AASMEngine(ProblemSpec(**payload["problem"]),store=store)
-                        out={"machine_id":engine.snapshot.machine_id,"state":engine.state_value}
+                        engine=AASMEngine(ProblemSpec(**payload["problem"]),store=store); out={"machine_id":engine.snapshot.machine_id,"state":engine.state_value}
                     finally: store.close()
                     return self._json(201,out)
                 if len(parts)<3 or parts[:2] != ["v1","machines"]: return self._json(404,{"error":"not_found"})
@@ -108,24 +101,16 @@ def make_handler(store_target:str,token:str|None=None):
                     elif parts[3:]==["interrupt"]: out=engine.user_interrupt(payload["note"],metadata=payload.get("metadata"))
                     else: return self._json(404,{"error":"not_found"})
                     return self._json(200,out if isinstance(out,dict) else asdict(out))
-                finally:
-                    store.close()
+                finally: store.close()
             except Exception as exc: return self._error(exc)
     return Handler
 
 
 def serve(store_target:str,host="127.0.0.1",port=8787,token:str|None=None):
     token=token or os.getenv("AASM_SERVER_TOKEN")
-    if host not in LOOPBACK_HOSTS and not token:
-        raise ValueError("AASM refuses non-loopback binding without --token or AASM_SERVER_TOKEN")
-    server=ThreadingHTTPServer((host,int(port)),make_handler(store_target,token))
-    server.serve_forever()
+    if host not in LOOPBACK_HOSTS and not token: raise ValueError("AASM refuses non-loopback binding without --token or AASM_SERVER_TOKEN")
+    server=ThreadingHTTPServer((host,int(port)),make_handler(store_target,token)); server.serve_forever()
 
 
 def main():
-    p=argparse.ArgumentParser()
-    p.add_argument("--store",required=True,help="SQLite path/sqlite:///... or postgres://...")
-    p.add_argument("--host",default="127.0.0.1")
-    p.add_argument("--port",type=int,default=8787)
-    p.add_argument("--token",help="bearer token; prefer AASM_SERVER_TOKEN for remote deployments")
-    a=p.parse_args(); serve(a.store,a.host,a.port,a.token)
+    p=argparse.ArgumentParser(); p.add_argument("--store",required=True,help="SQLite path/sqlite:///... or postgres://..."); p.add_argument("--host",default="127.0.0.1"); p.add_argument("--port",type=int,default=8787); p.add_argument("--token",help="bearer token; prefer AASM_SERVER_TOKEN for remote deployments"); a=p.parse_args(); serve(a.store,a.host,a.port,a.token)
