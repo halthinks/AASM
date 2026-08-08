@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/provisioning-request.schema.json",
+  "title": "AASM Provisioning Request",
+  "type": "object",
+  "required": ["provider", "resource_id", "action", "count", "reason"],
+  "properties": {
+    "provider": {"type": "string", "minLength": 1},
+    "resource_id": {"type": "string", "minLength": 1},
+    "action": {"enum": ["PROVISION", "DRAIN"]},
+    "count": {"type": "integer", "minimum": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "target_worker_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "request_id": {"type": "string", "minLength": 1},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": false
+}
