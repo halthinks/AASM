@@ -13,6 +13,7 @@ from .worker_loop import RemoteWorkerLoop
 from .economics import CallPurpose, ModelPricing, ModelUsageRecord, ReviewGatePolicy, EconomicsLedger
 from .openai_executor import OpenAIResponsesExecutor, OpenAIExecutionResult, OpenAIExecutorError
 from .codex_executor import CodexCLIExecutor, CodexExecutionResult, CodexExecutorError
+from .executor_orchestration import ExecutorAdapter, ExecutorBinding, ExecutorRegistry, ExecutionContract, ExecutionOrchestrator, OrchestrationResult, OrchestratedRemoteWorker
 from .codex_policy import CodexGovernancePolicy
 from .codex_telemetry import CodexTelemetryImport, import_otel_events, import_otel_jsonl
 
@@ -25,8 +26,9 @@ __all__=[
     "WorkerRecord","WorkerStatus","TaskLease","LeaseStatus","QuotaPolicy",
     "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","AASMRemoteClient","RemoteProtocolError","RemoteWorkerLoop",
     "CallPurpose","ModelPricing","ModelUsageRecord","ReviewGatePolicy","EconomicsLedger",
-    "OpenAIResponsesExecutor","OpenAIExecutionResult","OpenAIExecutorError","CodexCLIExecutor","CodexExecutionResult","CodexExecutorError","CodexGovernancePolicy",
-    "CodexTelemetryImport","import_otel_events","import_otel_jsonl"
+    "OpenAIResponsesExecutor","OpenAIExecutionResult","OpenAIExecutorError","CodexCLIExecutor","CodexExecutionResult","CodexExecutorError",
+    "ExecutorAdapter","ExecutorBinding","ExecutorRegistry","ExecutionContract","ExecutionOrchestrator","OrchestrationResult","OrchestratedRemoteWorker",
+    "CodexGovernancePolicy","CodexTelemetryImport","import_otel_events","import_otel_jsonl"
 ]
 
 from .graph import PlanNode, PlanEdge, PlanGraph
