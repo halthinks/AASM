@@ -10,7 +10,7 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.8.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.9.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
@@ -146,7 +146,7 @@ Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems 
 ### Requirements
 
 - Python **3.11+**
-- No mandatory runtime dependencies beyond the Python standard library in v0.8.0; PostgreSQL support is an optional extra
+- No mandatory runtime dependencies beyond the Python standard library in v0.9.0; PostgreSQL support is an optional extra
 
 ### Install from a clone
 
@@ -175,7 +175,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.8.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.9.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -272,20 +272,43 @@ See [`docs/RESOURCE_SCHEDULER.md`](docs/RESOURCE_SCHEDULER.md) and [`examples/sc
 
 ### Remote multi-host execution
 
-AASM v0.8 can run as a network control plane backed by PostgreSQL so workers on different machines share one authoritative event history and task-claim boundary.
+AASM v0.9 can run as a network control plane backed by PostgreSQL so workers on different machines share one authoritative event history and task-claim boundary.
 
 ```bash
 pip install -e '.[postgres]'
 aasm serve --store 'postgresql://aasm:password@db.example/aasm' --host 0.0.0.0 --port 8787 --token CHANGE_ME
 ```
 
-Remote workers use `AASMRemoteClient` to register, heartbeat, claim leases, renew them, and report results. A small built-in web inspector is exposed at `/ui`. See [`docs/REMOTE_EXECUTION.md`](docs/REMOTE_EXECUTION.md).
+Remote workers use `AASMRemoteClient` to register, heartbeat, claim leases, renew them, and report results. The browser Control Center at `/ui` shows live run state, workers, leases, plan graph, model routing, evidence, and cache-adjusted model economics. See [`docs/REMOTE_EXECUTION.md`](docs/REMOTE_EXECUTION.md) and [`docs/CONTROL_CENTER.md`](docs/CONTROL_CENTER.md).
 
 ### Model strength / cost routing
 
-Model choice is now a first-class resource decision. Register model profiles with capability, strength, cost, latency, and context metadata, then route each task against hard quality/cost constraints and an optimization objective. Local class names such as `luna`, `terra`, and `sol` are supported without coupling AASM to a specific provider.
+Model choice is a first-class resource decision. Register model profiles with capability, strength, cost, latency, and context metadata, then route each task against hard quality/cost constraints and an optimization objective. Luna/Terra/Sol-class routing can therefore spend stronger models where the quality floor requires them instead of treating all work as equivalent.
 
 See [`docs/MODEL_ROUTING.md`](docs/MODEL_ROUTING.md) and [`examples/model_profiles.json`](examples/model_profiles.json).
+
+### Real model executors and governance economics
+
+AASM is not only a skill file. v0.9 includes a real `OpenAIResponsesExecutor`, a headless `CodexCLIExecutor`, durable call-purpose accounting, cache-adjusted cost estimation, and a deterministic review gate.
+
+```python
+from aasm import CallPurpose, ModelUsageRecord
+
+engine.record_model_usage(ModelUsageRecord(
+    model_id="gpt-5.6-terra",
+    purpose=CallPurpose.PRODUCTIVE.value,
+    input_tokens=12000,
+    cached_input_tokens=9000,
+    output_tokens=3500,
+))
+
+print(engine.economics_summary())
+print(engine.review_gate("test"))
+```
+
+The rule is simple: **do not pay an intelligent reviewer to repeatedly re-decide a permission decision that can be expressed deterministically.** Keep sandboxing and technical boundaries; reserve semantic model review for changed assumptions, failed verification, materially large changes, and genuinely risky or irreversible operations.
+
+See [`docs/EXECUTOR_ADAPTERS.md`](docs/EXECUTOR_ADAPTERS.md) and [`docs/MODEL_ECONOMICS.md`](docs/MODEL_ECONOMICS.md).
 
 ## Orchestration profiles
 
@@ -296,7 +319,7 @@ AASM ships with multiple profiles to demonstrate that governance and role struct
 - [`expert_swarm.yaml`](profiles/expert_swarm.yaml) — specialist swarm with quorum authority
 - [`hierarchical_team.yaml`](profiles/hierarchical_team.yaml) — layered authority and delegation
 - [`quorum_governance.yaml`](profiles/quorum_governance.yaml) — decisions authorized by multiple voters
-- [`human_in_loop.yaml`](profiles/human_in_loop.yaml) — human approval at configured boundaries
+- [`human_in_loop.yaml`](profiles/human_in_loop.yaml) — human authorization for configured external/irreversible actions
 
 ## Machine lifecycle
 
@@ -323,6 +346,7 @@ AASM is **not**:
 - a prompt library
 - a replacement for your agent framework
 - a guarantee that an AI-generated proposal is correct
+- a hosted SaaS or managed worker fleet by itself
 - tied to any single agent role topology
 
 It is a control/runtime layer intended to sit around or underneath agent behavior.
@@ -337,9 +361,9 @@ See [`docs/DISTRIBUTED_WORKERS.md`](docs/DISTRIBUTED_WORKERS.md) and [`docs/REMO
 
 ## Project status
 
-**Current version: `0.8.0` — early-stage / experimental.**
+**Current version: `0.9.0` — early-stage / experimental.**
 
-The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, and model-strength/cost routing. The next stages focus on richer policy/verification, observability, provider adapters, and a more complete operator UI.
+The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, model-strength/cost routing, real OpenAI/Codex executor adapters, a browser Control Center, and cache-adjusted governance economics.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 
