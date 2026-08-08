@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from aasm import AASMEngine, MachineState, ProblemSpec
+from aasm import AASMEngine, MachineDefinition, MachineState, ProblemSpec
 from aasm.persistence import MemoryStore, SQLiteStore
 
 
@@ -44,6 +44,70 @@ def test_failed_durable_append_does_not_leave_ghost_local_state():
     assert e.snapshot.canonical_hash() == before
     assert e.snapshot.canonical_hash() == store.load_snapshot(machine_id).canonical_hash()
     assert e.replay().canonical_hash() == before
+
+
+def test_lazy_sqlite_resume_does_not_scan_full_history(tmp_path: Path):
+    class CountingSQLiteStore(SQLiteStore):
+        def __init__(self, path):
+            super().__init__(path)
+            self.load_events_calls = []
+
+        def load_events(self, machine_id, after_sequence=0):
+            self.load_events_calls.append(after_sequence)
+            return super().load_events(machine_id, after_sequence=after_sequence)
+
+    db = tmp_path / "lazy.db"
+    seed_store = SQLiteStore(db)
+    seed = AASMEngine(ProblemSpec("lazy resume"), store=seed_store)
+    seed.transition(MachineState.FORMALIZE, "normalized")
+    seed.transition(MachineState.CLASSIFY, "formalized")
+    machine_id = seed.snapshot.machine_id
+    last_sequence = seed.events[-1].sequence
+    seed_store.close()
+
+    store = CountingSQLiteStore(db)
+    lazy = AASMEngine.resume(machine_id, store, load_history=False)
+    assert store.load_events_calls == []
+    assert lazy.state == MachineState.CLASSIFY
+    assert lazy._history_loaded is False
+    assert lazy._last_sequence == last_sequence
+
+    lazy.transition(MachineState.PLAN, "incremental append")
+    assert store.load_events_calls == [last_sequence]
+    assert lazy.events[-1].sequence == last_sequence + 1
+    assert lazy._history_loaded is False
+
+    exported = lazy.export()
+    assert store.load_events_calls[-1] == 0
+    assert len(exported["events"]) == last_sequence + 1
+    assert lazy._history_loaded is True
+    store.close()
+
+
+def test_lazy_resume_preserves_custom_machine_definition(tmp_path: Path):
+    definition = MachineDefinition.from_dict({
+        "name": "lazy-custom",
+        "start_state": "START",
+        "terminal_states": ["DONE"],
+        "transitions": {"START": ["WORK"], "WORK": ["DONE"], "DONE": []},
+    })
+    db = tmp_path / "custom.db"
+    store = SQLiteStore(db)
+    engine = AASMEngine(ProblemSpec("custom lazy"), store=store, definition=definition)
+    engine.transition("WORK", "begin")
+    machine_id = engine.snapshot.machine_id
+    expected_hash = engine.snapshot.canonical_hash()
+    store.close()
+
+    reopened = SQLiteStore(db)
+    lazy = AASMEngine.resume(machine_id, reopened, load_history=False)
+    assert lazy.definition == definition
+    assert lazy.state == "WORK"
+    assert lazy.allowed() == ["DONE"]
+    assert lazy.snapshot.canonical_hash() == expected_hash
+    lazy.transition("DONE", "complete")
+    assert lazy.state == "DONE"
+    reopened.close()
 
 
 def test_sqlite_resume_after_engine_is_discarded(tmp_path: Path):
