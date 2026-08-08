@@ -111,32 +111,20 @@ class PostgresStore:
                 )
 
     def append(self, machine_id: str, event: Event, snapshot: MachineSnapshot) -> Event:
-        """Reduce one event against the locked canonical materialized snapshot.
-
-        Full event replay remains a verification/recovery tool; it is not on the
-        hot append path, so heartbeat-heavy long runs do not become quadratic.
-        """
+        """Reduce one event against the locked canonical materialized snapshot."""
         with self._conn.transaction():
             with self._conn.cursor() as cur:
                 cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))",(self._event_lock_key(machine_id),))
-                cur.execute("SELECT snapshot_json FROM aasm_runs WHERE machine_id=%s FOR UPDATE",(machine_id,))
-                run=cur.fetchone()
+                cur.execute("SELECT snapshot_json FROM aasm_runs WHERE machine_id=%s FOR UPDATE",(machine_id,)); run=cur.fetchone()
                 if run is None: raise KeyError(machine_id)
-                cur.execute("SELECT COALESCE(MAX(sequence),0) FROM aasm_events WHERE machine_id=%s",(machine_id,))
-                last_sequence=int(cur.fetchone()[0])
+                cur.execute("SELECT COALESCE(MAX(sequence),0) FROM aasm_events WHERE machine_id=%s",(machine_id,)); last_sequence=int(cur.fetchone()[0])
                 canonical=None if last_sequence==0 else snapshot_from_dict(self._obj(run[0]))
                 event.machine_id=machine_id; event.sequence=last_sequence+1
                 if canonical is not None and event.event_type==EventType.TRANSITION_COMMITTED.value and event.from_state is not None and canonical.state!=event.from_state:
                     raise ValueError(f"Stale transition: event expected {event.from_state}, canonical state is {canonical.state}")
                 canonical=reduce_event(canonical,event)
-                cur.execute(
-                    "INSERT INTO aasm_events(machine_id,sequence,event_id,event_json,created_at) VALUES(%s,%s,%s,%s::jsonb,%s)",
-                    (machine_id,event.sequence,event.event_id,self._j(event_to_dict(event)),event.ts),
-                )
-                cur.execute(
-                    "UPDATE aasm_runs SET snapshot_json=%s::jsonb,state=%s,version=%s,updated_at=%s WHERE machine_id=%s",
-                    (self._j(snapshot_to_dict(canonical)),canonical.state,canonical.version,time.time(),machine_id),
-                )
+                cur.execute("INSERT INTO aasm_events(machine_id,sequence,event_id,event_json,created_at) VALUES(%s,%s,%s,%s::jsonb,%s)",(machine_id,event.sequence,event.event_id,self._j(event_to_dict(event)),event.ts))
+                cur.execute("UPDATE aasm_runs SET snapshot_json=%s::jsonb,state=%s,version=%s,updated_at=%s WHERE machine_id=%s",(self._j(snapshot_to_dict(canonical)),canonical.state,canonical.version,time.time(),machine_id))
         self._replace_snapshot(snapshot,canonical); return event
 
     def load_snapshot(self,machine_id):
@@ -150,6 +138,16 @@ class PostgresStore:
             cur.execute("SELECT event_json FROM aasm_events WHERE machine_id=%s AND sequence>%s ORDER BY sequence",(machine_id,after_sequence)); rows=cur.fetchall()
         return [event_from_dict(self._obj(r[0])) for r in rows]
 
+    def load_first_event(self,machine_id):
+        with self._conn.cursor() as cur:
+            cur.execute("SELECT event_json FROM aasm_events WHERE machine_id=%s ORDER BY sequence LIMIT 1",(machine_id,)); row=cur.fetchone()
+        if row is None: raise KeyError(machine_id)
+        return event_from_dict(self._obj(row[0]))
+
+    def last_event_sequence(self,machine_id):
+        with self._conn.cursor() as cur:
+            cur.execute("SELECT COALESCE(MAX(sequence),0) FROM aasm_events WHERE machine_id=%s",(machine_id,)); return int(cur.fetchone()[0])
+
     def list_unfinished(self):
         with self._conn.cursor() as cur:
             cur.execute("SELECT machine_id,snapshot_json,state FROM aasm_runs ORDER BY updated_at"); rows=cur.fetchall()
@@ -162,10 +160,7 @@ class PostgresStore:
     def save_checkpoint(self,machine_id,checkpoint):
         with self._conn.transaction():
             with self._conn.cursor() as cur:
-                cur.execute(
-                    "INSERT INTO aasm_checkpoints(checkpoint_id,machine_id,snapshot_json,reason,created_at) VALUES(%s,%s,%s::jsonb,%s,%s) ON CONFLICT(checkpoint_id) DO UPDATE SET snapshot_json=excluded.snapshot_json,reason=excluded.reason",
-                    (checkpoint.checkpoint_id,machine_id,self._j(snapshot_to_dict(checkpoint.snapshot)),checkpoint.reason,time.time()),
-                )
+                cur.execute("INSERT INTO aasm_checkpoints(checkpoint_id,machine_id,snapshot_json,reason,created_at) VALUES(%s,%s,%s::jsonb,%s,%s) ON CONFLICT(checkpoint_id) DO UPDATE SET snapshot_json=excluded.snapshot_json,reason=excluded.reason",(checkpoint.checkpoint_id,machine_id,self._j(snapshot_to_dict(checkpoint.snapshot)),checkpoint.reason,time.time()))
     def load_checkpoint(self,machine_id,checkpoint_id):
         with self._conn.cursor() as cur:
             cur.execute("SELECT snapshot_json,reason FROM aasm_checkpoints WHERE machine_id=%s AND checkpoint_id=%s",(machine_id,checkpoint_id)); row=cur.fetchone()
@@ -175,10 +170,7 @@ class PostgresStore:
     def save_effect(self,record:EffectRecord):
         with self._conn.transaction():
             with self._conn.cursor() as cur:
-                cur.execute(
-                    "INSERT INTO aasm_effects(effect_id,machine_id,idempotency_key,status,effect_json,created_at,updated_at) VALUES(%s,%s,%s,%s,%s::jsonb,%s,%s) ON CONFLICT(effect_id) DO UPDATE SET status=excluded.status,effect_json=excluded.effect_json,updated_at=excluded.updated_at",
-                    (record.spec.effect_id,record.machine_id,record.spec.idempotency_key,record.status,self._j(effect_to_dict(record)),record.created_at,record.updated_at),
-                )
+                cur.execute("INSERT INTO aasm_effects(effect_id,machine_id,idempotency_key,status,effect_json,created_at,updated_at) VALUES(%s,%s,%s,%s,%s::jsonb,%s,%s) ON CONFLICT(effect_id) DO UPDATE SET status=excluded.status,effect_json=excluded.effect_json,updated_at=excluded.updated_at",(record.spec.effect_id,record.machine_id,record.spec.idempotency_key,record.status,self._j(effect_to_dict(record)),record.created_at,record.updated_at))
     def load_effect(self,machine_id,effect_id):
         with self._conn.cursor() as cur:
             cur.execute("SELECT effect_json FROM aasm_effects WHERE machine_id=%s AND effect_id=%s",(machine_id,effect_id)); row=cur.fetchone()
@@ -213,8 +205,7 @@ class PostgresStore:
                 cur.execute("SELECT effect_json FROM aasm_effects WHERE machine_id=%s AND effect_id=%s FOR UPDATE",(machine_id,effect_id)); row=cur.fetchone()
                 if row is None: raise KeyError(effect_id)
                 record=self._prepare_effect_attempt(effect_from_dict(self._obj(row[0])))
-                if record.status!=EffectStatus.SUCCEEDED.value:
-                    cur.execute("UPDATE aasm_effects SET status=%s,effect_json=%s::jsonb,updated_at=%s WHERE machine_id=%s AND effect_id=%s",(record.status,self._j(effect_to_dict(record)),record.updated_at,machine_id,effect_id))
+                if record.status!=EffectStatus.SUCCEEDED.value: cur.execute("UPDATE aasm_effects SET status=%s,effect_json=%s::jsonb,updated_at=%s WHERE machine_id=%s AND effect_id=%s",(record.status,self._j(effect_to_dict(record)),record.updated_at,machine_id,effect_id))
                 return record
 
     def mark_running_effects_unknown(self,machine_id):
