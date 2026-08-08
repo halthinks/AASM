@@ -1,7 +1,8 @@
 from __future__ import annotations
 from copy import deepcopy
 from dataclasses import asdict
-from .core.reducer import reduce_event
+from .core.reducer import reduce_event, replay_events
+from .model import EventType
 from .runtime import AASMEngine as V07Engine
 from .model_routing import ModelProfile, ModelRouteRequest, ModelStrengthRouter
 
@@ -14,6 +15,38 @@ class AASMEngine(V07Engine):
     @classmethod
     def _hydrate(cls,snapshot,events,store,authority=None,definition=None):
         self=super()._hydrate(snapshot,events,store,authority=authority,definition=definition); self.model_router=ModelStrengthRouter(); return self
+
+    @classmethod
+    def resume(cls,machine_id,store,authority=None,*,recover_effects=False):
+        """Rehydrate a run without treating ordinary inspection as a crash.
+
+        `recover_effects=True` is reserved for an actual process-recovery path:
+        only then are durable RUNNING effects converted to UNKNOWN for explicit
+        reconciliation. Stateless HTTP/CLI inspection can safely resume with the
+        default `False` without disturbing work that another host is still doing.
+        """
+        events=store.load_events(machine_id)
+        if not events: raise KeyError(machine_id)
+        self=cls._hydrate(replay_events(events),events,store,authority=authority)
+        if recover_effects:
+            marker=getattr(store,"mark_running_effects_unknown",None)
+            if marker:
+                for record in marker(machine_id):
+                    self.emit(
+                        EventType.EFFECT_UNKNOWN.value,
+                        self.state_value,
+                        self.state_value,
+                        "recovered unresolved effect",
+                        data={"effect_id":record.spec.effect_id,"idempotency_key":record.spec.idempotency_key},
+                    )
+        return self
+
+    @classmethod
+    def recover_unfinished(cls,store,authority=None):
+        return [
+            cls.resume(mid,store,authority=authority,recover_effects=True)
+            for mid in store.list_unfinished()
+        ]
 
     def _commit(self,event):
         """Adopt state only after the durable append succeeds.
