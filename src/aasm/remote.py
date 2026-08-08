@@ -39,3 +39,6 @@ class AASMRemoteClient:
     def model_usage(self,machine_id,record):
         payload=asdict(record) if hasattr(record,"__dataclass_fields__") else dict(record)
         return self._request("POST",f"/v1/machines/{machine_id}/model-usage",{"record":payload})
+    def model_outcome(self,machine_id,record):
+        payload=asdict(record) if hasattr(record,"__dataclass_fields__") else dict(record)
+        return self._request("POST",f"/v1/machines/{machine_id}/model-outcome",{"record":payload})
