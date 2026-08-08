@@ -6,6 +6,7 @@ def test_cli_exposes_durable_commands():
     for argv, command in [
         (["demo"], "demo"),
         (["runs", "--db", "x.db"], "runs"),
+        (["runs", "--store", "postgresql://example/aasm"], "runs"),
         (["replay", "machine_x", "--db", "x.db"], "replay"),
         (["replay", "machine_x", "--db", "x.db", "--at", "3"], "replay"),
         (["fork", "machine_x", "--db", "x.db", "--at", "3"], "fork"),
@@ -16,6 +17,8 @@ def test_cli_exposes_durable_commands():
         (["evidence", "machine_x", "--db", "x.db"], "evidence"),
         (["resources", "machine_x", "--db", "x.db"], "resources"),
         (["schedule", "machine_x", "--db", "x.db", "--tasks", "tasks.json"], "schedule"),
+        (["economics", "machine_x", "--store", "x.db"], "economics"),
+        (["codex-telemetry", "machine_x", "--store", "x.db", "--jsonl", "otel.jsonl"], "codex-telemetry"),
     ]:
         assert parser.parse_args(argv).command == command
 
