@@ -30,6 +30,8 @@ class AASMRemoteClient:
     def team(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/team")
     def collaboration(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/collaboration")
     def change_control(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/change-control")
+    def checkpoint_triggers(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/checkpoint-triggers")
+    def fleet_control(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/fleet-control")
     def register_worker(self,machine_id,worker:WorkerRecord): return self._request("POST",f"/v1/machines/{machine_id}/workers/register",{"worker":asdict(worker)})
     def heartbeat(self,machine_id,worker_id): return self._request("POST",f"/v1/machines/{machine_id}/workers/{worker_id}/heartbeat",{})
     def claim(self,machine_id,worker_id,task:TaskDemand,lease_seconds=60.0): return self._request("POST",f"/v1/machines/{machine_id}/claim",{"worker_id":worker_id,"task":asdict(task),"lease_seconds":lease_seconds})
@@ -54,3 +56,6 @@ class AASMRemoteClient:
     def analyze_change(self,machine_id,signal,pause_affected=True): return self._request("POST",f"/v1/machines/{machine_id}/change-control/analyze",{"signal":self._payload(signal),"pause_affected":bool(pause_affected)})
     def resolve_change_impact(self,machine_id,impact_id,planner_id,*,resume_nodes=None,retire_nodes=None,plan_decision_id=None):
         return self._request("POST",f"/v1/machines/{machine_id}/change-control/{impact_id}/resolve",{"planner_id":planner_id,"resume_nodes":list(resume_nodes or []),"retire_nodes":list(retire_nodes or []),"plan_decision_id":plan_decision_id})
+    def configure_checkpoint_triggers(self,machine_id,policy): return self._request("POST",f"/v1/machines/{machine_id}/checkpoint-triggers/configure",{"policy":self._payload(policy)})
+    def configure_fleet_control(self,machine_id,policy,refresh=True): return self._request("POST",f"/v1/machines/{machine_id}/fleet-control/configure",{"policy":self._payload(policy),"refresh":bool(refresh)})
+    def refresh_fleet_control(self,machine_id,collaboration_policy=None): return self._request("POST",f"/v1/machines/{machine_id}/fleet-control/refresh",{"collaboration_policy":self._payload(collaboration_policy) if collaboration_policy is not None else {}})
