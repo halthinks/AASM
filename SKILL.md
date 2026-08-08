@@ -145,3 +145,18 @@ If the authoritative plan itself must change, the Planner must commit an explici
 A `user_interrupt()` with `metadata.seed_nodes` is additive steering: preserve the existing plan and provenance, pause only the impacted dependent region, and continue unaffected work. Do not regenerate the whole plan simply because a new requirement arrived.
 
 Change-impact analysis controls task validity, not permission or security. Sandbox rules, governance review, authority policy, credentials, external-effect authorization, and destructive-operation guards remain separate boundaries.
+
+## Automatic checkpoint triggers and fleet admission
+Use `CheckpointTriggerPolicy` to decide which explicit Verifier findings automatically become selective change checkpoints. Failed tests, changed assumptions, unexpected output, and blocking findings may trigger by default. Automatic checkpointing pauses invalidated work; it does **not** grant the Verifier plan authority.
+
+When `PBVCoordinator` submits a Verifier report, the Planner payload includes the resulting trigger, affected/remaining nodes, paused tasks, and current fleet-control state. The Planner may resolve part of an impact through `PlannerDecision.metadata.resolve_impact`, but only explicitly listed nodes may resume or retire. A structural plan change still requires `PLAN_INTERRUPT` with a validated `plan_patch`.
+
+Fleet admission is opt-in through `FleetControlPolicy`. When enabled, call `configure_fleet_control()` or `refresh_fleet_control()` to re-run collaboration analysis on currently runnable scheduled tasks. Paused, completed, and pruned work must be excluded before computing useful concurrency.
+
+The resulting admission limit is enforced through AASM's existing machine-scoped `QuotaPolicy`, not a process-local counter. This is important: SQLite/PostgreSQL then enforce fleet admission atomically at the same task-claim boundary as other durable quotas.
+
+Fleet control limits active admitted work; it does not provision machines, model sessions, cloud instances, credentials, or external services. Collaboration analysis remains evidence and fleet enforcement remains separately configurable. Deployment authority is not implied by a worker recommendation.
+
+Recalculate fleet admission after an automatic checkpoint, Planner `PLAN_INTERRUPT`, or change-impact resolution when the policy enables those refreshes. Avoid duplicate recalculation when one Planner decision both resolves a checkpoint and changes the plan.
+
+Inspect this loop through `checkpoint-triggers`, `checkpoint-trigger-policy`, `fleet-control`, and `fleet-refresh`, or the equivalent remote endpoints. The Control Center should make recommendation vs enforcement visibly distinct.
