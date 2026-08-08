@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/change-signal.schema.json",
+  "title": "AASM Change Signal",
+  "type": "object",
+  "required": ["kind", "note"],
+  "properties": {
+    "kind": {"enum": ["user_steering", "assumption_changed", "evidence_changed", "verification_failed", "contradiction", "risk_escalation", "external_dependency"]},
+    "note": {"type": "string", "minLength": 1},
+    "seed_nodes": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "assumption_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "risk_class": {"type": ["string", "null"]},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": false
+}
