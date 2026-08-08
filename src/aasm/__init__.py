@@ -1,4 +1,4 @@
-from .runtime_v11 import AASMEngine
+from .runtime_v12 import AASMEngine
 from .model import MachineState, ProblemSpec, TaskEnvelope, Proposal, Result, CapabilitySet
 from .agents import AASMAgent, FunctionAgent
 from .authority import SingleControllerAuthority, AutonomousAuthority, QuorumAuthority, HierarchicalAuthority
@@ -12,6 +12,7 @@ from .adaptive_routing import ModelOutcomeRecord, ModelPerformance, ModelOutcome
 from .remote import AASMRemoteClient, RemoteProtocolError
 from .worker_loop import RemoteWorkerLoop
 from .economics import CallPurpose, ModelPricing, ModelUsageRecord, ReviewGatePolicy, EconomicsLedger
+from .governance import GovernanceAction, GovernanceBudgetPolicy, GovernanceContext, GovernanceDecision, GovernanceEconomicsController
 from .openai_executor import OpenAIResponsesExecutor, OpenAIExecutionResult, OpenAIExecutorError
 from .codex_executor import CodexCLIExecutor, CodexExecutionResult, CodexExecutorError
 from .executor_orchestration import ExecutorAdapter, ExecutorBinding, ExecutorRegistry, ExecutionContract, ExecutionOrchestrator, OrchestrationResult, OrchestratedRemoteWorker
@@ -28,6 +29,7 @@ __all__=[
     "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","ModelOutcomeRecord","ModelPerformance","ModelOutcomeLedger","AdaptiveRouteResult","AdaptiveModelRouter",
     "AASMRemoteClient","RemoteProtocolError","RemoteWorkerLoop",
     "CallPurpose","ModelPricing","ModelUsageRecord","ReviewGatePolicy","EconomicsLedger",
+    "GovernanceAction","GovernanceBudgetPolicy","GovernanceContext","GovernanceDecision","GovernanceEconomicsController",
     "OpenAIResponsesExecutor","OpenAIExecutionResult","OpenAIExecutorError","CodexCLIExecutor","CodexExecutionResult","CodexExecutorError",
     "ExecutorAdapter","ExecutorBinding","ExecutorRegistry","ExecutionContract","ExecutionOrchestrator","OrchestrationResult","OrchestratedRemoteWorker",
     "CodexGovernancePolicy","CodexTelemetryImport","import_otel_events","import_otel_jsonl"
