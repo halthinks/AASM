@@ -1,4 +1,4 @@
-from .runtime_v14 import AASMEngine
+from .runtime_v15 import AASMEngine
 from .model import MachineState, ProblemSpec, TaskEnvelope, Proposal, Result, CapabilitySet
 from .agents import AASMAgent, FunctionAgent
 from .authority import SingleControllerAuthority, AutonomousAuthority, QuorumAuthority, HierarchicalAuthority
@@ -10,6 +10,7 @@ from .workers import WorkerRecord, WorkerStatus, TaskLease, LeaseStatus, QuotaPo
 from .model_routing import ModelProfile, ModelRouteRequest, ModelRouteResult, ModelStrengthRouter
 from .adaptive_routing import ModelOutcomeRecord, ModelPerformance, ModelOutcomeLedger, AdaptiveRouteResult, AdaptiveModelRouter
 from .collaboration import CollaborationPolicy, CollaborationCandidate, CollaborationAnalysis, CollaborationPlanner
+from .change_impact import ChangeKind, ChangeSignal, ImpactAnalysis, ChangeImpactAnalyzer
 from .team_protocol import TeamRole, PlannerDirective, TeamMember, BuilderOutput, VerifierReport, PlannerDecision, PlannerBuilderVerifierPolicy
 from .pbv_orchestrator import PBVCycleResult, PBVCoordinator
 from .remote import AASMRemoteClient, RemoteProtocolError
@@ -31,6 +32,7 @@ __all__=[
     "WorkerRecord","WorkerStatus","TaskLease","LeaseStatus","QuotaPolicy",
     "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","ModelOutcomeRecord","ModelPerformance","ModelOutcomeLedger","AdaptiveRouteResult","AdaptiveModelRouter",
     "CollaborationPolicy","CollaborationCandidate","CollaborationAnalysis","CollaborationPlanner",
+    "ChangeKind","ChangeSignal","ImpactAnalysis","ChangeImpactAnalyzer",
     "TeamRole","PlannerDirective","TeamMember","BuilderOutput","VerifierReport","PlannerDecision","PlannerBuilderVerifierPolicy","PBVCycleResult","PBVCoordinator",
     "AASMRemoteClient","RemoteProtocolError","RemoteWorkerLoop",
     "CallPurpose","ModelPricing","ModelUsageRecord","ReviewGatePolicy","EconomicsLedger",
