@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/lease.schema.json",
+  "title": "AASM Task Lease",
+  "type": "object",
+  "required": ["lease_id", "task_id", "worker_id", "resource_id", "demand", "status", "acquired_at", "heartbeat_at", "expires_at", "attempt"],
+  "properties": {
+    "lease_id": {"type": "string"},
+    "task_id": {"type": "string"},
+    "worker_id": {"type": "string"},
+    "resource_id": {"type": "string"},
+    "demand": {"type": "number", "minimum": 0},
+    "required_capabilities": {"type": "array", "items": {"type": "string"}},
+    "status": {"enum": ["ACTIVE", "COMPLETED", "FAILED", "RELEASED", "EXPIRED"]},
+    "acquired_at": {"type": "number"},
+    "heartbeat_at": {"type": "number"},
+    "expires_at": {"type": "number"},
+    "attempt": {"type": "integer", "minimum": 1},
+    "result": {"type": ["object", "null"]},
+    "error": {"type": ["string", "null"]},
+    "metadata": {"type": "object"}
+  }
+}
