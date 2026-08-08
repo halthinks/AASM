@@ -10,7 +10,7 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.11.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.12.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
@@ -66,6 +66,7 @@ AASM is an attempt to make those properties first-class.
 | **Agent protocols** | Provides generic agent contracts plus adapters for common orchestration patterns. |
 | **Executor orchestration** | Turns a claimed lease into a model route, physical executor invocation, usage/evidence capture, and durable completion. |
 | **Adaptive model routing** | Learns task-class-specific model quality/cost/latency from explicit evaluated outcomes while preserving hard static eligibility floors. |
+| **Governance economics** | Separates semantic review from authority, budgets governance overhead, reuses unchanged low-risk completed reviews, and pauses rather than waiving required review. |
 | **Provenance** | Emits state-change and execution events so the run can be inspected after the fact. |
 
 ## Architecture
@@ -148,7 +149,7 @@ Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems 
 ### Requirements
 
 - Python **3.11+**
-- No mandatory runtime dependencies beyond the Python standard library in v0.11.0; PostgreSQL support is an optional extra
+- No mandatory runtime dependencies beyond the Python standard library in v0.12.0; PostgreSQL support is an optional extra
 
 ### Install from a clone
 
@@ -177,7 +178,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.11.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.12.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -345,7 +346,7 @@ AASM uses Wilson acceptance bounds rather than raw success rates; `confidence` i
 
 See [`docs/ADAPTIVE_MODEL_ROUTING.md`](docs/ADAPTIVE_MODEL_ROUTING.md) and [`examples/adaptive_routing.py`](examples/adaptive_routing.py).
 
-### Real model executors and governance economics
+### Real model executors and model economics
 
 AASM is not only a skill file. It includes a real `OpenAIResponsesExecutor`, a headless `CodexCLIExecutor`, durable call-purpose accounting, cache-adjusted cost estimation, and a deterministic review gate.
 
@@ -364,9 +365,37 @@ print(engine.economics_summary())
 print(engine.review_gate("test"))
 ```
 
-The rule is simple: **do not pay an intelligent reviewer to repeatedly re-decide a permission decision that can be expressed deterministically.** Keep sandboxing and technical boundaries; reserve semantic model review for changed assumptions, failed verification, materially large changes, and genuinely risky or irreversible operations.
-
 See [`docs/EXECUTOR_ADAPTERS.md`](docs/EXECUTOR_ADAPTERS.md) and [`docs/MODEL_ECONOMICS.md`](docs/MODEL_ECONOMICS.md).
+
+### Governance economics and reviewer-call efficiency
+
+v0.12 makes semantic-review overhead a first-class control signal. AASM fingerprints the material governance context and can reuse a **completed low-risk semantic review** only when action, scope, policy, assumptions, and evidence remain unchanged.
+
+```python
+from aasm import GovernanceBudgetPolicy, GovernanceContext
+
+engine.configure_governance_budget(GovernanceBudgetPolicy(
+    soft_governance_token_ratio=.35,
+    hard_governance_token_ratio=.75,
+    min_total_tokens_for_ratio_enforcement=50_000,
+))
+
+decision = engine.governance_decide(GovernanceContext(
+    action_class="architecture_choice",
+    scope="backend",
+    action_signature="sha256:...",
+    assumption_revision="A17",
+    evidence_revision="E42",
+))
+```
+
+The result controls **whether another model review is required**, not whether execution is authorized. Sandbox policy, authority policy, credentials, network rules, effect authorization/idempotency, and destructive-operation guards remain independent boundaries.
+
+Hard governance-budget exhaustion returns `BUDGET_PAUSE`; AASM never turns an exhausted review budget into silent approval. Soft pressure can suggest a lower-cost eligible reviewer. Ratio thresholds wait for a minimum usage sample so early 100%-governance ratios do not prematurely stop productive work.
+
+`governance_report()` exposes deterministic bypasses, reused reviews, budget state, and conservative avoided-token/cost estimates derived from the run's observed average permission-review call when one exists.
+
+See [`docs/GOVERNANCE_ECONOMICS.md`](docs/GOVERNANCE_ECONOMICS.md) and [`examples/governance_economics.py`](examples/governance_economics.py).
 
 ## Orchestration profiles
 
@@ -419,9 +448,9 @@ See [`docs/DISTRIBUTED_WORKERS.md`](docs/DISTRIBUTED_WORKERS.md) and [`docs/REMO
 
 ## Project status
 
-**Current version: `0.11.0` — early-stage / experimental.**
+**Current version: `0.12.0` — early-stage / experimental.**
 
-The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, static model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, evaluated-outcome adaptive model routing, a browser Control Center, and cache-adjusted governance economics.
+The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, static model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, evaluated-outcome adaptive model routing, governance-review budgets/reuse, a browser Control Center, and cache-adjusted model economics.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 
