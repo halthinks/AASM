@@ -10,7 +10,7 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.9.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.10.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
@@ -64,6 +64,7 @@ AASM is an attempt to make those properties first-class.
 | **Adversarial verification** | Challenges unsupported claims and searches for counterexamples or missing evidence. |
 | **Authority policies** | Supports controller, autonomous, quorum, and hierarchical governance models. |
 | **Agent protocols** | Provides generic agent contracts plus adapters for common orchestration patterns. |
+| **Executor orchestration** | Turns a claimed lease into a model route, physical executor invocation, usage/evidence capture, and durable completion. |
 | **Provenance** | Emits state-change and execution events so the run can be inspected after the fact. |
 
 ## Architecture
@@ -146,7 +147,7 @@ Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems 
 ### Requirements
 
 - Python **3.11+**
-- No mandatory runtime dependencies beyond the Python standard library in v0.9.0; PostgreSQL support is an optional extra
+- No mandatory runtime dependencies beyond the Python standard library in v0.10.0; PostgreSQL support is an optional extra
 
 ### Install from a clone
 
@@ -175,7 +176,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.9.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.10.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -228,7 +229,7 @@ See [`docs/DURABLE_COGNITION.md`](docs/DURABLE_COGNITION.md).
 
 ### Durable external effects
 
-AASM can persist externally observable actions separately from model reasoning. Each effect has an authorization state, retry policy, idempotency key, durable result/error record, and crash-recovery semantics. If a process dies while an effect is running, AASM marks the outcome `UNKNOWN` and refuses a blind retry by default.
+AASM can persist externally observable actions separately from model reasoning. Each effect has an authorization state, retry policy, idempotency key, durable result/error record, and crash-recovery semantics. If a process dies while an effect is running, explicit crash recovery marks the outcome `UNKNOWN` and refuses a blind retry by default.
 
 See [`docs/EFFECT_SYSTEM.md`](docs/EFFECT_SYSTEM.md) and [`examples/effect_demo.py`](examples/effect_demo.py).
 
@@ -272,7 +273,7 @@ See [`docs/RESOURCE_SCHEDULER.md`](docs/RESOURCE_SCHEDULER.md) and [`examples/sc
 
 ### Remote multi-host execution
 
-AASM v0.9 can run as a network control plane backed by PostgreSQL so workers on different machines share one authoritative event history and task-claim boundary.
+AASM can run as a network control plane backed by PostgreSQL so workers on different machines share one authoritative event history and task-claim boundary.
 
 ```bash
 pip install -e '.[postgres]'
@@ -287,9 +288,29 @@ Model choice is a first-class resource decision. Register model profiles with ca
 
 See [`docs/MODEL_ROUTING.md`](docs/MODEL_ROUTING.md) and [`examples/model_profiles.json`](examples/model_profiles.json).
 
+### End-to-end executor orchestration
+
+v0.10 closes the physical execution loop. A scheduled task can carry an `execution` contract; an `OrchestratedRemoteWorker` claims its lease, routes the model, selects a compatible worker-local executor, invokes the real Codex CLI / Responses API / custom adapter, reports model usage, and durably completes or fails the lease.
+
+```bash
+aasm worker \
+  --url https://aasm.example \
+  --machine-id MACHINE_ID \
+  --worker-id coding-01 \
+  --resource-id coding-pool \
+  --executor codex \
+  --executor-id codex-cli \
+  --provider openai \
+  --capability code \
+  --cwd /workspace/repository \
+  --token "$AASM_SERVER_TOKEN"
+```
+
+See [`docs/EXECUTOR_ORCHESTRATION.md`](docs/EXECUTOR_ORCHESTRATION.md) and [`examples/orchestrated_worker.py`](examples/orchestrated_worker.py).
+
 ### Real model executors and governance economics
 
-AASM is not only a skill file. v0.9 includes a real `OpenAIResponsesExecutor`, a headless `CodexCLIExecutor`, durable call-purpose accounting, cache-adjusted cost estimation, and a deterministic review gate.
+AASM is not only a skill file. It includes a real `OpenAIResponsesExecutor`, a headless `CodexCLIExecutor`, durable call-purpose accounting, cache-adjusted cost estimation, and a deterministic review gate.
 
 ```python
 from aasm import CallPurpose, ModelUsageRecord
@@ -361,9 +382,9 @@ See [`docs/DISTRIBUTED_WORKERS.md`](docs/DISTRIBUTED_WORKERS.md) and [`docs/REMO
 
 ## Project status
 
-**Current version: `0.9.0` — early-stage / experimental.**
+**Current version: `0.10.0` — early-stage / experimental.**
 
-The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, model-strength/cost routing, real OpenAI/Codex executor adapters, a browser Control Center, and cache-adjusted governance economics.
+The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, a browser Control Center, and cache-adjusted governance economics.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 
