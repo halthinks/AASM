@@ -5,12 +5,13 @@ import json
 from dataclasses import asdict
 
 from .definitions import MachineDefinition
-from .runtime import AASMEngine
+from .runtime_v08 import AASMEngine
 from .model import MachineState, ProblemSpec
 from .model_check import check_machine
 from .persistence import SQLiteStore
 from .resources import TaskDemand
 from .workers import WorkerRecord, QuotaPolicy
+from .model_routing import ModelRouteRequest
 
 
 def _json(data): print(json.dumps(data, indent=2, sort_keys=True, default=str))
@@ -31,14 +32,12 @@ def _runs(args):
 def _replay(args):
     store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
     snap=engine.replay(at_sequence=args.at)
-    _json({"machine_id":args.machine_id,"at_sequence":args.at,"snapshot":asdict(snap),"event_count":len(engine.events)})
-    store.close()
+    _json({"machine_id":args.machine_id,"at_sequence":args.at,"snapshot":asdict(snap),"event_count":len(engine.events)}); store.close()
 
 
 def _fork(args):
     store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); forked=engine.fork(args.at)
-    _json({"source_machine_id":args.machine_id,"source_sequence":args.at,"fork_machine_id":forked.snapshot.machine_id,"snapshot":asdict(forked.snapshot)})
-    store.close()
+    _json({"source_machine_id":args.machine_id,"source_sequence":args.at,"fork_machine_id":forked.snapshot.machine_id,"snapshot":asdict(forked.snapshot)}); store.close()
 
 
 def _inspect(args):
@@ -48,51 +47,50 @@ def _inspect(args):
 
 
 def _effects(args):
-    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
-    _json({"machine_id":args.machine_id,"effects":[asdict(e) for e in engine.list_effects()]}); store.close()
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); _json({"machine_id":args.machine_id,"effects":[asdict(e) for e in engine.list_effects()]}); store.close()
 
 
 def _plan(args):
-    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
-    _json({"machine_id":args.machine_id,"graph":engine.snapshot.graph,"frontier":engine.snapshot.frontier,"visited":engine.snapshot.visited,"pruned":engine.snapshot.pruned}); store.close()
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); _json({"machine_id":args.machine_id,"graph":engine.snapshot.graph,"frontier":engine.snapshot.frontier,"visited":engine.snapshot.visited,"pruned":engine.snapshot.pruned}); store.close()
 
 
 def _memory(args):
-    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
-    _json({"machine_id":args.machine_id,"memory":engine.snapshot.memory}); store.close()
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); _json({"machine_id":args.machine_id,"memory":engine.snapshot.memory}); store.close()
 
 
 def _evidence(args):
-    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
-    payload={"machine_id":args.machine_id,"evidence":engine.snapshot.evidence}
-    if args.lineage:
-        payload["lineage"]=[asdict(x) for x in engine.evidence_lineage(args.lineage)]
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); payload={"machine_id":args.machine_id,"evidence":engine.snapshot.evidence}
+    if args.lineage: payload["lineage"]=[asdict(x) for x in engine.evidence_lineage(args.lineage)]
     _json(payload); store.close()
 
 
 def _resources(args):
-    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
-    _json({"machine_id":args.machine_id,"resources":engine.list_resources(),"last_schedule":engine.last_schedule()}); store.close()
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); _json({"machine_id":args.machine_id,"resources":engine.list_resources(),"last_schedule":engine.last_schedule()}); store.close()
 
 
 def _schedule(args):
-    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
-    raw=json.loads(open(args.tasks,"r",encoding="utf-8").read())
-    tasks=[TaskDemand(**item) for item in raw]
-    result=engine.schedule(tasks,reason=f"schedule loaded from {args.tasks}")
-    _json({"machine_id":args.machine_id,"result":result.to_dict()}); store.close()
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); raw=json.loads(open(args.tasks,"r",encoding="utf-8").read()); tasks=[TaskDemand(**item) for item in raw]; result=engine.schedule(tasks,reason=f"schedule loaded from {args.tasks}"); _json({"machine_id":args.machine_id,"result":result.to_dict()}); store.close()
 
 
 def _workers(args):
-    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
-    _json({"machine_id":args.machine_id,"workers":engine.list_workers(),"quotas":engine.list_quotas(),"leases":engine.list_leases()}); store.close()
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); _json({"machine_id":args.machine_id,"workers":engine.list_workers(),"quotas":engine.list_quotas(),"leases":engine.list_leases()}); store.close()
 
 
 def _claim(args):
-    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
-    raw=json.loads(open(args.task,"r",encoding="utf-8").read()); task=TaskDemand(**raw)
-    lease=engine.claim_task(task,args.worker,lease_seconds=args.lease_seconds)
-    _json({"machine_id":args.machine_id,"lease":lease}); store.close()
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); raw=json.loads(open(args.task,"r",encoding="utf-8").read()); task=TaskDemand(**raw); lease=engine.claim_task(task,args.worker,lease_seconds=args.lease_seconds); _json({"machine_id":args.machine_id,"lease":lease}); store.close()
+
+
+def _models(args):
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); _json({"machine_id":args.machine_id,"models":engine.list_model_profiles(),"last_model_route":engine.last_model_route()}); store.close()
+
+
+def _model_route(args):
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store); raw=json.loads(open(args.request,"r",encoding="utf-8").read()); result=engine.route_model(ModelRouteRequest(**raw)); _json(result.to_dict()); store.close()
+
+
+def _serve(args):
+    from .server import serve
+    serve(args.store,args.host,args.port,args.token)
 
 
 def _verify_machine(args):
@@ -101,22 +99,24 @@ def _verify_machine(args):
 
 
 def build_parser():
-    parser=argparse.ArgumentParser(prog="aasm",description="Algorithmic Agent State Machine runtime")
-    sub=parser.add_subparsers(dest="command",required=True)
+    parser=argparse.ArgumentParser(prog="aasm",description="Algorithmic Agent State Machine runtime"); sub=parser.add_subparsers(dest="command",required=True)
     demo=sub.add_parser("demo",help="run the built-in demonstration"); demo.add_argument("--db",help="optional SQLite database path for a durable demo"); demo.set_defaults(func=_demo)
-    runs=sub.add_parser("runs",help="list unfinished durable runs"); runs.add_argument("--db",required=True,help="SQLite database path"); runs.set_defaults(func=_runs)
-    replay=sub.add_parser("replay",help="rebuild a machine snapshot from its event stream"); replay.add_argument("machine_id"); replay.add_argument("--db",required=True,help="SQLite database path"); replay.add_argument("--at",type=int,help="replay only through this event sequence"); replay.set_defaults(func=_replay)
-    fork=sub.add_parser("fork",help="fork a durable run from an earlier event sequence"); fork.add_argument("machine_id"); fork.add_argument("--db",required=True,help="SQLite database path"); fork.add_argument("--at",type=int,required=True,help="source event sequence to fork from"); fork.set_defaults(func=_fork)
-    inspect=sub.add_parser("inspect",help="inspect a persisted machine snapshot"); inspect.add_argument("machine_id"); inspect.add_argument("--db",required=True,help="SQLite database path"); inspect.add_argument("--events",action="store_true",help="include the full event stream"); inspect.set_defaults(func=_inspect)
-    effects=sub.add_parser("effects",help="list durable external effects for a run"); effects.add_argument("machine_id"); effects.add_argument("--db",required=True,help="SQLite database path"); effects.set_defaults(func=_effects)
+    runs=sub.add_parser("runs",help="list unfinished durable runs"); runs.add_argument("--db",required=True); runs.set_defaults(func=_runs)
+    replay=sub.add_parser("replay",help="rebuild a machine snapshot from its event stream"); replay.add_argument("machine_id"); replay.add_argument("--db",required=True); replay.add_argument("--at",type=int); replay.set_defaults(func=_replay)
+    fork=sub.add_parser("fork",help="fork a durable run from an earlier event sequence"); fork.add_argument("machine_id"); fork.add_argument("--db",required=True); fork.add_argument("--at",type=int,required=True); fork.set_defaults(func=_fork)
+    inspect=sub.add_parser("inspect",help="inspect a persisted machine snapshot"); inspect.add_argument("machine_id"); inspect.add_argument("--db",required=True); inspect.add_argument("--events",action="store_true"); inspect.set_defaults(func=_inspect)
+    effects=sub.add_parser("effects",help="list durable external effects for a run"); effects.add_argument("machine_id"); effects.add_argument("--db",required=True); effects.set_defaults(func=_effects)
     plan=sub.add_parser("plan",help="inspect durable planning graph/frontier state"); plan.add_argument("machine_id"); plan.add_argument("--db",required=True); plan.set_defaults(func=_plan)
     memory=sub.add_parser("memory",help="inspect durable DP memory"); memory.add_argument("machine_id"); memory.add_argument("--db",required=True); memory.set_defaults(func=_memory)
-    evidence=sub.add_parser("evidence",help="inspect durable evidence and lineage"); evidence.add_argument("machine_id"); evidence.add_argument("--db",required=True); evidence.add_argument("--lineage",help="show ancestry for one evidence id"); evidence.set_defaults(func=_evidence)
+    evidence=sub.add_parser("evidence",help="inspect durable evidence and lineage"); evidence.add_argument("machine_id"); evidence.add_argument("--db",required=True); evidence.add_argument("--lineage"); evidence.set_defaults(func=_evidence)
     resources=sub.add_parser("resources",help="inspect durable capability/resource registry and last schedule"); resources.add_argument("machine_id"); resources.add_argument("--db",required=True); resources.set_defaults(func=_resources)
-    schedule=sub.add_parser("schedule",help="compute and persist a capability-aware schedule from a JSON task list"); schedule.add_argument("machine_id"); schedule.add_argument("--db",required=True); schedule.add_argument("--tasks",required=True,help="JSON file containing a list of TaskDemand objects"); schedule.set_defaults(func=_schedule)
+    schedule=sub.add_parser("schedule",help="compute and persist a capability-aware schedule"); schedule.add_argument("machine_id"); schedule.add_argument("--db",required=True); schedule.add_argument("--tasks",required=True); schedule.set_defaults(func=_schedule)
     workers=sub.add_parser("workers",help="inspect durable workers, quotas, and leases"); workers.add_argument("machine_id"); workers.add_argument("--db",required=True); workers.set_defaults(func=_workers)
-    claim=sub.add_parser("claim",help="atomically claim one task for a worker"); claim.add_argument("machine_id"); claim.add_argument("--db",required=True); claim.add_argument("--worker",required=True); claim.add_argument("--task",required=True,help="JSON file containing one TaskDemand"); claim.add_argument("--lease-seconds",type=float,default=60.0); claim.set_defaults(func=_claim)
-    verify=sub.add_parser("verify-machine",help="statically validate a declarative machine definition"); verify.add_argument("path",help="JSON/TOML machine definition; YAML when PyYAML is installed"); verify.set_defaults(func=_verify_machine)
+    claim=sub.add_parser("claim",help="atomically claim one task for a worker"); claim.add_argument("machine_id"); claim.add_argument("--db",required=True); claim.add_argument("--worker",required=True); claim.add_argument("--task",required=True); claim.add_argument("--lease-seconds",type=float,default=60.0); claim.set_defaults(func=_claim)
+    models=sub.add_parser("models",help="inspect durable model profiles and last route"); models.add_argument("machine_id"); models.add_argument("--db",required=True); models.set_defaults(func=_models)
+    mr=sub.add_parser("model-route",help="route a task to a registered model profile"); mr.add_argument("machine_id"); mr.add_argument("--db",required=True); mr.add_argument("--request",required=True); mr.set_defaults(func=_model_route)
+    servep=sub.add_parser("serve",help="run the remote AASM HTTP control plane"); servep.add_argument("--store",required=True,help="SQLite path/sqlite:///... or postgres://..."); servep.add_argument("--host",default="127.0.0.1"); servep.add_argument("--port",type=int,default=8787); servep.add_argument("--token"); servep.set_defaults(func=_serve)
+    verify=sub.add_parser("verify-machine",help="statically validate a declarative machine definition"); verify.add_argument("path"); verify.set_defaults(func=_verify_machine)
     return parser
 
 
