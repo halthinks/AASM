@@ -31,3 +31,15 @@ class AASMEngine(V07Engine):
         resources=deepcopy(self.snapshot.resources); resources["last_model_route"]={"request":asdict(request),"result":result.to_dict()}; self.patch_snapshot({"resources":resources},reason); return result
 
     def last_model_route(self): return deepcopy(self.snapshot.resources.get("last_model_route"))
+
+    def claim_next_task(self,worker_id:str,*,lease_seconds:float=60.0):
+        """Claim the highest-priority scheduled task this worker can execute."""
+        finished={x.get("task_id") for x in self.snapshot.resources.get("leases",[]) if x.get("status")=="COMPLETED"}
+        active={x.get("task_id") for x in self.snapshot.resources.get("leases",[]) if x.get("status")=="ACTIVE"}
+        raw_tasks=[deepcopy(x) for x in self.snapshot.resources.get("tasks",[]) if x.get("task_id") not in finished|active]
+        raw_tasks.sort(key=lambda x:(-int(x.get("priority",0)),x.get("task_id","")))
+        from .resources import TaskDemand
+        for raw in raw_tasks:
+            try: return self.claim_task(TaskDemand(**raw),worker_id,lease_seconds=lease_seconds)
+            except (ValueError,KeyError): continue
+        return None
