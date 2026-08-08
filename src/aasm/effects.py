@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 
 from .model import new_id, now
 
@@ -49,6 +49,7 @@ class EffectRecord:
     attempts: int = 0
     authorization_id: str | None = None
     authority: str | None = None
+    execution_id: str | None = None
     result: dict[str, Any] | None = None
     error: str | None = None
     evidence: list[str] = field(default_factory=list)
