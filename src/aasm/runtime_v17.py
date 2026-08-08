@@ -38,6 +38,7 @@ class AASMEngine(V16Engine):
             "records": len(rows),
             "duration_stats": ExecutionTelemetryLedger.duration_stats(rows),
             "latest": deepcopy(rows[-1]) if rows else None,
+            "recent": deepcopy(rows[-50:]),
             "artifacts": [
                 {"task_id": x.get("task_id"), "worker_id": x.get("worker_id"), "lease_id": x.get("lease_id"), "refs": list(x.get("artifact_refs", []) or []), "ts": x.get("ts")}
                 for x in rows if x.get("artifact_refs")
@@ -118,8 +119,10 @@ class AASMEngine(V16Engine):
         )
         record = self.propose_effect(spec)
         resources = deepcopy(self.snapshot.resources)
-        resources.setdefault("provisioning_history", []).append({"request": payload, "effect_id": record.spec.effect_id, "status": record.status, "reason": reason})
-        self.patch_snapshot({"resources": resources}, reason)
+        history = resources.setdefault("provisioning_history", [])
+        if not any(x.get("effect_id") == record.spec.effect_id for x in history):
+            history.append({"request": payload, "effect_id": record.spec.effect_id, "status": record.status, "reason": reason})
+            self.patch_snapshot({"resources": resources}, reason)
         return record
 
     def execute_provisioning(self, effect_id: str, adapter, *, reason="authorized fleet provisioning executed"):
@@ -135,20 +138,24 @@ class AASMEngine(V16Engine):
         if result.status == "SUCCEEDED" and request.action == ProvisioningAction.DRAIN:
             for worker_id in request.target_worker_ids:
                 try:
-                    self.update_worker(worker_id, {"status": WorkerStatus.DRAINING.value}, reason="provisioning adapter drained worker")
+                    current = next((x for x in self.list_workers() if x.get("worker_id") == worker_id), None)
+                    if current and current.get("status") != WorkerStatus.DRAINING.value:
+                        self.update_worker(worker_id, {"status": WorkerStatus.DRAINING.value}, reason="provisioning adapter drained worker")
                 except KeyError:
                     pass
         resources = deepcopy(self.snapshot.resources)
-        resources.setdefault("provisioning_executions", []).append({
-            "effect_id": effect_id,
-            "request_id": request.request_id,
-            "provider": request.provider,
-            "action": request.action,
-            "status": result.status,
-            "result": deepcopy(result.result),
-            "error": result.error,
-        })
-        self.patch_snapshot({"resources": resources}, reason)
+        executions = resources.setdefault("provisioning_executions", [])
+        if not any(x.get("effect_id") == effect_id for x in executions):
+            executions.append({
+                "effect_id": effect_id,
+                "request_id": request.request_id,
+                "provider": request.provider,
+                "action": request.action,
+                "status": result.status,
+                "result": deepcopy(result.result),
+                "error": result.error,
+            })
+            self.patch_snapshot({"resources": resources}, reason)
         return result
 
     def provisioning_report(self):
