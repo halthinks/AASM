@@ -1,4 +1,4 @@
-from aasm import AASMEngine, ProblemSpec, SQLiteStore, CodexGovernancePolicy
+from aasm import AASMEngine, ProblemSpec, SQLiteStore, CodexGovernancePolicy, import_otel_events
 from aasm.economics import CallPurpose, EconomicsLedger, ModelPricing, ModelUsageRecord, ReviewGatePolicy
 
 
@@ -11,6 +11,29 @@ def test_cache_adjusted_economics_and_governance_ratio():
     assert summary["estimated_cost"] > 0
     assert 0 < summary["governance_cost_ratio"] < 1
     assert summary["by_purpose"]["permission_review"]["calls"] == 1
+
+
+def test_unpriced_internal_model_is_not_silently_zero_cost():
+    ledger=EconomicsLedger([{"model_id":"codex-auto-review","purpose":"permission_review","input_tokens":5000,"output_tokens":100}])
+    summary=ledger.summary({})
+    assert summary["unpriced_tokens"] == 5100
+    assert summary["unpriced_models"] == ["codex-auto-review"]
+    assert summary["cost_complete"] is False
+    assert summary["governance_cost_ratio"] is None
+
+
+def test_codex_otel_auto_review_is_classified_as_permission_review():
+    batch=import_otel_events([
+        {"model":"codex-auto-review","session_source":"subagent_guardian","token_type":"input","value":4000},
+        {"model":"codex-auto-review","session_source":"subagent_guardian","token_type":"cached_input","value":2500},
+        {"model":"codex-auto-review","session_source":"subagent_guardian","token_type":"output","value":500},
+    ])
+    assert len(batch.records)==1
+    record=batch.records[0]
+    assert record.purpose=="permission_review"
+    assert record.input_tokens==6500
+    assert record.cached_input_tokens==2500
+    assert record.output_tokens==500
 
 
 def test_review_gate_uses_deterministic_policy_for_benign_actions():
