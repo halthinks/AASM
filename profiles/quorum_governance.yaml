@@ -1,0 +1,9 @@
+profile: quorum_governance
+authority:
+  mode: quorum
+  required_votes: 3
+roles:
+  - id: member_a
+  - id: member_b
+  - id: member_c
+  - id: member_d

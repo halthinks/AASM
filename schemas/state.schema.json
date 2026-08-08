@@ -1,0 +1,22 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://aasm.local/schemas/state.schema.json",
+  "title":"AASM Machine Snapshot",
+  "type":"object",
+  "required":["machine_id","version","state","problem","graph","frontier","visited","pruned","memory","resources","evidence"],
+  "properties":{
+    "machine_id":{"type":"string"},
+    "version":{"type":"integer","minimum":0},
+    "state":{"enum":["INGEST","FORMALIZE","CLASSIFY","DECOMPOSE","PLAN","SELECT","EXECUTE","OBSERVE","VERIFY","REPAIR","BACKTRACK","INVESTIGATE","COMMIT","PAUSE","COMPLETE","FAIL"]},
+    "problem":{"$ref":"problem.schema.json"},
+    "graph":{"type":"object","required":["nodes","edges"],"properties":{"nodes":{"type":"array"},"edges":{"type":"array"}}},
+    "frontier":{"type":"array","items":{"type":"string"}},
+    "visited":{"type":"array","items":{"type":"string"}},
+    "pruned":{"type":"array","items":{"type":"string"}},
+    "memory":{"type":"object"},
+    "resources":{"type":"object"},
+    "evidence":{"type":"object"},
+    "metadata":{"type":"object"}
+  },
+  "additionalProperties":false
+}

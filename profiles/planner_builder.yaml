@@ -1,0 +1,10 @@
+profile: planner_builder
+authority:
+  mode: single_controller
+  controller_id: planner
+roles:
+  - id: planner
+    capabilities: [planning, authorization, verification]
+  - id: builder
+    capabilities: [implementation, testing]
+adapter: PlannerBuilderAdapter

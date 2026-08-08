@@ -1,0 +1,11 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://aasm.local/schemas/transition.schema.json",
+  "title":"AASM Transition Event","type":"object",
+  "required":["event_id","ts","event_type","reason"],
+  "properties":{
+    "event_id":{"type":"string"},"ts":{"type":"number"},"event_type":{"type":"string"},
+    "from_state":{"type":["string","null"]},"to_state":{"type":["string","null"]},"reason":{"type":"string"},
+    "evidence":{"type":"array","items":{"type":"string"}},"data":{"type":"object"}
+  },"additionalProperties":false
+}

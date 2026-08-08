@@ -1,0 +1,47 @@
+---
+name: aasm-algorithmic-agent-state-machine
+description: Use AASM to structure an AI task as a durable algorithmic state machine with explicit legal transitions, graph planning, backtracking, memoization, resource allocation, evidence checks, and configurable authority.
+---
+
+# AASM Skill
+
+## When to use
+Use this skill for tasks that are multi-step, branchy, stateful, expensive to repeat, require auditable plan changes, involve multiple agents/tools, or need deterministic failure recovery.
+
+Do not assume Planner/Builder. AASM is role-agnostic. Select an orchestration profile or define agents by capability.
+
+## Operating rules
+1. Formalize the goal into objective, constraints, invariants, acceptance tests, and structural features.
+2. Instantiate `AASMEngine(ProblemSpec(...))`.
+3. Move only through legal machine transitions. Never mutate `snapshot.state` directly.
+4. Run `engine.classify()` in `CLASSIFY` to select applicable algorithmic operators.
+5. Represent nontrivial dependencies as a `PlanGraph`; prefer topological execution for DAGs and shortest path when alternatives have costs.
+6. Create a checkpoint before branching, irreversible work, or a high-risk assumption.
+7. Use `DPMemory` for equivalent solved subproblems; attach validity scope and invalidate when assumptions change.
+8. Use `ResourceFlowAllocator` when work competes for bounded agents, tools, concurrency, or budget; inspect minimum-cut edges before adding workers.
+9. Before COMMIT or irreversible action, call adversarial verification and resolve blocking counterexamples.
+10. Agents may propose actions. The configured `AuthorityPolicy` decides who can authorize them. The runtime, not generated prose, owns authoritative state.
+11. Emit evidence and provenance for every material transition.
+12. COMPLETE only when acceptance tests are satisfied; FAIL is terminal and must state why.
+
+## Profiles
+- `single_agent.yaml`: one agent, reversible autonomous actions.
+- `planner_builder.yaml`: compatibility profile; Planner/Builder is not the core architecture.
+- `expert_swarm.yaml`: specialist agents with quorum governance.
+- `hierarchical_team.yaml`: delegated local authority with central/human gates.
+- `quorum_governance.yaml`: multi-party authorization.
+- `human_in_loop.yaml`: human authorization for configured external/irreversible actions.
+
+## Required handoff payload
+When another agent receives AASM work, give it: machine id/version, current state, problem spec, assigned task/frontier node, relevant graph neighborhood, constraints/invariants, evidence references, authorization scope, checkpoint id if applicable, and allowed response types.
+
+## Failure semantics
+- Local defect with preserved assumptions → `REPAIR`
+- Ancestor decision invalid → `BACKTRACK`
+- Evidence insufficient / contradiction unresolved → `INVESTIGATE`
+- Better costed path discovered → relax the plan graph, preserve provenance
+- Resource bottleneck → run max-flow/min-cut, reallocate rather than blindly spawn agents
+- User or external dependency blocks progress → `PAUSE`
+
+## Safety and correctness
+AASM improves process control; it does not make an underlying model correct. External side effects, security-sensitive actions, or domain-specific high-stakes decisions require their own policies and validation.

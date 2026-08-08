@@ -1,0 +1,12 @@
+profile: expert_swarm
+authority:
+  mode: quorum
+  required_votes: 2
+roles:
+  - id: researcher
+    capabilities: [retrieval, evidence]
+  - id: implementer
+    capabilities: [implementation]
+  - id: verifier
+    capabilities: [testing, adversarial_review]
+adapter: SwarmAdapter

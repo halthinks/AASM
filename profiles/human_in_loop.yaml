@@ -1,0 +1,9 @@
+profile: human_in_loop
+authority:
+  mode: hierarchical
+  default_authority: controller
+  action_authorities:
+    irreversible_external_action: human
+    publish: human
+    deploy_production: human
+adapter: HumanToolAdapter

@@ -1,0 +1,15 @@
+profile: hierarchical_team
+authority:
+  mode: hierarchical
+  default_authority: controller
+  action_authorities:
+    local_repair: subsystem_lead
+    commit: controller
+    irreversible_external_action: human
+roles:
+  - id: controller
+    capabilities: [planning, integration]
+  - id: subsystem_lead
+    capabilities: [delegation, repair]
+  - id: worker_pool
+    capabilities: [execution]

@@ -1,0 +1,4 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema","title":"AASM Agent Message","type":"object",
+  "required":["kind","sender","payload"],"properties":{"kind":{"type":"string"},"sender":{"type":"string"},"payload":{"type":"object"},"correlation_id":{"type":["string","null"]}},"additionalProperties":false
+}

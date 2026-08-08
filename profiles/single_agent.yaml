@@ -1,0 +1,7 @@
+profile: single_agent
+authority:
+  mode: autonomous
+  allowed_actions: [inspect, read, compute, local_repair]
+roles:
+  - id: primary
+    capabilities: [reasoning, execution, verification]
