@@ -10,7 +10,7 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.14.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.15.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
@@ -69,6 +69,7 @@ AASM is an attempt to make those properties first-class.
 | **Governance economics** | Separates semantic review from authority, budgets governance overhead, reuses unchanged low-risk completed reviews, and pauses rather than waiving required review. |
 | **Executable PBV profile** | Runs Builder → Verifier → Planner handoffs with Planner-only plan authority and explicit `CONTINUE | REPAIR | INVESTIGATE | PAUSE | PLAN_INTERRUPT` control messages. |
 | **Massive collaboration** | Computes useful worker fan-out from critical path, DAG width, eligible max-flow capacity, coordination overhead, cost, and min-cut bottlenecks instead of blindly spawning agents. |
+| **Selective change checkpoints** | Maps changed information onto the affected dependency subgraph, pauses only invalidated work, preserves unaffected leases, and lets the Planner resume repaired nodes incrementally. |
 | **Provenance** | Emits state-change and execution events so the run can be inspected after the fact. |
 
 ## Architecture
@@ -151,7 +152,7 @@ Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems 
 ### Requirements
 
 - Python **3.11+**
-- No mandatory runtime dependencies beyond the Python standard library in v0.14.0; PostgreSQL support is an optional extra
+- No mandatory runtime dependencies beyond the Python standard library in v0.15.0; PostgreSQL support is an optional extra
 
 ### Install from a clone
 
@@ -180,7 +181,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.14.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.15.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -451,6 +452,36 @@ aasm collaboration MACHINE_ID --store runs.db --policy collaboration-policy.json
 
 See [`docs/MASSIVE_COLLABORATION.md`](docs/MASSIVE_COLLABORATION.md) and [`examples/massive_collaboration.py`](examples/massive_collaboration.py).
 
+### Information-change checkpoints and additive steering
+
+v0.15 maps changed information onto the plan instead of restarting everything. `ChangeSignal` can represent user steering, assumption/evidence changes, failed verification, contradictions, risk escalation, or external dependency changes.
+
+When a signal names `seed_nodes`, AASM computes the downstream dependency closure, durably pauses only that affected region, releases affected active leases, and leaves unrelated active work untouched. Paused tasks cannot be claimed until the Planner resolves them.
+
+```python
+from aasm import ChangeKind, ChangeSignal
+
+impact = engine.analyze_change(ChangeSignal(
+    ChangeKind.USER_STEERING,
+    "also support FreeCAD",
+    seed_nodes=["cad-adapter"],
+))
+
+print(impact["affected_nodes"])
+print(engine.paused_tasks())
+```
+
+Unanchored changes still require Planner attention but do not falsely invalidate the whole graph. Resolution is incremental: the authoritative Planner may resume repaired nodes while unresolved descendants remain paused. v0.15 checks the canonical stored pause set before and after task claim, and the pause path releases newly visible affected leases, preventing stale worker processes from successfully taking newly paused work.
+
+The existing `user_interrupt()` API remains compatible; supplying `metadata={"seed_nodes": [...]}` automatically records the steering event and creates a selective impact checkpoint.
+
+```bash
+aasm change-analyze MACHINE_ID --store runs.db --signal change.json
+aasm change-control MACHINE_ID --store runs.db
+```
+
+See [`docs/INFORMATION_CHANGE_CHECKPOINTS.md`](docs/INFORMATION_CHANGE_CHECKPOINTS.md) and [`examples/change_impact.py`](examples/change_impact.py).
+
 ## Orchestration profiles
 
 AASM ships with multiple profiles to demonstrate that governance and role structure are independent of the core runtime:
@@ -502,9 +533,9 @@ See [`docs/DISTRIBUTED_WORKERS.md`](docs/DISTRIBUTED_WORKERS.md) and [`docs/REMO
 
 ## Project status
 
-**Current version: `0.14.0` — early-stage / experimental.**
+**Current version: `0.15.0` — early-stage / experimental.**
 
-The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, static model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, evaluated-outcome adaptive model routing, governance-review budgets/reuse, executable Planner/Builder/Verifier orchestration, evidence-based massive-collaboration planning, a browser Control Center, and cache-adjusted model economics.
+The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, static model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, evaluated-outcome adaptive model routing, governance-review budgets/reuse, executable Planner/Builder/Verifier orchestration, evidence-based massive-collaboration planning, selective information-change checkpointing/additive steering, a browser Control Center, and cache-adjusted model economics.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 
