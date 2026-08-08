@@ -10,7 +10,7 @@ AASM turns open-ended agent behavior into an explicit computational process: sta
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.12.0%20early--stage-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.13.0%20early--stage-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [**Quick start**](#quick-start) · [**Downloads**](#downloads) · [**Use cases**](#use-cases) · [**Examples**](#examples) · [**Architecture**](#architecture) · [**Contributing**](CONTRIBUTING.md)
@@ -67,6 +67,7 @@ AASM is an attempt to make those properties first-class.
 | **Executor orchestration** | Turns a claimed lease into a model route, physical executor invocation, usage/evidence capture, and durable completion. |
 | **Adaptive model routing** | Learns task-class-specific model quality/cost/latency from explicit evaluated outcomes while preserving hard static eligibility floors. |
 | **Governance economics** | Separates semantic review from authority, budgets governance overhead, reuses unchanged low-risk completed reviews, and pauses rather than waiving required review. |
+| **Executable PBV profile** | Runs Builder → Verifier → Planner handoffs with Planner-only plan authority and explicit `CONTINUE | REPAIR | INVESTIGATE | PAUSE | PLAN_INTERRUPT` control messages. |
 | **Provenance** | Emits state-change and execution events so the run can be inspected after the fact. |
 
 ## Architecture
@@ -149,7 +150,7 @@ Coordinate APIs, CLIs, browsers, databases, test harnesses, or external systems 
 ### Requirements
 
 - Python **3.11+**
-- No mandatory runtime dependencies beyond the Python standard library in v0.12.0; PostgreSQL support is an optional extra
+- No mandatory runtime dependencies beyond the Python standard library in v0.13.0; PostgreSQL support is an optional extra
 
 ### Install from a clone
 
@@ -178,7 +179,7 @@ Choose whichever form is easiest:
 - **Clone with Git:** `git clone https://github.com/halthinks/AASM.git`
 - **Browse the repository:** [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-> AASM is currently **v0.12.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
+> AASM is currently **v0.13.0 / early-stage**. The `main` archive tracks current development. Versioned releases and package-registry distribution are planned; see the [roadmap](ROADMAP.md).
 
 ## Minimal example
 
@@ -397,12 +398,34 @@ Hard governance-budget exhaustion returns `BUDGET_PAUSE`; AASM never turns an ex
 
 See [`docs/GOVERNANCE_ECONOMICS.md`](docs/GOVERNANCE_ECONOMICS.md) and [`examples/governance_economics.py`](examples/governance_economics.py).
 
+### Executable Planner / Builder / Verifier
+
+v0.13 makes the Planner/Builder pattern executable and adds an explicit Verifier role. Builders produce work, Verifiers inspect it and recommend a response, and only the registered Planner can commit the authoritative control directive or change the plan.
+
+The runtime control vocabulary is exactly:
+
+```text
+CONTINUE | REPAIR | INVESTIGATE | PAUSE | PLAN_INTERRUPT
+```
+
+`PLAN_INTERRUPT` is the only directive allowed to mutate the plan and requires an explicit plan patch. AASM validates the patch against a copy of the graph before incrementing the durable plan revision, so an invalid or cyclic update cannot half-apply.
+
+`PBVCoordinator` automates the physical handoff:
+
+```text
+BuilderOutput → Verifier → VerifierReport → Planner → PlannerDecision
+```
+
+The Verifier and Planner may be Codex/Responses agents, other providers, remote services, deterministic code, or humans. Planner overrides remain linked to the source Verifier report.
+
+See [`docs/EXECUTABLE_PBV.md`](docs/EXECUTABLE_PBV.md) and [`examples/pbv_cycle.py`](examples/pbv_cycle.py).
+
 ## Orchestration profiles
 
 AASM ships with multiple profiles to demonstrate that governance and role structure are independent of the core runtime:
 
 - [`single_agent.yaml`](profiles/single_agent.yaml) — one agent with bounded autonomy
-- [`planner_builder.yaml`](profiles/planner_builder.yaml) — compatibility profile for Planner/Builder systems
+- [`planner_builder.yaml`](profiles/planner_builder.yaml) — executable Planner / Builder / Verifier with Planner-owned plan authority
 - [`expert_swarm.yaml`](profiles/expert_swarm.yaml) — specialist swarm with quorum authority
 - [`hierarchical_team.yaml`](profiles/hierarchical_team.yaml) — layered authority and delegation
 - [`quorum_governance.yaml`](profiles/quorum_governance.yaml) — decisions authorized by multiple voters
@@ -448,9 +471,9 @@ See [`docs/DISTRIBUTED_WORKERS.md`](docs/DISTRIBUTED_WORKERS.md) and [`docs/REMO
 
 ## Project status
 
-**Current version: `0.12.0` — early-stage / experimental.**
+**Current version: `0.13.0` — early-stage / experimental.**
 
-The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, static model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, evaluated-outcome adaptive model routing, governance-review budgets/reuse, a browser Control Center, and cache-adjusted model economics.
+The runtime now includes event-sourced state, SQLite and PostgreSQL durability, persisted checkpoints, crash/restart recovery, durable external effects, declarative machines, static model checking, historical replay/forking, durable planning and DP memory, evidence lineage, capability-aware scheduling, crash-safe worker leases/quotas, remote multi-host execution, static model-strength/cost routing, real OpenAI/Codex executor adapters, end-to-end executor orchestration, evaluated-outcome adaptive model routing, governance-review budgets/reuse, executable Planner/Builder/Verifier orchestration, a browser Control Center, and cache-adjusted model economics.
 
 See [`ROADMAP.md`](ROADMAP.md) for the direction of travel.
 
