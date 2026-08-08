@@ -7,14 +7,11 @@ from .resources import TaskDemand
 from .workers import WorkerRecord
 from .model_routing import ModelRouteRequest
 
-
 class RemoteProtocolError(RuntimeError): pass
-
 
 class AASMRemoteClient:
     """Dependency-free JSON/HTTP client for remote AASM control planes."""
-    def __init__(self,base_url:str,token:str|None=None,timeout:float=30.0):
-        self.base_url=base_url.rstrip('/'); self.token=token; self.timeout=timeout
+    def __init__(self,base_url:str,token:str|None=None,timeout:float=30.0): self.base_url=base_url.rstrip('/'); self.token=token; self.timeout=timeout
     def _request(self,method,path,payload=None):
         data=None if payload is None else json.dumps(payload).encode(); headers={"Content-Type":"application/json","Accept":"application/json"}
         if self.token: headers["Authorization"]=f"Bearer {self.token}"
@@ -37,8 +34,11 @@ class AASMRemoteClient:
     def fail(self,machine_id,lease_id,error): return self._request("POST",f"/v1/machines/{machine_id}/leases/{lease_id}/fail",{"error":error})
     def route_model(self,machine_id,request:ModelRouteRequest): return self._request("POST",f"/v1/machines/{machine_id}/model-route",{"request":asdict(request)})
     def model_usage(self,machine_id,record):
-        payload=asdict(record) if hasattr(record,"__dataclass_fields__") else dict(record)
-        return self._request("POST",f"/v1/machines/{machine_id}/model-usage",{"record":payload})
+        payload=asdict(record) if hasattr(record,"__dataclass_fields__") else dict(record); return self._request("POST",f"/v1/machines/{machine_id}/model-usage",{"record":payload})
     def model_outcome(self,machine_id,record):
-        payload=asdict(record) if hasattr(record,"__dataclass_fields__") else dict(record)
-        return self._request("POST",f"/v1/machines/{machine_id}/model-outcome",{"record":payload})
+        payload=asdict(record) if hasattr(record,"__dataclass_fields__") else dict(record); return self._request("POST",f"/v1/machines/{machine_id}/model-outcome",{"record":payload})
+    def configure_governance_budget(self,machine_id,policy):
+        payload=asdict(policy) if hasattr(policy,"__dataclass_fields__") else dict(policy); return self._request("POST",f"/v1/machines/{machine_id}/governance-budget",{"policy":payload})
+    def governance_decide(self,machine_id,context):
+        payload=asdict(context) if hasattr(context,"__dataclass_fields__") else dict(context); return self._request("POST",f"/v1/machines/{machine_id}/governance-decision",{"context":payload})
+    def complete_governance_review(self,machine_id,decision_id,evidence=None): return self._request("POST",f"/v1/machines/{machine_id}/governance-review/{decision_id}/complete",{"evidence":list(evidence or [])})
