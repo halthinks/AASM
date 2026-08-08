@@ -10,6 +10,7 @@ from .workers import WorkerRecord, WorkerStatus, TaskLease, LeaseStatus, QuotaPo
 from .model_routing import ModelProfile, ModelRouteRequest, ModelRouteResult, ModelStrengthRouter
 from .adaptive_routing import ModelOutcomeRecord, ModelPerformance, ModelOutcomeLedger, AdaptiveRouteResult, AdaptiveModelRouter
 from .team_protocol import TeamRole, PlannerDirective, TeamMember, BuilderOutput, VerifierReport, PlannerDecision, PlannerBuilderVerifierPolicy
+from .pbv_orchestrator import PBVCycleResult, PBVCoordinator
 from .remote import AASMRemoteClient, RemoteProtocolError
 from .worker_loop import RemoteWorkerLoop
 from .economics import CallPurpose, ModelPricing, ModelUsageRecord, ReviewGatePolicy, EconomicsLedger
@@ -28,7 +29,7 @@ __all__=[
     "ResourceRecord","TaskDemand","Assignment","ScheduleResult","CapabilityScheduler",
     "WorkerRecord","WorkerStatus","TaskLease","LeaseStatus","QuotaPolicy",
     "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","ModelOutcomeRecord","ModelPerformance","ModelOutcomeLedger","AdaptiveRouteResult","AdaptiveModelRouter",
-    "TeamRole","PlannerDirective","TeamMember","BuilderOutput","VerifierReport","PlannerDecision","PlannerBuilderVerifierPolicy",
+    "TeamRole","PlannerDirective","TeamMember","BuilderOutput","VerifierReport","PlannerDecision","PlannerBuilderVerifierPolicy","PBVCycleResult","PBVCoordinator",
     "AASMRemoteClient","RemoteProtocolError","RemoteWorkerLoop",
     "CallPurpose","ModelPricing","ModelUsageRecord","ReviewGatePolicy","EconomicsLedger",
     "GovernanceAction","GovernanceBudgetPolicy","GovernanceContext","GovernanceDecision","GovernanceEconomicsController",
