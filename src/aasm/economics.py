@@ -101,15 +101,23 @@ class EconomicsLedger:
         by_purpose: dict[str, dict[str, float]] = {}
         total_cost = 0.0
         total_tokens = 0
+        unpriced_tokens = 0
+        unpriced_models: set[str] = set()
         for record in self.records:
             tokens = record.input_tokens + record.output_tokens
-            cost = record.estimated_cost(pricing[record.model_id]) if record.model_id in pricing else 0.0
+            is_priced = record.model_id in pricing
+            cost = record.estimated_cost(pricing[record.model_id]) if is_priced else 0.0
+            if not is_priced and tokens:
+                unpriced_tokens += tokens
+                unpriced_models.add(record.model_id)
             total_tokens += tokens
             total_cost += cost
-            bucket = by_purpose.setdefault(record.purpose, {"calls": 0, "tokens": 0, "estimated_cost": 0.0})
+            bucket = by_purpose.setdefault(record.purpose, {"calls": 0, "tokens": 0, "estimated_cost": 0.0, "unpriced_tokens": 0})
             bucket["calls"] += 1
             bucket["tokens"] += tokens
             bucket["estimated_cost"] += cost
+            if not is_priced:
+                bucket["unpriced_tokens"] += tokens
         governance_purposes = {
             CallPurpose.GOVERNANCE.value,
             CallPurpose.PERMISSION_REVIEW.value,
@@ -122,8 +130,11 @@ class EconomicsLedger:
             "tokens": total_tokens,
             "estimated_cost": total_cost,
             "by_purpose": by_purpose,
-            "governance_cost_ratio": (governance_cost / total_cost) if total_cost else 0.0,
+            "governance_cost_ratio": (governance_cost / total_cost) if total_cost else None,
             "governance_token_ratio": (governance_tokens / total_tokens) if total_tokens else 0.0,
+            "unpriced_tokens": unpriced_tokens,
+            "unpriced_models": sorted(unpriced_models),
+            "cost_complete": unpriced_tokens == 0,
         }
 
     def to_dict(self) -> list[dict[str, Any]]:
