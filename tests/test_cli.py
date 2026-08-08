@@ -25,6 +25,11 @@ def test_cli_exposes_durable_commands():
         (["codex-telemetry", "machine_x", "--store", "x.db", "--jsonl", "otel.jsonl"], "codex-telemetry"),
         (["model-outcome", "machine_x", "--store", "x.db", "--record", "outcome.json"], "model-outcome"),
         (["model-performance", "machine_x", "--store", "x.db", "--task-class", "backend"], "model-performance"),
+        (["team", "machine_x", "--store", "x.db"], "team"),
+        (["team-init", "machine_x", "--store", "x.db", "--members", "members.json"], "team-init"),
+        (["builder-output", "machine_x", "--store", "x.db", "--record", "builder.json"], "builder-output"),
+        (["verifier-report", "machine_x", "--store", "x.db", "--record", "verifier.json"], "verifier-report"),
+        (["planner-decision", "machine_x", "--store", "x.db", "--record", "decision.json"], "planner-decision"),
     ]:
         assert parser.parse_args(argv).command == command
 
