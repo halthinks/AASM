@@ -10,6 +10,7 @@ from .model import MachineState, ProblemSpec
 from .model_check import check_machine
 from .persistence import SQLiteStore
 from .resources import TaskDemand
+from .workers import WorkerRecord, QuotaPolicy
 
 
 def _json(data): print(json.dumps(data, indent=2, sort_keys=True, default=str))
@@ -82,6 +83,18 @@ def _schedule(args):
     _json({"machine_id":args.machine_id,"result":result.to_dict()}); store.close()
 
 
+def _workers(args):
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
+    _json({"machine_id":args.machine_id,"workers":engine.list_workers(),"quotas":engine.list_quotas(),"leases":engine.list_leases()}); store.close()
+
+
+def _claim(args):
+    store=SQLiteStore(args.db); engine=AASMEngine.resume(args.machine_id,store)
+    raw=json.loads(open(args.task,"r",encoding="utf-8").read()); task=TaskDemand(**raw)
+    lease=engine.claim_task(task,args.worker,lease_seconds=args.lease_seconds)
+    _json({"machine_id":args.machine_id,"lease":lease}); store.close()
+
+
 def _verify_machine(args):
     definition=MachineDefinition.load(args.path); report=check_machine(definition); _json(report.to_dict())
     if not report.valid: raise SystemExit(2)
@@ -101,6 +114,8 @@ def build_parser():
     evidence=sub.add_parser("evidence",help="inspect durable evidence and lineage"); evidence.add_argument("machine_id"); evidence.add_argument("--db",required=True); evidence.add_argument("--lineage",help="show ancestry for one evidence id"); evidence.set_defaults(func=_evidence)
     resources=sub.add_parser("resources",help="inspect durable capability/resource registry and last schedule"); resources.add_argument("machine_id"); resources.add_argument("--db",required=True); resources.set_defaults(func=_resources)
     schedule=sub.add_parser("schedule",help="compute and persist a capability-aware schedule from a JSON task list"); schedule.add_argument("machine_id"); schedule.add_argument("--db",required=True); schedule.add_argument("--tasks",required=True,help="JSON file containing a list of TaskDemand objects"); schedule.set_defaults(func=_schedule)
+    workers=sub.add_parser("workers",help="inspect durable workers, quotas, and leases"); workers.add_argument("machine_id"); workers.add_argument("--db",required=True); workers.set_defaults(func=_workers)
+    claim=sub.add_parser("claim",help="atomically claim one task for a worker"); claim.add_argument("machine_id"); claim.add_argument("--db",required=True); claim.add_argument("--worker",required=True); claim.add_argument("--task",required=True,help="JSON file containing one TaskDemand"); claim.add_argument("--lease-seconds",type=float,default=60.0); claim.set_defaults(func=_claim)
     verify=sub.add_parser("verify-machine",help="statically validate a declarative machine definition"); verify.add_argument("path",help="JSON/TOML machine definition; YAML when PyYAML is installed"); verify.set_defaults(func=_verify_machine)
     return parser
 
