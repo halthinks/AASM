@@ -31,6 +31,7 @@
 ./docs/EXECUTOR_ADAPTERS.md
 ./docs/EXECUTOR_ORCHESTRATION.md
 ./docs/GOVERNANCE_ECONOMICS.md
+./docs/MASSIVE_COLLABORATION.md
 ./docs/MODEL_ECONOMICS.md
 ./docs/MODEL_ROUTING.md
 ./docs/REMOTE_EXECUTION.md
@@ -44,6 +45,7 @@
 ./examples/fork_demo.py
 ./examples/governance_economics.py
 ./examples/machine.json
+./examples/massive_collaboration.py
 ./examples/model_profiles.json
 ./examples/multi_agent_demo.py
 ./examples/orchestrated_worker.py
@@ -58,6 +60,7 @@
 ./profiles/single_agent.yaml
 ./pyproject.toml
 ./schemas/agent-message.schema.json
+./schemas/collaboration-policy.schema.json
 ./schemas/effect.schema.json
 ./schemas/event.schema.json
 ./schemas/evidence.schema.json
@@ -92,6 +95,7 @@
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
+./src/aasm/collaboration.py
 ./src/aasm/control_center.py
 ./src/aasm/core/__init__.py
 ./src/aasm/core/reducer.py
@@ -128,6 +132,7 @@
 ./src/aasm/runtime_v11.py
 ./src/aasm/runtime_v12.py
 ./src/aasm/runtime_v13.py
+./src/aasm/runtime_v14.py
 ./src/aasm/scheduler.py
 ./src/aasm/server.py
 ./src/aasm/team_protocol.py
@@ -138,6 +143,7 @@
 ./tests/test_adaptive_routing.py
 ./tests/test_authority_protocols.py
 ./tests/test_cli.py
+./tests/test_collaboration_planner.py
 ./tests/test_definitions_modelcheck.py
 ./tests/test_durable_planning_memory_evidence.py
 ./tests/test_economics_control_center.py
