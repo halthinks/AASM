@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.16.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.17.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -52,6 +52,13 @@ AASM is currently **v0.16.0 / early-stage**. This roadmap describes direction, n
 - ✅ durable machine-quota enforcement of fleet admission across SQLite/PostgreSQL claims
 - ✅ automatic fleet refresh after triggered checkpoints, `PLAN_INTERRUPT`, and change resolution
 - ✅ remote/CLI checkpoint-trigger and fleet-control configuration plus live Control Center state
+- ✅ provider-neutral physical fleet provisioning plans from enforced admission targets
+- ✅ authority-gated provisioning effects using the durable effect/idempotency boundary
+- ✅ optional control-plane provisioning registry with fail-closed provider execution
+- ✅ automatic worker lifecycle telemetry around remote leases
+- ✅ streamed log/progress/artifact telemetry contracts and bounded durable retention
+- ✅ observed task/task-class durations feeding subsequent collaboration/fleet calculations
+- ✅ live telemetry and provisioning Control Center panels plus remote/CLI surfaces
 - richer event/evidence contracts
 - ✅ declarative machine definitions + initial static model checking
 - improved schema validation
@@ -64,18 +71,18 @@ AASM is currently **v0.16.0 / early-stage**. This roadmap describes direction, n
 
 ## Next architecture layer
 
-- executor-fleet provisioning adapters that consume admission recommendations without bypassing deployment authority
-- streamed worker logs and artifacts in the Control Center
+- provider-specific provisioning adapters/examples for Kubernetes, local supervisors, and common cloud runtimes
+- richer streamed worker logs with external log-store cursors instead of bounded in-snapshot records
 - create/pause/resume/approve/fork controls with authority-policy enforcement
 - richer executor adapters and provider-neutral structured result contract
 - run- and project-level productive-work budgets in addition to governance budgets
 - graph visualization and execution tracing
 - automatic evidence/assumption → plan-node impact mappings with explicit provenance rather than inferred hidden dependencies
-- ✅ deterministic state replay at explicit event boundaries
+- deterministic state replay at explicit event boundaries
 - richer human approval surfaces
 - policy-as-data for authority rules
 - pluggable adversarial/verifier agents
-- benchmark suite for orchestration behavior and governance efficiency
+- benchmark suite for orchestration behavior, fleet efficiency, and governance efficiency
 
 ## Longer-term possibilities
 
