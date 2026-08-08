@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/execution-contract.schema.json",
+  "title": "AASM Execution Contract",
+  "type": "object",
+  "required": ["prompt"],
+  "properties": {
+    "prompt": {"type": "string", "minLength": 1},
+    "purpose": {"type": "string"},
+    "instructions": {"type": ["string", "null"]},
+    "reasoning_effort": {"type": ["string", "null"]},
+    "executor_id": {"type": ["string", "null"]},
+    "fixed_model_id": {"type": ["string", "null"]},
+    "model_required_capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "executor_required_capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "min_strength": {"type": "number", "minimum": 0, "maximum": 1},
+    "min_context_window": {"type": "integer", "minimum": 0},
+    "max_cost_per_1k_output": {"type": ["number", "null"], "minimum": 0},
+    "optimize": {"enum": ["balanced", "strength", "cost", "latency"]},
+    "candidate_model_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": false
+}
