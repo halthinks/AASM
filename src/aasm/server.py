@@ -9,13 +9,15 @@ from .checkpoint_triggers import CheckpointTriggerPolicy
 from .collaboration import CollaborationPolicy
 from .control_center import html_document
 from .economics import ModelUsageRecord
+from .execution_telemetry import ExecutionTelemetryRecord, TelemetryPolicy
 from .fleet_control import FleetControlPolicy
 from .governance import GovernanceBudgetPolicy, GovernanceContext
 from .model import ProblemSpec
 from .model_routing import ModelRouteRequest
 from .persistence.factory import open_store
+from .provisioning import ProvisioningRequest
 from .resources import TaskDemand
-from .runtime_v16 import AASMEngine
+from .runtime_v17 import AASMEngine
 from .team_protocol import BuilderOutput, PlannerDecision, TeamMember, VerifierReport
 from .workers import WorkerRecord
 
@@ -23,9 +25,9 @@ MAX_BODY_BYTES=1_000_000
 LOOPBACK_HOSTS={"127.0.0.1","localhost","::1"}
 CSP="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
 
-def make_handler(store_target:str,token:str|None=None):
+def make_handler(store_target:str,token:str|None=None,provisioners=None):
     class Handler(BaseHTTPRequestHandler):
-        server_version="AASM/0.16"
+        server_version="AASM/0.17"
         def log_message(self,fmt,*args): pass
         def _auth(self):
             if not token: return True
@@ -49,13 +51,14 @@ def make_handler(store_target:str,token:str|None=None):
         def _error(self,exc): self._json(400,{"error":type(exc).__name__,"message":str(exc)})
         def do_GET(self):
             parsed=urlparse(self.path)
-            if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.16.0"})
+            if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.17.0"})
             if parsed.path=="/ui":
                 raw=html_document().encode(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self._security_headers(html=True); self.send_header("Content-Length",str(len(raw))); self.end_headers(); return self.wfile.write(raw)
             if not self._auth(): return self._json(401,{"error":"unauthorized"})
             parts=[p for p in parsed.path.split('/') if p]
             try:
-                if len(parts)==4 and parts[:2]==["v1","machines"] and parts[3] in {"state","dashboard","team","collaboration","change-control","checkpoint-triggers","fleet-control"}:
+                supported={"state","dashboard","team","collaboration","change-control","checkpoint-triggers","fleet-control","telemetry","provisioning"}
+                if len(parts)==4 and parts[:2]==["v1","machines"] and parts[3] in supported:
                     store,engine=self._machine(parts[2])
                     try:
                         if parts[3]=="dashboard": payload=engine.dashboard()
@@ -64,7 +67,9 @@ def make_handler(store_target:str,token:str|None=None):
                         elif parts[3]=="change-control": payload={"paused_tasks":engine.paused_tasks(),"last_impact":engine.last_impact(),"impacts":engine.impact_history()}
                         elif parts[3]=="checkpoint-triggers": payload={"policy":asdict(engine.checkpoint_trigger_policy()),"last":engine.last_checkpoint_trigger(),"history":engine.checkpoint_trigger_history()}
                         elif parts[3]=="fleet-control": payload=engine.fleet_control_report()
-                        else: payload={"snapshot":asdict(engine.snapshot),"workers":engine.list_workers(),"leases":engine.list_leases(),"models":engine.list_model_profiles(),"last_model_route":engine.last_model_route(),"model_performance":engine.model_performance(),"governance":engine.governance_report(),"team_protocol":engine.team_report(),"collaboration":engine.last_collaboration_analysis(),"change_control":{"paused_tasks":engine.paused_tasks(),"last_impact":engine.last_impact()},"checkpoint_triggers":{"policy":asdict(engine.checkpoint_trigger_policy()),"last":engine.last_checkpoint_trigger()},"fleet_control":engine.fleet_control_report()}
+                        elif parts[3]=="telemetry": payload=engine.telemetry_report()
+                        elif parts[3]=="provisioning": payload=engine.provisioning_report()
+                        else: payload={"snapshot":asdict(engine.snapshot),"workers":engine.list_workers(),"leases":engine.list_leases(),"models":engine.list_model_profiles(),"last_model_route":engine.last_model_route(),"model_performance":engine.model_performance(),"governance":engine.governance_report(),"team_protocol":engine.team_report(),"collaboration":engine.last_collaboration_analysis(),"change_control":{"paused_tasks":engine.paused_tasks(),"last_impact":engine.last_impact()},"checkpoint_triggers":{"policy":asdict(engine.checkpoint_trigger_policy()),"last":engine.last_checkpoint_trigger()},"fleet_control":engine.fleet_control_report(),"execution_telemetry":engine.telemetry_report(),"provisioning":engine.provisioning_report()}
                     finally: store.close()
                     return self._json(200,payload)
                 return self._json(404,{"error":"not_found"})
@@ -109,6 +114,14 @@ def make_handler(store_target:str,token:str|None=None):
                     elif parts[3:]==["checkpoint-triggers","configure"]: out=engine.configure_checkpoint_triggers(CheckpointTriggerPolicy(**payload.get("policy",{})))
                     elif parts[3:]==["fleet-control","configure"]: out=engine.configure_fleet_control(FleetControlPolicy(**payload.get("policy",{})),refresh=bool(payload.get("refresh",True)))
                     elif parts[3:]==["fleet-control","refresh"]: out=engine.refresh_fleet_control(collaboration_policy=CollaborationPolicy(**payload.get("collaboration_policy",{})))
+                    elif parts[3:]==["telemetry"]: out=engine.record_execution_telemetry(ExecutionTelemetryRecord(**payload["record"]))
+                    elif parts[3:]==["telemetry","configure"]: out=engine.configure_telemetry(TelemetryPolicy(**payload.get("policy",{})))
+                    elif parts[3:]==["provisioning","plan"]: out=engine.plan_fleet_provisioning(payload["provider"],payload["resource_id"],desired_workers=payload.get("desired_workers"))
+                    elif parts[3:]==["provisioning","propose"]: out=engine.propose_provisioning(ProvisioningRequest(**payload["request"]))
+                    elif len(parts)==6 and parts[3]=="provisioning" and parts[5]=="authorize": out=engine.authorize_effect(parts[4],authority=payload.get("authority","controller"))
+                    elif len(parts)==6 and parts[3]=="provisioning" and parts[5]=="execute":
+                        if provisioners is None: raise ValueError("No provisioning registry is configured on this control plane")
+                        effect=engine.store.load_effect(mid,parts[4]); provider=(effect.spec.payload or {}).get("provider"); adapter=provisioners.get(provider); out=engine.execute_provisioning(parts[4],adapter)
                     elif parts[3:]==["review-gate"]: out=engine.review_gate(payload["action_class"],**payload.get("signals",{}))
                     elif parts[3:]==["interrupt"]: out=engine.user_interrupt(payload["note"],metadata=payload.get("metadata"))
                     else: return self._json(404,{"error":"not_found"})
@@ -117,10 +130,10 @@ def make_handler(store_target:str,token:str|None=None):
             except Exception as exc: return self._error(exc)
     return Handler
 
-def serve(store_target:str,host="127.0.0.1",port=8787,token:str|None=None):
+def serve(store_target:str,host="127.0.0.1",port=8787,token:str|None=None,provisioners=None):
     token=token or os.getenv("AASM_SERVER_TOKEN")
     if host not in LOOPBACK_HOSTS and not token: raise ValueError("AASM refuses non-loopback binding without --token or AASM_SERVER_TOKEN")
-    ThreadingHTTPServer((host,int(port)),make_handler(store_target,token)).serve_forever()
+    ThreadingHTTPServer((host,int(port)),make_handler(store_target,token,provisioners)).serve_forever()
 
 def main():
     p=argparse.ArgumentParser(); p.add_argument("--store",required=True); p.add_argument("--host",default="127.0.0.1"); p.add_argument("--port",type=int,default=8787); p.add_argument("--token"); a=p.parse_args(); serve(a.store,a.host,a.port,a.token)
