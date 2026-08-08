@@ -19,6 +19,8 @@ def test_cli_exposes_durable_commands():
         (["schedule", "machine_x", "--db", "x.db", "--tasks", "tasks.json"], "schedule"),
         (["economics", "machine_x", "--store", "x.db"], "economics"),
         (["codex-telemetry", "machine_x", "--store", "x.db", "--jsonl", "otel.jsonl"], "codex-telemetry"),
+        (["model-outcome", "machine_x", "--store", "x.db", "--record", "outcome.json"], "model-outcome"),
+        (["model-performance", "machine_x", "--store", "x.db", "--task-class", "backend"], "model-performance"),
     ]:
         assert parser.parse_args(argv).command == command
 
