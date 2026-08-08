@@ -68,7 +68,13 @@ def test_only_authoritative_planner_can_resolve_and_partial_resume_is_preserved(
     with pytest.raises(PermissionError): e.resolve_change_impact("builder",impact["impact_id"],resume_nodes=["b"])
     partial=e.resolve_change_impact("planner",impact["impact_id"],resume_nodes=["b"])
     assert partial["status"]=="PARTIAL"
+    assert partial["remaining_nodes"]==["c"]
     assert e.paused_tasks()==["c"]
+    final=e.resolve_change_impact("planner",impact["impact_id"],resume_nodes=["c"])
+    assert final["status"]=="RESOLVED"
+    assert final["remaining_nodes"]==[]
+    assert len(final["resolutions"])==2
+    assert e.paused_tasks()==[]
     store.close()
 
 
