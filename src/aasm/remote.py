@@ -28,6 +28,7 @@ class AASMRemoteClient:
     def create_machine(self,problem:dict): return self._request("POST","/v1/machines",{"problem":problem})
     def state(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/state")
     def team(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/team")
+    def collaboration(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/collaboration")
     def register_worker(self,machine_id,worker:WorkerRecord): return self._request("POST",f"/v1/machines/{machine_id}/workers/register",{"worker":asdict(worker)})
     def heartbeat(self,machine_id,worker_id): return self._request("POST",f"/v1/machines/{machine_id}/workers/{worker_id}/heartbeat",{})
     def claim(self,machine_id,worker_id,task:TaskDemand,lease_seconds=60.0): return self._request("POST",f"/v1/machines/{machine_id}/claim",{"worker_id":worker_id,"task":asdict(task),"lease_seconds":lease_seconds})
@@ -45,3 +46,7 @@ class AASMRemoteClient:
     def builder_output(self,machine_id,output): return self._request("POST",f"/v1/machines/{machine_id}/team/builder-output",{"output":self._payload(output)})
     def verifier_report(self,machine_id,report): return self._request("POST",f"/v1/machines/{machine_id}/team/verifier-report",{"report":self._payload(report)})
     def planner_decision(self,machine_id,decision): return self._request("POST",f"/v1/machines/{machine_id}/team/planner-decision",{"decision":self._payload(decision)})
+    def analyze_collaboration(self,machine_id,policy=None,tasks=None):
+        body={"policy":self._payload(policy) if policy is not None else {}}
+        if tasks is not None: body["tasks"]=[self._payload(x) for x in tasks]
+        return self._request("POST",f"/v1/machines/{machine_id}/collaboration/analyze",body)
