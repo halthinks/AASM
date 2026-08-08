@@ -28,7 +28,7 @@ Do not assume Planner/Builder. AASM is role-agnostic. Select an orchestration pr
 
 ## Profiles
 - `single_agent.yaml`: one agent, reversible autonomous actions.
-- `planner_builder.yaml`: compatibility profile; Planner/Builder is not the core architecture.
+- `planner_builder.yaml`: executable Planner/Builder/Verifier profile; Planner/Builder is not the core architecture.
 - `expert_swarm.yaml`: specialist agents with quorum governance.
 - `hierarchical_team.yaml`: delegated local authority with central/human gates.
 - `quorum_governance.yaml`: multi-party authorization.
@@ -104,3 +104,18 @@ Configure soft/hard governance budgets with `GovernanceBudgetPolicy`. Ratio thre
 After a required review completes, call `complete_governance_review(decision_id, evidence=...)`. Record the actual reviewer model call separately as `CallPurpose.PERMISSION_REVIEW` so governance overhead and cache-adjusted cost remain measurable.
 
 Use `governance_report()` to inspect budget state, deterministic bypasses, reused reviews, and conservative avoided-overhead estimates. Avoided token/cost estimates use the run's observed average permission-review call when available; treat them as counterfactual estimates, not billing facts.
+
+## Executable Planner / Builder / Verifier profile
+Use `initialize_team()` with exactly one enabled `PLANNER` plus any number of Builders and Verifiers. The registered Planner is the sole owner of authoritative plan mutation.
+
+Builders submit `BuilderOutput`. They may report artifacts, diffs, tests, assumptions, and evidence, but they do not issue control directives or modify the plan.
+
+Verifiers submit `VerifierReport`. They may recommend one of `CONTINUE | REPAIR | INVESTIGATE | PAUSE | PLAN_INTERRUPT`, and AASM records a deterministic policy recommendation from verification signals, but neither recommendation is authority.
+
+Only the Planner may commit `PlannerDecision`. `PLAN_INTERRUPT` is the only directive that may include a `plan_patch`; it must include one. Apply the patch against a copied plan graph and validate it before committing. A failed/cyclic patch must leave the existing plan revision unchanged.
+
+Use `PBVCoordinator` to automate the physical handoff:
+
+`BuilderOutput → Verifier callable → VerifierReport → Planner callable → PlannerDecision`.
+
+Planner and Verifier callables can be real model executors, remote services, deterministic code, or humans. Preserve the source `verifier_report_id` when the Planner overrides a recommendation. A changed assumption or unexpected output should lead to explicit Planner reasoning and, when the plan must change, an explicit `PLAN_INTERRUPT`; never silently infer and rewrite the plan.
