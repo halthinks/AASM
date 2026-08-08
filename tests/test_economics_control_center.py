@@ -1,4 +1,4 @@
-from aasm import AASMEngine, ProblemSpec, SQLiteStore
+from aasm import AASMEngine, ProblemSpec, SQLiteStore, CodexGovernancePolicy
 from aasm.economics import CallPurpose, EconomicsLedger, ModelPricing, ModelUsageRecord, ReviewGatePolicy
 
 
@@ -19,6 +19,16 @@ def test_review_gate_uses_deterministic_policy_for_benign_actions():
     assert gate.decide("destructive")["requires_model_review"] is True
     assert gate.decide("read",assumption_changed=True)["requires_model_review"] is True
     assert gate.decide("build",tests_failed=True)["requires_model_review"] is True
+
+
+def test_generated_codex_policy_keeps_sandbox_and_narrow_allowlist():
+    policy=CodexGovernancePolicy()
+    rules=policy.render_rules()
+    requirements=policy.render_requirements_toml()
+    assert "git', 'status" in rules
+    assert "git', 'reset', '--hard" in rules
+    assert "workspace-write" in requirements
+    assert "open network" not in requirements.lower()
 
 
 def test_economics_is_durable_and_dashboard_exposes_it(tmp_path):
