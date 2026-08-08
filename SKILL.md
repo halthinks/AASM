@@ -65,9 +65,18 @@ For multi-host operation, run the AASM control plane against `PostgresStore` and
 
 Treat model choice as resource routing when model classes differ materially in strength, latency, context, or cost. Register `ModelProfile` records and route with `ModelRouteRequest`; do not hard-code expensive models for tasks that meet their quality floor on a cheaper class, and do not route high-risk architecture/review work below its minimum strength contract. The selected model is a control-plane decision; the executor adapter must translate it into the actual provider/Codex/API invocation.
 
+## Executor orchestration
+For work that should actually run on remote machines, put an `execution` object in `TaskDemand.metadata`. At minimum provide `prompt`; add model/executor capability floors, `min_strength`, context/cost constraints, or fixed model/executor IDs only when the task contract requires them.
+
+Run physical workers with `OrchestratedRemoteWorker` or `aasm worker`. Register worker-local executors with `ExecutorRegistry`/`ExecutorBinding`; never treat the existence of a model route as proof that an executable provider adapter exists. The worker must complete this chain explicitly:
+
+`lease → execution contract → model route → executor selection → provider/Codex invocation → usage/evidence capture → durable completion/failure`.
+
+Report returned `ModelUsageRecord` through the control plane before lease completion so later adaptive routing has empirical task/model/executor/outcome data. Worker restarts may reuse a durable `worker_id` only when the resource binding is unchanged.
+
 ## Model economics and review efficiency
 Treat model calls as resource consumption with purpose. Record productive, verification, governance, permission-review, synthesis, and retry usage separately, including cached-input reads and explicit cache-write tokens when the provider exposes them. Prefer deterministic rules for routine benign permission decisions; escalate to model review when assumptions change, tests fail, the change is materially large, or the operation is destructive, credential-related, security-sensitive, externally mutating, or irreversible.
 
 Do **not** weaken sandboxing, network policy, credential boundaries, or destructive-operation guards to save tokens. Use `ReviewGatePolicy` and Codex rules to remove redundant semantic review only where the permission decision is already expressible deterministically. Use model intelligence where changed information genuinely requires judgment.
 
-When using `OpenAIResponsesExecutor` or `CodexCLIExecutor`, record returned usage with `engine.record_model_usage()` so the Control Center can expose cache-adjusted productive-vs-governance cost. If governance overhead grows disproportionately, change checkpoint cadence, deterministic rules, or model routing before simply adding more reviewer agents.
+When using `OpenAIResponsesExecutor` or `CodexCLIExecutor`, record returned usage with `engine.record_model_usage()` or the remote model-usage endpoint so the Control Center can expose cache-adjusted productive-vs-governance cost. If governance overhead grows disproportionately, change checkpoint cadence, deterministic rules, or model routing before simply adding more reviewer agents.
