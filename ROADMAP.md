@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.8.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.9.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -16,6 +16,10 @@ AASM is currently **v0.8.0 / early-stage**. This roadmap describes direction, no
 - ✅ remote worker transport/protocol
 - ✅ PostgreSQL-backed coordination and advisory-lock sequencing
 - ✅ model strength/cost/context/latency routing
+- ✅ browser Control Center and provenance-preserving steering
+- ✅ OpenAI Responses and Codex CLI executor adapters
+- ✅ cache-adjusted model economics and governance-overhead accounting
+- ✅ deterministic review gating / Codex policy generation
 - richer event/evidence contracts
 - ✅ declarative machine definitions + initial static model checking
 - improved schema validation
@@ -28,16 +32,17 @@ AASM is currently **v0.8.0 / early-stage**. This roadmap describes direction, no
 
 ## Next architecture layer
 
-- richer operator web UI: create/steer/pause/resume runs, not only inspect them
-- concrete provider executors for OpenAI Responses/Codex and other runtimes
-- resumable long-running worker sessions and streamed worker logs
-- budget accounting beyond active capacity quotas
+- streamed worker logs and artifacts in the Control Center
+- create/pause/resume/approve/fork controls with authority-policy enforcement
+- richer executor adapters and provider-neutral structured result contract
+- empirical model-strength calibration from tests, repair rate, latency, and accepted evidence
+- run- and project-level token/cost budgets with hard/soft thresholds
 - graph visualization and execution tracing
 - ✅ deterministic state replay at explicit event boundaries
-- human approval surfaces
+- richer human approval surfaces
 - policy-as-data for authority rules
 - pluggable adversarial/verifier agents
-- benchmark suite for orchestration behavior
+- benchmark suite for orchestration behavior and governance efficiency
 
 ## Longer-term possibilities
 
