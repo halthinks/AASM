@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.15.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.16.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -41,12 +41,17 @@ AASM is currently **v0.15.0 / early-stage**. This roadmap describes direction, n
 - ✅ coordination-overhead and marginal-improvement worker-count optimization
 - ✅ min-cut/capability bottleneck evidence and durable collaboration history
 - ✅ remote/CLI collaboration analysis and live Control Center fan-out status
-- ✅ information-change signals for user steering, assumption/evidence changes, failed verification, contradictions, risk escalation, and external dependencies
-- ✅ downstream impact-closure analysis over the durable plan graph
+- ✅ information-change signals and downstream selective impact closure
 - ✅ selective affected-task pause with unaffected active leases preserved
 - ✅ canonical pre/post claim checks so stale workers cannot successfully acquire newly paused work
 - ✅ incremental Planner-only impact resolution with partial resume and durable remaining-node provenance
 - ✅ remote/CLI change-control surfaces and live Control Center checkpoint state
+- ✅ automatic Verifier checkpoint triggers for failed tests, changed assumptions, unexpected output, and blocking findings
+- ✅ PBV Planner payloads carrying automatic trigger, impacted region, and fleet state
+- ✅ opt-in fleet admission control derived from collaboration analysis
+- ✅ durable machine-quota enforcement of fleet admission across SQLite/PostgreSQL claims
+- ✅ automatic fleet refresh after triggered checkpoints, `PLAN_INTERRUPT`, and change resolution
+- ✅ remote/CLI checkpoint-trigger and fleet-control configuration plus live Control Center state
 - richer event/evidence contracts
 - ✅ declarative machine definitions + initial static model checking
 - improved schema validation
@@ -59,13 +64,13 @@ AASM is currently **v0.15.0 / early-stage**. This roadmap describes direction, n
 
 ## Next architecture layer
 
-- executor-fleet provisioning adapters that consume collaboration recommendations without bypassing deployment authority
-- automatic Planner checkpoint triggers that connect Verifier findings directly to `ChangeSignal` generation and impacted-subgraph replanning
+- executor-fleet provisioning adapters that consume admission recommendations without bypassing deployment authority
 - streamed worker logs and artifacts in the Control Center
 - create/pause/resume/approve/fork controls with authority-policy enforcement
 - richer executor adapters and provider-neutral structured result contract
 - run- and project-level productive-work budgets in addition to governance budgets
 - graph visualization and execution tracing
+- automatic evidence/assumption → plan-node impact mappings with explicit provenance rather than inferred hidden dependencies
 - ✅ deterministic state replay at explicit event boundaries
 - richer human approval surfaces
 - policy-as-data for authority rules
