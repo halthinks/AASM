@@ -19,13 +19,6 @@ class AASMEngine(V07Engine):
 
     @classmethod
     def resume(cls,machine_id,store,authority=None,*,recover_effects=False):
-        """Rehydrate a run without treating ordinary inspection as a crash.
-
-        `recover_effects=True` is reserved for an actual process-recovery path:
-        only then are durable RUNNING effects converted to UNKNOWN for explicit
-        reconciliation. Stateless HTTP/CLI inspection can safely resume with the
-        default `False` without disturbing work that another host is still doing.
-        """
         events=store.load_events(machine_id)
         if not events: raise KeyError(machine_id)
         self=cls._hydrate(replay_events(events),events,store,authority=authority)
@@ -35,19 +28,26 @@ class AASMEngine(V07Engine):
                 for record in marker(machine_id):
                     self.emit(
                         EventType.EFFECT_UNKNOWN.value,
-                        self.state_value,
-                        self.state_value,
+                        self.state_value,self.state_value,
                         "recovered unresolved effect",
                         data={"effect_id":record.spec.effect_id,"idempotency_key":record.spec.idempotency_key},
                     )
         return self
 
     @classmethod
-    def recover_unfinished(cls,store,authority=None):
+    def recover_unfinished(cls,store,authority=None,*,recover_effects=False):
         return [
-            cls.resume(mid,store,authority=authority,recover_effects=True)
+            cls.resume(mid,store,authority=authority,recover_effects=recover_effects)
             for mid in store.list_unfinished()
         ]
+
+    def _sync_after_append(self):
+        """Pull only events committed since this engine's last known sequence."""
+        after=self.events[-1].sequence if self.events else 0
+        fresh=self.store.load_events(self.snapshot.machine_id,after_sequence=after)
+        if fresh:
+            self.events.extend(fresh)
+        self._refresh_runtime_views()
 
     def _commit(self,event):
         """Adopt state only after the durable append succeeds."""
@@ -68,13 +68,7 @@ class AASMEngine(V07Engine):
         return stored
 
     def execute_effect(self,effect_id,executor):
-        """Execute one externally visible effect with an atomic durable start.
-
-        Stores that implement `claim_effect_attempt` transition AUTHORIZED (or
-        an explicitly retryable FAILED/UNKNOWN state) to RUNNING atomically.
-        This prevents two hosts from both crossing the same external side-effect
-        boundary after racing on the same authorized effect.
-        """
+        """Execute one externally visible effect with an atomic durable start."""
         claim=getattr(self.store,"claim_effect_attempt",None)
         if claim is None:
             return super().execute_effect(effect_id,executor)
@@ -88,11 +82,7 @@ class AASMEngine(V07Engine):
         self.emit(
             EventType.EFFECT_STARTED.value,
             self.state_value,self.state_value,"effect started",
-            data={
-                "effect_id":effect_id,
-                "attempt":record.attempts,
-                "idempotency_key":record.spec.idempotency_key,
-            },
+            data={"effect_id":effect_id,"attempt":record.attempts,"idempotency_key":record.spec.idempotency_key},
         )
         try:
             result=executor(record.spec,record.spec.idempotency_key)
@@ -139,7 +129,6 @@ class AASMEngine(V07Engine):
     def last_model_route(self): return deepcopy(self.snapshot.resources.get("last_model_route"))
 
     def claim_next_task(self,worker_id:str,*,lease_seconds:float=60.0):
-        """Claim the highest-priority scheduled task this worker can execute."""
         finished={x.get("task_id") for x in self.snapshot.resources.get("leases",[]) if x.get("status")=="COMPLETED"}
         active={x.get("task_id") for x in self.snapshot.resources.get("leases",[]) if x.get("status")=="ACTIVE"}
         raw_tasks=[deepcopy(x) for x in self.snapshot.resources.get("tasks",[]) if x.get("task_id") not in finished|active]
