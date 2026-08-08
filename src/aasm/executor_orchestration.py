@@ -21,17 +21,16 @@ class ExecutorBinding:
     enabled: bool = True
     priority: int = 0
     metadata: dict[str, Any] = field(default_factory=dict)
-
     def __post_init__(self):
         if not self.executor_id: raise ValueError("executor_id is required")
         self.providers=sorted(set(self.providers)); self.capabilities=sorted(set(self.capabilities))
-    def supports(self,provider,required):
-        return self.enabled and (not self.providers or provider in self.providers) and set(required).issubset(self.capabilities)
+    def supports(self,provider,required): return self.enabled and (not self.providers or provider in self.providers) and set(required).issubset(self.capabilities)
 
 
 @dataclass
 class ExecutionContract:
     prompt: str
+    task_class: str | None = None
     purpose: str = CallPurpose.PRODUCTIVE.value
     instructions: str | None = None
     reasoning_effort: str | None = None
@@ -44,15 +43,24 @@ class ExecutionContract:
     max_cost_per_1k_output: float | None = None
     optimize: str = "balanced"
     candidate_model_ids: list[str] = field(default_factory=list)
+    min_empirical_samples: int = 3
+    min_empirical_acceptance: float = 0.0
+    explore_under_sampled: bool = False
+    empirical_optimize: str = "cost_per_quality"
     metadata: dict[str, Any] = field(default_factory=dict)
     def __post_init__(self):
         if not self.prompt: raise ValueError("execution prompt is required")
+        if self.task_class is not None and not str(self.task_class).strip(): raise ValueError("task_class must be non-empty when supplied")
+        if self.min_empirical_samples < 0: raise ValueError("min_empirical_samples must be non-negative")
+        if not 0 <= float(self.min_empirical_acceptance) <= 1: raise ValueError("min_empirical_acceptance must be between 0 and 1")
+        if self.empirical_optimize not in {"cost_per_quality","quality","latency"}: raise ValueError("empirical_optimize must be cost_per_quality, quality, or latency")
         self.model_required_capabilities=sorted(set(self.model_required_capabilities)); self.executor_required_capabilities=sorted(set(self.executor_required_capabilities))
     @classmethod
     def from_lease(cls,lease):
         metadata=dict(lease.get("metadata") or {}); raw=dict(metadata.get("execution") or {})
         if "prompt" not in raw and metadata.get("prompt"): raw["prompt"]=metadata["prompt"]
         if "purpose" not in raw and metadata.get("purpose"): raw["purpose"]=metadata["purpose"]
+        if "task_class" not in raw and metadata.get("task_class"): raw["task_class"]=metadata["task_class"]
         return cls(**raw)
 
 
@@ -79,8 +87,7 @@ class ExecutorRegistry:
         eligible=[b for b in self._bindings.values() if b.supports(provider,required_capabilities)]
         if not eligible: raise ValueError(f"No executor satisfies provider={provider!r} capabilities={sorted(required_capabilities)!r}")
         return sorted(eligible,key=lambda b:(-b.priority,b.executor_id))[0]
-    def describe(self):
-        return [{"executor_id":b.executor_id,"providers":list(b.providers),"capabilities":list(b.capabilities),"enabled":b.enabled,"priority":b.priority,"metadata":dict(b.metadata)} for b in sorted(self._bindings.values(),key=lambda x:x.executor_id)]
+    def describe(self): return [{"executor_id":b.executor_id,"providers":list(b.providers),"capabilities":list(b.capabilities),"enabled":b.enabled,"priority":b.priority,"metadata":dict(b.metadata)} for b in sorted(self._bindings.values(),key=lambda x:x.executor_id)]
 
 
 class ExecutionOrchestrator:
@@ -94,7 +101,10 @@ class ExecutionOrchestrator:
             state=self.client.state(self.machine_id); profiles={m.get("model_id"):m for m in state.get("models",[])}; profile=profiles.get(contract.fixed_model_id)
             if profile is None: raise ValueError(f"Fixed model is not registered: {contract.fixed_model_id}")
             return {"task_id":task_id,"selected_model_id":contract.fixed_model_id,"provider":profile.get("provider"),"reason":"fixed model requested by execution contract","eligible":[contract.fixed_model_id],"rejected":{},"score":None}
-        route=self.client.route_model(self.machine_id,ModelRouteRequest(task_id=task_id,required_capabilities=contract.model_required_capabilities,min_strength=contract.min_strength,min_context_window=contract.min_context_window,max_cost_per_1k_output=contract.max_cost_per_1k_output,optimize=contract.optimize,candidate_ids=contract.candidate_model_ids,metadata=dict(contract.metadata)))
+        route_metadata=dict(contract.metadata)
+        if contract.task_class: route_metadata["task_class"]=contract.task_class
+        route_metadata.update({"min_empirical_samples":contract.min_empirical_samples,"min_empirical_acceptance":contract.min_empirical_acceptance,"explore_under_sampled":contract.explore_under_sampled,"empirical_optimize":contract.empirical_optimize})
+        route=self.client.route_model(self.machine_id,ModelRouteRequest(task_id=task_id,required_capabilities=contract.model_required_capabilities,min_strength=contract.min_strength,min_context_window=contract.min_context_window,max_cost_per_1k_output=contract.max_cost_per_1k_output,optimize=contract.optimize,candidate_ids=contract.candidate_model_ids,metadata=route_metadata))
         if not route.get("selected_model_id"): raise ValueError(route.get("reason") or "No eligible model")
         return route
     def execute(self,lease):
@@ -107,8 +117,7 @@ class ExecutionOrchestrator:
         except TypeError as exc:
             if "instructions" not in str(exc) and "reasoning_effort" not in str(exc): raise
             kwargs.pop("instructions",None); kwargs.pop("reasoning_effort",None); result=binding.adapter.run(contract.prompt,**kwargs)
-        output_text=str(getattr(result,"output_text","") or ""); usage=self._usage_dict(getattr(result,"usage",None),task_id=task_id,executor_id=binding.executor_id)
-        self.client.model_usage(self.machine_id,usage)
+        output_text=str(getattr(result,"output_text","") or ""); usage=self._usage_dict(getattr(result,"usage",None),task_id=task_id,executor_id=binding.executor_id); self.client.model_usage(self.machine_id,usage)
         evidence=[]; response_id=getattr(result,"response_id",None); thread_id=getattr(result,"thread_id",None)
         if response_id: evidence.append(f"openai_response:{response_id}")
         if thread_id: evidence.append(f"codex_thread:{thread_id}")
@@ -116,7 +125,6 @@ class ExecutionOrchestrator:
 
 
 class OrchestratedRemoteWorker(RemoteWorkerLoop):
-    """Physical remote worker: claim -> route model -> choose executor -> run -> account -> complete."""
     def __init__(self,client,machine_id,worker,registry,*,lease_seconds=120.0,heartbeat_interval=20.0,idle_sleep=2.0):
         self.orchestrator=ExecutionOrchestrator(client,machine_id,registry)
         super().__init__(client,machine_id,worker,self.orchestrator.execute,lease_seconds=lease_seconds,heartbeat_interval=heartbeat_interval,idle_sleep=idle_sleep)
