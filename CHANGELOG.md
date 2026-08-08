@@ -4,6 +4,18 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.8.0] - 2026-08-07
+
+### Added
+
+- optional PostgreSQL coordination store with advisory-lock event sequencing and atomic cross-host task claims
+- dependency-free `aasm.remote.v1` JSON/HTTP worker protocol and `AASMRemoteClient`
+- `aasm serve` control-plane server with bearer-token protection and a built-in `/ui` inspector
+- real multi-host worker registration, heartbeat, lease claim/renew/complete/fail over the network
+- durable model profiles with capability, strength, cost, latency, context, and concurrency metadata
+- deterministic model routing with hard quality/cost/context filters and balanced/strength/cost/latency objectives
+- PostgreSQL integration CI service and remote-protocol/model-routing tests
+
 ## [0.7.0] - 2026-08-07
 
 ### Added
