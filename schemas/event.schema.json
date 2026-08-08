@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.local/schemas/event.schema.json",
+  "title": "AASM Durable Event",
+  "type": "object",
+  "required": ["event_id", "ts", "event_type", "reason", "machine_id", "sequence", "schema_version"],
+  "properties": {
+    "event_id": {"type": "string", "minLength": 1},
+    "ts": {"type": "number"},
+    "event_type": {"type": "string", "minLength": 1},
+    "from_state": {"type": ["string", "null"]},
+    "to_state": {"type": ["string", "null"]},
+    "reason": {"type": "string"},
+    "evidence": {"type": "array", "items": {"type": "string"}},
+    "data": {"type": "object"},
+    "machine_id": {"type": "string", "minLength": 1},
+    "sequence": {"type": "integer", "minimum": 1},
+    "schema_version": {"type": "integer", "minimum": 1}
+  },
+  "additionalProperties": false
+}

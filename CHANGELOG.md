@@ -4,6 +4,24 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.2.0] - 2026-08-07
+
+### Added
+
+- event-sourced authoritative write path for machine creation, transitions, metadata patches, and checkpoint restoration
+- `Store` persistence protocol with `MemoryStore` and crash-safe `SQLiteStore` implementations
+- atomic SQLite event append + materialized snapshot updates using WAL mode
+- `AASMEngine.resume()` and `recover_unfinished()` for process restart recovery
+- deterministic event replay with canonical-state equality tests
+- persisted checkpoints that can be restored by a later process
+- durable runtime CLI commands: `runs`, `inspect`, and `replay`
+- durable-run example and crash/recovery scenario documentation
+- versioned durable event JSON schema
+
+### Compatibility
+
+- existing v0.1 `AASMEngine(problem)` and `transition()` call sites remain valid; in-memory persistence remains the default
+
 ## [0.1.0] - 2026-08-07
 
 ### Added

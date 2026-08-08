@@ -1,17 +1,18 @@
 # AASM Roadmap
 
-AASM is currently **v0.1.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.2.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
-- durable machine-state persistence
-- persistent checkpoint and DP-memory backends
+- ✅ durable machine-state persistence (event stream + SQLite)
+- ✅ persistent checkpoint backend (SQLite)
+- persistent DP-memory backend
 - richer event/evidence contracts
 - improved schema validation
 - async execution primitives
 - configurable retry and recovery policies
 - plugin/provider interfaces
-- stronger CLI inspection and replay tools
+- ✅ initial CLI inspection and replay tools
 - more worked examples
 - integration adapters for popular agent runtimes
 - versioned release packaging

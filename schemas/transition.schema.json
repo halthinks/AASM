@@ -2,10 +2,11 @@
   "$schema":"https://json-schema.org/draft/2020-12/schema",
   "$id":"https://aasm.local/schemas/transition.schema.json",
   "title":"AASM Transition Event","type":"object",
-  "required":["event_id","ts","event_type","reason"],
+  "required":["event_id","ts","event_type","reason","machine_id","sequence","schema_version"],
   "properties":{
-    "event_id":{"type":"string"},"ts":{"type":"number"},"event_type":{"type":"string"},
-    "from_state":{"type":["string","null"]},"to_state":{"type":["string","null"]},"reason":{"type":"string"},
-    "evidence":{"type":"array","items":{"type":"string"}},"data":{"type":"object"}
+    "event_id":{"type":"string"},"ts":{"type":"number"},"event_type":{"const":"transition_committed"},
+    "from_state":{"type":"string"},"to_state":{"type":"string"},"reason":{"type":"string"},
+    "evidence":{"type":"array","items":{"type":"string"}},"data":{"type":"object"},
+    "machine_id":{"type":"string"},"sequence":{"type":"integer","minimum":1},"schema_version":{"type":"integer","minimum":1}
   },"additionalProperties":false
 }
