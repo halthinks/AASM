@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/worker.schema.json",
+  "title": "AASM Worker Record",
+  "type": "object",
+  "required": ["worker_id", "resource_id", "status", "heartbeat_timeout", "last_heartbeat"],
+  "properties": {
+    "worker_id": {"type": "string", "minLength": 1},
+    "resource_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["ACTIVE", "DRAINING", "OFFLINE", "STALE"]},
+    "heartbeat_timeout": {"type": "number", "exclusiveMinimum": 0},
+    "last_heartbeat": {"type": "number"},
+    "metadata": {"type": "object"}
+  }
+}
