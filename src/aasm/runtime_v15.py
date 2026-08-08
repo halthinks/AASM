@@ -15,6 +15,10 @@ class AASMEngine(V14Engine):
     def paused_tasks(self):
         return sorted(set(self.snapshot.resources.get("change_control",{}).get("paused_tasks",[]) or []))
 
+    def _canonical_paused_tasks(self):
+        snapshot=self.store.load_snapshot(self.snapshot.machine_id)
+        return set(snapshot.resources.get("change_control",{}).get("paused_tasks",[]) or [])
+
     def impact_history(self):
         return deepcopy(self.snapshot.resources.get("change_control",{}).get("impacts",[]) or [])
 
@@ -41,7 +45,10 @@ class AASMEngine(V14Engine):
 
         released=[]
         if pause_affected:
-            affected=set(raw["affected_active_tasks"])
+            # Use the post-pause canonical snapshot, not the pre-analysis active
+            # set. This catches a concurrent claim that landed while the impact
+            # checkpoint itself was being committed.
+            affected=set(raw["affected_nodes"])
             for lease in list(self.snapshot.resources.get("leases",[])):
                 if lease.get("status")=="ACTIVE" and lease.get("task_id") in affected:
                     self.release_lease(lease["lease_id"])
@@ -54,9 +61,17 @@ class AASMEngine(V14Engine):
         return deepcopy(raw)
 
     def claim_task(self,task,worker_id,**kwargs):
-        if task.task_id in set(self.paused_tasks()):
+        # Check the authoritative store rather than trusting this process's local
+        # snapshot. Re-check after claim as well to close the pause/claim race:
+        # if a pause lands concurrently, the just-created lease is immediately
+        # released and never returned as successful ownership.
+        if task.task_id in self._canonical_paused_tasks():
             raise ValueError(f"Task paused by information-change checkpoint: {task.task_id}")
-        return super().claim_task(task,worker_id,**kwargs)
+        lease=super().claim_task(task,worker_id,**kwargs)
+        if task.task_id in self._canonical_paused_tasks():
+            self.release_lease(lease["lease_id"])
+            raise ValueError(f"Task became paused during claim: {task.task_id}")
+        return lease
 
     def resolve_change_impact(self,planner_id:str,impact_id:str,*,resume_nodes:list[str]|None=None,retire_nodes:list[str]|None=None,plan_decision_id:str|None=None,reason="change impact resolved"):
         resources=deepcopy(self.snapshot.resources); team=resources.get("team_protocol")
