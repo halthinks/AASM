@@ -59,8 +59,6 @@ def import_otel_events(events: Iterable[dict[str, Any]]) -> CodexTelemetryImport
         token_type = str(_first(flat, ("token_type",), "")).lower()
         raw_value = _first(flat, ("value", "sum", "token_count", "tokens"), None)
         if raw_value is None:
-            # Prometheus/OTLP JSON sometimes leaves the metric number at a
-            # top-level value whose key includes token_usage_sum.
             for key, value in flat.items():
                 if "token_usage" in key.lower() and isinstance(value, (int, float)):
                     raw_value = value
@@ -73,27 +71,34 @@ def import_otel_events(events: Iterable[dict[str, Any]]) -> CodexTelemetryImport
         if count < 0:
             ignored += 1
             continue
+
         purpose = _purpose(model, source)
         key = (model, purpose, source)
-        bucket = grouped.setdefault(key, {"input": 0, "cached_input": 0, "output": 0})
+        bucket = grouped.setdefault(
+            key,
+            {"input": 0, "cached_input": 0, "cache_write": 0, "output": 0},
+        )
         if token_type in {"cached_input", "cached", "cache_read"}:
             bucket["cached_input"] += count
+            bucket["input"] += count
+        elif token_type in {"cache_write", "cache_write_input", "cache_write_tokens"}:
+            bucket["cache_write"] += count
             bucket["input"] += count
         elif token_type in {"output", "reasoning_output"}:
             bucket["output"] += count
         elif token_type in {"input", "non_cached_input", "uncached_input"}:
             bucket["input"] += count
         else:
-            # Unknown token classes are ignored rather than silently charged as
-            # fresh input; callers can inspect ignored_events/telemetry source.
             ignored += 1
             continue
+
     records = [
         ModelUsageRecord(
             model_id=model,
             purpose=purpose,
             input_tokens=counts["input"],
             cached_input_tokens=counts["cached_input"],
+            cache_write_tokens=counts["cache_write"],
             output_tokens=counts["output"],
             metadata={"source": "codex_otel", "session_source": source},
         )
