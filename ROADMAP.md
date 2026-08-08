@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.9.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.10.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -18,6 +18,9 @@ AASM is currently **v0.9.0 / early-stage**. This roadmap describes direction, no
 - ✅ model strength/cost/context/latency routing
 - ✅ browser Control Center and provenance-preserving steering
 - ✅ OpenAI Responses and Codex CLI executor adapters
+- ✅ scheduled task → model route → executor → usage/evidence → durable completion orchestration
+- ✅ worker-local executor registry and `aasm worker` launch surface
+- ✅ durable worker reconnect after process restart
 - ✅ cache-adjusted model economics and governance-overhead accounting
 - ✅ deterministic review gating / Codex policy generation
 - richer event/evidence contracts
@@ -32,20 +35,23 @@ AASM is currently **v0.9.0 / early-stage**. This roadmap describes direction, no
 
 ## Next architecture layer
 
+- empirical model-strength calibration from tests, repair rate, latency, cost, and accepted evidence
+- adaptive escalation/demotion between model classes based on measured task outcomes
 - streamed worker logs and artifacts in the Control Center
 - create/pause/resume/approve/fork controls with authority-policy enforcement
 - richer executor adapters and provider-neutral structured result contract
-- empirical model-strength calibration from tests, repair rate, latency, and accepted evidence
 - run- and project-level token/cost budgets with hard/soft thresholds
 - graph visualization and execution tracing
 - ✅ deterministic state replay at explicit event boundaries
 - richer human approval surfaces
 - policy-as-data for authority rules
+- executable Planner/Builder/Verifier orchestration profile
 - pluggable adversarial/verifier agents
 - benchmark suite for orchestration behavior and governance efficiency
 
 ## Longer-term possibilities
 
+- massive-collaboration scheduler using graph critical-path and min-cut evidence before spawning workers
 - Redis/cache adapters around PostgreSQL coordination
 - multi-runtime SDKs
 - deeper formal verification / temporal-property checking
