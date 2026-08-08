@@ -10,6 +10,7 @@
     "attempts": {"type": "integer", "minimum": 0},
     "authorization_id": {"type": ["string", "null"]},
     "authority": {"type": ["string", "null"]},
+    "execution_id": {"type": ["string", "null"], "description": "Opaque owner token for the current/most recent execution attempt."},
     "result": {"type": ["object", "null"]},
     "error": {"type": ["string", "null"]},
     "evidence": {"type": "array", "items": {"type": "string"}},
