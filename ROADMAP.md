@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.10.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.11.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -21,6 +21,9 @@ AASM is currently **v0.10.0 / early-stage**. This roadmap describes direction, n
 - ✅ scheduled task → model route → executor → usage/evidence → durable completion orchestration
 - ✅ worker-local executor registry and `aasm worker` launch surface
 - ✅ durable worker reconnect after process restart
+- ✅ empirical model outcome ledger by task class
+- ✅ adaptive model routing with static hard gates, Wilson-bound evidence, repair/cost/latency metrics, and deterministic calibration
+- ✅ remote/CLI model outcome feedback and model-performance inspection
 - ✅ cache-adjusted model economics and governance-overhead accounting
 - ✅ deterministic review gating / Codex policy generation
 - richer event/evidence contracts
@@ -35,8 +38,8 @@ AASM is currently **v0.10.0 / early-stage**. This roadmap describes direction, n
 
 ## Next architecture layer
 
-- empirical model-strength calibration from tests, repair rate, latency, cost, and accepted evidence
-- adaptive escalation/demotion between model classes based on measured task outcomes
+- governance economics optimization: identify/coalesce repetitive permission-review calls and enforce governance-overhead budgets without weakening sandbox/security boundaries
+- information-change checkpoint policy so expensive review is triggered by changed assumptions, failed verification, risk class, or material plan changes rather than every shell boundary
 - streamed worker logs and artifacts in the Control Center
 - create/pause/resume/approve/fork controls with authority-policy enforcement
 - richer executor adapters and provider-neutral structured result contract
@@ -52,6 +55,7 @@ AASM is currently **v0.10.0 / early-stage**. This roadmap describes direction, n
 ## Longer-term possibilities
 
 - massive-collaboration scheduler using graph critical-path and min-cut evidence before spawning workers
+- cross-project model-performance priors with project/task-class isolation and explicit provenance
 - Redis/cache adapters around PostgreSQL coordination
 - multi-runtime SDKs
 - deeper formal verification / temporal-property checking
