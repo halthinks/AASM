@@ -46,3 +46,11 @@ def test_postgres_store_has_clear_optional_dependency_error():
     except ImportError:
         from aasm.persistence.postgres import PostgresStore
         with pytest.raises(RuntimeError): PostgresStore('postgresql://invalid')
+
+
+def test_claim_next_uses_scheduled_priority(tmp_path):
+    store=SQLiteStore(tmp_path/'next.db'); e=AASMEngine(ProblemSpec('next'),store=store)
+    e.register_resource(ResourceRecord('cpu','worker',['code'],capacity=1)); e.register_worker(WorkerRecord('w','cpu'))
+    e.schedule([TaskDemand('low',['code'],priority=1),TaskDemand('high',['code'],priority=10)])
+    lease=e.claim_next_task('w',lease_seconds=20)
+    assert lease['task_id']=='high'; store.close()
