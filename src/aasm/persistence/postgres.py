@@ -23,17 +23,17 @@ else:
 class PostgresStore:
     """PostgreSQL coordination store for multi-host AASM control planes.
 
-    Per-machine advisory locks serialize authoritative event reduction. Task
-    claims use a separate per-machine advisory lock so task ownership, resource
-    capacity, and quota checks are one database transaction across hosts.
+    Per-machine advisory locks serialize authoritative event reduction. Claims
+    acquire the same event lock before the claim lock, read the current durable
+    machine snapshot, and enforce worker/resource/quota policy from PostgreSQL.
+    A stale worker process therefore cannot claim using obsolete capacity or
+    quota configuration.
     """
 
     def __init__(self, dsn: str):
         if psycopg is None:
             raise RuntimeError("PostgresStore requires `pip install 'aasm-runtime[postgres]'`") from _IMPORT_ERROR
         self.dsn=dsn
-        # Reads should observe committed work from other hosts immediately.
-        # All writes below use explicit transaction() contexts.
         self._conn=psycopg.connect(dsn, autocommit=True)
         self._migrate()
 
@@ -110,6 +110,14 @@ class PostgresStore:
         target.__dict__.clear()
         target.__dict__.update(deepcopy(source.__dict__))
 
+    @staticmethod
+    def _event_lock_key(machine_id: str) -> str:
+        return f"event:{machine_id}"
+
+    @staticmethod
+    def _claim_lock_key(machine_id: str) -> str:
+        return f"claims:{machine_id}"
+
     def initialize_run(self, snapshot: MachineSnapshot):
         ts=time.time()
         with self._conn.transaction():
@@ -125,7 +133,7 @@ class PostgresStore:
         """Append one event against database-canonical state under a machine lock."""
         with self._conn.transaction():
             with self._conn.cursor() as cur:
-                cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (f"event:{machine_id}",))
+                cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (self._event_lock_key(machine_id),))
                 cur.execute(
                     "SELECT event_json FROM aasm_events WHERE machine_id=%s ORDER BY sequence",
                     (machine_id,),
@@ -279,6 +287,30 @@ class PostgresStore:
             if max_units is not None and sum(float(row[2] or 0) for row in selected)+demand > float(max_units)+1e-12:
                 raise ValueError(f"Quota exceeded: {raw.get('quota_id')}")
 
+    @staticmethod
+    def _canonical_claim_policy(snapshot: MachineSnapshot, worker_id: str, requested_resource_id: str | None, at_time: float):
+        resources=snapshot.resources or {}
+        worker=next((x for x in resources.get("workers",[]) if x.get("worker_id")==worker_id),None)
+        if worker is None:
+            raise KeyError(worker_id)
+        if worker.get("status") != "ACTIVE":
+            raise ValueError(f"Worker {worker_id} is not ACTIVE")
+        heartbeat=float(worker.get("last_heartbeat",0) or 0)
+        timeout=float(worker.get("heartbeat_timeout",60) or 60)
+        if at_time > heartbeat + timeout:
+            raise ValueError(f"Worker {worker_id} is stale")
+        resource_id=worker.get("resource_id")
+        if requested_resource_id is not None and requested_resource_id != resource_id:
+            raise ValueError(
+                f"Stale worker resource mapping: requested {requested_resource_id}, canonical is {resource_id}"
+            )
+        resource=next((x for x in resources.get("registry",[]) if x.get("resource_id")==resource_id),None)
+        if resource is None:
+            raise KeyError(resource_id)
+        if not resource.get("enabled",True):
+            raise ValueError(f"Resource {resource_id} is disabled")
+        return resource_id,float(resource.get("capacity",0) or 0),deepcopy(resources.get("quotas",[]))
+
     def acquire_task_claim(
         self,
         machine_id,
@@ -293,10 +325,28 @@ class PostgresStore:
         resource_capacity=None,
         quotas=None,
     ):
-        """Atomically reserve task ownership and enforce shared capacity/quotas."""
+        """Reserve ownership using only current canonical PostgreSQL policy.
+
+        Caller-supplied capacity/quotas are accepted for protocol compatibility
+        but never trusted when a durable machine snapshot exists.
+        """
+        del resource_capacity,quotas
         with self._conn.transaction():
             with self._conn.cursor() as cur:
-                cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))",(f"claims:{machine_id}",))
+                # Always take locks in event -> claims order. Appends only need
+                # the event lock, so capacity/quota configuration cannot change
+                # while this transaction reads and applies it.
+                cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))",(self._event_lock_key(machine_id),))
+                cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))",(self._claim_lock_key(machine_id),))
+                cur.execute("SELECT snapshot_json FROM aasm_runs WHERE machine_id=%s FOR UPDATE",(machine_id,))
+                row=cur.fetchone()
+                if row is None:
+                    raise KeyError(machine_id)
+                canonical=snapshot_from_dict(self._obj(row[0]))
+                canonical_resource,canonical_capacity,canonical_quotas=self._canonical_claim_policy(
+                    canonical,worker_id,resource_id,float(at_time)
+                )
+
                 cur.execute("DELETE FROM aasm_task_claims WHERE machine_id=%s AND expires_at<=%s",(machine_id,at_time))
                 cur.execute("SELECT 1 FROM aasm_task_claims WHERE machine_id=%s AND task_id=%s",(machine_id,task_id))
                 if cur.fetchone() is not None:
@@ -311,15 +361,15 @@ class PostgresStore:
                 self._check_claim_limits(
                     active,
                     worker_id=worker_id,
-                    resource_id=resource_id,
+                    resource_id=canonical_resource,
                     demand=float(demand),
-                    resource_capacity=resource_capacity,
-                    quotas=quotas,
+                    resource_capacity=canonical_capacity,
+                    quotas=canonical_quotas,
                 )
                 cur.execute(
                     """INSERT INTO aasm_task_claims(machine_id,task_id,lease_id,worker_id,expires_at,resource_id,demand)
                        VALUES(%s,%s,%s,%s,%s,%s,%s)""",
-                    (machine_id,task_id,lease_id,worker_id,expires_at,resource_id,float(demand)),
+                    (machine_id,task_id,lease_id,worker_id,expires_at,canonical_resource,float(demand)),
                 )
                 return True
 
