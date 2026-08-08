@@ -62,9 +62,26 @@ class AASMEngine:
         try:return MachineState(self.snapshot.state)
         except ValueError:return self.snapshot.state
     def allowed(self): return sorted(self.definition.allowed(self.state_value))
-    def _append_existing(self,event): stored=self.store.append(self.snapshot.machine_id,event,self.snapshot); self.events.append(stored); return stored
+
+    def _sync_after_append(self):
+        # Durable multi-process stores may fold events committed by another host
+        # into the canonical snapshot while this event is appended. Refresh both
+        # derived runtime views and the local event list from authoritative storage.
+        self.events=self.store.load_events(self.snapshot.machine_id)
+        self._refresh_runtime_views()
+
+    def _append_existing(self,event):
+        stored=self.store.append(self.snapshot.machine_id,event,self.snapshot)
+        self._sync_after_append()
+        return stored
+
     def _refresh_runtime_views(self): self.graph=PlanGraph.from_dict(self.snapshot.graph); self.memory=DPMemory(self.snapshot.memory); self.evidence_ledger=EvidenceLedger.from_dict(self.snapshot.evidence)
-    def _commit(self,event): self.snapshot=reduce_event(self.snapshot,event); stored=self.store.append(self.snapshot.machine_id,event,self.snapshot); self.events.append(stored); self._refresh_runtime_views(); return stored
+
+    def _commit(self,event):
+        self.snapshot=reduce_event(self.snapshot,event)
+        stored=self.store.append(self.snapshot.machine_id,event,self.snapshot)
+        self._sync_after_append()
+        return stored
 
     def transition(self,to,reason,evidence=None,data=None):
         target=to.value if isinstance(to,MachineState) else str(to)
