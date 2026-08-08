@@ -1,8 +1,12 @@
+import threading
+from http.server import ThreadingHTTPServer
+
 import pytest
 
 from aasm import (
     AASMEngine,
     BuilderOutput,
+    CheckpointTriggerPolicy,
     FleetControlPolicy,
     PBVCoordinator,
     PlanEdge,
@@ -16,6 +20,8 @@ from aasm import (
     VerifierReport,
     WorkerRecord,
 )
+from aasm.remote import AASMRemoteClient
+from aasm.server import make_handler
 
 
 def _team(engine):
@@ -107,3 +113,18 @@ def test_fleet_control_is_opt_in_and_does_not_provision_workers():
     report = e.fleet_control_report()
     assert report["policy"]["enabled"] is False
     assert report["admission_limit"] is None
+
+
+def test_remote_checkpoint_and_fleet_configuration_round_trip(tmp_path):
+    db = str(tmp_path / "v16-remote.db")
+    store = SQLiteStore(db); e = AASMEngine(ProblemSpec("remote v16"), store=store); mid = e.snapshot.machine_id; store.close()
+    server = ThreadingHTTPServer(("127.0.0.1", 0), make_handler(db, "secret")); threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        client = AASMRemoteClient(f"http://127.0.0.1:{server.server_port}", "secret")
+        assert client.health()["version"] == "0.16.0"
+        client.configure_checkpoint_triggers(mid, CheckpointTriggerPolicy(on_blocking=False))
+        assert client.checkpoint_triggers(mid)["policy"]["on_blocking"] is False
+        client.configure_fleet_control(mid, FleetControlPolicy(enabled=True), refresh=False)
+        assert client.fleet_control(mid)["policy"]["enabled"] is True
+    finally:
+        server.shutdown(); server.server_close()
