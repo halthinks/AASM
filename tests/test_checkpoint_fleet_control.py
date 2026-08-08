@@ -89,15 +89,33 @@ def test_pbv_planner_receives_automatic_checkpoint_and_can_resolve_part_of_it():
     assert e.last_impact()["status"] == "PARTIAL"
 
 
-def test_fleet_control_enforces_collaboration_recommendation_as_atomic_machine_quota(tmp_path):
+def test_requires_predecessor_must_complete_before_downstream_claim(tmp_path):
+    store = SQLiteStore(tmp_path / "deps.db")
+    e = AASMEngine(ProblemSpec("dependency claims"), store=store)
+    e.register_resource(ResourceRecord("pool", "agent", ["code"], capacity=2))
+    e.register_worker(WorkerRecord("w1", "pool")); e.register_worker(WorkerRecord("w2", "pool"))
+    e.plan_add_node(PlanNode("a", "task")); e.plan_add_node(PlanNode("b", "task")); e.plan_add_edge(PlanEdge("a", "b", relation="requires"))
+    ta, tb = TaskDemand("a", ["code"]), TaskDemand("b", ["code"])
+    with pytest.raises(ValueError, match="dependencies not complete"):
+        e.claim_task(tb, "w2", lease_seconds=120)
+    first = e.claim_task(ta, "w1", lease_seconds=120)
+    with pytest.raises(ValueError, match="dependencies not complete"):
+        e.claim_task(tb, "w2", lease_seconds=120)
+    e.complete_lease(first["lease_id"], result={"ok": True})
+    second = e.claim_task(tb, "w2", lease_seconds=120)
+    assert second["status"] == "ACTIVE"
+    store.close()
+
+
+def test_fleet_control_enforces_admission_limit_as_atomic_machine_quota(tmp_path):
     store = SQLiteStore(tmp_path / "fleet.db")
     e = AASMEngine(ProblemSpec("fleet control"), store=store)
     e.register_resource(ResourceRecord("pool", "agent", ["code"], capacity=5))
     e.register_worker(WorkerRecord("w1", "pool")); e.register_worker(WorkerRecord("w2", "pool"))
-    e.plan_add_node(PlanNode("a", "task")); e.plan_add_node(PlanNode("b", "task")); e.plan_add_edge(PlanEdge("a", "b"))
+    e.plan_add_node(PlanNode("a", "task")); e.plan_add_node(PlanNode("b", "task"))
     tasks = [TaskDemand("a", ["code"]), TaskDemand("b", ["code"])]
     e.schedule(tasks)
-    fleet = e.configure_fleet_control(FleetControlPolicy(enabled=True))
+    fleet = e.configure_fleet_control(FleetControlPolicy(enabled=True, ceiling_workers=1))
     assert fleet["admission_limit"] == 1
     first = e.claim_task(tasks[0], "w1", lease_seconds=120)
     with pytest.raises(ValueError, match="Quota exceeded"):
