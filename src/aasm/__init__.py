@@ -14,6 +14,7 @@ from .economics import CallPurpose, ModelPricing, ModelUsageRecord, ReviewGatePo
 from .openai_executor import OpenAIResponsesExecutor, OpenAIExecutionResult, OpenAIExecutorError
 from .codex_executor import CodexCLIExecutor, CodexExecutionResult, CodexExecutorError
 from .codex_policy import CodexGovernancePolicy
+from .codex_telemetry import CodexTelemetryImport, import_otel_events, import_otel_jsonl
 
 __all__=[
     "AASMEngine","MachineState","ProblemSpec","TaskEnvelope","Proposal","Result","CapabilitySet",
@@ -24,7 +25,8 @@ __all__=[
     "WorkerRecord","WorkerStatus","TaskLease","LeaseStatus","QuotaPolicy",
     "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","AASMRemoteClient","RemoteProtocolError","RemoteWorkerLoop",
     "CallPurpose","ModelPricing","ModelUsageRecord","ReviewGatePolicy","EconomicsLedger",
-    "OpenAIResponsesExecutor","OpenAIExecutionResult","OpenAIExecutorError","CodexCLIExecutor","CodexExecutionResult","CodexExecutorError","CodexGovernancePolicy"
+    "OpenAIResponsesExecutor","OpenAIExecutionResult","OpenAIExecutorError","CodexCLIExecutor","CodexExecutionResult","CodexExecutorError","CodexGovernancePolicy",
+    "CodexTelemetryImport","import_otel_events","import_otel_jsonl"
 ]
 
 from .graph import PlanNode, PlanEdge, PlanGraph
