@@ -21,6 +21,40 @@ AASM does **not** disable sandboxing or security controls. The optimization targ
 
 `EconomicsLedger` then calculates cost from separately configured uncached-input, cached-input, and output prices. Pricing is configurable. The built-in GPT-5.6 table is a dated convenience snapshot, not a promise that provider prices never change.
 
+## Codex Auto-review telemetry
+
+`codex_telemetry.import_otel_events()` and `import_otel_jsonl()` can ingest Codex/OpenTelemetry-style token metrics. Events labelled with `codex-auto-review`, `subagent_guardian`, or equivalent guardian metadata are classified as `permission_review` rather than productive work. Cached input, fresh input, and output remain separate when the telemetry exposes those token types.
+
+This gives AASM a concrete measurement loop:
+
+```text
+Codex execution / Auto-review
+        |
+        v
+OpenTelemetry token metrics
+        |
+        v
+AASM Codex telemetry importer
+        |
+        +-- productive
+        +-- verification
+        +-- permission_review
+        |
+        v
+EconomicsLedger + Control Center
+```
+
+The importer is intentionally conservative: token classes it cannot classify are reported as ignored rather than silently priced as uncached input.
+
+```python
+from aasm import import_otel_jsonl
+
+batch = import_otel_jsonl("codex-otel.jsonl")
+for record in batch.records:
+    engine.record_model_usage(record)
+print(engine.economics_summary())
+```
+
 ## Governance ratio
 
 AASM exposes both:
