@@ -4,6 +4,18 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.7.0] - 2026-08-07
+
+### Added
+
+- durable worker registry with heartbeat, draining/offline/stale states
+- crash-safe task leases with claim, heartbeat, completion, failure, release, expiry, and reclaim lifecycle
+- SQLite-backed atomic task-claim reservations to prevent duplicate multi-process claims
+- machine, worker, and resource quotas for active leases and capacity units
+- stale-worker reaping that expires abandoned leases
+- restart/replay/fork preservation of worker, quota, and lease state
+- worker/lease CLI inspection, JSON schemas, documentation, and example
+
 ## [0.6.0] - 2026-08-07
 
 ### Added
