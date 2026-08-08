@@ -9,7 +9,7 @@ from pathlib import Path
 
 from ..checkpoint import Checkpoint
 from ..core.reducer import reduce_event
-from ..model import Event, EventType, MachineSnapshot, MachineState
+from ..model import Event, EventType, MachineSnapshot, MachineState, new_id
 from ..effects import EffectExecutionError, EffectRecord, EffectStatus, EffectUnknownOutcome
 from .serde import event_from_dict, event_to_dict, snapshot_from_dict, snapshot_to_dict
 from .effect_serde import effect_from_dict, effect_to_dict
@@ -94,17 +94,13 @@ class SQLiteStore:
     def initialize_run(self, snapshot: MachineSnapshot) -> None:
         ts=time.time(); payload=json.dumps(snapshot_to_dict(snapshot),sort_keys=True)
         with self._lock,self._conn:
-            self._conn.execute(
-                "INSERT OR IGNORE INTO runs(machine_id,snapshot_json,state,version,created_at,updated_at) VALUES(?,?,?,?,?,?)",
-                (snapshot.machine_id,payload,snapshot.state,snapshot.version,ts,ts),
-            )
+            self._conn.execute("INSERT OR IGNORE INTO runs(machine_id,snapshot_json,state,version,created_at,updated_at) VALUES(?,?,?,?,?,?)",(snapshot.machine_id,payload,snapshot.state,snapshot.version,ts,ts))
 
     @staticmethod
     def _replace_snapshot(target:MachineSnapshot,source:MachineSnapshot):
         target.__dict__.clear(); target.__dict__.update(deepcopy(source.__dict__))
 
     def append(self,machine_id:str,event:Event,snapshot:MachineSnapshot)->Event:
-        """Reduce one event against the locked canonical materialized snapshot."""
         with self._lock:
             self._conn.execute("BEGIN IMMEDIATE")
             try:
@@ -179,7 +175,7 @@ class SQLiteStore:
         if record.status==EffectStatus.RUNNING.value: raise EffectExecutionError(f"Effect {record.spec.effect_id} is already RUNNING on another executor")
         if record.status!=EffectStatus.AUTHORIZED.value: raise ValueError(f"Effect {record.spec.effect_id} is not authorized (status={record.status})")
         if record.attempts>=max(1,record.spec.retry_policy.max_attempts): raise EffectExecutionError(f"Effect {record.spec.effect_id} exhausted retry attempts")
-        record.attempts+=1; record.status=EffectStatus.RUNNING.value; record.updated_at=time.time(); return record
+        record.attempts+=1; record.execution_id=new_id("exec"); record.status=EffectStatus.RUNNING.value; record.updated_at=time.time(); return record
 
     def claim_effect_attempt(self,machine_id:str,effect_id:str)->EffectRecord:
         with self._lock:
@@ -191,6 +187,22 @@ class SQLiteStore:
                 if record.status!=EffectStatus.SUCCEEDED.value:
                     self._conn.execute("UPDATE effects SET status=?,effect_json=?,updated_at=? WHERE machine_id=? AND effect_id=?",(record.status,json.dumps(effect_to_dict(record),sort_keys=True),record.updated_at,machine_id,effect_id))
                 self._conn.commit(); return record
+            except Exception:
+                self._conn.rollback(); raise
+
+    def finish_effect_attempt(self,record:EffectRecord,execution_id:str)->EffectRecord:
+        if record.status not in {EffectStatus.SUCCEEDED.value,EffectStatus.FAILED.value}: raise ValueError("effect finalization requires SUCCEEDED or FAILED")
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                row=self._conn.execute("SELECT effect_json FROM effects WHERE machine_id=? AND effect_id=?",(record.machine_id,record.spec.effect_id)).fetchone()
+                if row is None: raise KeyError(record.spec.effect_id)
+                current=effect_from_dict(json.loads(row["effect_json"]))
+                if current.status!=EffectStatus.RUNNING.value or current.execution_id!=execution_id or current.attempts!=record.attempts:
+                    raise EffectExecutionError(f"Effect {record.spec.effect_id} lost execution ownership before durable finalization; reconcile external outcome")
+                current.status=record.status; current.result=deepcopy(record.result); current.error=record.error; current.evidence=deepcopy(record.evidence); current.updated_at=record.updated_at
+                self._conn.execute("UPDATE effects SET status=?,effect_json=?,updated_at=? WHERE machine_id=? AND effect_id=?",(current.status,json.dumps(effect_to_dict(current),sort_keys=True),current.updated_at,current.machine_id,current.spec.effect_id))
+                self._conn.commit(); return current
             except Exception:
                 self._conn.rollback(); raise
 
