@@ -4,6 +4,36 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.13.0] - 2026-08-08
+
+### Added
+
+- durable `TeamMember`, `BuilderOutput`, `VerifierReport`, and `PlannerDecision` records
+- exact runtime directives: `CONTINUE | REPAIR | INVESTIGATE | PAUSE | PLAN_INTERRUPT`
+- executable `PlannerBuilderVerifierPolicy` with one authoritative Planner, Builder execution role, and advisory Verifier role
+- atomic `PLAN_INTERRUPT` graph patches with plan-revision provenance and cycle validation before commit
+- durable team status, per-task directives, Builder-output history, Verifier-report history, and Planner-decision history
+- `PBVCoordinator` automatic Builder → Verifier → Planner handoff wrapper
+- remote PBV protocol endpoints and matching `AASMRemoteClient` helpers
+- `team`, `team-init`, `builder-output`, `verifier-report`, and `planner-decision` CLI commands
+- live Planner/Builder/Verifier status in the browser Control Center
+- executable PBV documentation, schema, profile, worked example, and acceptance tests
+
+### Authority semantics
+
+- only the registered Planner can commit an authoritative control directive
+- Builders can produce work and evidence but cannot mutate the plan
+- Verifiers can inspect Builder output and recommend a directive but cannot authorize continuation or rewrite the plan
+- `PLAN_INTERRUPT` is the only directive allowed to mutate the authoritative plan and must include an explicit `plan_patch`
+- plan patches are applied to a copy of the current graph and validated before one durable commit; invalid or cyclic patches leave the current plan and revision unchanged
+- Planner overrides of Verifier recommendations remain linked to the source Verifier report for provenance
+
+### Executable handoff
+
+- `PBVCoordinator` persists Builder output, passes it to a Verifier callable, persists the Verifier report, passes both to the Planner callable, validates Planner identity, and commits the Planner decision
+- Planner and Verifier callables remain transport-neutral and can be backed by Codex, OpenAI Responses, another model provider, deterministic code, a remote service, or a human approval surface
+- the PBV profile remains an AASM orchestration profile rather than becoming the role-agnostic core architecture
+
 ## [0.12.0] - 2026-08-08
 
 ### Added
@@ -177,10 +207,10 @@ The project uses semantic-versioning intent while the public API remains experim
 
 - declarative `MachineDefinition` runtime with JSON/TOML loading and optional YAML loading
 - static transition-graph model checker for undefined targets, unreachable states, dead ends, invalid terminal edges, and non-terminating reachable regions
-- `aasm verify-machine` CLI command and versioned machine-definition JSON schema
+- `aasm verify-machine` command and versioned machine-definition JSON schema
 - historical replay at an exact machine-local event sequence
 - durable machine forking with new machine IDs and explicit source lineage
-- `aasm fork` CLI command and fork demonstration
+- `aasm fork` command and fork demonstration
 - custom terminal-state awareness in unfinished-run recovery
 
 ### Compatibility and safety
