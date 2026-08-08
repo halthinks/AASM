@@ -82,14 +82,23 @@ class PBVCoordinator:
             )
         )
         team = self.engine.team_report()
+        checkpoint = self.engine.last_checkpoint_trigger() if hasattr(self.engine, "last_checkpoint_trigger") else None
+        change_control = {
+            "paused_tasks": self.engine.paused_tasks(),
+            "last_impact": self.engine.last_impact(),
+        } if hasattr(self.engine, "paused_tasks") else None
+        fleet = self.engine.fleet_control_report() if hasattr(self.engine, "fleet_control_report") else None
         planner_payload = {
             "builder_output": built,
             "verifier_report": verified,
             "policy_recommendation": verified.get("policy_recommendation"),
+            "automatic_checkpoint_trigger": checkpoint,
+            "change_control": change_control,
+            "fleet_control": fleet,
             "plan_revision": team.get("plan_revision"),
             "plan_graph": self.engine.snapshot.graph,
             "allowed_directives": [x.value for x in PlannerDirective],
-            "instruction": "You alone own the authoritative plan. Test the new evidence against current assumptions. Do not mutate the plan unless PLAN_INTERRUPT includes an explicit validated plan_patch.",
+            "instruction": "You alone own the authoritative plan. Test the new evidence against current assumptions. If an automatic checkpoint exists, resolve only nodes that are valid again. Do not mutate the plan unless PLAN_INTERRUPT includes an explicit validated plan_patch.",
         }
         decided = self.engine.planner_decide(
             self._planner_record(
