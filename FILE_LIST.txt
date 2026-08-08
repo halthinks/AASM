@@ -31,6 +31,7 @@
 ./docs/EXECUTOR_ADAPTERS.md
 ./docs/EXECUTOR_ORCHESTRATION.md
 ./docs/GOVERNANCE_ECONOMICS.md
+./docs/INFORMATION_CHANGE_CHECKPOINTS.md
 ./docs/MASSIVE_COLLABORATION.md
 ./docs/MODEL_ECONOMICS.md
 ./docs/MODEL_ROUTING.md
@@ -39,6 +40,7 @@
 ./docs/RESOURCE_SCHEDULER.md
 ./docs/USE_CASES.md
 ./examples/adaptive_routing.py
+./examples/change_impact.py
 ./examples/distributed_workers.py
 ./examples/durable_run.py
 ./examples/effect_demo.py
@@ -60,6 +62,7 @@
 ./profiles/single_agent.yaml
 ./pyproject.toml
 ./schemas/agent-message.schema.json
+./schemas/change-signal.schema.json
 ./schemas/collaboration-policy.schema.json
 ./schemas/effect.schema.json
 ./schemas/event.schema.json
@@ -90,6 +93,7 @@
 ./src/aasm/adversary.py
 ./src/aasm/agents.py
 ./src/aasm/authority.py
+./src/aasm/change_impact.py
 ./src/aasm/checkpoint.py
 ./src/aasm/cli.py
 ./src/aasm/codex_executor.py
@@ -133,6 +137,7 @@
 ./src/aasm/runtime_v12.py
 ./src/aasm/runtime_v13.py
 ./src/aasm/runtime_v14.py
+./src/aasm/runtime_v15.py
 ./src/aasm/scheduler.py
 ./src/aasm/server.py
 ./src/aasm/team_protocol.py
@@ -142,6 +147,7 @@
 ./tests/scenarios/replay/README.md
 ./tests/test_adaptive_routing.py
 ./tests/test_authority_protocols.py
+./tests/test_change_impact.py
 ./tests/test_cli.py
 ./tests/test_collaboration_planner.py
 ./tests/test_definitions_modelcheck.py
