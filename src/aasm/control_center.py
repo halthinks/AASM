@@ -1,0 +1,45 @@
+from __future__ import annotations
+
+
+def html_document() -> str:
+    return r'''<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AASM Control Center</title>
+<style>
+:root{color-scheme:dark;--bg:#0a0d12;--panel:#111722;--line:#263143;--text:#edf4ff;--muted:#91a0b5;--accent:#7dd3fc;--ok:#86efac;--warn:#fde68a;--bad:#fca5a5}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui;background:radial-gradient(circle at top,#142033 0,#0a0d12 45%);color:var(--text)}
+header{padding:22px 28px;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:center;justify-content:space-between}h1{font-size:20px;margin:0}.sub{color:var(--muted)}
+main{padding:22px;max-width:1500px;margin:auto}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}input,button,select,textarea{background:#0c121b;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:9px 11px}input{min-width:330px}button{cursor:pointer}button:hover{border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px}.panel{background:linear-gradient(180deg,#141b27,#0f151f);border:1px solid var(--line);border-radius:14px;padding:16px;min-height:150px}.wide{grid-column:span 2}.full{grid-column:1/-1}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 12px}.metric{font-size:28px;font-weight:700}.row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #1c2634}.row:last-child{border-bottom:0}.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 8px;color:var(--accent)}
+pre{white-space:pre-wrap;word-break:break-word;margin:0;color:#cfe2ff;max-height:420px;overflow:auto}.bar{height:9px;background:#202b3b;border-radius:9px;overflow:hidden}.bar>i{display:block;height:100%;background:linear-gradient(90deg,#38bdf8,#a78bfa)}
+@media(max-width:950px){.grid{grid-template-columns:1fr}.wide,.full{grid-column:auto}input{min-width:0;width:100%}}
+</style></head>
+<body><header><div><h1>AASM Control Center</h1><div class="sub">Durable state · workers · models · economics · evidence · control</div></div><span id="health" class="pill">offline</span></header>
+<main><div class="toolbar"><input id="mid" placeholder="machine id"><button onclick="loadDash()">Load run</button><button onclick="sendInterrupt()">Steer / interrupt</button><button onclick="refresh()">Refresh</button></div>
+<div class="grid">
+<section class="panel"><h2>Run</h2><div id="state" class="metric">—</div><div id="goal" class="sub"></div><div class="row"><span>Version</span><b id="version">—</b></div><div class="row"><span>Frontier</span><b id="frontier">—</b></div></section>
+<section class="panel"><h2>Economics</h2><div class="metric" id="cost">$0.00</div><div class="row"><span>Total model tokens</span><b id="tokens">0</b></div><div class="row"><span>Governance token share</span><b id="govratio">0%</b></div><div class="bar"><i id="govbar" style="width:0%"></i></div></section>
+<section class="panel"><h2>Models</h2><div id="models"></div></section>
+<section class="panel wide"><h2>Active work</h2><div id="leases"></div></section>
+<section class="panel"><h2>Workers</h2><div id="workers"></div></section>
+<section class="panel wide"><h2>Plan graph</h2><pre id="graph">—</pre></section>
+<section class="panel"><h2>Model spend by purpose</h2><div id="purposes"></div></section>
+<section class="panel full"><h2>Evidence / controls</h2><pre id="evidence">—</pre></section>
+</div></main>
+<script>
+let current=null; const $=id=>document.getElementById(id);
+async function api(path,opts={}){const r=await fetch(path,opts); if(!r.ok) throw new Error(await r.text()); return r.json()}
+async function refresh(){try{const h=await api('/health');$('health').textContent=h.protocol||'online'}catch(e){$('health').textContent='offline'} if(current) await loadDash()}
+function rows(items,fn){return items.length?items.map(fn).join(''):'<div class="sub">None</div>'}
+async function loadDash(){current=$('mid').value.trim(); if(!current)return; const d=await api('/v1/machines/'+encodeURIComponent(current)+'/dashboard');
+$('state').textContent=d.state;$('goal').textContent=d.problem?.goal||'';$('version').textContent=d.version;$('frontier').textContent=(d.frontier||[]).length;
+const e=d.economics||{};$('cost').textContent='$'+Number(e.estimated_cost||0).toFixed(4);$('tokens').textContent=(e.tokens||0).toLocaleString();const g=Math.round((e.governance_token_ratio||0)*100);$('govratio').textContent=g+'%';$('govbar').style.width=g+'%';
+$('models').innerHTML=rows(d.models||[],m=>`<div class=row><span>${m.model_id}</span><b>${Math.round((m.strength||0)*100)}%</b></div>`);
+$('workers').innerHTML=rows(d.workers||[],w=>`<div class=row><span>${w.worker_id}</span><b>${w.status||''}</b></div>`);
+$('leases').innerHTML=rows((d.leases||[]).filter(x=>x.status==='ACTIVE'),l=>`<div class=row><span>${l.task_id} → ${l.worker_id}</span><b>${l.status}</b></div>`);
+$('graph').textContent=JSON.stringify(d.graph,null,2);$('evidence').textContent=JSON.stringify({evidence:d.evidence,control:d.control,allowed_transitions:d.allowed_transitions},null,2);
+$('purposes').innerHTML=rows(Object.entries(e.by_purpose||{}),([k,v])=>`<div class=row><span>${k}</span><b>$${Number(v.estimated_cost||0).toFixed(4)}</b></div>`)}
+async function sendInterrupt(){if(!current)return alert('Load a run first');const note=prompt('Steering instruction / interrupt');if(!note)return;await api('/v1/machines/'+encodeURIComponent(current)+'/interrupt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({note})});await loadDash()}
+refresh();setInterval(()=>{if(current)loadDash().catch(()=>{})},5000)
+</script></body></html>'''
