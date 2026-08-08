@@ -9,4 +9,5 @@ venv/
 *.db
 *.db-shm
 *.db-wal
+SHA256SUMS.generated.txt
 .DS_Store
