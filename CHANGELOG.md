@@ -15,7 +15,19 @@ The project uses semantic-versioning intent while the public API remains experim
 - deterministic `ReviewGatePolicy` for routine benign actions with escalation on risk, changed assumptions, failed tests, or material diffs
 - conservative Codex rules/requirements generator through `CodexGovernancePolicy`
 - provenance-preserving user steering/interrupt API and Control Center action
-- dashboard, model-usage, review-gate, and interrupt HTTP endpoints plus `aasm economics` CLI inspection
+- dashboard, model-usage, review-gate, interrupt, and Codex telemetry inspection/import surfaces
+
+### Audit hardening
+
+- PostgreSQL event appends now reduce from database-canonical event history under a per-machine advisory lock so stale hosts cannot overwrite materialized state
+- PostgreSQL task claims now enforce current worker/resource/quota policy from the canonical database snapshot, including stale-host capacity and quota changes
+- SQLite event append and task/effect ownership paths use immediate write transactions for local multi-process coordination
+- external effect attempts are atomically claimed before execution in SQLite and PostgreSQL, preventing two workers from executing one authorized effect concurrently
+- passive `resume()` no longer reclassifies healthy remote `RUNNING` effects; crash reconciliation is explicit through `recover_effects=True` or `recover_unfinished()`
+- failed durable appends no longer leave uncommitted ghost state in the live runtime
+- CLI storage arguments now support PostgreSQL across inspection/coordination commands while retaining `--db` as a SQLite compatibility alias
+- cache-write tokens, long-context pricing multipliers, unpriced internal models, and governance-token/cost completeness are represented explicitly in economics accounting
+- tracked release inventory is CI-checked; SHA-256 manifests are generated from immutable checkouts/releases instead of maintained as stale moving-branch data
 
 ### Design principle
 
