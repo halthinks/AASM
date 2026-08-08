@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/model-outcome.schema.json",
+  "title": "AASM Evaluated Model Outcome",
+  "type": "object",
+  "required": ["task_id", "task_class", "model_id", "accepted"],
+  "properties": {
+    "task_id": {"type": "string", "minLength": 1},
+    "task_class": {"type": "string", "minLength": 1},
+    "model_id": {"type": "string", "minLength": 1},
+    "accepted": {"type": "boolean"},
+    "executor_id": {"type": ["string", "null"]},
+    "repair_required": {"type": "boolean"},
+    "verification_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "latency_seconds": {"type": ["number", "null"], "minimum": 0},
+    "estimated_cost": {"type": ["number", "null"], "minimum": 0},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": false
+}
