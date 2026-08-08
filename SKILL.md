@@ -56,3 +56,6 @@ Use `engine.plan_add_node`, `plan_add_edge`, `plan_update_node`, `plan_mark_visi
 
 ## Durable resource scheduling
 When work competes for constrained agents, tools, model slots, GPUs, API quotas, or human review capacity, register them with `ResourceRecord` and express work as `TaskDemand`. Use `engine.schedule()` rather than manually assigning workers when capability/capacity constraints matter. Treat `result.bottlenecks` and `result.unmet` as planner evidence: adding workers outside the min-cut does not improve throughput. Resource/schedule state is replayable and fork-aware.
+
+## Distributed worker rule
+When work may be executed by multiple processes or machines, register workers against durable resources and use `claim_task()` rather than assigning ownership only in conversational state. Heartbeat long-running leases, reap stale workers, and use quotas for bounded concurrency/capacity. SQLite task claims are atomic per `(machine_id, task_id)` so concurrent workers cannot both reserve the same unexpired task. After another process advances a machine, resume from the durable store before continuing from that process.
