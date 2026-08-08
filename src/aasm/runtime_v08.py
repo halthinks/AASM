@@ -1,6 +1,7 @@
 from __future__ import annotations
 from copy import deepcopy
 from dataclasses import asdict
+from .core.reducer import reduce_event
 from .runtime import AASMEngine as V07Engine
 from .model_routing import ModelProfile, ModelRouteRequest, ModelStrengthRouter
 
@@ -13,6 +14,32 @@ class AASMEngine(V07Engine):
     @classmethod
     def _hydrate(cls,snapshot,events,store,authority=None,definition=None):
         self=super()._hydrate(snapshot,events,store,authority=authority,definition=definition); self.model_router=ModelStrengthRouter(); return self
+
+    def _commit(self,event):
+        """Adopt state only after the durable append succeeds.
+
+        A concurrent durable store can reject a stale/invalid event. Reducing
+        into a candidate first prevents an uncommitted local "ghost" state.
+        Stores such as SQLite/PostgreSQL may replace the candidate with their
+        database-canonical reduction during append.
+        """
+        machine_id=self.snapshot.machine_id
+        candidate=reduce_event(self.snapshot,event)
+        try:
+            stored=self.store.append(machine_id,event,candidate)
+        except Exception:
+            # The live snapshot was never replaced by the candidate. Refresh
+            # when possible so the caller immediately sees authoritative state.
+            try:
+                self.snapshot=self.store.load_snapshot(machine_id)
+                self.events=self.store.load_events(machine_id)
+                self._refresh_runtime_views()
+            except Exception:
+                pass
+            raise
+        self.snapshot=candidate
+        self._sync_after_append()
+        return stored
 
     def register_model_profile(self,profile:ModelProfile,*,reason="model profile registered"):
         resources=deepcopy(self.snapshot.resources); models=resources.setdefault("models",[])
