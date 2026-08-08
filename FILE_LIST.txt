@@ -31,6 +31,7 @@
 ./docs/EXECUTABLE_PBV.md
 ./docs/EXECUTOR_ADAPTERS.md
 ./docs/EXECUTOR_ORCHESTRATION.md
+./docs/FLEET_PROVISIONING_TELEMETRY.md
 ./docs/GOVERNANCE_ECONOMICS.md
 ./docs/INFORMATION_CHANGE_CHECKPOINTS.md
 ./docs/MASSIVE_COLLABORATION.md
@@ -54,6 +55,7 @@
 ./examples/multi_agent_demo.py
 ./examples/orchestrated_worker.py
 ./examples/pbv_cycle.py
+./examples/provisioning_telemetry.py
 ./examples/remote_worker.py
 ./examples/scheduler_demo.py
 ./profiles/expert_swarm.yaml
@@ -71,6 +73,7 @@
 ./schemas/event.schema.json
 ./schemas/evidence.schema.json
 ./schemas/execution-contract.schema.json
+./schemas/execution-telemetry.schema.json
 ./schemas/fleet-control-policy.schema.json
 ./schemas/governance-budget.schema.json
 ./schemas/governance-context.schema.json
@@ -85,6 +88,7 @@
 ./schemas/plan-edge.schema.json
 ./schemas/plan-node.schema.json
 ./schemas/problem.schema.json
+./schemas/provisioning-request.schema.json
 ./schemas/quota.schema.json
 ./schemas/resource.schema.json
 ./schemas/state.schema.json
@@ -113,6 +117,7 @@
 ./src/aasm/effects.py
 ./src/aasm/engine.py
 ./src/aasm/evidence.py
+./src/aasm/execution_telemetry.py
 ./src/aasm/executor_orchestration.py
 ./src/aasm/fleet_control.py
 ./src/aasm/flow.py
@@ -133,6 +138,7 @@
 ./src/aasm/persistence/serde.py
 ./src/aasm/persistence/sqlite.py
 ./src/aasm/protocols.py
+./src/aasm/provisioning.py
 ./src/aasm/remote.py
 ./src/aasm/resources.py
 ./src/aasm/router.py
@@ -145,6 +151,7 @@
 ./src/aasm/runtime_v14.py
 ./src/aasm/runtime_v15.py
 ./src/aasm/runtime_v16.py
+./src/aasm/runtime_v17.py
 ./src/aasm/scheduler.py
 ./src/aasm/server.py
 ./src/aasm/team_protocol.py
@@ -172,6 +179,7 @@
 ./tests/test_pbv_plan_indexes.py
 ./tests/test_persistence.py
 ./tests/test_postgres_integration.py
+./tests/test_provisioning_telemetry.py
 ./tests/test_replay_fork.py
 ./tests/test_scheduler.py
 ./tests/test_schemas.py
