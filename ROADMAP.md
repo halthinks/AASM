@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.12.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.13.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -31,6 +31,11 @@ AASM is currently **v0.12.0 / early-stage**. This roadmap describes direction, n
 - ✅ hard-budget `BUDGET_PAUSE` semantics that never waive required review
 - ✅ observed-baseline avoided-review token/cost estimates
 - ✅ remote/CLI governance decision, budget, review-completion, and reporting surfaces
+- ✅ executable Planner/Builder/Verifier protocol with `CONTINUE | REPAIR | INVESTIGATE | PAUSE | PLAN_INTERRUPT`
+- ✅ Planner-only authoritative plan mutation and durable plan revisions
+- ✅ automatic Builder → Verifier → Planner handoff coordinator
+- ✅ atomic validated `PLAN_INTERRUPT` graph patches and Planner override provenance
+- ✅ remote/CLI PBV surfaces and live Control Center team state
 - richer event/evidence contracts
 - ✅ declarative machine definitions + initial static model checking
 - improved schema validation
@@ -43,9 +48,9 @@ AASM is currently **v0.12.0 / early-stage**. This roadmap describes direction, n
 
 ## Next architecture layer
 
-- executable Planner/Builder/Verifier orchestration profile with `CONTINUE | REPAIR | INVESTIGATE | PAUSE | PLAN_INTERRUPT`
-- planner-owned authoritative plan revisions and additive user steering without provenance loss
-- checkpoint-trigger policy that invokes expensive planning/review on changed assumptions, failed verification, contradictions, risk escalation, or material plan change
+- massive-collaboration scheduler using dependency critical path, parallel width, coordination cost, and max-flow/min-cut evidence before spawning workers
+- information-change checkpoint policy that invokes expensive planning/review on changed assumptions, failed verification, contradictions, risk escalation, or material plan change
+- additive user steering that maps interrupts to affected plan subgraphs and resumes unaffected workers
 - streamed worker logs and artifacts in the Control Center
 - create/pause/resume/approve/fork controls with authority-policy enforcement
 - richer executor adapters and provider-neutral structured result contract
@@ -59,7 +64,6 @@ AASM is currently **v0.12.0 / early-stage**. This roadmap describes direction, n
 
 ## Longer-term possibilities
 
-- massive-collaboration scheduler using graph critical-path and min-cut evidence before spawning workers
 - cross-project model-performance priors with project/task-class isolation and explicit provenance
 - Redis/cache adapters around PostgreSQL coordination
 - multi-runtime SDKs
