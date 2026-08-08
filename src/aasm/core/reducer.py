@@ -140,6 +140,36 @@ def reduce_event(snapshot: MachineSnapshot | None, event: Event) -> MachineSnaps
         resources["assignments"] = deepcopy(event.data.get("assignments", []))
         resources["last_schedule"] = deepcopy(event.data.get("result", {}))
         next_snapshot.version += 1
+    elif event.event_type == EventType.WORKER_REGISTERED.value:
+        resources = next_snapshot.resources
+        registry = resources.setdefault("workers", [])
+        worker = deepcopy(event.data["worker"])
+        if any(x.get("worker_id") == worker.get("worker_id") for x in registry):
+            raise ValueError(f"Worker already exists: {worker.get('worker_id')}")
+        registry.append(worker); next_snapshot.version += 1
+    elif event.event_type in {EventType.WORKER_UPDATED.value, EventType.WORKER_HEARTBEAT.value}:
+        worker_id = event.data["worker_id"]; patch = deepcopy(event.data.get("patch", {})); found=False
+        for worker in next_snapshot.resources.setdefault("workers", []):
+            if worker.get("worker_id") == worker_id:
+                worker.update(patch); found=True; break
+        if not found: raise KeyError(worker_id)
+        next_snapshot.version += 1
+    elif event.event_type == EventType.QUOTA_SET.value:
+        quotas = next_snapshot.resources.setdefault("quotas", [])
+        quota = deepcopy(event.data["quota"])
+        quotas[:] = [x for x in quotas if x.get("quota_id") != quota.get("quota_id")]
+        quotas.append(quota); next_snapshot.version += 1
+    elif event.event_type == EventType.LEASE_CLAIMED.value:
+        leases = next_snapshot.resources.setdefault("leases", [])
+        lease = deepcopy(event.data["lease"])
+        leases.append(lease); next_snapshot.version += 1
+    elif event.event_type in {EventType.LEASE_HEARTBEAT.value, EventType.LEASE_COMPLETED.value, EventType.LEASE_FAILED.value, EventType.LEASE_RELEASED.value, EventType.LEASE_EXPIRED.value}:
+        lease_id = event.data["lease_id"]; patch=deepcopy(event.data.get("patch", {})); found=False
+        for lease in next_snapshot.resources.setdefault("leases", []):
+            if lease.get("lease_id") == lease_id:
+                lease.update(patch); found=True; break
+        if not found: raise KeyError(lease_id)
+        next_snapshot.version += 1
     return next_snapshot
 
 
