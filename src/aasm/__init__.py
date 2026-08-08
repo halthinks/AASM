@@ -1,4 +1,4 @@
-from .runtime_v09 import AASMEngine
+from .runtime_v11 import AASMEngine
 from .model import MachineState, ProblemSpec, TaskEnvelope, Proposal, Result, CapabilitySet
 from .agents import AASMAgent, FunctionAgent
 from .authority import SingleControllerAuthority, AutonomousAuthority, QuorumAuthority, HierarchicalAuthority
@@ -8,6 +8,7 @@ from .model_check import ModelCheckIssue, ModelCheckReport, check_machine
 from .persistence import MemoryStore, SQLiteStore, PostgresStore
 from .workers import WorkerRecord, WorkerStatus, TaskLease, LeaseStatus, QuotaPolicy
 from .model_routing import ModelProfile, ModelRouteRequest, ModelRouteResult, ModelStrengthRouter
+from .adaptive_routing import ModelOutcomeRecord, ModelPerformance, ModelOutcomeLedger, AdaptiveRouteResult, AdaptiveModelRouter
 from .remote import AASMRemoteClient, RemoteProtocolError
 from .worker_loop import RemoteWorkerLoop
 from .economics import CallPurpose, ModelPricing, ModelUsageRecord, ReviewGatePolicy, EconomicsLedger
@@ -24,7 +25,8 @@ __all__=[
     "MachineDefinition","default_machine_definition","ModelCheckIssue","ModelCheckReport","check_machine",
     "ResourceRecord","TaskDemand","Assignment","ScheduleResult","CapabilityScheduler",
     "WorkerRecord","WorkerStatus","TaskLease","LeaseStatus","QuotaPolicy",
-    "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","AASMRemoteClient","RemoteProtocolError","RemoteWorkerLoop",
+    "ModelProfile","ModelRouteRequest","ModelRouteResult","ModelStrengthRouter","ModelOutcomeRecord","ModelPerformance","ModelOutcomeLedger","AdaptiveRouteResult","AdaptiveModelRouter",
+    "AASMRemoteClient","RemoteProtocolError","RemoteWorkerLoop",
     "CallPurpose","ModelPricing","ModelUsageRecord","ReviewGatePolicy","EconomicsLedger",
     "OpenAIResponsesExecutor","OpenAIExecutionResult","OpenAIExecutorError","CodexCLIExecutor","CodexExecutionResult","CodexExecutorError",
     "ExecutorAdapter","ExecutorBinding","ExecutorRegistry","ExecutionContract","ExecutionOrchestrator","OrchestrationResult","OrchestratedRemoteWorker",
