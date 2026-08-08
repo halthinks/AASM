@@ -86,6 +86,7 @@ class OpenAIResponsesExecutor:
             purpose=purpose,
             input_tokens=int(usage_raw.get("input_tokens", 0) or 0),
             cached_input_tokens=int(input_details.get("cached_tokens", 0) or 0),
+            cache_write_tokens=int(input_details.get("cache_write_tokens", 0) or 0),
             output_tokens=int(usage_raw.get("output_tokens", 0) or 0),
             task_id=task_id,
             metadata=dict(metadata or {}),
