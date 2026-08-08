@@ -18,13 +18,22 @@ AASM prevents duplicate invocation after a recorded success. For systems that su
 
 ## Crash semantics
 
-If a process exits while an effect is `RUNNING`, `AASMEngine.resume()` marks that effect `UNKNOWN`. By default, `execute_effect()` refuses to retry it. The caller must reconcile the external outcome using `reconcile_effect()` or explicitly opt into `retry_on_unknown` when the executor is known to be retry-safe.
+A normal `AASMEngine.resume(machine_id, store)` is now **passive**: it reconstructs the run without reclassifying live effects. This matters for stateless HTTP/control-plane inspection, where another host may still be legitimately executing a `RUNNING` effect.
 
-This prevents the dangerous pattern:
+When a process actually died and its in-flight effects must be reconciled, use:
 
-1. external operation succeeds;
-2. process dies before local success is recorded;
-3. restart blindly repeats the operation.
+```python
+engine = AASMEngine.resume(machine_id, store, recover_effects=True)
+```
+
+or `AASMEngine.recover_unfinished(store)`, which opts into effect recovery for unfinished runs.
+
+That recovery path converts unresolved `RUNNING` effects to `UNKNOWN`. By default, `execute_effect()` refuses to retry an `UNKNOWN` effect. The caller must reconcile the external outcome using `reconcile_effect()` or explicitly opt into `retry_on_unknown` when the executor is known to be retry-safe.
+
+This prevents both dangerous patterns:
+
+1. external operation succeeds; the process dies before local success is recorded; restart blindly repeats the operation;
+2. a healthy remote worker is still executing; a read-only dashboard/API request resumes the run and incorrectly declares its effect `UNKNOWN`.
 
 ## Retry semantics
 
@@ -32,4 +41,4 @@ This prevents the dangerous pattern:
 
 ## Current boundary
 
-AASM v0.3 persists effect intent, authorization, attempts, status, results, errors, evidence, and idempotency metadata. It does not claim that arbitrary external systems themselves are transactional. Exactly-once behavior across a network boundary requires either provider-side idempotency or reconciliation.
+AASM persists effect intent, authorization, attempts, status, results, errors, evidence, and idempotency metadata. It does not claim that arbitrary external systems themselves are transactional. Exactly-once behavior across a network boundary requires either provider-side idempotency or reconciliation.
