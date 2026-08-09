@@ -28,6 +28,16 @@ jobs:
         run: python scripts/release_manifest.py --check-file-list
       - name: Compile source and tests
         run: python -m compileall -q src tests examples scripts
+      - name: Validate embedded Control Center JavaScript
+        run: |
+          python - <<'PY' > /tmp/aasm-control-center.js
+          from aasm.control_center import html_document
+          page = html_document()
+          start = page.index("<script>") + len("<script>")
+          end = page.index("</script>", start)
+          print(page[start:end])
+          PY
+          node --check /tmp/aasm-control-center.js
       - name: Test
         run: pytest -q
 
@@ -72,7 +82,7 @@ jobs:
         run: |
           if [ "$TEST_RESULT" = "success" ] && [ "$POSTGRES_RESULT" = "success" ]; then
             state=success
-            description="unit matrix and PostgreSQL integration passed"
+            description="unit matrix, Control Center JS, and PostgreSQL integration passed"
           else
             state=failure
             description="unit=$TEST_RESULT postgres=$POSTGRES_RESULT"
