@@ -8,11 +8,12 @@ from .checkpoint_triggers import CheckpointTriggerPolicy
 from .collaboration import CollaborationPolicy
 from .codex_telemetry import import_otel_jsonl
 from .definitions import MachineDefinition
+from .execution_controls import WorkerControlRecord
 from .execution_telemetry import TelemetryPolicy
 from .fleet_control import FleetControlPolicy
 from .governance import GovernanceBudgetPolicy, GovernanceContext
 from .provisioning import ProvisioningRequest
-from .runtime_v17 import AASMEngine
+from .runtime_v18 import AASMEngine
 from .team_protocol import BuilderOutput, PlannerDecision, TeamMember, VerifierReport
 from .model import MachineState, ProblemSpec
 from .model_check import check_machine
@@ -55,6 +56,9 @@ def _telemetry(args): store=_open(args); e=AASMEngine.resume(args.machine_id,sto
 def _provisioning(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.provisioning_report()); store.close()
 def _provision_plan(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.plan_fleet_provisioning(args.provider,args.resource_id,desired_workers=args.desired_workers)); store.close()
 def _provision_propose(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(asdict(e.propose_provisioning(ProvisioningRequest(**_load(args.request))))); store.close()
+def _execution_controls(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.execution_control_report()); store.close()
+def _worker_control(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.control_worker(WorkerControlRecord(args.worker,args.action,args.actor,args.reason))); store.close()
+def _artifacts(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"artifacts":e.external_artifacts(task_id=args.task_id,worker_id=args.worker_id,limit=args.limit)}); store.close()
 def _workers(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"workers":e.list_workers(),"quotas":e.list_quotas(),"leases":e.list_leases()}); store.close()
 def _claim(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json(e.claim_task(TaskDemand(**_load(args.task)),args.worker,lease_seconds=args.lease_seconds)); store.close()
 def _models(args): store=_open(args); e=AASMEngine.resume(args.machine_id,store); _json({"models":e.list_model_profiles(),"last_model_route":e.last_model_route()}); store.close()
@@ -97,8 +101,10 @@ def build_parser():
     q=stored("replay","replay"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--at",type=int); q.set_defaults(func=_replay)
     q=stored("fork","fork"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--at",type=int,required=True); q.set_defaults(func=_fork)
     q=stored("inspect","inspect"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--events",action="store_true"); q.set_defaults(func=_inspect)
-    for name,func in [("effects",_effects),("plan",_plan),("memory",_memory),("resources",_resources),("workers",_workers),("models",_models),("economics",_economics),("governance",_governance),("team",_team),("change-control",_change_control),("checkpoint-triggers",_checkpoint_triggers),("provisioning",_provisioning)]: q=stored(name,name); q.add_argument("machine_id"); _add_store_args(q); q.set_defaults(func=func)
+    for name,func in [("effects",_effects),("plan",_plan),("memory",_memory),("resources",_resources),("workers",_workers),("models",_models),("economics",_economics),("governance",_governance),("team",_team),("change-control",_change_control),("checkpoint-triggers",_checkpoint_triggers),("provisioning",_provisioning),("execution-controls",_execution_controls)]: q=stored(name,name); q.add_argument("machine_id"); _add_store_args(q); q.set_defaults(func=func)
     q=stored("telemetry","inspect/configure live execution telemetry"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--policy"); q.set_defaults(func=_telemetry)
+    q=stored("artifacts","inspect external artifact references"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--task-id"); q.add_argument("--worker-id"); q.add_argument("--limit",type=int,default=200); q.set_defaults(func=_artifacts)
+    q=stored("worker-control","drain, resume, or offline a worker in AASM"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--worker",required=True); q.add_argument("--action",choices=["DRAIN","RESUME","OFFLINE"],required=True); q.add_argument("--actor",required=True); q.add_argument("--reason",required=True); q.set_defaults(func=_worker_control)
     q=stored("evidence","evidence"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--lineage"); q.set_defaults(func=_evidence)
     q=stored("schedule","schedule"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--tasks",required=True); q.set_defaults(func=_schedule)
     q=stored("collaboration","analyze useful worker fan-out"); q.add_argument("machine_id"); _add_store_args(q); q.add_argument("--tasks"); q.add_argument("--policy"); q.set_defaults(func=_collaboration)
