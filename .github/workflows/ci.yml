@@ -31,7 +31,7 @@ jobs:
       - name: Test
         run: pytest -q
 
-  postgres-integration:
+  postgres_integration:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -59,16 +59,16 @@ jobs:
       - name: PostgreSQL coordination test
         run: pytest -q tests/test_postgres_integration.py
 
-  ci-summary:
+  ci_summary:
     if: always()
-    needs: [test, postgres-integration]
+    needs: [test, postgres_integration]
     runs-on: ubuntu-latest
     steps:
       - name: Publish direct-push-visible commit status
         env:
           GH_TOKEN: ${{ github.token }}
           TEST_RESULT: ${{ needs.test.result }}
-          POSTGRES_RESULT: ${{ needs.postgres-integration.result }}
+          POSTGRES_RESULT: ${{ needs.postgres_integration.result }}
         run: |
           if [ "$TEST_RESULT" = "success" ] && [ "$POSTGRES_RESULT" = "success" ]; then
             state=success
@@ -77,6 +77,7 @@ jobs:
             state=failure
             description="unit=$TEST_RESULT postgres=$POSTGRES_RESULT"
           fi
+          export state description
           python - <<'PY' > /tmp/status.json
           import json, os
           print(json.dumps({
