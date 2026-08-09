@@ -12,6 +12,7 @@ from aasm import (
     ProblemSpec,
     ResourceRecord,
     SQLiteStore,
+    TaskDemand,
     WorkerControlAction,
     WorkerControlRecord,
     WorkerRecord,
@@ -62,12 +63,24 @@ def test_worker_controls_are_durable_and_do_not_delete_worker(tmp_path):
     store.close()
 
 
+def test_drain_keeps_active_lease_but_offline_releases_it():
+    e=AASMEngine(ProblemSpec("lease controls"))
+    e.register_resource(ResourceRecord("pool","agent",["code"],capacity=1)); e.register_worker(WorkerRecord("w","pool"))
+    lease=e.claim_task(TaskDemand("job",["code"]),"w",lease_seconds=120)
+    e.control_worker(WorkerControlRecord("w",WorkerControlAction.DRAIN,"operator","graceful maintenance"))
+    assert next(x for x in e.list_leases() if x["lease_id"]==lease["lease_id"])["status"]=="ACTIVE"
+    e.control_worker(WorkerControlRecord("w",WorkerControlAction.OFFLINE,"operator","force offline"))
+    assert next(x for x in e.list_leases() if x["lease_id"]==lease["lease_id"])["status"]=="RELEASED"
+    assert e.worker_control_history()[-1]["released_lease_ids"]==[lease["lease_id"]]
+
+
 def test_store_text_artifact_records_ref_and_telemetry():
     e=AASMEngine(ProblemSpec("artifact")); backend=MemoryArtifactBackend()
     item=e.store_text_artifact(backend,backend_name="memory",namespace="run",name="log",text="hello",worker_id="w",task_id="t",lease_id="l")
     assert item["ref"].startswith("artifact+memory://")
     assert e.external_artifacts()[-1]["ref"]==item["ref"]
     assert e.execution_telemetry()[-1]["artifact_refs"]==[item["ref"]]
+    assert e.dashboard()["execution_telemetry"]["recent"][-1]["artifact_refs"]==[item["ref"]]
 
 
 def test_remote_artifact_and_control_round_trip(tmp_path):
