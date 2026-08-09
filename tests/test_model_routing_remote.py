@@ -56,6 +56,12 @@ def test_control_center_has_security_headers_and_escaped_dynamic_labels(tmp_path
         assert '${esc(m.model_id)}' in page
         assert '${esc(w.worker_id)}' in page
         assert '${esc(l.task_id)}' in page
+        assert 'data-aasm-action="worker-control"' in page
+        assert 'data-aasm-action="approve-effect"' in page
+        assert 'data-aasm-action="preview-artifact"' in page
+        assert 'onclick="workerControl(' not in page
+        assert 'onclick="approveEffect(' not in page
+        assert 'onclick="previewArtifact(' not in page
     finally:
         server.shutdown(); server.server_close()
 
