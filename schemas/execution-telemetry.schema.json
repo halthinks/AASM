@@ -5,10 +5,11 @@
   "type": "object",
   "required": ["worker_id", "task_id", "lease_id", "kind"],
   "properties": {
+    "record_id": {"type": "string", "minLength": 1},
     "worker_id": {"type": "string", "minLength": 1},
     "task_id": {"type": "string", "minLength": 1},
     "lease_id": {"type": "string", "minLength": 1},
-    "kind": {"enum": ["STARTED", "LOG", "PROGRESS", "ARTIFACT", "COMPLETED", "FAILED", "HEARTBEAT"]},
+    "kind": {"enum": ["STARTED", "LOG", "PROGRESS", "ARTIFACT", "COMPLETED", "FAILED", "LEASE_LOST", "HEARTBEAT"]},
     "ts": {"type": "number"},
     "duration_seconds": {"type": ["number", "null"], "minimum": 0},
     "message": {"type": ["string", "null"]},
