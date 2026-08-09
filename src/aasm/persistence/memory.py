@@ -5,7 +5,6 @@ import threading
 import time
 
 from ..checkpoint import Checkpoint
-from ..core.reducer import reduce_event
 from ..effects import EffectExecutionError, EffectRecord, EffectStatus, EffectUnknownOutcome
 from ..model import Event, EventType, MachineSnapshot, MachineState, new_id
 
@@ -37,6 +36,10 @@ class MemoryStore:
             self._events.setdefault(snapshot.machine_id, [])
 
     def append(self, machine_id: str, event: Event, snapshot: MachineSnapshot) -> Event:
+        # Imported lazily to avoid persistence.__init__ -> MemoryStore -> reducer
+        # while reducer itself is importing persistence.serde.
+        from ..core.reducer import reduce_event
+
         with self._lock:
             if machine_id not in self._snapshots:
                 raise KeyError(machine_id)
