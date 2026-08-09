@@ -37,6 +37,7 @@
 ./docs/MASSIVE_COLLABORATION.md
 ./docs/MODEL_ECONOMICS.md
 ./docs/MODEL_ROUTING.md
+./docs/PROVIDER_ADAPTERS_ARTIFACTS_CONTROLS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
 ./docs/RESOURCE_SCHEDULER.md
@@ -55,6 +56,7 @@
 ./examples/multi_agent_demo.py
 ./examples/orchestrated_worker.py
 ./examples/pbv_cycle.py
+./examples/provider_artifacts_controls.py
 ./examples/provisioning_telemetry.py
 ./examples/remote_worker.py
 ./examples/scheduler_demo.py
@@ -74,6 +76,7 @@
 ./schemas/evidence.schema.json
 ./schemas/execution-contract.schema.json
 ./schemas/execution-telemetry.schema.json
+./schemas/external-artifact.schema.json
 ./schemas/fleet-control-policy.schema.json
 ./schemas/governance-budget.schema.json
 ./schemas/governance-context.schema.json
@@ -94,12 +97,14 @@
 ./schemas/state.schema.json
 ./schemas/task-demand.schema.json
 ./schemas/transition.schema.json
+./schemas/worker-control.schema.json
 ./schemas/worker.schema.json
 ./scripts/release_manifest.py
 ./src/aasm/__init__.py
 ./src/aasm/adaptive_routing.py
 ./src/aasm/adversary.py
 ./src/aasm/agents.py
+./src/aasm/artifact_backends.py
 ./src/aasm/authority.py
 ./src/aasm/change_impact.py
 ./src/aasm/checkpoint.py
@@ -117,6 +122,7 @@
 ./src/aasm/effects.py
 ./src/aasm/engine.py
 ./src/aasm/evidence.py
+./src/aasm/execution_controls.py
 ./src/aasm/execution_telemetry.py
 ./src/aasm/executor_orchestration.py
 ./src/aasm/fleet_control.py
@@ -138,6 +144,7 @@
 ./src/aasm/persistence/serde.py
 ./src/aasm/persistence/sqlite.py
 ./src/aasm/protocols.py
+./src/aasm/provider_adapters.py
 ./src/aasm/provisioning.py
 ./src/aasm/remote.py
 ./src/aasm/resources.py
@@ -152,6 +159,7 @@
 ./src/aasm/runtime_v15.py
 ./src/aasm/runtime_v16.py
 ./src/aasm/runtime_v17.py
+./src/aasm/runtime_v18.py
 ./src/aasm/scheduler.py
 ./src/aasm/server.py
 ./src/aasm/team_protocol.py
@@ -184,4 +192,5 @@
 ./tests/test_scheduler.py
 ./tests/test_schemas.py
 ./tests/test_team_protocol.py
+./tests/test_v18_provider_artifacts_controls.py
 ./tests/test_workers_leases.py
