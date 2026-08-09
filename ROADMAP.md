@@ -1,107 +1,64 @@
 # AASM Roadmap
 
-AASM is currently **v0.18.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.19.0 / experimental**. This roadmap describes direction, not guaranteed delivery dates.
 
-## Near term
+## Delivered foundation
 
-- ✅ durable machine-state persistence (event stream + SQLite)
-- ✅ persistent checkpoint backend (SQLite)
-- ✅ persistent DP-memory backend
-- ✅ durable plan graph + evidence lineage
-- ✅ durable effect lifecycle + idempotency boundary
-- ✅ durable capability registry + resource scheduler
-- ✅ distributed worker registry + leases
-- ✅ crash-safe task claiming + lease expiry/reclaim
-- ✅ worker/resource quota enforcement
-- ✅ remote worker transport/protocol
-- ✅ PostgreSQL-backed coordination and advisory-lock sequencing
-- ✅ model strength/cost/context/latency routing
-- ✅ browser Control Center and provenance-preserving steering
+- ✅ explicit algorithmic state machine and legal transitions
+- ✅ graph planning, shortest paths, backtracking, and DP memory
+- ✅ evidence, assumptions, observations, contradictions, and lineage
+- ✅ event-sourced durability, checkpoints, SQLite, replay, and forks
+- ✅ external-effect proposal, authorization, idempotency, attempt ownership, UNKNOWN outcomes, and reconciliation
+- ✅ declarative machine definitions and static model checking
+- ✅ capability resources, max-flow/min-cut scheduling, priorities, and quotas
+- ✅ distributed worker registry, heartbeats, leases, expiry, reclaim, and stale-worker handling
+- ✅ PostgreSQL multi-host coordination and canonical task claims
+- ✅ model capability/strength/context/cost/latency routing
 - ✅ OpenAI Responses and Codex CLI executor adapters
-- ✅ scheduled task → model route → executor → usage/evidence → durable completion orchestration
-- ✅ worker-local executor registry and `aasm worker` launch surface
-- ✅ durable worker reconnect after process restart
-- ✅ empirical model outcome ledger by task class
-- ✅ adaptive model routing with static hard gates, Wilson-bound evidence, repair/cost/latency metrics, and deterministic calibration
-- ✅ remote/CLI model outcome feedback and model-performance inspection
-- ✅ cache-adjusted model economics and governance-overhead accounting
-- ✅ deterministic review gating / Codex policy generation
-- ✅ durable governance budgets with soft/hard token/cost/call thresholds
-- ✅ semantic-review fingerprints and completed-review reuse for unchanged low-risk decisions
-- ✅ hard-budget `BUDGET_PAUSE` semantics that never waive required review
-- ✅ observed-baseline avoided-review token/cost estimates
-- ✅ remote/CLI governance decision, budget, review-completion, and reporting surfaces
-- ✅ executable Planner/Builder/Verifier protocol with `CONTINUE | REPAIR | INVESTIGATE | PAUSE | PLAN_INTERRUPT`
-- ✅ Planner-only authoritative plan mutation and durable plan revisions
-- ✅ automatic Builder → Verifier → Planner handoff coordinator
-- ✅ atomic validated `PLAN_INTERRUPT` graph patches and Planner override provenance
-- ✅ remote/CLI PBV surfaces and live Control Center team state
-- ✅ massive-collaboration analysis using dependency critical path and topological parallel width
-- ✅ useful worker ceilings from physical capacity plus capability-eligible max-flow capacity
-- ✅ coordination-overhead and marginal-improvement worker-count optimization
-- ✅ min-cut/capability bottleneck evidence and durable collaboration history
-- ✅ remote/CLI collaboration analysis and live Control Center fan-out status
-- ✅ information-change signals and downstream selective impact closure
-- ✅ selective affected-task pause with unaffected active leases preserved
-- ✅ canonical pre/post claim checks so stale workers cannot successfully acquire newly paused work
-- ✅ incremental Planner-only impact resolution with partial resume and durable remaining-node provenance
-- ✅ remote/CLI change-control surfaces and live Control Center checkpoint state
-- ✅ automatic Verifier checkpoint triggers for failed tests, changed assumptions, unexpected output, and blocking findings
-- ✅ PBV Planner payloads carrying automatic trigger, impacted region, and fleet state
-- ✅ opt-in fleet admission control derived from collaboration analysis
-- ✅ durable machine-quota enforcement of fleet admission across SQLite/PostgreSQL claims
-- ✅ automatic fleet refresh after triggered checkpoints, `PLAN_INTERRUPT`, and change resolution
-- ✅ remote/CLI checkpoint-trigger and fleet-control configuration plus live Control Center state
-- ✅ provider-neutral physical fleet provisioning plans from enforced admission targets
-- ✅ authority-gated provisioning effects using the durable effect/idempotency boundary
-- ✅ optional control-plane provisioning registry with fail-closed provider execution
-- ✅ automatic worker lifecycle telemetry around remote leases
-- ✅ streamed log/progress/artifact telemetry contracts and bounded durable retention
-- ✅ observed task/task-class durations feeding subsequent collaboration/fleet calculations
-- ✅ live telemetry and provisioning Control Center panels plus remote/CLI surfaces
-- ✅ explicit argv-based provider adapter contract and Kubernetes scale adapter
-- ✅ external artifact backend registry with memory and path-confined local-directory implementations
-- ✅ stable external text artifact references with optional telemetry linkage
-- ✅ durable worker `DRAIN | RESUME | OFFLINE` controls with actor/reason provenance
-- ✅ Control Center worker lifecycle actions plus remote/CLI control surfaces
-- richer event/evidence contracts
-- ✅ declarative machine definitions + initial static model checking
-- improved schema validation
-- configurable retry and recovery policies
-- plugin/provider interfaces
-- ✅ historical CLI replay + durable run forking
-- more worked examples
-- integration adapters for popular agent runtimes
-- versioned release packaging
+- ✅ end-to-end task → model → executor → usage/evidence → completion orchestration
+- ✅ evaluated-outcome adaptive model routing by task class
+- ✅ cache-aware model economics and governance-overhead accounting
+- ✅ deterministic review gating, governance budgets, and safe review reuse
+- ✅ executable Planner / Builder / Verifier protocol with Planner-only plan authority
+- ✅ automatic Builder → Verifier → Planner handoff
+- ✅ critical-path, DAG-width, coordination-overhead, and useful-worker analysis
+- ✅ selective information-change checkpoints and additive steering
+- ✅ automatic Verifier checkpoint triggers and fleet-admission recalculation
+- ✅ authority-gated provider-neutral physical provisioning
+- ✅ live execution telemetry and observed-duration feedback
+- ✅ Kubernetes, local-process, and Docker Compose provisioning adapters
+- ✅ external artifact references and bounded previews
+- ✅ worker drain/resume/offline controls
+- ✅ durable mission `QUIESCE`, `SUSPEND`, and `RESUME`
+- ✅ status-separated effect queue and explicit effect approval
+- ✅ controlled authority-gated fork creation
+- ✅ opaque cursor paging for telemetry and artifact references
+- ✅ `LEASE_LOST` semantics for results produced after ownership revocation
+- ✅ browser Control Center, CLI, and remote-client operator surfaces
 
 ## Next architecture layer
 
-- local process-supervisor and container-runtime provisioning adapters with the same explicit effect boundary
-- object-store artifact backends (S3-compatible/GCS/Azure-style) that keep credentials outside durable AASM state
-- artifact/log cursors and pagination for high-volume execution traces
-- create/pause/resume/approve/fork Control Center actions with authority-policy enforcement
-- richer executor adapters and provider-neutral structured result contract
 - run- and project-level productive-work budgets in addition to governance budgets
-- graph visualization and execution tracing
-- automatic evidence/assumption → plan-node impact mappings with explicit provenance rather than inferred hidden dependencies
-- deterministic state replay at explicit event boundaries
-- richer human approval surfaces
-- policy-as-data for authority rules
-- pluggable adversarial/verifier agents
-- benchmark suite for orchestration behavior, fleet efficiency, and governance efficiency
+- richer human approval queues with policy-as-data and delegation scopes
+- provider-neutral structured executor results and streamed tool events
+- external log-store backends with retention, search, and signed references
+- deeper graph visualization, critical-path tracing, and event-timeline inspection
+- automatic evidence/assumption → plan-node impact mappings with explicit provenance
+- reconciliation assistants for UNKNOWN external effects that never guess external state
+- rolling worker-fleet health, startup timeout, and provider/AASM identity reconciliation
+- pluggable adversarial/verifier agents and benchmark suites
+- formal temporal-property checking over machine and effect histories
+- release packaging, signed artifacts, and package-registry publication
 
 ## Longer-term possibilities
 
-- cross-project model-performance priors with project/task-class isolation and explicit provenance
-- Redis/cache adapters around PostgreSQL coordination
-- multi-runtime SDKs
-- deeper formal verification / temporal-property checking
-- evidence lineage graphs
-- sandbox integrations
-- simulation-driven plan validation
-- capability marketplaces / registries
-- standardized interoperability contracts for agent runtimes
+- cross-project model-performance priors with strict project/task-class isolation
+- Redis/cache acceleration around PostgreSQL coordination
+- multi-runtime SDKs and standardized agent-runtime interoperability contracts
+- simulation-driven plan validation and counterfactual forks
+- capability registries/marketplaces with explicit trust and cost evidence
+- domain adapters for CAD, robotics, research, deployment, and scientific simulation
 
 ## Non-goals for the core
 
-The project should avoid becoming a bundled LLM provider, a domain-specific application, or a monolithic framework that forces every user into one agent topology.
+AASM should not become a bundled LLM provider, a domain-specific application, or a monolithic framework that forces every user into one agent topology. The core should remain a role-agnostic control plane with explicit extension points.
