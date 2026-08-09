@@ -1,0 +1,33 @@
+{
+  "provisioners": [
+    {
+      "name": "local",
+      "kind": "local-process",
+      "state_dir": ".aasm/supervisor",
+      "workspace_root": ".",
+      "argv": [
+        "aasm",
+        "worker",
+        "--url", "http://127.0.0.1:8787",
+        "--machine-id", "REPLACE_MACHINE_ID",
+        "--worker-id", "{worker_id}",
+        "--resource-id", "{resource_id}",
+        "--executor", "codex",
+        "--capability", "code"
+      ]
+    },
+    {
+      "name": "compose",
+      "kind": "docker-compose",
+      "compose_file": "compose.yaml",
+      "service": "aasm-worker"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "local",
+      "kind": "local-directory",
+      "root": ".aasm/artifacts"
+    }
+  ]
+}
