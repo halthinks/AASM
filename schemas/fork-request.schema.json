@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/fork-request.schema.json",
+  "title": "AASM Controlled Fork Request",
+  "type": "object",
+  "required": [
+    "source_sequence",
+    "actor",
+    "reason"
+  ],
+  "properties": {
+    "source_sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_machine_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "metadata": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}
