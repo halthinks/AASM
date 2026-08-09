@@ -1,27 +1,47 @@
 # AASM Architecture
 
-AASM separates five concerns that are often collapsed into one LLM loop.
+AASM separates concerns that are often collapsed into one LLM loop.
 
 ## 1. Machine state
 
-The machine owns the authoritative state. Agents observe state through provided views and return proposals/results. They should not directly mutate the machine lifecycle.
+The machine owns authoritative state. Agents and adapters observe state through provided views and return proposals or results. They do not directly mutate the lifecycle, calculus, profile binding, or effect state.
 
 ## 2. Algorithmic planning
 
-Problem features are classified and mapped to useful operators such as graph traversal, backtracking, dynamic programming, shortest-path reasoning, or capacity allocation.
+Problem features are classified and mapped to useful operators such as graph traversal, backtracking, dynamic programming, shortest-path reasoning, capacity allocation, or an optional decision backend.
 
-## 3. Execution
+## 3. Formal decision and obligation calculus
 
-Agents, tools, humans, or services execute authorized work. The runtime is role-agnostic and does not require a fixed team topology.
+AASM records named decisions, conditional obligations, locks, conflicts, causal explanations, learned constraints, fairness, backjumping, and search restart. This is durable machine state rather than conversational memory.
 
-## 4. Authority
+## 4. Domain-neutral profile packages
 
-Capability and authority are separate. A worker may be capable of making a change without being authorized to commit that change to authoritative state.
+A package supplies use-case meaning through a versioned profile and independent adapter contracts. Profiles declare vocabulary, policies, evidence/artifact kinds, machine identity, migrations, and optional adapter bindings.
 
-## 5. Verification and provenance
+The package/profile layer is subordinate to the kernel:
 
-Results become observations. Observations can be checked against evidence and invariants before state is committed. Important transitions emit provenance events.
+```text
+package proposes meaning and candidate outputs
+              ↓
+AASM validates identity, authority, evidence, constraints, and migration
+              ↓
+authoritative state changes through the existing event/reducer path
+```
+
+Profiles are immutable by ID, version, and fingerprint. A package revision becomes active only through explicit conformance and migration. Discovery never downloads packages or executes adapters automatically.
+
+## 5. Execution
+
+Agents, tools, humans, simulators, or services execute authorized work. The runtime is role-agnostic and does not require a fixed team topology.
+
+## 6. Authority
+
+Capability and authority are separate. A worker or adapter may be capable of proposing a model, explanation, or external action without being authorized to activate, commit, learn a hard constraint, migrate a profile, or cross an effect boundary.
+
+## 7. Verification and provenance
+
+Results become evidence or generic semantic-result envelopes. Observations are checked against evidence contracts and invariants before authoritative commitment. Material changes retain provenance and survive replay, restart, and fork.
 
 ## Design boundary
 
-AASM should remain usable underneath many different agent frameworks. Provider-specific model invocation, application UX, domain-specific logic, and tool implementations generally belong outside the core or in adapters.
+AASM remains usable underneath different agent frameworks and domains. Provider-specific invocation, application UX, domain logic, package adapters, and tool implementations belong outside the core or behind explicit contracts.

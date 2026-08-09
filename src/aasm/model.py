@@ -106,6 +106,8 @@ class MachineSnapshot:
     evidence: dict[str, Any] = field(default_factory=lambda:{"claims":[],"observations":[],"contradictions":[],"assumptions":[],"records":[]})
     metadata: dict[str, Any] = field(default_factory=dict)
     calculus: dict[str, Any] = field(default_factory=default_calculus_state)
+    profile_binding: dict[str, Any] = field(default_factory=dict)
+    semantic_results: list[dict[str, Any]] = field(default_factory=list)
 
     def canonical_hash(self) -> str:
         payload = asdict(self)

@@ -1,0 +1,8 @@
+{
+  "max_hidden_epochs": 3,
+  "max_lock_age_epochs": 3,
+  "max_lock_count": 3,
+  "max_deferral_epochs": 3,
+  "enforcement": "BLOCK_PLANNING",
+  "review_batch_size": 1
+}

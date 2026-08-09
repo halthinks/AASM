@@ -1,0 +1,32 @@
+{
+  "aasm_contract": "0.22",
+  "adapter_entry_points": {},
+  "authors": [
+    "AASM contributors"
+  ],
+  "description": "Canonical built-in AASM evolve profile package.",
+  "distribution_name": "aasm-runtime",
+  "evolution_policy": {
+    "allow_runtime_proposals": true,
+    "allowed_activation_actors": [],
+    "metadata": {},
+    "minimum_evidence_count": 1,
+    "mode": "PROPOSAL_ONLY",
+    "require_conformance": true,
+    "require_explicit_activation": true,
+    "require_migration_for_breaking": true
+  },
+  "homepage": null,
+  "license": "MIT",
+  "metadata": {
+    "built_in": true,
+    "profile_fingerprint": "4bbde7a486269708871f7e1483eb19f7ae43d9b617d09d204c6d6785d8b5106c"
+  },
+  "migrations": [],
+  "package_id": "aasm.evolve.package",
+  "package_version": "1.0.0",
+  "profiles": [
+    "aasm.evolve"
+  ],
+  "schema_version": 1
+}

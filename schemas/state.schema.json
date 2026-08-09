@@ -1,8 +1,136 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aasm.local/schemas/state.schema.json",
-  "title": "AASM Machine Snapshot",
-  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "calculus": {
+      "$ref": "calculus-state.schema.json"
+    },
+    "evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "assumptions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "claims": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "contradictions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "observations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "records": {
+          "items": {
+            "$ref": "evidence.schema.json"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "claims",
+        "observations",
+        "contradictions"
+      ],
+      "type": "object"
+    },
+    "frontier": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "graph": {
+      "additionalProperties": false,
+      "properties": {
+        "edges": {
+          "items": {
+            "$ref": "plan-edge.schema.json"
+          },
+          "type": "array"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "plan-node.schema.json"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "nodes",
+        "edges"
+      ],
+      "type": "object"
+    },
+    "machine_id": {
+      "type": "string"
+    },
+    "memory": {
+      "additionalProperties": {
+        "$ref": "memory-entry.schema.json"
+      },
+      "type": "object"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "problem": {
+      "$ref": "problem.schema.json"
+    },
+    "profile_binding": {
+      "oneOf": [
+        {
+          "maxProperties": 0,
+          "type": "object"
+        },
+        {
+          "$ref": "profile-binding.schema.json"
+        }
+      ]
+    },
+    "pruned": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "resources": {
+      "type": "object"
+    },
+    "semantic_results": {
+      "items": {
+        "$ref": "semantic-result.schema.json"
+      },
+      "type": "array"
+    },
+    "state": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "version": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "visited": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
   "required": [
     "machine_id",
     "version",
@@ -16,117 +144,6 @@
     "resources",
     "evidence"
   ],
-  "properties": {
-    "machine_id": {
-      "type": "string"
-    },
-    "version": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "state": {
-      "type": "string",
-      "minLength": 1
-    },
-    "problem": {
-      "$ref": "problem.schema.json"
-    },
-    "graph": {
-      "type": "object",
-      "required": [
-        "nodes",
-        "edges"
-      ],
-      "properties": {
-        "nodes": {
-          "type": "array",
-          "items": {
-            "$ref": "plan-node.schema.json"
-          }
-        },
-        "edges": {
-          "type": "array",
-          "items": {
-            "$ref": "plan-edge.schema.json"
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    "frontier": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "visited": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "pruned": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "memory": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "memory-entry.schema.json"
-      }
-    },
-    "resources": {
-      "type": "object"
-    },
-    "evidence": {
-      "type": "object",
-      "required": [
-        "claims",
-        "observations",
-        "contradictions"
-      ],
-      "properties": {
-        "claims": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "observations": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "contradictions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "assumptions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "records": {
-          "type": "array",
-          "items": {
-            "$ref": "evidence.schema.json"
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    "metadata": {
-      "type": "object"
-    },
-    "calculus": {
-      "$ref": "calculus-state.schema.json"
-    }
-  },
-  "additionalProperties": false
+  "title": "AASM Machine Snapshot",
+  "type": "object"
 }

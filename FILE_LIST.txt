@@ -32,6 +32,7 @@
 ./docs/EXECUTABLE_PBV.md
 ./docs/EXECUTOR_ADAPTERS.md
 ./docs/EXECUTOR_ORCHESTRATION.md
+./docs/EXTENSION_CONTRACT.md
 ./docs/FLEET_PROVISIONING_TELEMETRY.md
 ./docs/FORMAL_CALCULUS.md
 ./docs/GOVERNANCE_ECONOMICS.md
@@ -40,9 +41,11 @@
 ./docs/MISSION_CONTROLS_OBSERVABILITY.md
 ./docs/MODEL_ECONOMICS.md
 ./docs/MODEL_ROUTING.md
+./docs/PROFILE_PACKAGES.md
 ./docs/PROVIDER_ADAPTERS_ARTIFACTS_CONTROLS.md
 ./docs/RELEASE_0.19.md
 ./docs/RELEASE_0.21.md
+./docs/RELEASE_0.22.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
 ./docs/RESOURCE_SCHEDULER.md
@@ -51,6 +54,7 @@
 ./examples/automatic_checkpoint_fleet.py
 ./examples/change_impact.py
 ./examples/distributed_workers.py
+./examples/domain_profile_field_study.py
 ./examples/durable_run.py
 ./examples/effect_demo.py
 ./examples/fork_demo.py
@@ -67,6 +71,16 @@
 ./examples/remote_worker.py
 ./examples/runtime-config.local.json
 ./examples/scheduler_demo.py
+./profiles/bare/README.md
+./profiles/bare/package.json
+./profiles/bare/profile.json
+./profiles/evolve/README.md
+./profiles/evolve/evidence-policy.json
+./profiles/evolve/examples/field-study.json
+./profiles/evolve/fairness-policy.json
+./profiles/evolve/machine.json
+./profiles/evolve/package.json
+./profiles/evolve/profile.json
 ./profiles/expert_swarm.yaml
 ./profiles/hierarchical_team.yaml
 ./profiles/human_in_loop.yaml
@@ -76,6 +90,7 @@
 ./pyproject.toml
 ./schemas/agent-message.schema.json
 ./schemas/calculus-state.schema.json
+./schemas/candidate-model.schema.json
 ./schemas/change-signal.schema.json
 ./schemas/checkpoint-trigger-policy.schema.json
 ./schemas/collaboration-policy.schema.json
@@ -98,14 +113,19 @@
 ./schemas/model-outcome.schema.json
 ./schemas/model-profile.schema.json
 ./schemas/model-route.schema.json
+./schemas/package-manifest.schema.json
 ./schemas/pbv-message.schema.json
 ./schemas/plan-edge.schema.json
 ./schemas/plan-node.schema.json
 ./schemas/problem.schema.json
+./schemas/profile-binding.schema.json
+./schemas/profile-evolution.schema.json
+./schemas/profile.schema.json
 ./schemas/provisioning-request.schema.json
 ./schemas/quota.schema.json
 ./schemas/resource.schema.json
 ./schemas/runtime-config.schema.json
+./schemas/semantic-result.schema.json
 ./schemas/state.schema.json
 ./schemas/task-demand.schema.json
 ./schemas/transition.schema.json
@@ -125,6 +145,7 @@
 ./src/aasm/cli.py
 ./src/aasm/cli_v19.py
 ./src/aasm/cli_v21.py
+./src/aasm/cli_v22.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -134,6 +155,7 @@
 ./src/aasm/core/__init__.py
 ./src/aasm/core/reducer.py
 ./src/aasm/definitions.py
+./src/aasm/domain_adapters.py
 ./src/aasm/economics.py
 ./src/aasm/effects.py
 ./src/aasm/engine.py
@@ -161,6 +183,8 @@
 ./src/aasm/persistence/postgres.py
 ./src/aasm/persistence/serde.py
 ./src/aasm/persistence/sqlite.py
+./src/aasm/profile_conformance.py
+./src/aasm/profile_packages.py
 ./src/aasm/protocols.py
 ./src/aasm/provider_adapters.py
 ./src/aasm/provisioning.py
@@ -181,10 +205,13 @@
 ./src/aasm/runtime_v18.py
 ./src/aasm/runtime_v19.py
 ./src/aasm/runtime_v21.py
+./src/aasm/runtime_v22.py
 ./src/aasm/scheduler.py
+./src/aasm/semantic_result.py
 ./src/aasm/server.py
 ./src/aasm/server_v19.py
 ./src/aasm/server_v21.py
+./src/aasm/server_v22.py
 ./src/aasm/supervisor_adapters.py
 ./src/aasm/team_protocol.py
 ./src/aasm/worker_loop.py
@@ -219,4 +246,5 @@
 ./tests/test_v18_provider_artifacts_controls.py
 ./tests/test_v19_mission_observability_supervisors.py
 ./tests/test_v21_calculus.py
+./tests/test_v22_profiles.py
 ./tests/test_workers_leases.py

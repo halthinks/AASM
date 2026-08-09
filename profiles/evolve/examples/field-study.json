@@ -1,0 +1,14 @@
+{
+  "goal": "Determine which watering schedule best supports a small community garden trial.",
+  "decisions": [
+    {"subject": "method.schedule", "values": ["daily", "alternate_days", "soil_triggered"]},
+    {"subject": "method.measurement", "values": ["height", "biomass", "combined"]}
+  ],
+  "obligations": [
+    {"kind": "work", "statement": "Apply the selected watering schedule consistently."},
+    {"kind": "verification", "statement": "Record measurements using the selected method."},
+    {"kind": "review", "statement": "Compare outcomes and document uncertainty."}
+  ],
+  "evidence": ["measurement", "observation", "human_attestation"],
+  "note": "This example is deliberately unrelated to software engineering. The same AASM profile contract applies without changing the kernel."
+}

@@ -23,6 +23,8 @@ def snapshot_from_dict(data: dict[str, Any]) -> MachineSnapshot:
     payload = dict(data)
     payload["problem"] = problem_from_dict(payload["problem"])
     payload["calculus"] = normalize_calculus_state(payload.get("calculus") or default_calculus_state())
+    payload.setdefault("profile_binding", {})
+    payload.setdefault("semantic_results", [])
     return MachineSnapshot(**payload)
 
 

@@ -3,17 +3,17 @@
 # AASM
 ## Algorithmic Agent State Machine
 
-**A durable algorithmic control plane and deterministic execution architecture for AI agents, tools, humans, models, and distributed worker fleets.**
+**A durable, deterministic control plane for agents, tools, humans, models, and real work.**
 
-AASM turns open-ended agent work into an explicit computational process: state is durable, transitions are legal or illegal, plans are graphs, authority is separate from capability, changed information pauses only affected work, evidence governs commitment, contradictions become learned constraints, and material decisions retain provenance.
+AASM keeps probabilistic reasoning inside explicit machine authority: state is durable, transitions are legal or illegal, plans are graphs, effects require authorization, evidence governs commitment, contradictions become learned constraints, and use-case behavior arrives through domain-neutral profile packages rather than being baked into the kernel.
 
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.21.0%20experimental-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.22.0%20experimental-orange)](ROADMAP.md)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-[**Quick start**](#quick-start) · [**What it can do**](#what-it-can-do) · [**v0.21 formal calculus**](#v021-formal-calculus-and-conflict-learning) · [**Architecture**](#architecture) · [**Downloads**](#downloads) · [**Contributing**](#contributing)
+[**Quick start**](#quick-start) · [**Profile packages**](#profile-packages) · [**Formal calculus**](#formal-conflict-learning-calculus) · [**Capabilities**](#capabilities) · [**Architecture**](#architecture) · [**Downloads**](#downloads)
 
 </div>
 
@@ -21,93 +21,128 @@ AASM turns open-ended agent work into an explicit computational process: state i
 
 ## What is AASM?
 
-Most agent frameworks focus on giving a model tools. AASM focuses on the harder systems question:
+Most agent frameworks concentrate on giving a model tools. AASM focuses on the systems question underneath them:
 
-> **How do you govern what an intelligent system is allowed to do next, remember what happened, recover from failure, coordinate real work, and improve future decisions when execution contradicts the plan?**
+> **How do you govern what an intelligent system is allowed to do next, preserve what happened, recover selectively, coordinate real work, and improve future decisions when execution contradicts the plan?**
 
-AASM is not a prompt file pretending to be a runtime. It includes:
+AASM is a Python runtime, CLI, durable event model, and control plane. It provides:
 
-- a Python runtime and CLI;
-- event-sourced machine state;
-- SQLite and PostgreSQL coordination;
-- declarative machine definitions and structural model checking;
-- crash-safe worker leases, capacity limits, and quotas;
-- remote worker and HTTP control-plane protocols;
-- graph planning, checkpoint backtracking, replay, forks, and DP memory;
-- evidence, assumptions, observations, contradictions, and lineage;
-- capability-aware max-flow/min-cut scheduling;
-- model-strength, cost, context, latency, and outcome-aware routing;
-- OpenAI Responses and Codex CLI executor adapters;
-- governance economics and redundant-review suppression;
-- executable Planner / Builder / Verifier orchestration;
+- explicit machine states and legal transitions;
+- event-sourced replay, checkpoints, and historical forks;
+- SQLite and PostgreSQL persistence;
+- graph planning, dependency-aware scheduling, and DP memory;
+- durable evidence, assumptions, observations, contradictions, and lineage;
+- external-effect proposal, authorization, idempotency, and reconciliation;
+- distributed workers, heartbeats, leases, quotas, and canonical task claims;
+- model capability, strength, context, latency, cost, and outcome routing;
+- optional Planner / Builder / Verifier orchestration;
 - selective information-change checkpoints and additive steering;
-- useful-concurrency and physical-fleet planning;
-- mission controls, live telemetry, external artifact references, and operator controls;
-- a durable formal decision/obligation calculus with conflict learning;
-- a browser Control Center.
+- collaboration analysis, fleet admission, mission controls, telemetry, artifacts, CLI, API, and browser Control Center;
+- a formal decision/obligation calculus with conflict learning;
+- domain-neutral profile packages and independent adapter contracts.
 
 The operating principle is:
 
 > **Models propose. Algorithms organize. Policy authorizes. Evidence validates. Contradictions teach. Durable state governs what happens next.**
 
-## Why this exists
+---
 
-LLMs are probabilistic. Serious workflows still need properties normally supplied by schedulers, workflow engines, databases, state machines, transaction logs, and verification systems:
+## Profile packages
 
-- explicit state instead of hidden conversational state;
-- legal transitions instead of improvised control flow;
-- checkpoint and replay instead of starting over;
-- dependency graphs instead of flat task lists;
-- resource-aware routing instead of indiscriminate agent spawning;
-- distinct capability and authority boundaries;
-- explicit external-effect authorization and idempotency;
-- crash-safe ownership and recovery;
-- measurable productive versus governance cost;
-- provenance that survives restarts and forks;
-- selective repair instead of destructive whole-plan replacement;
-- machine-readable conflicts instead of unstructured failure logs;
-- learned constraints instead of repeated rediscovery of the same invalid plan.
+AASM v0.22 separates the domain from the kernel.
 
-AASM makes those properties first-class around flexible agents rather than pretending the underlying model itself is deterministic.
+```text
+profile package
+    vocabulary · adapters · validators · policies · migrations
+                              ↓
+                       stable contracts
+                              ↓
+AASM kernel
+    state · authority · evidence · effects · constraints
+    locks · fairness · backjumping · restart · replay
+```
 
-## What it can do
+The domain says what a decision, obligation, result, or artifact **means**. AASM decides what that information is **allowed to change**.
 
-| Capability | What AASM provides |
+### Package, profile, binding, run
+
+These are different objects:
+
+| Object | Meaning |
 |---|---|
-| **State machine** | Explicit legal transitions, terminal states, replay, and declarative machine definitions. |
-| **Durable cognition** | Plan graph, frontier, visited/pruned state, DP memory, assumptions, claims, observations, contradictions, and provenance. |
-| **Formal calculus** | Named decisions, conditional obligations, model-relative locks, conflict explanations, learned no-goods, backjumping, fairness, and search restart. |
-| **External effects** | Proposal, authorization, attempt ownership, idempotency, failure, `UNKNOWN` outcome, and reconciliation. |
-| **Resource scheduling** | Capability-aware allocation, priorities, quotas, utilization, unmet demand, max-flow, and min-cut evidence. |
-| **Distributed execution** | PostgreSQL-backed multi-host workers, heartbeats, leases, expiry, reclaim, and canonical ownership. |
-| **Model routing** | Strength, capability, context, latency, cost, concurrency, and task-class outcome evidence. |
-| **Governance economics** | Productive/review token accounting, cache-aware cost, review budgets, and safe reuse of unchanged low-risk reviews. |
-| **Planner / Builder / Verifier** | Executable `CONTINUE | REPAIR | INVESTIGATE | PAUSE | PLAN_INTERRUPT` protocol with Planner-only plan authority. |
-| **Selective steering** | Changed evidence, assumptions, verification, risk, or user requirements pause only the impacted dependency region. |
-| **Massive collaboration** | Critical path, parallel width, capability cuts, coordination overhead, and the smallest near-optimal worker count. |
-| **Fleet control** | Recommendation → admission quota → explicit provisioning plan → authorized provider effect. |
-| **Mission control** | Durable `QUIESCE`, `SUSPEND`, and `RESUME` without conflating mission status with plan or machine state. |
-| **Observability** | Cursor-paged telemetry, `LEASE_LOST`, external artifact references, bounded previews, and execution history. |
-| **Operator interface** | Browser Control Center plus local and remote CLI/API surfaces. |
+| **Package** | A distributable artifact containing one or more profiles, optional adapters, schemas, migrations, documentation, examples, and tests. |
+| **Profile** | A versioned use-case contract inside a package: vocabulary, evidence kinds, policies, machine definition, and adapter bindings. |
+| **Binding** | The exact immutable profile version, fingerprint, package identity, and user configuration attached to one AASM machine. |
+| **Run** | The actual event-sourced execution history governed by that binding. |
 
-## v0.21: formal calculus and conflict learning
+Users, teams, AASM maintainers, or third parties can create packages for a use case. A package might represent a research protocol, design workflow, operations process, hardware-validation flow, document-production system, or any other domain that can express decisions, obligations, evidence, and results.
 
-AASM v0.21 implements cumulative, conflict-learning agent execution inside the existing event-sourced runtime.
+### Is package design an art form?
 
-It adds:
+Yes—more precisely, it is an engineering and design craft.
 
-- named planning decisions and one active decision per subject;
-- conditional persistent obligations with explicit evidence contracts;
-- model-relative locks that suppress work without deleting it;
-- first-class conflict and explanation objects;
-- projection of validated contradictions into guarded hard or soft learned constraints;
-- deterministic, graph-directed non-chronological backjumping;
-- restart-without-amnesia semantics;
-- cross-model fairness for persistent unresolved obligations;
-- Planner-authorized recovery under the executable PBV profile;
-- backward-compatible replay, SQLite, PostgreSQL, and historical-fork semantics.
+A package author chooses:
 
-The executable loop is:
+- which decisions deserve explicit names;
+- which obligations are persistent or conditional;
+- what counts as adequate evidence;
+- how conflicts should be explained;
+- when a learned constraint may become hard;
+- what belongs in a reusable profile versus one run's configuration;
+- how older bindings migrate to a new contract.
+
+Different packages can encode different philosophies for the same use case. AASM does not impose one ontology. It enforces identity, authority, persistence, provenance, conformance, and migration rules around whichever profile is selected.
+
+### Do packages naturally evolve?
+
+They can evolve, but **not by silently rewriting themselves**.
+
+```text
+repeated evidence or conflicts
+          ↓
+ProfileEvolutionProposal
+          ↓
+new package/profile version is authored
+          ↓
+conformance and domain validation
+          ↓
+explicit ProfileMigration
+          ↓
+authorized activation
+          ↓
+new immutable binding
+```
+
+A run naturally adapts inside a stable profile: decisions change, obligations enable or lock, conflicts create learned constraints, and search can backjump or restart.
+
+Changing the profile contract is different. It requires a new semantic version, fingerprint, conformance result, migration, and explicit activation. This preserves replay: an old history always retains the exact rules under which it was created.
+
+Run configuration can change without creating a new package version. A threshold, site list, budget, or reporting option is configuration. Changing the meaning of an obligation, evidence policy, decision namespace, or adapter contract is package evolution.
+
+See [`docs/PROFILE_PACKAGES.md`](docs/PROFILE_PACKAGES.md) and [`docs/EXTENSION_CONTRACT.md`](docs/EXTENSION_CONTRACT.md).
+
+### Built-in profiles
+
+AASM ships two domain-neutral profiles:
+
+- **`aasm.bare`** — minimal binding when the surrounding application already owns domain interpretation;
+- **`aasm.evolve`** — iterative modeling, conditional work, verification, conflict learning, repair, investigation, backjumping, and restart without assuming a domain.
+
+External Python distributions can advertise installed profiles through:
+
+```toml
+[project.entry-points."aasm.profiles"]
+standard = "my_package:standard_profile"
+high_assurance = "my_package:high_assurance_profile"
+```
+
+Discovery loads only already-installed entry points. AASM never downloads or installs code as a side effect of profile discovery.
+
+---
+
+## Formal conflict-learning calculus
+
+AASM v0.21 introduced the production calculus that v0.22 packages extend.
 
 ```text
 Abstract decisions
@@ -125,11 +160,7 @@ Learn a durable blocking constraint
 Backjump, repair, investigate, or restart
 ```
 
-The architectural connection is inspired by AVATAR-style heterogeneous reasoning: a cheaper abstraction layer controls candidate combinations, a richer semantic layer evaluates them, and contradictions discovered in the richer layer are returned as reusable blocking information.
-
-### Formal object model
-
-The v0.21 calculus distinguishes:
+The calculus maintains three linked views:
 
 ```text
 Decision Graph
@@ -140,81 +171,108 @@ Obligation Graph
     superseded, or proven impossible
 
 Evidence Graph
-    what observations support, contradict, or invalidate
+    what observations support, contradict, verify, or invalidate
     decisions and completion claims
 ```
 
-A learned incompatibility is represented as a guarded no-good:
+A validated incompatibility becomes a guarded no-good:
 
 ```text
 guard ⇒ NOT (assumption₁ AND assumption₂ AND ... AND assumptionₙ)
 ```
 
-Only validated or proven assumption conflicts may become hard constraints. Evidence disagreements and heuristic explanations remain soft.
+Only validated or proven assumption conflicts may become hard constraints. Evidence disagreement and heuristic explanations remain soft.
 
-### Backjumping
+Backjumping follows causal dependency rather than reverse creation order. Model-relative locks suppress work without deleting it. Cross-model fairness prevents persistent obligations from remaining hidden forever. `restart_search()` abandons speculative assignments while retaining verified work, evidence, conflicts, constraints, effects, mission state, leases, replay, and fork provenance.
 
-Backjumping follows causal dependencies rather than reverse creation order:
+See [`docs/FORMAL_CALCULUS.md`](docs/FORMAL_CALCULUS.md).
 
-1. trace explanation literals to active decisions;
-2. follow derived decisions to explicit causal roots;
-3. compute dependent decision, obligation, and plan-node closures;
-4. choose the deepest revisable root with the smallest dependent closure;
-5. invalidate only that causal region;
-6. preserve unrelated decisions and work, including unrelated work created later;
-7. mark affected obligations and plan nodes for revalidation;
-8. reuse the existing information-change checkpoint machinery for selective recovery.
+---
 
-### Locking, fairness, and restart
+## Domain-neutral adapter contracts
 
-A lock is conditional suppression, never deletion. Model changes, backjumps, and search restarts reevaluate locks and restore obligations whose lock conditions no longer hold.
-
-Persistent obligations age by deterministic model epochs. Overdue work must be exposed, explicitly deferred within policy, or terminally dispositioned; it cannot silently disappear under a sequence of plans.
-
-`restart_search()` is distinct from process resume, checkpoint restoration, and historical fork. It clears speculative assignments and search-local state while retaining evidence, learned constraints, effects, mission state, workers, leases, replay history, and fork lineage.
-
-### Integration boundary
-
-The calculus is part of the production AASM state:
+A package can independently provide any of five optional adapters:
 
 ```text
-existing MachineSnapshot
-existing immutable event stream
-existing pure reducer
-existing SQLite/PostgreSQL stores
-existing PlanGraph and EvidenceLedger
-existing Planner authority boundary
-existing information-change checkpoints
-        +
-formal decisions, obligations, locks, conflicts,
-explanations, learned constraints, backjumping,
-search restart, and fairness state
+DecisionBackend
+    proposes a CandidateModel
+
+ObligationAdapter
+    proposes obligations enabled by a model
+
+SemanticValidator
+    evaluates concrete evidence
+
+ConflictExplainer
+    proposes a causal explanation
+
+ConstraintCertifier
+    assigns a justified trust level to a projected constraint
 ```
 
-Calculus changes commit through the existing `SNAPSHOT_PATCHED` event path. Older snapshots without the field are migrated to the canonical empty calculus state when deserialized.
+No adapter can directly mutate AASM state, activate a decision, commit an obligation, authorize an effect, or install a hard constraint.
 
-See [`docs/FORMAL_CALCULUS.md`](docs/FORMAL_CALCULUS.md) and [`docs/RELEASE_0.21.md`](docs/RELEASE_0.21.md).
+Decision backends are solver-neutral. They may use deterministic rules, enumeration, SAT, SMT, CP-SAT, MILP, heuristic search, an LLM, a human, or a portfolio. Before activation, the kernel validates identity, parent decisions, pinned assignments, hard learned constraints, profile namespaces, and fairness.
+
+The generic semantic-result envelope supports:
+
+```text
+PASS
+LOCAL_DEFECT
+INFORMATION_GAP
+ASSUMPTION_CONFLICT
+EVIDENCE_CONFLICT
+POLICY_CONFLICT
+FATAL
+```
+
+It can carry claims, observations, evidence, artifacts, scope, confidence, and proposed conflict information without forcing one domain ontology.
+
+---
+
+## Capabilities
+
+| Capability | What AASM provides |
+|---|---|
+| **State machine** | Explicit legal transitions, terminal states, replay, declarative definitions, and structural model checking. |
+| **Durable cognition** | Plan graph, frontier, visited/pruned state, DP memory, evidence, assumptions, contradictions, and provenance. |
+| **Formal calculus** | Named decisions, conditional obligations, locks, conflicts, explanations, learned no-goods, backjumping, fairness, and restart. |
+| **Profile packages** | Versioned domain contracts, package manifests, fingerprints, bindings, adapters, conformance, and migrations. |
+| **Semantic results** | One durable, fingerprinted envelope for validators, tools, simulations, humans, and agents. |
+| **External effects** | Proposal, authorization, attempt ownership, idempotency, `FAILED` versus `UNKNOWN`, and reconciliation. |
+| **Resource scheduling** | Capability-aware allocation, priorities, quotas, max-flow/min-cut evidence, and unmet demand. |
+| **Distributed execution** | PostgreSQL-backed workers, heartbeats, leases, expiry, reclaim, and canonical ownership. |
+| **Model routing** | Capability, strength, context, latency, cost, concurrency, and evaluated task-class outcomes. |
+| **Planner / Builder / Verifier** | Optional executable protocol with Planner-only plan authority. |
+| **Selective steering** | Changed information pauses only the affected dependency closure. |
+| **Collaboration and fleet** | Critical path, parallel width, coordination overhead, admission limits, and explicit provisioning effects. |
+| **Mission control** | Durable `QUIESCE`, `SUSPEND`, and `RESUME` independent of plan, worker, and machine state. |
+| **Observability** | Telemetry, `LEASE_LOST`, external artifact references, bounded previews, CLI/API, and Control Center. |
+
+---
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    U[User / Event / Goal] --> S[AASM Durable State]
-    S --> P[Planner / Decision Abstraction]
-    P --> A[Authority and Governance]
+    U[User / Event / Goal] --> B[Profile Binding]
+    B --> S[AASM Durable State]
+    S --> P[Decision Backend or Human]
+    P --> K[Kernel Candidate Validation]
+    K --> A[Authority and Governance]
     A --> R[Resource and Model Routing]
     R --> W[Workers / Agents / Tools / Humans]
-    W --> T[Telemetry / Artifacts / Evidence]
-    T --> V[Verifier]
+    W --> E[Semantic Result / Evidence / Artifacts]
+    E --> V[Verifier]
     V -->|accepted| C[Commit]
     V -->|local defect| X[Selective Repair]
     V -->|information gap| I[Investigate]
     V -->|contradiction| F[Conflict Explanation]
     F --> L[Learn Constraint]
-    L --> B[Backjump / Restart]
+    L --> J[Backjump / Restart]
     X --> P
     I --> P
-    B --> P
+    J --> P
     C --> D{Complete?}
     D -->|no| P
     D -->|yes| Z[Complete]
@@ -232,11 +290,13 @@ Control Center / CLI / API
             │
    ┌────────┼────────┐
    ▼        ▼        ▼
- Codex   Responses   Tool/sim
- worker    worker     worker
+ model    tool/sim   human
+ worker    worker    reviewer
 ```
 
 The LLM is **inside** the machine. It is not the machine.
+
+---
 
 ## Quick start
 
@@ -255,51 +315,88 @@ pip install -e '.[dev]'
 pytest -q
 ```
 
-Run the demo:
+### Inspect built-in profiles
 
 ```bash
-aasm demo
-python examples/multi_agent_demo.py
+aasm profiles
+aasm profile-describe aasm.evolve
+aasm profile-conformance profiles/evolve/profile.json \
+  --package profiles/evolve/package.json
 ```
 
-### Minimal state-machine example
+### Bind a profile
 
 ```python
-from aasm import AASMEngine, MachineState, ProblemSpec
+from aasm import AASMEngine, ProblemSpec, evolve_profile
 
-engine = AASMEngine(ProblemSpec(
-    goal="Produce and verify an artifact",
-    constraints=[{"id": "C1", "text": "preserve provenance"}],
-    acceptance_tests=[{"id": "T1", "text": "all tests pass"}],
-    features={
-        "dependency_graph": True,
-        "branching_choices": True,
-        "capacity_constraints": True,
-    },
-))
-
-engine.transition(MachineState.FORMALIZE, "goal normalized")
-engine.transition(MachineState.CLASSIFY, "problem formalized")
-print(engine.classify())
+engine = AASMEngine(ProblemSpec("Carry out a verified multi-step objective"))
+engine.bind_profile(
+    evolve_profile(),
+    configuration={"review_mode": "strict"},
+    actor="owner",
+)
+print(engine.profile_report())
 ```
 
-### Formal-calculus example
+### Create a use-case profile
 
 ```python
-from aasm import AASMEngine, DecisionRecord, ObligationRecord, ProblemSpec
+from aasm import AASMProfile, ProfileEvolutionPolicy
 
-engine = AASMEngine(ProblemSpec("Build under explicit assumptions"))
-engine.register_decision(DecisionRecord("D-db", "database", "postgres"))
-engine.activate_decision("D-db")
-engine.register_obligation(ObligationRecord(
-    "O-db",
-    "Implement PostgreSQL storage",
-    activation_condition={
-        "decision": {"subject": "database", "op": "EQ", "value": "postgres"}
-    },
+profile = AASMProfile(
+    profile_id="example.field-study",
+    profile_version="1.0.0",
+    description="Evidence contract for a repeatable field study.",
+    decision_namespaces=["method"],
+    obligation_kinds=["measurement", "review", "work"],
+    evidence_kinds=["measurement", "observation", "human_attestation"],
+    artifact_kinds=["physical", "record"],
+    evolution_policy=ProfileEvolutionPolicy(mode="PROPOSAL_ONLY"),
+)
+```
+
+### Solver-neutral candidate validation
+
+```python
+from aasm import CandidateModel
+
+candidate = CandidateModel(
+    candidate_id="candidate-7",
+    assignments={"method.schedule": "decision-soil-triggered"},
+    backend_id="human-review",
+    backend_version="1",
+)
+report = engine.validate_candidate_model(candidate)
+assert report.valid, report.errors
+```
+
+### Record a semantic result
+
+```python
+from aasm import ProducerRef, SemanticResultEnvelope
+
+engine.record_semantic_result(SemanticResultEnvelope(
+    result_id="measurement-week-1",
+    producer=ProducerRef("human", "field-team", version="1"),
+    subject_ids=["obligation-measure"],
+    classification="PASS",
+    summary="The scheduled measurements were recorded.",
+    evidence=[{"kind": "measurement", "ref": "field-log-week-1"}],
 ))
-engine.enable_obligation("O-db")
-print(engine.calculus_report()["active_model"])
+```
+
+A complete non-software example is in [`examples/domain_profile_field_study.py`](examples/domain_profile_field_study.py).
+
+### CLI surfaces
+
+```bash
+aasm profile MACHINE_ID --store runs.db
+aasm profile-bind MACHINE_ID --store runs.db --profile aasm.evolve
+aasm decision-request MACHINE_ID --store runs.db
+aasm candidate-validate MACHINE_ID --store runs.db --candidate candidate.json
+aasm semantic-result-validate result.json
+aasm semantic-result-record MACHINE_ID --store runs.db --result result.json
+aasm semantic-results MACHINE_ID --store runs.db
 ```
 
 ### Durable local run
@@ -316,13 +413,6 @@ store = SQLiteStore("runs.db")
 engine = AASMEngine.resume(machine_id, store)
 ```
 
-### CLI inspection
-
-```bash
-aasm calculus MACHINE_ID --store runs.db
-aasm calculus-fairness MACHINE_ID --store runs.db
-```
-
 ### Remote multi-host control plane
 
 ```bash
@@ -334,113 +424,95 @@ aasm serve \
   --token "$AASM_SERVER_TOKEN"
 ```
 
-Open `/ui` on that server for the Control Center.
+Open `/ui` for the Control Center.
 
-### Mission controls
+---
 
-```bash
-aasm mission-pause MACHINE_ID --store runs.db \
-  --actor operator --reason "inspect anomaly" --mode QUIESCE
+## Use cases
 
-aasm mission-resume MACHINE_ID --store runs.db \
-  --actor operator --reason "review complete"
+Because profiles are external to the kernel, AASM can support many use cases without redefining core semantics:
+
+- autonomous and human-guided software engineering;
+- research protocols and evidence synthesis;
+- CAD, hardware, simulation, and manufacturing workflows;
+- laboratory and field experiments;
+- document, policy, and publication production;
+- operations, approvals, and compliance processes;
+- long-running multi-model or multi-worker missions;
+- any workflow where decisions, obligations, evidence, effects, and recovery must remain explicit.
+
+---
+
+## Project structure
+
+```text
+src/aasm/       runtime, calculus, profile contracts, stores, workers, control plane
+profiles/       built-in and example profile packages
+schemas/        machine-readable contracts
+docs/           architecture, subsystem, package, and release guides
+examples/       runnable examples across multiple kinds of work
+tests/          unit, durability, conformance, remote, and integration coverage
+SKILL.md        operating contract for Codex and other agents
 ```
 
-### Controlled fork
+## Non-goals
 
-```bash
-aasm fork-propose MACHINE_ID --store runs.db \
-  --actor operator --reason "evaluate alternate architecture"
+The core does not require:
 
-aasm effect-authorize MACHINE_ID --store runs.db \
-  --effect-id EFFECT_ID --actor operator --reason "approved isolation"
+- Planner / Builder / Verifier;
+- SAT or SMT;
+- an LLM or a particular provider;
+- GitHub or a source repository;
+- one evidence ontology or artifact type;
+- one user interface or worker topology;
+- automatic package installation;
+- silent package self-evolution.
 
-aasm fork-execute MACHINE_ID --store runs.db --effect-id EFFECT_ID
-```
+AASM improves control, provenance, and recovery. It does not make an underlying model, validator, simulation, or human judgment correct.
+
+---
 
 ## Downloads
 
 - **[Download source ZIP](https://github.com/halthinks/AASM/archive/refs/heads/main.zip)**
 - **[Download source TAR.GZ](https://github.com/halthinks/AASM/archive/refs/heads/main.tar.gz)**
 - Clone: `git clone https://github.com/halthinks/AASM.git`
-- Browse: [github.com/halthinks/AASM](https://github.com/halthinks/AASM)
 
-AASM is currently **v0.21.0 / experimental**. The `main` archives track current development.
+AASM is currently **v0.22.0 / experimental**. The `main` archives track current development.
 
-## Use cases
+## Documentation
 
-### Agentic software engineering
-
-Coordinate architecture, repository inspection, implementation, tests, adversarial review, repairs, CI recovery, and release work while keeping plan authority and provenance explicit.
-
-### Research and evidence synthesis
-
-Represent claims, sources, assumptions, contradictions, dependency structure, and confidence as durable evidence rather than hidden conversation context.
-
-### CAD and engineering workflows
-
-Model requirements, geometry, analysis, simulation, drawings, validation, and manufacturing handoffs as dependency nodes with selective rollback when an assumption changes.
-
-### Model-efficient collaboration
-
-Route inexpensive models to high-volume work, stronger models to architecture or contradiction resolution, and measure the least-cost model that reliably satisfies each task class.
-
-### Long-running autonomous operations
-
-Recover after crashes, reclaim stale work, pause a mission without destroying its plan, branch alternate histories, and inspect what happened afterward.
-
-### Human-in-the-loop systems
-
-Insert explicit approvals where authority policy requires them without repeatedly asking an intelligent reviewer to re-decide deterministic low-risk permissions.
-
-## Project structure
-
-```text
-src/aasm/       runtime, stores, routing, workers, calculus, control plane
-schemas/        machine-readable contracts
-profiles/       orchestration and authority examples
-examples/       runnable usage examples
-docs/           architecture and subsystem guides
-tests/          unit, durability, remote, and integration coverage
-SKILL.md        operating contract for Codex and other agents
-```
-
-## What AASM is not
-
-AASM is not an LLM provider, a prompt library, a guarantee that model output is correct, or a hosted worker fleet by itself. It is a control/runtime layer designed to sit around agents and tools.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`docs/FORMAL_CALCULUS.md`](docs/FORMAL_CALCULUS.md)
+- [`docs/PROFILE_PACKAGES.md`](docs/PROFILE_PACKAGES.md)
+- [`docs/EXTENSION_CONTRACT.md`](docs/EXTENSION_CONTRACT.md)
+- [`docs/RELEASE_0.22.md`](docs/RELEASE_0.22.md)
+- [`ROADMAP.md`](ROADMAP.md)
 
 ## Contributing
 
-Contributions are welcome, especially focused changes that improve correctness, interoperability, documentation, testing, provider adapters, formal properties, or real-world usefulness.
+Contributions are welcome, including profile packages, adapters, conformance fixtures, validators, solver backends, formal properties, documentation, and core-runtime improvements.
 
-Please read:
-
-- [`CONTRIBUTING.md`](CONTRIBUTING.md)
-- [`GOVERNANCE.md`](GOVERNANCE.md)
-- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md)
-- [`SECURITY.md`](SECURITY.md)
-
-A good contribution explains the problem, why the change belongs in AASM, how it was validated, and whether it changes a state, transition, authority, schema, persistence, or compatibility contract.
+Please read [`CONTRIBUTING.md`](CONTRIBUTING.md), [`GOVERNANCE.md`](GOVERNANCE.md), [`SECURITY.md`](SECURITY.md), and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## Design principles
 
 1. **Explicit over implicit.** Important state belongs in machine-readable structures.
-2. **Reversible where possible.** Risky work should have a recovery path.
-3. **Evidence before commitment.** Important claims should be inspectable and challengeable.
-4. **Role-agnostic core.** Agent topology is configuration, not architecture.
-5. **Authority is separate from capability.** Being able to act does not grant permission to redefine state.
-6. **Algorithms before blind spawning.** Use dependency, flow, and cost structure to decide whether more agents help.
-7. **Provenance is a feature.** A run should remain understandable after restart, repair, or fork.
-8. **Contradictions should become knowledge.** A trustworthy failure should restrict future search rather than merely produce another retry.
-9. **No fake determinism.** AASM constrains control flow; it does not pretend probabilistic outputs are infallible.
+2. **Authority is separate from capability.** Being able to act does not grant permission to redefine state.
+3. **Evidence before commitment.** Important claims remain inspectable and challengeable.
+4. **Domains extend; the kernel governs.** Use-case meaning belongs in packages, not hard-coded core branches.
+5. **Profiles are immutable contracts.** Evolution creates a new version and migration, never an invisible rewrite.
+6. **Contradictions should become knowledge.** Trustworthy failure restricts future search instead of creating blind retry loops.
+7. **Reversible where possible.** Backjump and restart preserve unrelated work and durable knowledge.
+8. **Algorithms before blind spawning.** Dependency, capacity, cost, and evidence determine whether more agents help.
+9. **Provenance is a feature.** A run remains understandable after restart, repair, migration, or fork.
+10. **No fake determinism.** AASM constrains authority and control flow; it does not pretend probabilistic outputs are infallible.
 
 ## Acknowledgements
 
-AASM's algorithmic mapping was inspired by Jeff Erickson's open educational materials on algorithms and models of computation. AASM's implementation and agent-runtime interpretation are original; see [`docs/ERICKSON_MAPPING.md`](docs/ERICKSON_MAPPING.md).
+AASM's algorithmic mapping was inspired by Jeff Erickson's open educational materials on algorithms and models of computation. The formal-calculus direction is informed by formal verification, saturation theorem proving, AVATAR-style splitting, labelled splitting, conflict-driven clause learning, non-chronological backjumping, restart policies, and fairness under changing abstract models.
 
-The v0.21 formal-calculus direction is additionally informed by research in formal verification, saturation theorem proving, AVATAR-style splitting, labelled splitting, conflict-driven clause learning, non-chronological backjumping, restart policies, and fairness under changing abstract models.
-
-This repository began as a first open-source contribution with the goal of turning a useful systems idea into something other people can inspect, test, challenge, and extend.
+AASM's implementation and agent-runtime interpretation are original.
 
 ## License
 
@@ -450,6 +522,6 @@ AASM is released under the [MIT License](LICENSE).
 
 <div align="center">
 
-**Try it. Break it. Measure it. Improve it.**
+**Define the contract. Preserve the evidence. Learn from contradiction. Keep authority explicit.**
 
 </div>

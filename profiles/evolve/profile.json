@@ -1,0 +1,68 @@
+{
+  "aasm_contract": "0.22",
+  "adapters": {},
+  "artifact_kinds": [
+    "digital",
+    "other",
+    "physical",
+    "record",
+    "reference"
+  ],
+  "capabilities": [
+    "conditional-obligations",
+    "conflict-learning",
+    "domain-neutral",
+    "fairness",
+    "knowledge-preserving-restart"
+  ],
+  "decision_namespaces": [
+    "*"
+  ],
+  "description": "Domain-neutral Evolve profile for goals that require iterative modeling, conditional work, evidence, conflict learning, repair, investigation, and controlled adaptation.",
+  "evidence_kinds": [
+    "claim",
+    "formal_proof",
+    "human_attestation",
+    "measurement",
+    "observation",
+    "test"
+  ],
+  "evolution_policy": {
+    "allow_runtime_proposals": true,
+    "allowed_activation_actors": [],
+    "metadata": {},
+    "minimum_evidence_count": 1,
+    "mode": "PROPOSAL_ONLY",
+    "require_conformance": true,
+    "require_explicit_activation": true,
+    "require_migration_for_breaking": true
+  },
+  "machine_definition": "aasm.evolve",
+  "metadata": {},
+  "migrations": [],
+  "obligation_kinds": [
+    "commit",
+    "investigation",
+    "review",
+    "verification",
+    "work"
+  ],
+  "policies": {
+    "hard_constraint_certification": [
+      "PROVEN",
+      "VALIDATED"
+    ],
+    "validation_classifications": [
+      "PASS",
+      "LOCAL_DEFECT",
+      "INFORMATION_GAP",
+      "ASSUMPTION_CONFLICT",
+      "EVIDENCE_CONFLICT",
+      "POLICY_CONFLICT",
+      "FATAL"
+    ]
+  },
+  "profile_id": "aasm.evolve",
+  "profile_version": "1.0.0",
+  "schema_version": 1
+}

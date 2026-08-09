@@ -1,0 +1,14 @@
+{
+  "classifications": [
+    "PASS",
+    "LOCAL_DEFECT",
+    "INFORMATION_GAP",
+    "ASSUMPTION_CONFLICT",
+    "EVIDENCE_CONFLICT",
+    "POLICY_CONFLICT",
+    "FATAL"
+  ],
+  "hard_constraint_certification": ["PROVEN", "VALIDATED"],
+  "soft_constraint_certification": ["CORROBORATED", "PROVISIONAL", "HEURISTIC"],
+  "rule": "A validator may recommend; only AASM authority may commit, learn hard constraints, backjump, restart, or activate a profile revision."
+}

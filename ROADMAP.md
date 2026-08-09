@@ -1,75 +1,111 @@
 # AASM Roadmap
 
-AASM is currently **v0.21.0 / experimental**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.22.0 / experimental**. This roadmap describes architectural direction, not guaranteed delivery dates.
 
 ## Delivered foundation
 
-- ✅ explicit algorithmic state machine and legal transitions
-- ✅ graph planning, shortest paths, checkpoint backtracking, and DP memory
-- ✅ evidence, assumptions, observations, contradictions, and lineage
-- ✅ event-sourced durability, checkpoints, SQLite, replay, and forks
-- ✅ external-effect proposal, authorization, idempotency, attempt ownership, UNKNOWN outcomes, and reconciliation
-- ✅ declarative machine definitions and static model checking
-- ✅ capability resources, max-flow/min-cut scheduling, priorities, and quotas
-- ✅ distributed worker registry, heartbeats, leases, expiry, reclaim, and stale-worker handling
-- ✅ PostgreSQL multi-host coordination and canonical task claims
-- ✅ model capability/strength/context/cost/latency routing
-- ✅ OpenAI Responses and Codex CLI executor adapters
-- ✅ end-to-end task → model → executor → usage/evidence → completion orchestration
-- ✅ evaluated-outcome adaptive model routing by task class
-- ✅ cache-aware model economics and governance-overhead accounting
-- ✅ deterministic review gating, governance budgets, and safe review reuse
-- ✅ executable Planner / Builder / Verifier protocol with Planner-only plan authority
-- ✅ automatic Builder → Verifier → Planner handoff
-- ✅ critical-path, DAG-width, coordination-overhead, and useful-worker analysis
+### Deterministic control plane
+
+- ✅ explicit machine state and legal transitions
+- ✅ declarative machine definitions and structural model checking
+- ✅ event-sourced durability, checkpoints, replay, and historical forks
+- ✅ SQLite and PostgreSQL coordination
+- ✅ external-effect authorization, idempotency, ownership, `UNKNOWN` outcomes, and reconciliation
+- ✅ mission `QUIESCE`, `SUSPEND`, and `RESUME`
+
+### Planning, evidence, and execution
+
+- ✅ plan graphs, shortest paths, checkpoint backtracking, and DP memory
+- ✅ claims, observations, assumptions, contradictions, invalidation, and lineage
+- ✅ capability scheduling, max-flow/min-cut evidence, priorities, and quotas
+- ✅ distributed workers, heartbeats, leases, expiry, reclaim, and stale-result rejection
+- ✅ model routing, adaptive outcomes, economics, and governance budgets
+- ✅ optional Planner / Builder / Verifier protocol and automatic handoff
 - ✅ selective information-change checkpoints and additive steering
-- ✅ automatic Verifier checkpoint triggers and fleet-admission recalculation
-- ✅ authority-gated provider-neutral physical provisioning
-- ✅ live execution telemetry and observed-duration feedback
-- ✅ Kubernetes, local-process, and Docker Compose provisioning adapters
-- ✅ external artifact references and bounded previews
-- ✅ worker drain/resume/offline controls
-- ✅ durable mission `QUIESCE`, `SUSPEND`, and `RESUME`
-- ✅ status-separated effect queue and explicit effect approval
-- ✅ controlled authority-gated fork creation
-- ✅ opaque cursor paging for telemetry and artifact references
-- ✅ `LEASE_LOST` semantics for results produced after ownership revocation
-- ✅ browser Control Center, CLI, and remote-client operator surfaces
+- ✅ collaboration analysis, fleet admission, provisioning adapters, telemetry, artifacts, CLI/API, and Control Center
+
+### v0.21 formal calculus
+
 - ✅ durable Decision, Obligation, and Evidence graph calculus
-- ✅ guarded hard/soft learned no-goods from validated conflicts
+- ✅ conditional obligations and evidence contracts
+- ✅ model-relative locks with automatic restoration
+- ✅ first-class conflicts and causal explanations
+- ✅ guarded hard/soft learned no-goods
 - ✅ graph-directed non-chronological backjumping
-- ✅ conditional locks with automatic restoration
 - ✅ knowledge-preserving search restart
 - ✅ bounded cross-model fairness and Planner-authorized recovery
 
+### v0.22 domain-neutral extension contract
+
+- ✅ versioned `AASMProfile` and `AASMPackageManifest`
+- ✅ immutable fingerprints and explicit per-machine profile bindings
+- ✅ separate Decision, Obligation, Validation, Explanation, and Certification adapter protocols
+- ✅ opt-in discovery of already-installed `aasm.profiles` entry points
+- ✅ solver-neutral decision requests and candidate models
+- ✅ kernel-side candidate validation against identity, hard constraints, pinned decisions, namespaces, and fairness
+- ✅ generic fingerprinted semantic-result envelope
+- ✅ static package/profile conformance and optional determinism probes
+- ✅ built-in `aasm.bare` and domain-neutral `aasm.evolve`
+- ✅ evidence-backed evolution proposals and explicit versioned migrations
+- ✅ non-software example package and run
+
 ## Next architecture layer
 
-- formal temporal-property checking over calculus and effect histories in TLC/SPIN CI
-- proof/certificate adapters for independently checked hard constraints
-- richer conflict minimization and semantic generalization policies
-- SAT/SMT-backed decision-model selection behind the deterministic kernel
-- Control Center conflict, explanation, obligation, and fairness views
-- remote write APIs for typed calculus records with authority policy
-- run- and project-level productive-work budgets in addition to governance budgets
-- richer human approval queues with policy-as-data and delegation scopes
-- provider-neutral structured executor results and streamed tool events
-- external log-store backends with retention, search, and signed references
-- deeper graph visualization, critical-path tracing, and event-timeline inspection
-- reconciliation assistants for UNKNOWN external effects that never guess external state
-- rolling worker-fleet health, startup timeout, and provider/AASM identity reconciliation
-- pluggable adversarial/verifier agents and benchmark suites
-- release packaging, signed artifacts, and package-registry publication
+### v0.23 — Decision backend ecosystem
+
+- finite-domain reference backend with reproducible enumeration
+- optional SAT, SMT, CP-SAT, MILP, human, LLM, and portfolio backends
+- backend capability declarations and budget-aware routing
+- backend-independent candidate explanation and scoring records
+- decision-model benchmark and conformance fixtures
+
+### v0.24 — Certificates and temporal conformance
+
+- independently checked proof/certificate adapters for hard constraints
+- TLA+ and Promela/SPIN models for calculus, effects, locks, fairness, and migration
+- history-property checker over durable event streams
+- formal CI gates with pinned tool versions
+- conflict-core minimization and semantic generalization policies
+
+### v0.25 — Generic calculus observability
+
+- Control Center Decision, Obligation, and Evidence graph views
+- profile/package identity, fingerprint, configuration, and migration history
+- conflict, explanation, constraint, lock, fairness-debt, backjump, and restart timelines
+- profile-specific display hints that cannot alter authority semantics
+- authenticated remote write APIs for typed profile/calculus records
+
+### Continuing control-plane work
+
+- run- and project-level productive-work budgets
+- richer human approval queues and delegation scopes
+- provider-neutral streamed executor events
+- external log stores with retention, search, and signed references
+- deeper critical-path and event-timeline visualization
+- reconciliation assistance that never guesses external state
+- rolling worker-fleet health and provider/AASM identity reconciliation
+- signed release artifacts and package-registry publication
 
 ## Longer-term possibilities
 
-- hierarchical conflict projection across planning, implementation, and execution layers
-- cross-project model-performance priors with strict project/task-class isolation
-- Redis/cache acceleration around PostgreSQL coordination
-- multi-runtime SDKs and standardized agent-runtime interoperability contracts
+- hierarchical conflict projection across strategy, implementation, and execution layers
+- governed package-evolution assistants that propose but never silently activate new contracts
+- package registries with trust, provenance, signatures, and compatibility evidence
+- cross-project performance priors with strict profile/task-class isolation
+- multi-runtime SDKs and standardized interoperability contracts
 - simulation-driven plan validation and counterfactual forks
-- capability registries/marketplaces with explicit trust and cost evidence
-- domain adapters for CAD, robotics, research, deployment, and scientific simulation
+- domain packages for CAD, robotics, research, deployment, operations, and scientific simulation maintained outside the core
 
 ## Non-goals for the core
 
-AASM should not become a bundled LLM provider, a domain-specific application, or a monolithic framework that forces every user into one agent topology. The core remains a role-agnostic deterministic control plane with explicit extension points.
+AASM should not become:
+
+- a bundled LLM provider;
+- a domain-specific application;
+- a package installer that downloads executable code during discovery;
+- a mandatory Planner/Builder system;
+- a mandatory SAT/SMT system;
+- a monolith that forces one evidence ontology, user interface, or agent topology;
+- a self-modifying package system without explicit versioning and migration.
+
+The core remains a role-agnostic, domain-neutral deterministic control plane with explicit extension contracts.

@@ -1,0 +1,94 @@
+{
+  "$id": "https://aasm.local/schemas/profile-binding.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "aasm_contract": {
+      "const": "0.22"
+    },
+    "activated_sequence": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "actor": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "configuration": {
+      "type": "object"
+    },
+    "evolution_history": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "evolution_proposals": {
+      "items": {
+        "$ref": "profile-evolution.schema.json"
+      },
+      "type": "array"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "package_fingerprint": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "package_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "package_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "previous_binding": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "profile_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "profile_id": {
+      "type": "string"
+    },
+    "profile_snapshot": {
+      "$ref": "profile.schema.json"
+    },
+    "profile_version": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ACTIVE",
+        "INACTIVE",
+        "MIGRATING",
+        "SUPERSEDED"
+      ]
+    }
+  },
+  "required": [
+    "profile_id",
+    "profile_version",
+    "aasm_contract",
+    "profile_fingerprint",
+    "configuration",
+    "profile_snapshot",
+    "status",
+    "activated_sequence",
+    "actor"
+  ],
+  "title": "AASM Machine Profile Binding",
+  "type": "object"
+}

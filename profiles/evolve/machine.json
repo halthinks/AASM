@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "name": "aasm-evolve",
+  "description": "Domain-neutral iterative execution machine with verification as the semantic decision boundary.",
+  "start_state": "INGEST",
+  "terminal_states": ["COMPLETE", "FAIL"],
+  "transitions": {
+    "INGEST": ["FORMALIZE", "PAUSE", "FAIL"],
+    "FORMALIZE": ["PLAN", "INVESTIGATE", "FAIL"],
+    "PLAN": ["SELECT", "INVESTIGATE", "PAUSE", "FAIL"],
+    "SELECT": ["EXECUTE", "VERIFY", "PLAN", "PAUSE", "FAIL"],
+    "EXECUTE": ["OBSERVE", "FAIL"],
+    "OBSERVE": ["VERIFY", "INVESTIGATE", "FAIL"],
+    "VERIFY": ["COMMIT", "REPAIR", "BACKTRACK", "INVESTIGATE", "COMPLETE", "FAIL"],
+    "REPAIR": ["EXECUTE", "VERIFY", "BACKTRACK", "FAIL"],
+    "BACKTRACK": ["SELECT", "PLAN", "INVESTIGATE", "FAIL"],
+    "INVESTIGATE": ["FORMALIZE", "PLAN", "SELECT", "VERIFY", "PAUSE", "FAIL"],
+    "COMMIT": ["SELECT", "PLAN", "COMPLETE", "FAIL"],
+    "PAUSE": ["PLAN", "SELECT", "FAIL"],
+    "COMPLETE": [],
+    "FAIL": []
+  },
+  "metadata": {
+    "profile_id": "aasm.evolve",
+    "domain_neutral": true
+  }
+}

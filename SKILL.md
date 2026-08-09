@@ -1,6 +1,6 @@
 ---
 name: aasm-algorithmic-agent-state-machine
-description: Use AASM to structure multi-step AI work as a durable algorithmic state machine with explicit transitions, graph planning, recovery, evidence, resource/model routing, authority, distributed workers, mission controls, and observable execution.
+description: Use AASM to structure durable, domain-neutral multi-step work with explicit state, profile packages, conflict learning, evidence, authority, recovery, resources, models, workers, effects, and observability.
 ---
 
 # AASM Skill
@@ -241,6 +241,57 @@ Observed task/task-class durations may feed later collaboration/fleet calculatio
 - Keep provider credentials/IAM outside the AASM config contract.
 - Constrain local worker directories beneath an operator-configured root.
 - Persist local process idempotency/PID state atomically.
+
+## Domain-neutral profile packages
+
+Use a profile package when a class of work needs reusable domain vocabulary, evidence rules, adapters, or migrations.
+
+Keep four concepts separate:
+
+```text
+package
+    distributable profiles, adapters, migrations, docs, tests
+
+profile
+    immutable versioned use-case contract
+
+binding
+    exact profile fingerprint + package identity + run configuration
+
+run
+    event-sourced execution under that binding
+```
+
+Package authors may define decision namespaces, obligation/evidence/artifact kinds, policies, and any of the optional adapter protocols:
+
+```text
+DecisionBackend
+ObligationAdapter
+SemanticValidator
+ConflictExplainer
+ConstraintCertifier
+```
+
+Adapters propose outputs. They do not mutate machine state, activate decisions, commit obligations, authorize effects, install hard constraints, or replace the profile binding.
+
+Profile discovery may load already-installed `aasm.profiles` entry points only when explicitly requested. It must not download packages or import adapter code during ordinary static validation.
+
+Treat profile versions as immutable. Do not change the content behind an existing `(profile_id, profile_version, fingerprint)` identity.
+
+A package may evolve only through the governed lifecycle:
+
+```text
+evidence/conflicts
+→ ProfileEvolutionProposal
+→ authored target version
+→ conformance
+→ ProfileMigration
+→ explicit authorized activation
+```
+
+AASM may help propose a new version. It must never silently self-modify or activate one. Run configuration may be updated separately when the contract itself is unchanged.
+
+Use `aasm.bare` when the application already owns domain meaning. Use `aasm.evolve` for domain-neutral iterative work with verification and conflict learning.
 
 ## Required handoff payload
 

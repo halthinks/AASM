@@ -1,0 +1,95 @@
+{
+  "$id": "https://aasm.local/schemas/profile-evolution.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "actor": {
+      "type": "string"
+    },
+    "applied_by": {
+      "type": "string"
+    },
+    "applied_sequence": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "changes": {
+      "items": {
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "created_sequence": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "decision_record_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "evidence_ids": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "from_version": {
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "migration_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "profile_id": {
+      "pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$",
+      "type": "string"
+    },
+    "proposal_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "reason": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "PROPOSED",
+        "APPROVED",
+        "REJECTED",
+        "APPLIED",
+        "SUPERSEDED"
+      ]
+    },
+    "target_profile_fingerprint": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "to_version": {
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "proposal_id",
+    "profile_id",
+    "from_version",
+    "to_version",
+    "reason",
+    "changes"
+  ],
+  "title": "AASM Profile Evolution Proposal",
+  "type": "object"
+}

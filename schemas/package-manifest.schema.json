@@ -1,0 +1,180 @@
+{
+  "$id": "https://aasm.local/schemas/package-manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "aasm_contract": {
+      "const": "0.22"
+    },
+    "adapter_entry_points": {
+      "additionalProperties": {
+        "pattern": "^[^\\s:]+:[^\\s:]+$",
+        "type": "string"
+      },
+      "propertyNames": {
+        "enum": [
+          "decision_backend",
+          "obligation_adapter",
+          "semantic_validator",
+          "conflict_explainer",
+          "constraint_certifier"
+        ]
+      },
+      "type": "object"
+    },
+    "authors": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "description": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "distribution_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "evolution_policy": {
+      "additionalProperties": false,
+      "properties": {
+        "allow_runtime_proposals": {
+          "type": "boolean"
+        },
+        "allowed_activation_actors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "minimum_evidence_count": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "mode": {
+          "enum": [
+            "FROZEN",
+            "MANUAL",
+            "PROPOSAL_ONLY",
+            "GOVERNED_AUTO_CANDIDATE"
+          ]
+        },
+        "require_conformance": {
+          "type": "boolean"
+        },
+        "require_explicit_activation": {
+          "type": "boolean"
+        },
+        "require_migration_for_breaking": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "homepage": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "license": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "migrations": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "checksum": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "compatibility": {
+            "enum": [
+              "BACKWARD_COMPATIBLE",
+              "REQUIRES_MIGRATION",
+              "BREAKING"
+            ]
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "from_version": {
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object"
+          },
+          "migration_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "operations": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "to_version": {
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "migration_id",
+          "from_version",
+          "to_version",
+          "compatibility",
+          "operations"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "package_id": {
+      "pattern": "^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?$",
+      "type": "string"
+    },
+    "package_version": {
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+      "type": "string"
+    },
+    "profiles": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "schema_version": {
+      "const": 1
+    }
+  },
+  "required": [
+    "package_id",
+    "package_version",
+    "description",
+    "profiles",
+    "aasm_contract"
+  ],
+  "title": "AASM Profile Package Manifest",
+  "type": "object"
+}

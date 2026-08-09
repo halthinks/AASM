@@ -1,0 +1,125 @@
+{
+  "$id": "https://aasm.local/schemas/semantic-result.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifacts": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "claims": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "classification": {
+      "enum": [
+        "PASS",
+        "LOCAL_DEFECT",
+        "INFORMATION_GAP",
+        "ASSUMPTION_CONFLICT",
+        "EVIDENCE_CONFLICT",
+        "POLICY_CONFLICT",
+        "FATAL"
+      ]
+    },
+    "confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "evidence": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "observations": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "producer": {
+      "additionalProperties": false,
+      "properties": {
+        "authority": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "producer_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "producer_type": {
+          "enum": [
+            "adapter",
+            "agent",
+            "human",
+            "service",
+            "simulator",
+            "tool",
+            "validator",
+            "other"
+          ]
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "producer_type",
+        "producer_id"
+      ],
+      "type": "object"
+    },
+    "proposed_conflict": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "result_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "scope": {
+      "type": "object"
+    },
+    "subject_ids": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "summary": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "result_id",
+    "producer",
+    "subject_ids",
+    "classification",
+    "summary"
+  ],
+  "title": "AASM Generic Semantic Result Envelope",
+  "type": "object"
+}

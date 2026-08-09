@@ -1,0 +1,45 @@
+{
+  "aasm_contract": "0.22",
+  "adapters": {},
+  "artifact_kinds": [
+    "digital",
+    "other",
+    "physical",
+    "record",
+    "reference"
+  ],
+  "capabilities": [
+    "domain-neutral",
+    "manual-binding"
+  ],
+  "decision_namespaces": [
+    "*"
+  ],
+  "description": "Minimal domain-neutral AASM profile with no required adapters or domain vocabulary.",
+  "evidence_kinds": [
+    "assumption",
+    "claim",
+    "contradiction",
+    "observation"
+  ],
+  "evolution_policy": {
+    "allow_runtime_proposals": true,
+    "allowed_activation_actors": [],
+    "metadata": {},
+    "minimum_evidence_count": 1,
+    "mode": "MANUAL",
+    "require_conformance": true,
+    "require_explicit_activation": true,
+    "require_migration_for_breaking": true
+  },
+  "machine_definition": "aasm.default",
+  "metadata": {},
+  "migrations": [],
+  "obligation_kinds": [
+    "work"
+  ],
+  "policies": {},
+  "profile_id": "aasm.bare",
+  "profile_version": "1.0.0",
+  "schema_version": 1
+}

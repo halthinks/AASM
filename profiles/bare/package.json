@@ -1,0 +1,32 @@
+{
+  "aasm_contract": "0.22",
+  "adapter_entry_points": {},
+  "authors": [
+    "AASM contributors"
+  ],
+  "description": "Canonical built-in AASM bare profile package.",
+  "distribution_name": "aasm-runtime",
+  "evolution_policy": {
+    "allow_runtime_proposals": true,
+    "allowed_activation_actors": [],
+    "metadata": {},
+    "minimum_evidence_count": 1,
+    "mode": "MANUAL",
+    "require_conformance": true,
+    "require_explicit_activation": true,
+    "require_migration_for_breaking": true
+  },
+  "homepage": null,
+  "license": "MIT",
+  "metadata": {
+    "built_in": true,
+    "profile_fingerprint": "5dc92a78300612af3d17e1878f7d2b9cec2969d026531ec92a07da2c46bfa2f3"
+  },
+  "migrations": [],
+  "package_id": "aasm.bare.package",
+  "package_version": "1.0.0",
+  "profiles": [
+    "aasm.bare"
+  ],
+  "schema_version": 1
+}

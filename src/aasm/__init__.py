@@ -1,4 +1,4 @@
-from .runtime_v21 import AASMEngine
+from .runtime_v22 import AASMEngine, default_profile_registry
 from .model import MachineState, ProblemSpec, TaskEnvelope, Proposal, Result, CapabilitySet
 from .agents import AASMAgent, FunctionAgent
 from .authority import SingleControllerAuthority, AutonomousAuthority, QuorumAuthority, HierarchicalAuthority
@@ -48,6 +48,51 @@ from .calculus import (
     compute_backjump,
     assert_calculus_invariants,
 )
+from .profile_packages import (
+    PROFILE_CONTRACT,
+    PROFILE_ENTRY_POINT_GROUP,
+    AdapterBinding,
+    ProfileEvolutionPolicy,
+    ProfileMigration,
+    AASMProfile,
+    AASMPackageManifest,
+    ProfileBinding,
+    ProfileEvolutionProposal,
+    ProfileRegistry,
+    bare_profile,
+    evolve_profile,
+)
+from .domain_adapters import (
+    DecisionRequest,
+    CandidateModel,
+    CandidateValidationReport,
+    DomainContext,
+    ValidationContext,
+    ExplanationContext,
+    ExplanationCandidate,
+    CertificationContext,
+    ConstraintCertificate,
+    DecisionBackend,
+    ObligationAdapter,
+    SemanticValidator,
+    ConflictExplainer,
+    ConstraintCertifier,
+    load_adapter,
+    validate_adapter_object,
+    determinism_probe,
+)
+from .semantic_result import (
+    SEMANTIC_CLASSIFICATIONS,
+    ProducerRef,
+    SemanticResultEnvelope,
+    validate_semantic_result,
+)
+from .profile_conformance import (
+    ConformanceIssue,
+    ConformanceReport,
+    ProfileConformanceKit,
+    assert_profile_conformant,
+)
 
 __all__=[
     "AASMEngine","MachineState","ProblemSpec","TaskEnvelope","Proposal","Result","CapabilitySet",
@@ -71,7 +116,12 @@ __all__=[
     "ExecutorAdapter","ExecutorBinding","ExecutorRegistry","ExecutionContract","ExecutionOrchestrator","OrchestrationResult","OrchestratedRemoteWorker",
     "CodexGovernancePolicy","CodexTelemetryImport","import_otel_events","import_otel_jsonl",
     "DecisionLiteral","DecisionRecord","ObligationRecord","LockRecord","ConflictRecord","ExplanationRecord","LearnedConstraint","FairnessPolicy","RecoveryDecision",
-    "default_calculus_state","condition_holds","project_constraint","compute_backjump","assert_calculus_invariants"
+    "default_calculus_state","condition_holds","project_constraint","compute_backjump","assert_calculus_invariants",
+    "PROFILE_CONTRACT","PROFILE_ENTRY_POINT_GROUP","AdapterBinding","ProfileEvolutionPolicy","ProfileMigration","AASMProfile","AASMPackageManifest","ProfileBinding","ProfileEvolutionProposal","ProfileRegistry","bare_profile","evolve_profile","default_profile_registry",
+    "DecisionRequest","CandidateModel","CandidateValidationReport","DomainContext","ValidationContext","ExplanationContext","ExplanationCandidate","CertificationContext","ConstraintCertificate",
+    "DecisionBackend","ObligationAdapter","SemanticValidator","ConflictExplainer","ConstraintCertifier","load_adapter","validate_adapter_object","determinism_probe",
+    "SEMANTIC_CLASSIFICATIONS","ProducerRef","SemanticResultEnvelope","validate_semantic_result",
+    "ConformanceIssue","ConformanceReport","ProfileConformanceKit","assert_profile_conformant"
 ]
 
 from .graph import PlanNode, PlanEdge, PlanGraph

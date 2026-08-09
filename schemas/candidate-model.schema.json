@@ -1,0 +1,46 @@
+{
+  "$id": "https://aasm.local/schemas/candidate-model.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "assignments": {
+      "additionalProperties": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "backend_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "backend_version": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "candidate_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "rationale": {
+      "type": "object"
+    },
+    "score": {
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "candidate_id",
+    "assignments",
+    "backend_id",
+    "backend_version"
+  ],
+  "title": "AASM Solver-Neutral Candidate Model",
+  "type": "object"
+}
