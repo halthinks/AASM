@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/mission-control.schema.json",
+  "title": "AASM Mission Control Record",
+  "type": "object",
+  "required": ["action", "actor", "reason"],
+  "properties": {
+    "control_id": {"type": "string", "minLength": 1},
+    "action": {"enum": ["PAUSE", "RESUME"]},
+    "actor": {"type": "string", "minLength": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["QUIESCE", "SUSPEND"]},
+    "ts": {"type": "number"},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": false
+}
