@@ -4,6 +4,42 @@ All notable user-visible changes to AASM will be documented here.
 
 The project uses semantic-versioning intent while the public API remains experimental before 1.0.
 
+## [0.18.0] - 2026-08-08
+
+### Added
+
+- `ArtifactBackend`, `ArtifactBackendRegistry`, `MemoryArtifactBackend`, and path-confined `LocalDirectoryArtifactBackend`
+- stable content-addressed text artifact references so logs/artifacts can live outside the bounded machine snapshot
+- remote artifact storage/inspection endpoints that fail closed when no backend registry is configured
+- `WorkerControlAction` and durable `WorkerControlRecord` provenance for `DRAIN`, `RESUME`, and `OFFLINE`
+- authenticated Control Center worker lifecycle buttons plus remote/CLI execution-control surfaces
+- `CommandProvisioningAdapter` for explicit argv-based provider commands without shell execution
+- `KubernetesScaleAdapter` as the first concrete provider-specific provisioning adapter
+- provider/artifact/control schemas, documentation, example, and regression tests
+
+### Provider and artifact semantics
+
+- provider-specific adapters remain behind the v0.17 provisioning effect lifecycle; a fleet recommendation or admission target never executes provider commands by itself
+- `KubernetesScaleAdapter` reads current replica count and issues explicit `kubectl scale` argv only after the enclosing provisioning effect is authorized
+- provider adapters inherit effect idempotency/UNKNOWN reconciliation rather than creating a second side-effect mechanism
+- a provider-side scale-up still does not manufacture a healthy AASM worker record; the physical worker must register and heartbeat
+- external artifact backends store content outside AASM and persist only stable references/provenance in the machine state
+- the local artifact backend sanitizes namespace/name components and rejects paths that escape its configured root
+
+### Execution-control semantics
+
+- `DRAIN` changes the worker to `DRAINING`, preventing new claims while allowing an active lease to finish
+- `RESUME` returns a worker to `ACTIVE`
+- `OFFLINE` changes admission state and releases that worker's active leases so ownership is not stranded
+- worker control is distinct from provider destruction: taking an AASM worker offline does not silently delete a VM, pod, process, or other infrastructure
+- provider teardown remains a separately proposed and explicitly authorized provisioning effect
+
+### Architectural significance
+
+- v0.18 separates four previously easy-to-conflate concerns: scheduling recommendation, lease admission, AASM worker lifecycle, and provider infrastructure lifecycle
+- logs/artifacts can now scale outside the event-sourced control state while keeping durable references and telemetry provenance
+- the Control Center begins transitioning from inspection-only UI into an authenticated operational surface without collapsing authority boundaries
+
 ## [0.17.0] - 2026-08-08
 
 ### Added
