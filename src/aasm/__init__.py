@@ -1,4 +1,4 @@
-from .runtime_v17 import AASMEngine
+from .runtime_v18 import AASMEngine
 from .model import MachineState, ProblemSpec, TaskEnvelope, Proposal, Result, CapabilitySet
 from .agents import AASMAgent, FunctionAgent
 from .authority import SingleControllerAuthority, AutonomousAuthority, QuorumAuthority, HierarchicalAuthority
@@ -15,6 +15,9 @@ from .checkpoint_triggers import CheckpointTriggerPolicy, CheckpointTrigger, Che
 from .fleet_control import FleetControlPolicy
 from .execution_telemetry import TelemetryKind, TelemetryPolicy, ExecutionTelemetryRecord, ExecutionTelemetryLedger
 from .provisioning import ProvisioningAction, ProvisioningRequest, ProvisioningPlan, ProvisioningAdapter, FunctionProvisioningAdapter, ProvisioningRegistry
+from .provider_adapters import CommandProvisioningAdapter, KubernetesScaleAdapter, subprocess_runner
+from .artifact_backends import ArtifactBackend, ArtifactBackendRegistry, MemoryArtifactBackend, LocalDirectoryArtifactBackend
+from .execution_controls import WorkerControlAction, WorkerControlRecord
 from .team_protocol import TeamRole, PlannerDirective, TeamMember, BuilderOutput, VerifierReport, PlannerDecision, PlannerBuilderVerifierPolicy
 from .pbv_orchestrator import PBVCycleResult, PBVCoordinator
 from .remote import AASMRemoteClient, RemoteProtocolError
@@ -39,6 +42,7 @@ __all__=[
     "ChangeKind","ChangeSignal","ImpactAnalysis","ChangeImpactAnalyzer","CheckpointTriggerPolicy","CheckpointTrigger","CheckpointTriggerEngine","FleetControlPolicy",
     "TelemetryKind","TelemetryPolicy","ExecutionTelemetryRecord","ExecutionTelemetryLedger",
     "ProvisioningAction","ProvisioningRequest","ProvisioningPlan","ProvisioningAdapter","FunctionProvisioningAdapter","ProvisioningRegistry",
+    "CommandProvisioningAdapter","KubernetesScaleAdapter","subprocess_runner","ArtifactBackend","ArtifactBackendRegistry","MemoryArtifactBackend","LocalDirectoryArtifactBackend","WorkerControlAction","WorkerControlRecord",
     "TeamRole","PlannerDirective","TeamMember","BuilderOutput","VerifierReport","PlannerDecision","PlannerBuilderVerifierPolicy","PBVCycleResult","PBVCoordinator",
     "AASMRemoteClient","RemoteProtocolError","RemoteWorkerLoop",
     "CallPurpose","ModelPricing","ModelUsageRecord","ReviewGatePolicy","EconomicsLedger",
