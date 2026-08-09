@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/worker-control.schema.json",
+  "title": "AASM Worker Control",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["worker_id", "action", "actor", "reason"],
+  "properties": {
+    "worker_id": {"type": "string", "minLength": 1},
+    "action": {"enum": ["DRAIN", "RESUME", "OFFLINE"]},
+    "actor": {"type": "string", "minLength": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "ts": {"type": "number"},
+    "metadata": {"type": "object"}
+  }
+}
