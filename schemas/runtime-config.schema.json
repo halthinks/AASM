@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/runtime-config.schema.json",
+  "title": "AASM Runtime Provider Configuration",
+  "type": "object",
+  "properties": {
+    "provisioners": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "kind"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "kubernetes",
+              "local-process",
+              "docker-compose"
+            ]
+          },
+          "state_dir": {
+            "type": "string",
+            "minLength": 1
+          },
+          "workspace_root": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "argv": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "terminate_timeout": {
+            "type": "number",
+            "minimum": 0
+          },
+          "kubectl": {
+            "type": "string",
+            "minLength": 1
+          },
+          "docker": {
+            "type": "string",
+            "minLength": 1
+          },
+          "service": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "compose_file": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "project_directory": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "project_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "local-process"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "state_dir"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "docker-compose"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "service"
+              ]
+            }
+          }
+        ],
+        "additionalProperties": false
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "kind"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "memory",
+              "local-directory"
+            ]
+          },
+          "root": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "local-directory"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "root"
+              ]
+            }
+          }
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
