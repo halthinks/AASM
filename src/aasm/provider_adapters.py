@@ -29,11 +29,13 @@ class CommandProvisioningAdapter:
 
     def apply(self, request: ProvisioningRequest, idempotency_key: str) -> dict[str, Any]:
         argv = list(self.builder(request))
-        if not argv or any(not isinstance(x, str) or not x for x in argv):
+        if not argv or any(not isinstance(value, str) or not value for value in argv):
             raise ValueError("provisioning command builder returned invalid argv")
         code, stdout, stderr = self.runner(argv)
         if code != 0:
-            raise RuntimeError(f"provisioning command failed ({code}): {stderr.strip() or stdout.strip()}")
+            raise RuntimeError(
+                f"provisioning command failed ({code}): {stderr.strip() or stdout.strip()}"
+            )
         return {
             "argv": argv,
             "exit_code": code,
@@ -48,28 +50,34 @@ class KubernetesScaleAdapter:
     """Scale one Kubernetes workload through kubectl.
 
     The request metadata must name `workload` and may set `kind` (deployment by
-    default), `namespace`, and `container`. PROVISION/DRAIN are interpreted as
-    desired replica deltas relative to the current replica count read from the
-    API. The adapter is only invoked after the enclosing AASM effect is authorized.
+    default) and `namespace`. PROVISION/DRAIN are interpreted as desired replica
+    deltas relative to the current replica count read from the API. The adapter
+    is only invoked after the enclosing AASM effect is authorized.
+
+    Replica scaling cannot prove which logical AASM worker was terminated. A
+    DRAIN result therefore declares `drain_scope=replica-count` and does not
+    claim targeted logical worker IDs.
     """
 
     kubectl: str = "kubectl"
     runner: CommandRunner = subprocess_runner
 
     def _base(self, request: ProvisioningRequest):
-        meta = request.metadata or {}
-        workload = str(meta.get("workload") or "").strip()
+        metadata = request.metadata or {}
+        workload = str(metadata.get("workload") or "").strip()
         if not workload:
             raise ValueError("Kubernetes provisioning requires metadata.workload")
-        kind = str(meta.get("kind") or "deployment").strip()
-        namespace = str(meta.get("namespace") or "default").strip()
+        kind = str(metadata.get("kind") or "deployment").strip()
+        namespace = str(metadata.get("namespace") or "default").strip()
         return kind, workload, namespace
 
     def _current_replicas(self, kind: str, workload: str, namespace: str) -> int:
         argv = [self.kubectl, "-n", namespace, "get", kind, workload, "-o", "json"]
         code, stdout, stderr = self.runner(argv)
         if code != 0:
-            raise RuntimeError(f"kubectl get failed ({code}): {stderr.strip() or stdout.strip()}")
+            raise RuntimeError(
+                f"kubectl get failed ({code}): {stderr.strip() or stdout.strip()}"
+            )
         payload = json.loads(stdout or "{}")
         return int(((payload.get("spec") or {}).get("replicas")) or 0)
 
@@ -81,17 +89,34 @@ class KubernetesScaleAdapter:
         elif request.action == ProvisioningAction.DRAIN:
             desired = max(0, current - request.count)
         else:
-            raise ValueError(f"Unsupported Kubernetes provisioning action: {request.action}")
-        argv = [self.kubectl, "-n", namespace, "scale", kind, workload, f"--replicas={desired}"]
+            raise ValueError(
+                f"Unsupported Kubernetes provisioning action: {request.action}"
+            )
+        argv = [
+            self.kubectl,
+            "-n",
+            namespace,
+            "scale",
+            kind,
+            workload,
+            f"--replicas={desired}",
+        ]
         code, stdout, stderr = self.runner(argv)
         if code != 0:
-            raise RuntimeError(f"kubectl scale failed ({code}): {stderr.strip() or stdout.strip()}")
+            raise RuntimeError(
+                f"kubectl scale failed ({code}): {stderr.strip() or stdout.strip()}"
+            )
         return {
             "kind": kind,
             "workload": workload,
             "namespace": namespace,
             "previous_replicas": current,
             "desired_replicas": desired,
+            "drain_scope": (
+                "replica-count"
+                if request.action == ProvisioningAction.DRAIN
+                else None
+            ),
             "stdout": stdout[-20000:],
             "stderr": stderr[-20000:],
             "idempotency_key": idempotency_key,
