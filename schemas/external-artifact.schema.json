@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": ["backend", "namespace", "name", "ref"],
   "properties": {
+    "artifact_id": {"type": "string", "minLength": 1},
     "backend": {"type": "string", "minLength": 1},
     "namespace": {"type": "string", "minLength": 1},
     "name": {"type": "string", "minLength": 1},
