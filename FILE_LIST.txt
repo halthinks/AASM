@@ -7,6 +7,7 @@
 ./.github/workflows/ci.yml
 ./.gitignore
 ./CHANGELOG.md
+./CHANGELOG_0.18_AND_EARLIER.md
 ./CODE_OF_CONDUCT.md
 ./CONTRIBUTING.md
 ./FILE_LIST.txt
@@ -35,9 +36,11 @@
 ./docs/GOVERNANCE_ECONOMICS.md
 ./docs/INFORMATION_CHANGE_CHECKPOINTS.md
 ./docs/MASSIVE_COLLABORATION.md
+./docs/MISSION_CONTROLS_OBSERVABILITY.md
 ./docs/MODEL_ECONOMICS.md
 ./docs/MODEL_ROUTING.md
 ./docs/PROVIDER_ADAPTERS_ARTIFACTS_CONTROLS.md
+./docs/RELEASE_0.19.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
 ./docs/RESOURCE_SCHEDULER.md
@@ -52,6 +55,7 @@
 ./examples/governance_economics.py
 ./examples/machine.json
 ./examples/massive_collaboration.py
+./examples/mission_controls_supervisors.py
 ./examples/model_profiles.json
 ./examples/multi_agent_demo.py
 ./examples/orchestrated_worker.py
@@ -59,6 +63,7 @@
 ./examples/provider_artifacts_controls.py
 ./examples/provisioning_telemetry.py
 ./examples/remote_worker.py
+./examples/runtime-config.local.json
 ./examples/scheduler_demo.py
 ./profiles/expert_swarm.yaml
 ./profiles/hierarchical_team.yaml
@@ -71,6 +76,7 @@
 ./schemas/change-signal.schema.json
 ./schemas/checkpoint-trigger-policy.schema.json
 ./schemas/collaboration-policy.schema.json
+./schemas/cursor-page.schema.json
 ./schemas/effect.schema.json
 ./schemas/event.schema.json
 ./schemas/evidence.schema.json
@@ -78,12 +84,14 @@
 ./schemas/execution-telemetry.schema.json
 ./schemas/external-artifact.schema.json
 ./schemas/fleet-control-policy.schema.json
+./schemas/fork-request.schema.json
 ./schemas/governance-budget.schema.json
 ./schemas/governance-context.schema.json
 ./schemas/governance-decision.schema.json
 ./schemas/lease.schema.json
 ./schemas/machine-definition.schema.json
 ./schemas/memory-entry.schema.json
+./schemas/mission-control.schema.json
 ./schemas/model-outcome.schema.json
 ./schemas/model-profile.schema.json
 ./schemas/model-route.schema.json
@@ -94,6 +102,7 @@
 ./schemas/provisioning-request.schema.json
 ./schemas/quota.schema.json
 ./schemas/resource.schema.json
+./schemas/runtime-config.schema.json
 ./schemas/state.schema.json
 ./schemas/task-demand.schema.json
 ./schemas/transition.schema.json
@@ -110,11 +119,13 @@
 ./src/aasm/checkpoint.py
 ./src/aasm/checkpoint_triggers.py
 ./src/aasm/cli.py
+./src/aasm/cli_v19.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
 ./src/aasm/collaboration.py
 ./src/aasm/control_center.py
+./src/aasm/control_center_v19.py
 ./src/aasm/core/__init__.py
 ./src/aasm/core/reducer.py
 ./src/aasm/definitions.py
@@ -130,10 +141,12 @@
 ./src/aasm/governance.py
 ./src/aasm/graph.py
 ./src/aasm/memory.py
+./src/aasm/mission_control.py
 ./src/aasm/model.py
 ./src/aasm/model_check.py
 ./src/aasm/model_routing.py
 ./src/aasm/openai_executor.py
+./src/aasm/pagination.py
 ./src/aasm/pbv_orchestrator.py
 ./src/aasm/persistence/__init__.py
 ./src/aasm/persistence/base.py
@@ -147,6 +160,7 @@
 ./src/aasm/provider_adapters.py
 ./src/aasm/provisioning.py
 ./src/aasm/remote.py
+./src/aasm/remote_v19.py
 ./src/aasm/resources.py
 ./src/aasm/router.py
 ./src/aasm/runtime.py
@@ -160,8 +174,11 @@
 ./src/aasm/runtime_v16.py
 ./src/aasm/runtime_v17.py
 ./src/aasm/runtime_v18.py
+./src/aasm/runtime_v19.py
 ./src/aasm/scheduler.py
 ./src/aasm/server.py
+./src/aasm/server_v19.py
+./src/aasm/supervisor_adapters.py
 ./src/aasm/team_protocol.py
 ./src/aasm/worker_loop.py
 ./src/aasm/workers.py
@@ -193,4 +210,5 @@
 ./tests/test_schemas.py
 ./tests/test_team_protocol.py
 ./tests/test_v18_provider_artifacts_controls.py
+./tests/test_v19_mission_observability_supervisors.py
 ./tests/test_workers_leases.py
