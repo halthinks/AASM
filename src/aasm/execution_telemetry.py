@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Any
 
-from .model import now
+from .model import new_id, now
 
 
 class TelemetryKind:
@@ -13,9 +13,10 @@ class TelemetryKind:
     ARTIFACT = "ARTIFACT"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+    LEASE_LOST = "LEASE_LOST"
     HEARTBEAT = "HEARTBEAT"
 
-    ALL = {STARTED, LOG, PROGRESS, ARTIFACT, COMPLETED, FAILED, HEARTBEAT}
+    ALL = {STARTED, LOG, PROGRESS, ARTIFACT, COMPLETED, FAILED, LEASE_LOST, HEARTBEAT}
 
 
 @dataclass
@@ -46,6 +47,7 @@ class ExecutionTelemetryRecord:
     artifact_refs: list[str] = field(default_factory=list)
     metrics: dict[str, float] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
+    record_id: str = field(default_factory=lambda: new_id("telemetry"))
 
     def __post_init__(self):
         if not self.worker_id or not self.task_id or not self.lease_id:
@@ -56,6 +58,8 @@ class ExecutionTelemetryRecord:
             raise ValueError("duration_seconds must be non-negative")
         if self.progress is not None and not 0 <= float(self.progress) <= 1:
             raise ValueError("progress must be between 0 and 1")
+        if not str(self.record_id).strip():
+            raise ValueError("record_id is required")
         self.artifact_refs = list(dict.fromkeys(self.artifact_refs))
 
     def to_dict(self):
