@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import asdict
 
 from .artifact_backends import ArtifactBackend
 from .execution_controls import WorkerControlAction, WorkerControlRecord
@@ -29,10 +28,17 @@ class AASMEngine(V17Engine):
         else:
             raise ValueError(record.action)
         updated = self.update_worker(record.worker_id, {"status": target}, reason=reason)
+        released=[]
+        if record.action == WorkerControlAction.OFFLINE:
+            for lease in list(self.list_leases()):
+                if lease.get("worker_id") == record.worker_id and lease.get("status") == "ACTIVE":
+                    self.release_lease(lease["lease_id"])
+                    released.append(lease["lease_id"])
         resources = deepcopy(self.snapshot.resources)
         raw = record.to_dict()
         raw["previous_status"] = current.get("status")
         raw["new_status"] = target
+        raw["released_lease_ids"] = released
         resources.setdefault("worker_control_history", []).append(raw)
         resources["last_worker_control"] = raw
         self.patch_snapshot({"resources": resources}, reason)
@@ -101,6 +107,9 @@ class AASMEngine(V17Engine):
 
     def dashboard(self):
         out = super().dashboard()
+        telemetry = dict(out.get("execution_telemetry") or {})
+        telemetry["recent"] = self.execution_telemetry(limit=20)
+        out["execution_telemetry"] = telemetry
         out["execution_controls"] = self.execution_control_report()
         out["external_artifacts"] = self.external_artifacts(limit=100)
         return out
