@@ -14,6 +14,8 @@ EXCLUDED_DIRS = {
     "venv",
     "__pycache__",
     "htmlcov",
+    "build",
+    "dist",
 }
 EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
 EXCLUDED_NAMES = {".DS_Store"}
@@ -24,7 +26,7 @@ def iter_files(*, exclude_output: Path | None = None):
         if not path.is_file():
             continue
         rel = path.relative_to(ROOT)
-        if any(part in EXCLUDED_DIRS for part in rel.parts):
+        if any(part in EXCLUDED_DIRS or part.endswith(".egg-info") for part in rel.parts):
             continue
         if path.suffix in EXCLUDED_SUFFIXES or path.name in EXCLUDED_NAMES:
             continue
