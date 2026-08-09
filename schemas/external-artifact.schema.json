@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/external-artifact.schema.json",
+  "title": "AASM External Artifact Reference",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["backend", "namespace", "name", "ref"],
+  "properties": {
+    "backend": {"type": "string", "minLength": 1},
+    "namespace": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "ref": {"type": "string", "minLength": 1},
+    "worker_id": {"type": ["string", "null"]},
+    "task_id": {"type": ["string", "null"]},
+    "lease_id": {"type": ["string", "null"]},
+    "metadata": {"type": "object"}
+  }
+}
