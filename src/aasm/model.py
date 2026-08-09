@@ -4,6 +4,8 @@ from enum import Enum
 from typing import Any, Iterable
 import hashlib, json, time, uuid
 
+from .calculus import default_calculus_state
+
 class MachineState(str, Enum):
     INGEST="INGEST"; FORMALIZE="FORMALIZE"; CLASSIFY="CLASSIFY"; DECOMPOSE="DECOMPOSE"
     PLAN="PLAN"; SELECT="SELECT"; EXECUTE="EXECUTE"; OBSERVE="OBSERVE"; VERIFY="VERIFY"
@@ -103,6 +105,7 @@ class MachineSnapshot:
     resources: dict[str, Any] = field(default_factory=dict)
     evidence: dict[str, Any] = field(default_factory=lambda:{"claims":[],"observations":[],"contradictions":[],"assumptions":[],"records":[]})
     metadata: dict[str, Any] = field(default_factory=dict)
+    calculus: dict[str, Any] = field(default_factory=default_calculus_state)
 
     def canonical_hash(self) -> str:
         payload = asdict(self)

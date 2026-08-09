@@ -1,0 +1,1027 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/calculus-state.schema.json",
+  "title": "AASM v0.21 Formal Calculus State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "epoch",
+    "active_model",
+    "decisions",
+    "decision_edges",
+    "obligations",
+    "obligation_edges",
+    "locks",
+    "conflicts",
+    "explanations",
+    "constraints",
+    "fairness",
+    "search_local"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "epoch": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "active_model": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "decisions": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/decision"
+      }
+    },
+    "decision_edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/decisionEdge"
+      }
+    },
+    "obligations": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/obligation"
+      }
+    },
+    "obligation_edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/obligationEdge"
+      }
+    },
+    "locks": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/lock"
+      }
+    },
+    "conflicts": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/conflict"
+      }
+    },
+    "explanations": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/explanation"
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/constraint"
+      }
+    },
+    "fairness": {
+      "$ref": "#/$defs/fairness"
+    },
+    "search_local": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "literal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject",
+        "op",
+        "value"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "op": {
+          "enum": [
+            "EQ",
+            "NEQ"
+          ]
+        },
+        "value": {},
+        "decision_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "condition": {
+      "$dynamicAnchor": "condition",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "const"
+          ],
+          "properties": {
+            "const": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision"
+          ],
+          "properties": {
+            "decision": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "subject",
+                "op",
+                "value"
+              ],
+              "properties": {
+                "subject": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "op": {
+                  "enum": [
+                    "EQ",
+                    "NEQ"
+                  ]
+                },
+                "value": {},
+                "decision_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "all"
+          ],
+          "properties": {
+            "all": {
+              "type": "array",
+              "items": {
+                "$dynamicRef": "#condition"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "any"
+          ],
+          "properties": {
+            "any": {
+              "type": "array",
+              "items": {
+                "$dynamicRef": "#condition"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "not"
+          ],
+          "properties": {
+            "not": {
+              "$dynamicRef": "#condition"
+            }
+          }
+        }
+      ]
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "subject",
+        "value",
+        "kind",
+        "status",
+        "level",
+        "parent_ids",
+        "antecedent_constraint_ids",
+        "evidence_ids",
+        "plan_node_ids",
+        "scope",
+        "pinned",
+        "created_sequence"
+      ],
+      "properties": {
+        "decision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {},
+        "kind": {
+          "enum": [
+            "ROOT",
+            "PINNED",
+            "EXPLICIT",
+            "DERIVED"
+          ]
+        },
+        "status": {
+          "enum": [
+            "PROPOSED",
+            "ACTIVE",
+            "SUSPENDED",
+            "SUPERSEDED",
+            "INVALIDATED",
+            "REJECTED",
+            "HISTORICAL"
+          ]
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "parent_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "antecedent_constraint_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "plan_node_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "scope": {
+          "type": "object"
+        },
+        "pinned": {
+          "type": "boolean"
+        },
+        "created_sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "activated_sequence": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "invalidated_by_conflict_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "superseded_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "decisionEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "src",
+        "dst",
+        "relation"
+      ],
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "dst": {
+          "type": "string"
+        },
+        "relation": {
+          "enum": [
+            "DEPENDS_ON",
+            "DERIVES"
+          ]
+        }
+      }
+    },
+    "obligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "obligation_id",
+        "statement",
+        "activation_condition",
+        "status",
+        "dependencies",
+        "decision_dependencies",
+        "plan_node_ids",
+        "required_evidence_types",
+        "evidence_ids",
+        "artifact_ids",
+        "lock_ids",
+        "persistent",
+        "mandatory",
+        "attempt_count",
+        "created_sequence",
+        "last_state_change_sequence",
+        "scope"
+      ],
+      "properties": {
+        "obligation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "activation_condition": {
+          "$ref": "#/$defs/condition"
+        },
+        "status": {
+          "enum": [
+            "AVAILABLE",
+            "ENABLED",
+            "IN_PROGRESS",
+            "VERIFYING",
+            "VERIFIED",
+            "COMMITTED",
+            "BLOCKED",
+            "LOCKED",
+            "NEEDS_REVALIDATION",
+            "REJECTED",
+            "SUPERSEDED",
+            "IMPOSSIBLE"
+          ]
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "decision_dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "plan_node_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "required_evidence_types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "artifact_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "lock_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "persistent": {
+          "type": "boolean"
+        },
+        "mandatory": {
+          "type": "boolean"
+        },
+        "attempt_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "created_sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "last_state_change_sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "disposition_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "scope": {
+          "type": "object"
+        }
+      }
+    },
+    "obligationEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "src",
+        "dst",
+        "relation"
+      ],
+      "properties": {
+        "src": {
+          "type": "string"
+        },
+        "dst": {
+          "type": "string"
+        },
+        "relation": {
+          "const": "REQUIRES"
+        }
+      }
+    },
+    "lock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lock_id",
+        "obligation_id",
+        "condition",
+        "reason",
+        "origin_decision_id",
+        "status",
+        "created_epoch",
+        "evidence_ids",
+        "scope"
+      ],
+      "properties": {
+        "lock_id": {
+          "type": "string"
+        },
+        "obligation_id": {
+          "type": "string"
+        },
+        "condition": {
+          "$ref": "#/$defs/condition"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin_decision_id": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ACTIVE",
+            "BROKEN",
+            "EXPIRED",
+            "SUPERSEDED"
+          ]
+        },
+        "created_epoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "broken_epoch": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "scope": {
+          "type": "object"
+        }
+      }
+    },
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "conflict_id",
+        "kind",
+        "evidence_ids",
+        "active_model_snapshot",
+        "decision_levels",
+        "scope",
+        "status",
+        "implicated_decision_ids",
+        "explanation_ids",
+        "learned_constraint_ids",
+        "created_sequence",
+        "candidate_snapshot_hash"
+      ],
+      "properties": {
+        "conflict_id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "ASSUMPTION_CONFLICT",
+            "EVIDENCE_CONFLICT",
+            "ROOT_CONFLICT",
+            "POLICY_CONFLICT"
+          ]
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "active_model_snapshot": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "decision_levels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "scope": {
+          "type": "object"
+        },
+        "status": {
+          "enum": [
+            "OPEN",
+            "EXPLAINED",
+            "LEARNED",
+            "RESOLVED",
+            "REJECTED"
+          ]
+        },
+        "observed_at_obligation_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "implicated_decision_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "explanation_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "learned_constraint_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "created_sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "resolved_sequence": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "backjump": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "candidate_snapshot_hash": {
+          "type": "string"
+        },
+        "rejected_by_evidence_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "explanation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "explanation_id",
+        "conflict_id",
+        "assumption_literals",
+        "evidence_ids",
+        "method",
+        "status",
+        "minimality",
+        "guard",
+        "dependency_edges",
+        "certificate",
+        "scope",
+        "created_sequence"
+      ],
+      "properties": {
+        "explanation_id": {
+          "type": "string"
+        },
+        "conflict_id": {
+          "type": "string"
+        },
+        "assumption_literals": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/literal"
+          }
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "method": {
+          "enum": [
+            "DEPENDENCY_TRACE",
+            "PROOF",
+            "DELTA_DEBUGGING",
+            "REPRODUCTION",
+            "MANUAL_REVIEW"
+          ]
+        },
+        "status": {
+          "enum": [
+            "PROPOSED",
+            "VALIDATED",
+            "PROVEN",
+            "REJECTED"
+          ]
+        },
+        "minimality": {
+          "enum": [
+            "NONE",
+            "IRREDUCIBLE",
+            "PROVEN_MINIMAL"
+          ]
+        },
+        "guard": {
+          "$ref": "#/$defs/condition"
+        },
+        "dependency_edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "from",
+              "to",
+              "relation"
+            ],
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              },
+              "relation": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "certificate": {
+          "type": "object"
+        },
+        "scope": {
+          "type": "object"
+        },
+        "created_sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "invalidated_by_evidence_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constraint_id",
+        "body",
+        "source_conflict_id",
+        "source_explanation_id",
+        "evidence_ids",
+        "guard",
+        "strength",
+        "status",
+        "validation",
+        "scope",
+        "created_sequence",
+        "reuse_count"
+      ],
+      "properties": {
+        "constraint_id": {
+          "type": "string"
+        },
+        "body": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/literal"
+          }
+        },
+        "source_conflict_id": {
+          "type": "string"
+        },
+        "source_explanation_id": {
+          "type": "string"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "guard": {
+          "$ref": "#/$defs/condition"
+        },
+        "strength": {
+          "enum": [
+            "HARD",
+            "SOFT"
+          ]
+        },
+        "status": {
+          "enum": [
+            "PROPOSED",
+            "ACTIVE",
+            "SOFT",
+            "EXPIRED",
+            "SUPERSEDED",
+            "REJECTED"
+          ]
+        },
+        "validation": {
+          "enum": [
+            "PROPOSED",
+            "VALIDATED",
+            "PROVEN",
+            "HEURISTIC"
+          ]
+        },
+        "scope": {
+          "type": "object"
+        },
+        "created_sequence": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reuse_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "superseded_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expired_by_evidence_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "fairnessPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_hidden_epochs",
+        "max_lock_age_epochs",
+        "max_lock_count",
+        "max_deferral_epochs",
+        "enforcement",
+        "review_batch_size"
+      ],
+      "properties": {
+        "max_hidden_epochs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_lock_age_epochs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_lock_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_deferral_epochs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "enforcement": {
+          "enum": [
+            "WARN",
+            "BLOCK_PLANNING"
+          ]
+        },
+        "review_batch_size": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "fairnessRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "created_epoch",
+        "last_considered_epoch",
+        "last_enabled_epoch",
+        "last_reviewed_epoch",
+        "current_lock_start_epoch",
+        "lock_count",
+        "hidden_epochs",
+        "continuous_lock_epochs",
+        "fairness_status",
+        "explicit_deferral_until_epoch"
+      ],
+      "properties": {
+        "created_epoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "last_considered_epoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "last_enabled_epoch": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "last_reviewed_epoch": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "current_lock_start_epoch": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "lock_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hidden_epochs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "continuous_lock_epochs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fairness_status": {
+          "enum": [
+            "NORMAL",
+            "DUE",
+            "OVERDUE",
+            "ESCALATED"
+          ]
+        },
+        "explicit_deferral_until_epoch": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "fairness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy",
+        "records"
+      ],
+      "properties": {
+        "policy": {
+          "$ref": "#/$defs/fairnessPolicy"
+        },
+        "records": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/fairnessRecord"
+          }
+        }
+      }
+    }
+  }
+}

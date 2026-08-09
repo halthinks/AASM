@@ -1,4 +1,4 @@
-from .runtime_v19 import AASMEngine
+from .runtime_v21 import AASMEngine
 from .model import MachineState, ProblemSpec, TaskEnvelope, Proposal, Result, CapabilitySet
 from .agents import AASMAgent, FunctionAgent
 from .authority import SingleControllerAuthority, AutonomousAuthority, QuorumAuthority, HierarchicalAuthority
@@ -32,6 +32,22 @@ from .codex_executor import CodexCLIExecutor, CodexExecutionResult, CodexExecuto
 from .executor_orchestration import ExecutorAdapter, ExecutorBinding, ExecutorRegistry, ExecutionContract, ExecutionOrchestrator, OrchestrationResult, OrchestratedRemoteWorker
 from .codex_policy import CodexGovernancePolicy
 from .codex_telemetry import CodexTelemetryImport, import_otel_events, import_otel_jsonl
+from .calculus import (
+    DecisionLiteral,
+    DecisionRecord,
+    ObligationRecord,
+    LockRecord,
+    ConflictRecord,
+    ExplanationRecord,
+    LearnedConstraint,
+    FairnessPolicy,
+    RecoveryDecision,
+    default_calculus_state,
+    condition_holds,
+    project_constraint,
+    compute_backjump,
+    assert_calculus_invariants,
+)
 
 __all__=[
     "AASMEngine","MachineState","ProblemSpec","TaskEnvelope","Proposal","Result","CapabilitySet",
@@ -53,7 +69,9 @@ __all__=[
     "GovernanceAction","GovernanceBudgetPolicy","GovernanceContext","GovernanceDecision","GovernanceEconomicsController",
     "OpenAIResponsesExecutor","OpenAIExecutionResult","OpenAIExecutorError","CodexCLIExecutor","CodexExecutionResult","CodexExecutorError",
     "ExecutorAdapter","ExecutorBinding","ExecutorRegistry","ExecutionContract","ExecutionOrchestrator","OrchestrationResult","OrchestratedRemoteWorker",
-    "CodexGovernancePolicy","CodexTelemetryImport","import_otel_events","import_otel_jsonl"
+    "CodexGovernancePolicy","CodexTelemetryImport","import_otel_events","import_otel_jsonl",
+    "DecisionLiteral","DecisionRecord","ObligationRecord","LockRecord","ConflictRecord","ExplanationRecord","LearnedConstraint","FairnessPolicy","RecoveryDecision",
+    "default_calculus_state","condition_holds","project_constraint","compute_backjump","assert_calculus_invariants"
 ]
 
 from .graph import PlanNode, PlanEdge, PlanGraph

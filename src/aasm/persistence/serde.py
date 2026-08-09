@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
 
+from ..calculus import default_calculus_state, normalize_calculus_state
 from ..model import Event, MachineSnapshot, ProblemSpec
 
 
@@ -21,6 +22,7 @@ def snapshot_to_dict(snapshot: MachineSnapshot) -> dict[str, Any]:
 def snapshot_from_dict(data: dict[str, Any]) -> MachineSnapshot:
     payload = dict(data)
     payload["problem"] = problem_from_dict(payload["problem"])
+    payload["calculus"] = normalize_calculus_state(payload.get("calculus") or default_calculus_state())
     return MachineSnapshot(**payload)
 
 

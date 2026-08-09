@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aasm-runtime"
-version = "0.19.0"
-description = "Algorithmic Agent State Machine: a role-agnostic deterministic orchestration runtime for AI agents and tools."
+version = "0.21.0"
+description = "Algorithmic Agent State Machine: a deterministic, event-sourced control plane with formal conflict learning for AI agents and tools."
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}

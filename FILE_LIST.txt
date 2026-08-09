@@ -33,6 +33,7 @@
 ./docs/EXECUTOR_ADAPTERS.md
 ./docs/EXECUTOR_ORCHESTRATION.md
 ./docs/FLEET_PROVISIONING_TELEMETRY.md
+./docs/FORMAL_CALCULUS.md
 ./docs/GOVERNANCE_ECONOMICS.md
 ./docs/INFORMATION_CHANGE_CHECKPOINTS.md
 ./docs/MASSIVE_COLLABORATION.md
@@ -41,6 +42,7 @@
 ./docs/MODEL_ROUTING.md
 ./docs/PROVIDER_ADAPTERS_ARTIFACTS_CONTROLS.md
 ./docs/RELEASE_0.19.md
+./docs/RELEASE_0.21.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
 ./docs/RESOURCE_SCHEDULER.md
@@ -73,6 +75,7 @@
 ./profiles/single_agent.yaml
 ./pyproject.toml
 ./schemas/agent-message.schema.json
+./schemas/calculus-state.schema.json
 ./schemas/change-signal.schema.json
 ./schemas/checkpoint-trigger-policy.schema.json
 ./schemas/collaboration-policy.schema.json
@@ -115,11 +118,13 @@
 ./src/aasm/agents.py
 ./src/aasm/artifact_backends.py
 ./src/aasm/authority.py
+./src/aasm/calculus.py
 ./src/aasm/change_impact.py
 ./src/aasm/checkpoint.py
 ./src/aasm/checkpoint_triggers.py
 ./src/aasm/cli.py
 ./src/aasm/cli_v19.py
+./src/aasm/cli_v21.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -175,9 +180,11 @@
 ./src/aasm/runtime_v17.py
 ./src/aasm/runtime_v18.py
 ./src/aasm/runtime_v19.py
+./src/aasm/runtime_v21.py
 ./src/aasm/scheduler.py
 ./src/aasm/server.py
 ./src/aasm/server_v19.py
+./src/aasm/server_v21.py
 ./src/aasm/supervisor_adapters.py
 ./src/aasm/team_protocol.py
 ./src/aasm/worker_loop.py
@@ -211,4 +218,5 @@
 ./tests/test_team_protocol.py
 ./tests/test_v18_provider_artifacts_controls.py
 ./tests/test_v19_mission_observability_supervisors.py
+./tests/test_v21_calculus.py
 ./tests/test_workers_leases.py
