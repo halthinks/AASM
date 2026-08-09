@@ -34,8 +34,11 @@ class AASMRemoteClient:
     def fleet_control(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/fleet-control")
     def telemetry_report(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/telemetry")
     def provisioning(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/provisioning")
+    def execution_controls(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/execution-controls")
+    def artifacts(self,machine_id): return self._request("GET",f"/v1/machines/{machine_id}/artifacts")
     def register_worker(self,machine_id,worker:WorkerRecord): return self._request("POST",f"/v1/machines/{machine_id}/workers/register",{"worker":asdict(worker)})
     def heartbeat(self,machine_id,worker_id): return self._request("POST",f"/v1/machines/{machine_id}/workers/{worker_id}/heartbeat",{})
+    def control_worker(self,machine_id,worker_id,control): return self._request("POST",f"/v1/machines/{machine_id}/workers/{worker_id}/control",{"control":self._payload(control)})
     def claim(self,machine_id,worker_id,task:TaskDemand,lease_seconds=60.0): return self._request("POST",f"/v1/machines/{machine_id}/claim",{"worker_id":worker_id,"task":asdict(task),"lease_seconds":lease_seconds})
     def claim_next(self,machine_id,worker_id,lease_seconds=60.0): return self._request("POST",f"/v1/machines/{machine_id}/claim-next",{"worker_id":worker_id,"lease_seconds":lease_seconds})
     def lease_heartbeat(self,machine_id,lease_id,extend_seconds=60.0): return self._request("POST",f"/v1/machines/{machine_id}/leases/{lease_id}/heartbeat",{"extend_seconds":extend_seconds})
@@ -67,3 +70,5 @@ class AASMRemoteClient:
     def propose_provisioning(self,machine_id,request): return self._request("POST",f"/v1/machines/{machine_id}/provisioning/propose",{"request":self._payload(request)})
     def authorize_provisioning(self,machine_id,effect_id,authority="controller"): return self._request("POST",f"/v1/machines/{machine_id}/provisioning/{effect_id}/authorize",{"authority":authority})
     def execute_provisioning(self,machine_id,effect_id): return self._request("POST",f"/v1/machines/{machine_id}/provisioning/{effect_id}/execute",{})
+    def store_text_artifact(self,machine_id,backend,name,text,*,namespace=None,worker_id=None,task_id=None,lease_id=None,metadata=None):
+        return self._request("POST",f"/v1/machines/{machine_id}/artifacts/text",{"backend":backend,"name":name,"text":text,"namespace":namespace,"worker_id":worker_id,"task_id":task_id,"lease_id":lease_id,"metadata":metadata or {}})
