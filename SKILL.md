@@ -181,3 +181,22 @@ Keep recommendation, enforcement, and physical provisioning visibly distinct:
 `collaboration recommendation → optional fleet admission quota → explicit provisioning plan → authorized provider effect → worker registration/heartbeat`.
 
 Telemetry is evidence, not authority. Observed timing may change scheduling/fleet recommendations, but it must never authorize deployment, plan mutation, credentials, external effects, or destructive actions.
+
+## Provider adapters, artifact backends, and execution controls
+Provider-specific execution remains downstream of explicit provisioning authorization. `CommandProvisioningAdapter` may execute only an explicit argv list; do not use shell strings or infer credentials/network privileges. `KubernetesScaleAdapter` is a concrete adapter that reads a named workload's current replicas and issues `kubectl scale` argv, but it must still be reached only through an authorized provisioning effect.
+
+Do not treat provider-side success as worker health. A Kubernetes replica, VM, or local process becomes usable only after its AASM worker registers and heartbeats.
+
+Keep large logs/artifacts outside the bounded machine snapshot. Use an `ArtifactBackend` and persist a stable reference through `store_text_artifact()` or a provider-specific backend with the same ref-oriented contract. `LocalDirectoryArtifactBackend` must remain confined below its configured root; never construct external paths directly from untrusted worker/task text.
+
+Artifact references are provenance, not proof of artifact validity. Verification code should still inspect/checksum/validate the underlying artifact when acceptance depends on its contents.
+
+Use worker controls with distinct semantics:
+
+- `DRAIN` stops new claims and lets active work finish.
+- `RESUME` returns the worker to ACTIVE admission.
+- `OFFLINE` stops new claims and releases the worker's active leases.
+
+Every worker control must record actor and reason. Worker lifecycle control is not provider lifecycle control: `OFFLINE` must not silently delete pods, VMs, or processes. If physical teardown is required, propose and authorize a separate provisioning effect.
+
+Control Center/remote/CLI actions must stay behind the existing bearer-authenticated control plane. Do not add unauthenticated operator shortcuts merely because the UI exposes buttons.
