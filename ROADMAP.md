@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.17.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
+AASM is currently **v0.18.0 / early-stage**. This roadmap describes direction, not guaranteed delivery dates.
 
 ## Near term
 
@@ -59,6 +59,11 @@ AASM is currently **v0.17.0 / early-stage**. This roadmap describes direction, n
 - ✅ streamed log/progress/artifact telemetry contracts and bounded durable retention
 - ✅ observed task/task-class durations feeding subsequent collaboration/fleet calculations
 - ✅ live telemetry and provisioning Control Center panels plus remote/CLI surfaces
+- ✅ explicit argv-based provider adapter contract and Kubernetes scale adapter
+- ✅ external artifact backend registry with memory and path-confined local-directory implementations
+- ✅ stable external text artifact references with optional telemetry linkage
+- ✅ durable worker `DRAIN | RESUME | OFFLINE` controls with actor/reason provenance
+- ✅ Control Center worker lifecycle actions plus remote/CLI control surfaces
 - richer event/evidence contracts
 - ✅ declarative machine definitions + initial static model checking
 - improved schema validation
@@ -71,9 +76,10 @@ AASM is currently **v0.17.0 / early-stage**. This roadmap describes direction, n
 
 ## Next architecture layer
 
-- provider-specific provisioning adapters/examples for Kubernetes, local supervisors, and common cloud runtimes
-- richer streamed worker logs with external log-store cursors instead of bounded in-snapshot records
-- create/pause/resume/approve/fork controls with authority-policy enforcement
+- local process-supervisor and container-runtime provisioning adapters with the same explicit effect boundary
+- object-store artifact backends (S3-compatible/GCS/Azure-style) that keep credentials outside durable AASM state
+- artifact/log cursors and pagination for high-volume execution traces
+- create/pause/resume/approve/fork Control Center actions with authority-policy enforcement
 - richer executor adapters and provider-neutral structured result contract
 - run- and project-level productive-work budgets in addition to governance budgets
 - graph visualization and execution tracing
