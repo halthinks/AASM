@@ -9,6 +9,7 @@ from .checkpoint_triggers import CheckpointTriggerPolicy
 from .collaboration import CollaborationPolicy
 from .control_center import html_document
 from .economics import ModelUsageRecord
+from .execution_controls import WorkerControlRecord
 from .execution_telemetry import ExecutionTelemetryRecord, TelemetryPolicy
 from .fleet_control import FleetControlPolicy
 from .governance import GovernanceBudgetPolicy, GovernanceContext
@@ -17,7 +18,7 @@ from .model_routing import ModelRouteRequest
 from .persistence.factory import open_store
 from .provisioning import ProvisioningRequest
 from .resources import TaskDemand
-from .runtime_v17 import AASMEngine
+from .runtime_v18 import AASMEngine
 from .team_protocol import BuilderOutput, PlannerDecision, TeamMember, VerifierReport
 from .workers import WorkerRecord
 
@@ -25,9 +26,9 @@ MAX_BODY_BYTES=1_000_000
 LOOPBACK_HOSTS={"127.0.0.1","localhost","::1"}
 CSP="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
 
-def make_handler(store_target:str,token:str|None=None,provisioners=None):
+def make_handler(store_target:str,token:str|None=None,provisioners=None,artifacts=None):
     class Handler(BaseHTTPRequestHandler):
-        server_version="AASM/0.17"
+        server_version="AASM/0.18"
         def log_message(self,fmt,*args): pass
         def _auth(self):
             if not token: return True
@@ -51,13 +52,13 @@ def make_handler(store_target:str,token:str|None=None,provisioners=None):
         def _error(self,exc): self._json(400,{"error":type(exc).__name__,"message":str(exc)})
         def do_GET(self):
             parsed=urlparse(self.path)
-            if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.17.0"})
+            if parsed.path=="/health": return self._json(200,{"ok":True,"protocol":"aasm.remote.v1","version":"0.18.0"})
             if parsed.path=="/ui":
                 raw=html_document().encode(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self._security_headers(html=True); self.send_header("Content-Length",str(len(raw))); self.end_headers(); return self.wfile.write(raw)
             if not self._auth(): return self._json(401,{"error":"unauthorized"})
             parts=[p for p in parsed.path.split('/') if p]
             try:
-                supported={"state","dashboard","team","collaboration","change-control","checkpoint-triggers","fleet-control","telemetry","provisioning"}
+                supported={"state","dashboard","team","collaboration","change-control","checkpoint-triggers","fleet-control","telemetry","provisioning","execution-controls","artifacts"}
                 if len(parts)==4 and parts[:2]==["v1","machines"] and parts[3] in supported:
                     store,engine=self._machine(parts[2])
                     try:
@@ -69,7 +70,9 @@ def make_handler(store_target:str,token:str|None=None,provisioners=None):
                         elif parts[3]=="fleet-control": payload=engine.fleet_control_report()
                         elif parts[3]=="telemetry": payload=engine.telemetry_report()
                         elif parts[3]=="provisioning": payload=engine.provisioning_report()
-                        else: payload={"snapshot":asdict(engine.snapshot),"workers":engine.list_workers(),"leases":engine.list_leases(),"models":engine.list_model_profiles(),"last_model_route":engine.last_model_route(),"model_performance":engine.model_performance(),"governance":engine.governance_report(),"team_protocol":engine.team_report(),"collaboration":engine.last_collaboration_analysis(),"change_control":{"paused_tasks":engine.paused_tasks(),"last_impact":engine.last_impact()},"checkpoint_triggers":{"policy":asdict(engine.checkpoint_trigger_policy()),"last":engine.last_checkpoint_trigger()},"fleet_control":engine.fleet_control_report(),"execution_telemetry":engine.telemetry_report(),"provisioning":engine.provisioning_report()}
+                        elif parts[3]=="execution-controls": payload=engine.execution_control_report()
+                        elif parts[3]=="artifacts": payload={"artifacts":engine.external_artifacts(limit=200)}
+                        else: payload={"snapshot":asdict(engine.snapshot),"workers":engine.list_workers(),"leases":engine.list_leases(),"models":engine.list_model_profiles(),"last_model_route":engine.last_model_route(),"model_performance":engine.model_performance(),"governance":engine.governance_report(),"team_protocol":engine.team_report(),"collaboration":engine.last_collaboration_analysis(),"change_control":{"paused_tasks":engine.paused_tasks(),"last_impact":engine.last_impact()},"checkpoint_triggers":{"policy":asdict(engine.checkpoint_trigger_policy()),"last":engine.last_checkpoint_trigger()},"fleet_control":engine.fleet_control_report(),"execution_telemetry":engine.telemetry_report(),"provisioning":engine.provisioning_report(),"execution_controls":engine.execution_control_report(),"external_artifacts":engine.external_artifacts(limit=100)}
                     finally: store.close()
                     return self._json(200,payload)
                 return self._json(404,{"error":"not_found"})
@@ -89,6 +92,7 @@ def make_handler(store_target:str,token:str|None=None,provisioners=None):
                 try:
                     if parts[3:]==["workers","register"]: out=engine.register_worker(WorkerRecord(**payload["worker"]))
                     elif len(parts)==6 and parts[3]=="workers" and parts[5]=="heartbeat": out=engine.worker_heartbeat(parts[4])
+                    elif len(parts)==6 and parts[3]=="workers" and parts[5]=="control": out=engine.control_worker(WorkerControlRecord(worker_id=parts[4],**payload["control"]))
                     elif parts[3:]==["claim"]: out=engine.claim_task(TaskDemand(**payload["task"]),payload["worker_id"],lease_seconds=float(payload.get("lease_seconds",60)))
                     elif parts[3:]==["claim-next"]:
                         out=engine.claim_next_task(payload["worker_id"],lease_seconds=float(payload.get("lease_seconds",60)))
@@ -122,6 +126,9 @@ def make_handler(store_target:str,token:str|None=None,provisioners=None):
                     elif len(parts)==6 and parts[3]=="provisioning" and parts[5]=="execute":
                         if provisioners is None: raise ValueError("No provisioning registry is configured on this control plane")
                         effect=engine.store.load_effect(mid,parts[4]); provider=(effect.spec.payload or {}).get("provider"); adapter=provisioners.get(provider); out=engine.execute_provisioning(parts[4],adapter)
+                    elif parts[3:]==["artifacts","text"]:
+                        if artifacts is None: raise ValueError("No artifact backend registry is configured on this control plane")
+                        backend_name=payload["backend"]; backend=artifacts.get(backend_name); out=engine.store_text_artifact(backend,backend_name=backend_name,namespace=payload.get("namespace",mid),name=payload["name"],text=payload["text"],worker_id=payload.get("worker_id"),task_id=payload.get("task_id"),lease_id=payload.get("lease_id"),metadata=payload.get("metadata"))
                     elif parts[3:]==["review-gate"]: out=engine.review_gate(payload["action_class"],**payload.get("signals",{}))
                     elif parts[3:]==["interrupt"]: out=engine.user_interrupt(payload["note"],metadata=payload.get("metadata"))
                     else: return self._json(404,{"error":"not_found"})
@@ -130,10 +137,10 @@ def make_handler(store_target:str,token:str|None=None,provisioners=None):
             except Exception as exc: return self._error(exc)
     return Handler
 
-def serve(store_target:str,host="127.0.0.1",port=8787,token:str|None=None,provisioners=None):
+def serve(store_target:str,host="127.0.0.1",port=8787,token:str|None=None,provisioners=None,artifacts=None):
     token=token or os.getenv("AASM_SERVER_TOKEN")
     if host not in LOOPBACK_HOSTS and not token: raise ValueError("AASM refuses non-loopback binding without --token or AASM_SERVER_TOKEN")
-    ThreadingHTTPServer((host,int(port)),make_handler(store_target,token,provisioners)).serve_forever()
+    ThreadingHTTPServer((host,int(port)),make_handler(store_target,token,provisioners,artifacts)).serve_forever()
 
 def main():
     p=argparse.ArgumentParser(); p.add_argument("--store",required=True); p.add_argument("--host",default="127.0.0.1"); p.add_argument("--port",type=int,default=8787); p.add_argument("--token"); a=p.parse_args(); serve(a.store,a.host,a.port,a.token)
