@@ -45,6 +45,10 @@ def test_selective_pause_releases_only_affected_active_lease_and_blocks_reclaim(
     e.register_worker(WorkerRecord("w1","pool")); e.register_worker(WorkerRecord("w2","pool"))
     for node in _graph().nodes.values(): e.plan_add_node(node)
     e.plan_add_edge(PlanEdge("a","b")); e.plan_add_edge(PlanEdge("b","c"))
+    # v0.16+ enforces plan dependency readiness at the durable claim boundary.
+    # This test is about selective pause/release behavior, so satisfy b's
+    # predecessor before making b active.
+    e.plan_update_node("a",{"status":"complete"})
     ta=TaskDemand("b",["code"]); tx=TaskDemand("x",["code"])
     lb=e.claim_task(ta,"w1",lease_seconds=120); lx=e.claim_task(tx,"w2",lease_seconds=120)
     impact=e.analyze_change(ChangeSignal(ChangeKind.VERIFICATION_FAILED,"b failed tests",seed_nodes=["b"]))
