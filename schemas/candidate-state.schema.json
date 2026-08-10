@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.local/schemas/candidate-state.schema.json",
+  "title": "AASM Candidate Lifecycle State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "requests", "batches", "candidates", "backend_history"],
+  "properties": {
+    "schema_version": {"type": "integer", "minimum": 1},
+    "requests": {"type": "object"},
+    "batches": {"type": "object"},
+    "candidates": {"type": "object"},
+    "selected_candidate_id": {"type": ["string", "null"]},
+    "activated_candidate_id": {"type": ["string", "null"]},
+    "backend_history": {"type": "array", "items": {"type": "object"}}
+  }
+}
