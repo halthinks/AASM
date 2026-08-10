@@ -51,7 +51,7 @@ LearnCertified ==
 Restart ==
     /\ phase \notin Terminal
     /\ phase' = "RESTART"
-    /\ active' \subseteq active
+    /\ active' \in SUBSET active
     /\ epoch' = epoch + 1
     /\ UNCHANGED << locked, hardKnowledge, certifiedKnowledge,
                      conflictOpen, resolvedConflict, unresolvedMandatory >>
