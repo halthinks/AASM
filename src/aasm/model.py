@@ -91,6 +91,30 @@ class Event:
     sequence: int = 0
     schema_version: int = 1
 
+
+def _candidate_state() -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "requests": {},
+        "batches": {},
+        "candidates": {},
+        "selected_candidate_id": None,
+        "activated_candidate_id": None,
+        "backend_history": [],
+    }
+
+
+def _assurance_state() -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "policy": {"require_certificate_for_hard_constraint": True},
+        "certificates": {},
+        "verifications": {},
+        "history_checks": [],
+        "minimizations": {},
+        "generalizations": {},
+    }
+
 @dataclass
 class MachineSnapshot:
     machine_id: str
@@ -108,6 +132,8 @@ class MachineSnapshot:
     calculus: dict[str, Any] = field(default_factory=default_calculus_state)
     profile_binding: dict[str, Any] = field(default_factory=dict)
     semantic_results: list[dict[str, Any]] = field(default_factory=list)
+    candidate_state: dict[str, Any] = field(default_factory=_candidate_state)
+    assurance_state: dict[str, Any] = field(default_factory=_assurance_state)
 
     def canonical_hash(self) -> str:
         payload = asdict(self)
