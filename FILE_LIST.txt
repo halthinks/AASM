@@ -278,4 +278,5 @@
 ./tests/test_v23_decision_backends.py
 ./tests/test_v24_assurance.py
 ./tests/test_v25_observability.py
+./tests/test_v25_remote_observability.py
 ./tests/test_workers_leases.py
