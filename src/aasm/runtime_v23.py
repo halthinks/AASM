@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from inspect import signature
 from typing import Any
 
 from .decision_backends import (
     BackendBudget,
+    BackendDiagnostic,
     CandidateBatch,
     CandidateLifecycleRecord,
     DecisionBackendRegistry,
@@ -55,6 +57,17 @@ class AASMEngine(V22Engine):
             "backend_history": deepcopy(state.get("backend_history", [])),
         }
 
+    @staticmethod
+    def _invoke_batch_backend(backend: Any, request, budget, continuation):
+        method = backend.propose_batch
+        parameters = signature(method).parameters
+        kwargs: dict[str, Any] = {}
+        if "budget" in parameters:
+            kwargs["budget"] = budget
+        if "continuation" in parameters:
+            kwargs["continuation"] = continuation
+        return method(request, **kwargs)
+
     def generate_candidate_batch(
         self,
         backend_id: str = "aasm.finite-domain",
@@ -66,17 +79,43 @@ class AASMEngine(V22Engine):
         request = self.decision_request()
         backend = self.backend_registry.get(backend_id)
         if hasattr(backend, "propose_batch"):
-            batch = backend.propose_batch(request, budget=budget, continuation=continuation)
+            batch = self._invoke_batch_backend(backend, request, budget, continuation)
         else:
             raw = backend.propose(request)
-            candidate = raw if isinstance(raw, CandidateModel) else CandidateModel.from_dict(raw)
-            batch = CandidateBatch(
-                request_id=candidate.candidate_id,
-                backend_id=backend_id,
-                backend_version=str(getattr(backend, "backend_version", "0")),
-                candidates=[candidate],
-                exhausted=True,
-            )
+            if isinstance(raw, CandidateModel):
+                candidate = raw
+                batch = CandidateBatch(
+                    request_id=candidate.candidate_id,
+                    backend_id=backend_id,
+                    backend_version=str(getattr(backend, "backend_version", "0")),
+                    candidates=[candidate],
+                    exhausted=True,
+                )
+            elif isinstance(raw, dict) and "assignments" in raw:
+                candidate = CandidateModel.from_dict(raw)
+                batch = CandidateBatch(
+                    request_id=candidate.candidate_id,
+                    backend_id=backend_id,
+                    backend_version=str(getattr(backend, "backend_version", "0")),
+                    candidates=[candidate],
+                    exhausted=True,
+                )
+            else:
+                request_id = "request_" + self.snapshot.canonical_hash()[:16]
+                batch = CandidateBatch(
+                    request_id=request_id,
+                    backend_id=backend_id,
+                    backend_version=str(getattr(backend, "backend_version", "0")),
+                    candidates=[],
+                    exhausted=False,
+                    diagnostics=[BackendDiagnostic(
+                        "INPUT_REQUIRED",
+                        "backend requires an external response before it can produce a candidate",
+                        "INFO",
+                        {"request_packet": deepcopy(raw)},
+                    )],
+                    certificate={"request_packet": deepcopy(raw)},
+                )
 
         state = self._candidate_state()
         request_payload = request.to_dict()
