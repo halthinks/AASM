@@ -3,146 +3,51 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
-    "calculus": {
-      "$ref": "calculus-state.schema.json"
-    },
+    "assurance_state": {"$ref": "assurance-state.schema.json"},
+    "calculus": {"$ref": "calculus-state.schema.json"},
+    "candidate_state": {"$ref": "candidate-state.schema.json"},
     "evidence": {
       "additionalProperties": false,
       "properties": {
-        "assumptions": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "claims": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "contradictions": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "observations": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "records": {
-          "items": {
-            "$ref": "evidence.schema.json"
-          },
-          "type": "array"
-        }
+        "assumptions": {"items": {"type": "string"}, "type": "array"},
+        "claims": {"items": {"type": "string"}, "type": "array"},
+        "contradictions": {"items": {"type": "string"}, "type": "array"},
+        "observations": {"items": {"type": "string"}, "type": "array"},
+        "records": {"items": {"$ref": "evidence.schema.json"}, "type": "array"}
       },
-      "required": [
-        "claims",
-        "observations",
-        "contradictions"
-      ],
+      "required": ["claims", "observations", "contradictions"],
       "type": "object"
     },
-    "frontier": {
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
+    "frontier": {"items": {"type": "string"}, "type": "array"},
     "graph": {
       "additionalProperties": false,
       "properties": {
-        "edges": {
-          "items": {
-            "$ref": "plan-edge.schema.json"
-          },
-          "type": "array"
-        },
-        "nodes": {
-          "items": {
-            "$ref": "plan-node.schema.json"
-          },
-          "type": "array"
-        }
+        "edges": {"items": {"$ref": "plan-edge.schema.json"}, "type": "array"},
+        "nodes": {"items": {"$ref": "plan-node.schema.json"}, "type": "array"}
       },
-      "required": [
-        "nodes",
-        "edges"
-      ],
+      "required": ["nodes", "edges"],
       "type": "object"
     },
-    "machine_id": {
-      "type": "string"
-    },
-    "memory": {
-      "additionalProperties": {
-        "$ref": "memory-entry.schema.json"
-      },
-      "type": "object"
-    },
-    "metadata": {
-      "type": "object"
-    },
-    "problem": {
-      "$ref": "problem.schema.json"
-    },
+    "machine_id": {"type": "string"},
+    "memory": {"additionalProperties": {"$ref": "memory-entry.schema.json"}, "type": "object"},
+    "metadata": {"type": "object"},
+    "problem": {"$ref": "problem.schema.json"},
     "profile_binding": {
       "oneOf": [
-        {
-          "maxProperties": 0,
-          "type": "object"
-        },
-        {
-          "$ref": "profile-binding.schema.json"
-        }
+        {"maxProperties": 0, "type": "object"},
+        {"$ref": "profile-binding.schema.json"}
       ]
     },
-    "pruned": {
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "resources": {
-      "type": "object"
-    },
-    "semantic_results": {
-      "items": {
-        "$ref": "semantic-result.schema.json"
-      },
-      "type": "array"
-    },
-    "state": {
-      "minLength": 1,
-      "type": "string"
-    },
-    "version": {
-      "minimum": 0,
-      "type": "integer"
-    },
-    "visited": {
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    }
+    "pruned": {"items": {"type": "string"}, "type": "array"},
+    "resources": {"type": "object"},
+    "semantic_results": {"items": {"$ref": "semantic-result.schema.json"}, "type": "array"},
+    "state": {"minLength": 1, "type": "string"},
+    "version": {"minimum": 0, "type": "integer"},
+    "visited": {"items": {"type": "string"}, "type": "array"}
   },
   "required": [
-    "machine_id",
-    "version",
-    "state",
-    "problem",
-    "graph",
-    "frontier",
-    "visited",
-    "pruned",
-    "memory",
-    "resources",
-    "evidence"
+    "machine_id", "version", "state", "problem", "graph", "frontier",
+    "visited", "pruned", "memory", "resources", "evidence"
   ],
   "title": "AASM Machine Snapshot",
   "type": "object"
