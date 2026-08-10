@@ -5,6 +5,7 @@
 ./.github/PULL_REQUEST_TEMPLATE.md
 ./.github/dependabot.yml
 ./.github/workflows/ci.yml
+./.github/workflows/formal.yml
 ./.gitignore
 ./CHANGELOG.md
 ./CHANGELOG_0.18_AND_EARLIER.md
@@ -83,6 +84,7 @@
 ./formal/AASMCalculus.cfg
 ./formal/AASMCalculus.tla
 ./formal/aasm_calculus.pml
+./formal/toolchain.lock.json
 ./profiles/bare/README.md
 ./profiles/bare/package.json
 ./profiles/bare/profile.json
