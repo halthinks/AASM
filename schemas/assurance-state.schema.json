@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.local/schemas/assurance-state.schema.json",
+  "title": "AASM Assurance State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy", "certificates", "verifications", "history_checks", "minimizations", "generalizations"],
+  "properties": {
+    "schema_version": {"type": "integer", "minimum": 1},
+    "policy": {"type": "object"},
+    "certificates": {"type": "object"},
+    "verifications": {"type": "object"},
+    "history_checks": {"type": "array", "items": {"type": "object"}},
+    "minimizations": {"type": "object"},
+    "generalizations": {"type": "object"}
+  }
+}
