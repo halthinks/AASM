@@ -64,7 +64,9 @@ def _history_check(args):
 
 
 def _inspect(args):
-    _v22._base._with_engine(args, lambda engine: _json(engine.inspect_machine(args.surface)))
+    if args.surface is None:
+        return _v22._base._inspect(args)
+    return _v22._base._with_engine(args, lambda engine: _json(engine.inspect_machine(args.surface)))
 
 
 def build_parser():
@@ -93,10 +95,10 @@ def build_parser():
     command = _stored(commands, "history-check", "verify durable event-history properties", _history_check)
     command.add_argument("--no-persist", action="store_true")
 
-    command = _stored(commands, "inspect", "inspect a domain-neutral machine projection", _inspect)
+    command = commands.choices["inspect"]
     command.add_argument(
         "--surface",
-        default="summary",
+        default=None,
         choices=[
             "summary",
             "decisions",
@@ -110,7 +112,9 @@ def build_parser():
             "calculus",
             "profile",
         ],
+        help="return a v0.25 domain-neutral projection instead of the legacy full run export",
     )
+    command.set_defaults(func=_inspect)
     return parser
 
 
