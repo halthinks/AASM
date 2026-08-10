@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.local/schemas/certificate.schema.json",
+  "title": "AASM Assurance Certificate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["certificate_id", "kind", "subject_type", "subject_id", "payload", "payload_fingerprint", "verifier_id", "status", "created_sequence"],
+  "properties": {
+    "certificate_id": {"type": "string", "minLength": 1},
+    "kind": {"type": "string", "minLength": 1},
+    "subject_type": {"type": "string", "minLength": 1},
+    "subject_id": {"type": "string", "minLength": 1},
+    "payload": {"type": "object"},
+    "payload_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "verifier_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["PROPOSED", "VERIFIED", "REJECTED", "INCONCLUSIVE", "EXPIRED"]},
+    "scope": {"type": "object"},
+    "created_sequence": {"type": "integer", "minimum": 0},
+    "verified_sequence": {"type": ["integer", "null"], "minimum": 0},
+    "verification_id": {"type": "string"}
+  }
+}
