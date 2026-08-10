@@ -1,0 +1,104 @@
+name: Formal Assurance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "formal/**"
+      - "src/aasm/assurance.py"
+      - "src/aasm/conflict_minimization.py"
+      - "src/aasm/runtime_v24.py"
+      - ".github/workflows/formal.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  model_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Validate model source contracts
+        run: python scripts/check_formal_models.py
+
+      - name: Read pinned toolchain
+        id: toolchain
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          lock = json.loads(Path("formal/toolchain.lock.json").read_text())
+          print(f"tla_url={lock['tla_plus']['url']}")
+          print(f"tla_sha256={lock['tla_plus']['sha256']}")
+          print(f"spin_url={lock['spin']['url']}")
+          print(f"spin_sha256={lock['spin']['sha256']}")
+          PY
+
+      - name: Verify bounded TLA+ model
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -L --fail --silent --show-error \
+            "${{ steps.toolchain.outputs.tla_url }}" \
+            -o /tmp/tla2tools.jar
+          echo "${{ steps.toolchain.outputs.tla_sha256 }}  /tmp/tla2tools.jar" \
+            | sha256sum --check -
+          cd formal
+          java -cp /tmp/tla2tools.jar tlc2.TLC \
+            -workers 2 \
+            -config AASMCalculus.cfg \
+            AASMCalculus.tla
+
+      - name: Verify bounded Promela model
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -L --fail --silent --show-error \
+            "${{ steps.toolchain.outputs.spin_url }}" \
+            -o /tmp/spin.tar.gz
+          echo "${{ steps.toolchain.outputs.spin_sha256 }}  /tmp/spin.tar.gz" \
+            | sha256sum --check -
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bison
+          mkdir -p /tmp/spin-src
+          tar -xzf /tmp/spin.tar.gz -C /tmp/spin-src --strip-components=1
+          make -C /tmp/spin-src/Src -j2
+          cd formal
+          /tmp/spin-src/Src/spin -a aasm_calculus.pml
+          gcc -O2 -o /tmp/aasm-pan pan.c
+          /tmp/aasm-pan -m100000
+
+      - name: Publish formal assurance status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+        shell: bash
+        run: |
+          if [ "$RESULT" = "success" ]; then state=success; else state=failure; fi
+          export state
+          python - <<'PY' > /tmp/formal-status.json
+          import json, os
+          print(json.dumps({
+              "state": os.environ["state"],
+              "context": "aasm/formal-assurance",
+              "description": f"TLC and SPIN bounded assurance {os.environ['RESULT']}",
+              "target_url": f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+          }))
+          PY
+          curl --fail-with-body --silent --show-error \
+            -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            --data-binary @/tmp/formal-status.json
+          test "$state" = success
