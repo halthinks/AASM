@@ -97,24 +97,18 @@ def evidence_graph(snapshot: Any) -> ObservableGraph:
         nodes.append({
             "id": evidence_id,
             "kind": "evidence",
-            "label": record.get("claim") or record.get("summary") or record.get("kind"),
+            "label": record.get("statement") or record.get("claim") or record.get("summary") or record.get("kind"),
             "status": record.get("status"),
             "evidence_kind": record.get("kind"),
-            "valid": record.get("valid", True),
+            "confidence": record.get("confidence"),
             "metadata": deepcopy(record.get("metadata") or {}),
         })
-        relations = record.get("relations") or {}
-        if isinstance(relations, dict):
-            for relation in ("supports", "contradicts", "derived_from"):
-                values = relations.get(relation) or []
-                if isinstance(values, str):
-                    values = [values]
-                for target in values:
-                    edges.append({"src": evidence_id, "dst": target, "relation": relation.upper()})
-        for target in record.get("supports", []) if isinstance(record.get("supports"), list) else []:
-            edges.append({"src": evidence_id, "dst": target, "relation": "SUPPORTS"})
-        for target in record.get("contradicts", []) if isinstance(record.get("contradicts"), list) else []:
-            edges.append({"src": evidence_id, "dst": target, "relation": "CONTRADICTS"})
+        for relation in ("supports", "contradicts", "derived_from"):
+            values = record.get(relation) or []
+            if isinstance(values, str):
+                values = [values]
+            for target in values:
+                edges.append({"src": evidence_id, "dst": target, "relation": relation.upper()})
     return ObservableGraph(
         graph_id="evidence-graph",
         kind="EVIDENCE",
@@ -149,7 +143,7 @@ def fairness_debt(snapshot: Any) -> list[dict[str, Any]]:
     for obligation_id, record in records.items():
         rows.append({
             "obligation_id": obligation_id,
-            "status": record.get("status", "NORMAL"),
+            "status": record.get("fairness_status", record.get("status", "NORMAL")),
             "hidden_epochs": int(record.get("hidden_epochs", 0)),
             "continuous_lock_epochs": int(record.get("continuous_lock_epochs", 0)),
             "lock_count": int(record.get("lock_count", 0)),
@@ -172,11 +166,11 @@ def event_timeline(events: Iterable[Any]) -> list[dict[str, Any]]:
             category = "BACKJUMP"
         elif "restart" in lowered:
             category = "RESTART"
-        elif "profile evolution" in lowered or "profile" in lowered and "bound" in lowered:
+        elif "profile evolution" in lowered or ("profile" in lowered and "bound" in lowered):
             category = "PROFILE"
         elif "candidate" in lowered:
             category = "CANDIDATE"
-        elif "certificate" in lowered or "assurance" in lowered:
+        elif "certificate" in lowered or "assurance" in lowered or "history" in lowered:
             category = "ASSURANCE"
         if category is None:
             continue
