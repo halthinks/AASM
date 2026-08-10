@@ -2,6 +2,64 @@
 
 All notable user-visible changes to AASM are documented here. Detailed history through v0.18 is preserved in [`CHANGELOG_0.18_AND_EARLIER.md`](CHANGELOG_0.18_AND_EARLIER.md).
 
+## [0.25.0] - 2026-08-10
+
+AASM v0.25 adds domain-neutral observability over the formal calculus, decision backend ecosystem, assurance state, and profile package lifecycle.
+
+### Added
+
+- Decision Graph, Obligation Graph, and Evidence Graph projections;
+- conflict/backjump timeline and event-derived restart, profile, candidate, and assurance timeline;
+- fairness-debt projection for persistent obligations;
+- package binding, evolution proposal, migration, and configuration history views;
+- candidate-backend and assurance summaries;
+- generic `AASMEngine.inspect_machine()` inspection surfaces;
+- `aasm inspect` CLI surface;
+- v0.25 HTTP runtime wiring;
+- `schemas/observability-report.schema.json`;
+- `docs/OBSERVABILITY.md` and `docs/RELEASE_0.25.md`.
+
+The observability layer uses generic AASM objects rather than source-code, CAD, scientific, business, or other domain-specific concepts.
+
+## [0.24.0] - 2026-08-10
+
+AASM v0.24 adds independently checkable assurance around learned machine knowledge and durable execution history.
+
+### Added
+
+- durable assurance policy, certificate, verification, history-check, minimization, and generalization state;
+- `CertificateRecord` and `CertificateVerification` contracts;
+- exact learned-constraint projection certification;
+- detached SHA-256 artifact verification;
+- certificate-gated hard-constraint promotion;
+- durable event-history checking for sequence, identity, machine, terminal-state, and completion properties;
+- `GREEDY_IRREDUCIBLE` and `EXACT_BOUNDED` conflict-core minimization through a `ConflictOracle`;
+- assurance state migration for older snapshots;
+- assurance and history schemas;
+- `docs/FORMAL_ASSURANCE.md` and `docs/RELEASE_0.24.md`.
+
+The assurance layer verifies coverage, provenance, and declared machine properties. It does not substitute for domain-specific truth or model validation.
+
+## [0.23.0] - 2026-08-10
+
+AASM v0.23 makes candidate decision generation replaceable without moving state authority out of the deterministic runtime.
+
+### Added
+
+- durable candidate request, batch, lifecycle, selection, and activation state;
+- backend capability, budget, usage, diagnostic, explanation, batch, and lifecycle contracts;
+- deterministic finite-domain reference backend with stable continuation tokens;
+- human proposal backend;
+- provider-neutral callback backend for heuristic/model integrations;
+- portfolio backend with candidate deduplication and backend provenance;
+- backend registry and capability routing;
+- runtime candidate generation, revalidation, selection, and activation;
+- CLI surfaces for backend and candidate inspection/control;
+- candidate state and batch schemas;
+- `docs/DECISION_BACKENDS.md` and `docs/RELEASE_0.23.md`.
+
+Backends propose candidate models. AASM independently checks profile namespaces, decision identity, parents, pinned assignments, learned hard constraints, and fairness before activation.
+
 ## [0.22.0] - 2026-08-09
 
 AASM v0.22 introduces domain-neutral profile packages so use-case meaning can evolve outside the deterministic kernel.
