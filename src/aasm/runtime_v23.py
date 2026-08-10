@@ -164,7 +164,16 @@ class AASMEngine(V22Engine):
             self.patch_snapshot({"candidate_state": state}, "stale candidate rejected during activation")
             raise ValueError("candidate is no longer admissible: " + "; ".join(report.errors))
 
-        for subject, decision_id in sorted(report.normalized_assignments.items()):
+        calculus = self._begin_calculus()
+        ordered_assignments = sorted(
+            report.normalized_assignments.items(),
+            key=lambda item: (
+                int(calculus["decisions"].get(item[1], {}).get("level", 0)),
+                str(item[0]),
+                str(item[1]),
+            ),
+        )
+        for subject, decision_id in ordered_assignments:
             calculus = self._begin_calculus()
             current_id = calculus["active_model"].get(subject)
             if current_id == decision_id:
