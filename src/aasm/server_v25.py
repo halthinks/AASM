@@ -32,7 +32,15 @@ def make_handler(store_target: str, token: str | None = None, provisioners=None,
 
         def do_GET(self):
             if self.path == "/health":
-                return self._json(200, {"ok": True, "protocol": "aasm.remote.v1", "version": "0.25.0"})
+                return self._json(
+                    200,
+                    {
+                        "ok": True,
+                        "protocol": "aasm.remote.v1",
+                        "version": "0.19.0",
+                        "runtime_version": "0.25.0",
+                    },
+                )
             parsed = self._v25_machine_resource()
             if parsed is None:
                 return super().do_GET()
