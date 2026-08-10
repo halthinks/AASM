@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.local/schemas/candidate-batch.schema.json",
+  "title": "AASM Candidate Batch",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["request_id", "backend_id", "backend_version", "candidates", "exhausted", "usage", "diagnostics"],
+  "properties": {
+    "request_id": {"type": "string", "minLength": 1},
+    "backend_id": {"type": "string", "minLength": 1},
+    "backend_version": {"type": "string", "minLength": 1},
+    "candidates": {"type": "array", "items": {"$ref": "candidate-model.schema.json"}},
+    "exhausted": {"type": "boolean"},
+    "continuation": {"type": ["string", "null"]},
+    "usage": {"type": "object"},
+    "diagnostics": {"type": "array", "items": {"type": "object"}},
+    "certificate": {"type": "object"}
+  }
+}
