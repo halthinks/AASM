@@ -25,6 +25,30 @@ def snapshot_from_dict(data: dict[str, Any]) -> MachineSnapshot:
     payload["calculus"] = normalize_calculus_state(payload.get("calculus") or default_calculus_state())
     payload.setdefault("profile_binding", {})
     payload.setdefault("semantic_results", [])
+    payload.setdefault(
+        "candidate_state",
+        {
+            "schema_version": 1,
+            "requests": {},
+            "batches": {},
+            "candidates": {},
+            "selected_candidate_id": None,
+            "activated_candidate_id": None,
+            "backend_history": [],
+        },
+    )
+    payload.setdefault(
+        "assurance_state",
+        {
+            "schema_version": 1,
+            "policy": {"require_certificate_for_hard_constraint": True},
+            "certificates": {},
+            "verifications": {},
+            "history_checks": [],
+            "minimizations": {},
+            "generalizations": {},
+        },
+    )
     return MachineSnapshot(**payload)
 
 
