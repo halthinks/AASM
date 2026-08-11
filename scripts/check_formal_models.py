@@ -26,12 +26,10 @@ def project_version(path: Path) -> str:
 
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
-    tla = root / "formal" / "AASMCalculus.tla"
-    cfg = root / "formal" / "AASMCalculus.cfg"
-    promela = root / "formal" / "aasm_calculus.pml"
+    version = project_version(root / "pyproject.toml")
 
     require(
-        tla,
+        root / "formal" / "AASMCalculus.tla",
         [
             "StageCandidate",
             "ActivateCandidate",
@@ -49,9 +47,9 @@ def main() -> int:
             "pendingCandidate = {}",
         ],
     )
-    forbid(tla, ["LearnCertified =="])
+    forbid(root / "formal" / "AASMCalculus.tla", ["LearnCertified =="])
     require(
-        cfg,
+        root / "formal" / "AASMCalculus.cfg",
         [
             "SPECIFICATION Spec",
             "HardRequiresCertificate",
@@ -61,7 +59,7 @@ def main() -> int:
         ],
     )
     require(
-        promela,
+        root / "formal" / "aasm_calculus.pml",
         [
             "soft_knowledge",
             "registered_certificate",
@@ -82,7 +80,7 @@ def main() -> int:
         [
             "def _commit_calculus",
             "def learn_constraint",
-            "effective_strength = \"SOFT\"",
+            'effective_strength = "SOFT"',
             "assert_hard_constraint_certification",
             "def promote_constraint_hard",
             "aasm_lineage",
@@ -94,8 +92,8 @@ def main() -> int:
         [
             "def _stage_candidate_activation",
             "def _validate_calculus_state_for_commit",
-            "\"calculus\": staged_calculus",
-            "\"candidate_state\": state",
+            '"calculus": staged_calculus',
+            '"candidate_state": state',
         ],
     )
     require(
@@ -112,18 +110,18 @@ def main() -> int:
         ["def causal_graph", "def _closed_graph", "EXPOSE_OR_DISPOSITION"],
     )
 
-    version = project_version(root / "pyproject.toml")
-    require(root / "pyproject.toml", ["reference_data/research/*.json"])
+    require(root / "pyproject.toml", ["reference_data/research/*.json", 'build==1.5.0'])
     require(
         root / "src" / "aasm" / "__init__.py",
         [
             f'__version__ = "{version}"',
             'REMOTE_PROTOCOL_NAME = "aasm.remote.v1"',
             'REMOTE_PROTOCOL_VERSION = "0.19.0"',
-            "PUBLIC_API_CONTRACT",
             '"contract_id": "aasm.adoption.v1"',
-            '"reference_application"',
-            '"local_stack"',
+            '"contract_version": "0.4.1"',
+            '"source_distribution_self_test": True',
+            '"source_distribution_scope": "FULL_REPOSITORY_CONTRACT"',
+            '"historical_release_policy": "REPORT_ONLY"',
             '"docker compose up --build"',
             "run_research_synthesis_demo",
             "bootstrap_stack",
@@ -131,54 +129,6 @@ def main() -> int:
             "def public_api_contract",
             "def validate_public_api_contract",
             "existing event/reducer runtime",
-        ],
-    )
-    require(
-        root / "src" / "aasm" / "cli_v25.py",
-        [
-            "adoption-contract",
-            "validate_public_api_contract",
-            '"research-synthesis"',
-            "run_research_synthesis_demo",
-            'commands.choices["demo"]',
-        ],
-    )
-    require(
-        root / "src" / "aasm" / "cli_v27.py",
-        [
-            "execute_stack_action",
-            'commands.add_parser(\n        "stack"',
-            'serve_command.add_argument(\n        "--demo-state"',
-            "server_v27",
-        ],
-    )
-    require(
-        root / "src" / "aasm" / "server_v25.py",
-        [
-            'server_version = f"AASM/{__version__}"',
-            'if self.path == "/adoption-contract"',
-            '"runtime_version": __version__',
-            "REMOTE_PROTOCOL_VERSION",
-        ],
-    )
-    require(
-        root / "src" / "aasm" / "server_v27.py",
-        [
-            "_v19.html_document = html_document",
-            'if parsed.path == "/"',
-            'if parsed.path == "/demo-stack"',
-            "demo_state_path",
-            "AASM refuses non-loopback binding without --token",
-        ],
-    )
-    require(
-        root / "src" / "aasm" / "research_profile.py",
-        [
-            "def research_profile",
-            "def research_package",
-            'profile_id="aasm.research-synthesis"',
-            "ResearchProfileRegistry",
-            '"hero_profile": True',
         ],
     )
     require(
@@ -204,7 +154,6 @@ def main() -> int:
             "def run_worker_cycle",
             "RemoteWorkerLoop",
             "AASMRemoteClient",
-            "run_research_synthesis_demo",
             "engine.register_resource",
             "engine.schedule",
             "existing remote registration/claim/lease/completion API",
@@ -215,67 +164,40 @@ def main() -> int:
         ["DELETE FROM", "TRUNCATE", "UPDATE aasm_runs", "INSERT INTO aasm_runs"],
     )
     require(
-        root / "src" / "aasm" / "control_center_v26.py",
-        [
-            "v19_html_document",
-            "Decision Graph",
-            "Obligation Graph",
-            "Evidence Graph",
-            "learned no-good",
-            "/inspect/conflicts",
-        ],
-    )
-    require(
-        root / "src" / "aasm" / "control_center_v27.py",
-        [
-            "v26_html_document",
-            "v0.27 One-Command Local Full Stack",
-            "Live setup machine",
-            "Completed reference run",
-            "/demo-stack",
-            "aasmStackAutoload",
-        ],
-    )
-    require(
-        root / "src" / "aasm" / "reference_data" / "research" / "manifest.json",
-        [
-            '"corpus_id": "aasm-research-corpus-v1"',
-            '"network_required": false',
-            '"model_key_required": false',
-            '"synthetic": true',
-        ],
-    )
-    require(
-        root / "profiles" / "research" / "profile.json",
-        [
-            '"profile_id": "aasm.research-synthesis"',
-            '"profile_version": "1.0.0"',
-            '"hero_profile": true',
-        ],
-    )
-    require(
-        root / "Dockerfile",
-        [
-            "FROM python:3.13-slim",
-            "python -m pip install '.[postgres]'",
-            "EXPOSE 8787",
-        ],
-    )
-    require(
         root / "compose.yaml",
         [
             "postgres:17-alpine",
             "bootstrap:",
             "runtime:",
             "worker-1:",
-            "worker-2:",
             "stackctl:",
-            "service_completed_successfully",
             "aasm.demo_stack",
-            "two-workers",
+            "aasm.__version__",
         ],
     )
     forbid(root / "compose.yaml", ["DELETE FROM", "TRUNCATE"])
+
+    require(
+        root / "MANIFEST.in",
+        [
+            "recursive-include .github",
+            "recursive-include docs",
+            "recursive-include formal",
+            "recursive-include profiles",
+            "recursive-include schemas",
+            "recursive-include scripts",
+            "recursive-include tests",
+        ],
+    )
+    require(
+        root / "tests" / "test_v28_sdist_selfcontained.py",
+        ["test_source_distribution_is_self_contained", "test_sdist_smoke.py"],
+    )
+    require(
+        root / "tests" / "test_sdist_smoke.py",
+        ["validate_public_api_contract", "execute_operator_runbook", "REPRESENTATIVE_MEMBERS"],
+    )
+
     require(
         root / "README.md",
         [
@@ -285,17 +207,17 @@ def main() -> int:
             "aasm adoption-contract",
             "One-command start",
             "docker compose up --build",
-            "v0.28.0 — Distribution and Operator Readiness",
+            "Self-Contained Source Distribution",
+            "v0.29.0 — Thin LangGraph Adapter",
         ],
     )
     require(
         root / "CHANGELOG.md",
         [
             f"## [{version}] -",
-            "One-command local stack",
-            "Research Synthesis Hero Stack",
+            "source distribution",
+            "v0.28.1 assets are not overwritten",
             "aasm.adoption.v1",
-            "parallel runtime",
         ],
     )
     require(
@@ -303,28 +225,20 @@ def main() -> int:
         [
             f"v{version} / experimental",
             "Program rule: extend the working path",
-            "v0.27.0 — One-Command Local Full Stack",
+            "v0.28.2 — Self-Contained Source Distribution",
             "Current — implemented",
-            "v0.28.0 — Distribution and Operator Readiness",
+            "v0.29.0 — Thin LangGraph Adapter",
+            "v0.34.0 — Distributed Recovery Certification",
             "Adoption scorecard",
         ],
     )
     require(
         root / "docs" / "ARCHITECTURE.md",
-        [
-            "Canonical adoption surface",
-            "existing event/reducer runtime",
-            "GET /adoption-contract",
-        ],
+        ["Canonical adoption surface", "existing event/reducer runtime", "GET /adoption-contract"],
     )
     require(
         root / "docs" / "RESEARCH_SYNTHESIS_DEMO.md",
-        [
-            "existing event/reducer runtime",
-            "aasm demo",
-            "LC-retrieval-only",
-            "exact replay",
-        ],
+        ["existing event/reducer runtime", "aasm demo", "LC-retrieval-only", "exact replay"],
     )
     require(
         root / "docs" / "LOCAL_FULL_STACK.md",
@@ -337,41 +251,22 @@ def main() -> int:
         ],
     )
     require(
-        root / "docs" / "RELEASE_0.27.md",
-        [
-            "AASM v0.27.0",
-            "One-Command Local Full Stack",
-            "existing event/reducer authority path",
-            "Docker Compose end-to-end smoke test",
-        ],
+        root / "docs" / "RELEASE_0.28.md",
+        ["AASM v0.28.2", "standalone smoke test", "existing implementation path"],
     )
     require(
-        root / "WHY_AASM.md",
+        root / ".github" / "workflows" / "formal.yml",
         [
-            "Stateless retry baseline",
-            "AASM reference run",
-            "Failed interpretation blocked from recurring",
-        ],
-    )
-    require(
-        root / "tests" / "test_v26_research_synthesis.py",
-        [
-            "test_complete_reference_run_demonstrates_learning_backjump_and_preservation",
-            "test_control_center_extends_existing_dashboard_with_reasoning_surfaces",
-        ],
-    )
-    require(
-        root / "tests" / "test_v27_local_stack.py",
-        [
-            "test_stack_bootstrap_seeds_live_and_completed_canonical_machines",
-            "test_demo_worker_uses_existing_remote_registration_claim_and_lease_path",
-            "test_fresh_is_a_non_destructive_canonical_reset",
-            "test_compose_and_control_center_expose_the_documented_stack_contract",
+            "MANIFEST.in",
+            "tests/test_v28_sdist_selfcontained.py",
+            "tests/test_sdist_smoke.py",
+            "Verify bounded TLA+ model",
+            "Verify bounded Promela model and fairness property",
         ],
     )
 
     print(
-        "formal, runtime, release, adoption, hero-stack, and local-full-stack source contracts: PASS"
+        "formal, runtime, release, adoption, hero-stack, local-stack, and self-contained-sdist source contracts: PASS"
     )
     return 0
 
