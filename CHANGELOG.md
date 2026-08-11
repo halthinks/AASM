@@ -4,49 +4,48 @@ All notable user-visible changes to AASM are documented here.
 
 Detailed history through v0.27.0 is preserved in [`CHANGELOG_0.27_AND_EARLIER.md`](CHANGELOG_0.27_AND_EARLIER.md). History through v0.18 is also available separately in [`CHANGELOG_0.18_AND_EARLIER.md`](CHANGELOG_0.18_AND_EARLIER.md).
 
+## [0.28.2] - 2026-08-11
+
+AASM v0.28.2 makes the source distribution self-contained and self-testing. It changes packaging and validation only; the deterministic runtime, `aasm.adoption.v1` authority boundary, and `aasm.remote.v1 / 0.19.0` protocol remain unchanged.
+
+### Source-distribution integrity
+
+- added `MANIFEST.in` covering repository contracts, profiles, schemas, formal models, runbooks, examples, workflows, scripts, and tests;
+- added an extracted-sdist smoke test that runs without a Git checkout;
+- added representative member checks for the complete source contract;
+- added `build==1.5.0` to the contributor test extra so the source-package gate is reproducible;
+- updated the public distribution contract to declare standalone source-distribution validation;
+- kept release publication immutable: v0.28.1 assets are not overwritten.
+
 ## [0.28.1] - 2026-08-11
 
-AASM v0.28.1 hardens the real release boundary exposed by v0.28.0 publication. It keeps the same `aasm.adoption.v1` runtime, Research Synthesis Hero Stack, One-command local stack, formal assurance, and seven Operator runbooks. No parallel runtime or alternate state authority was added.
+AASM v0.28.1 hardens release publication after exercising the real v0.28.0 workflow. It does not create a parallel runtime or change the `aasm.adoption.v1` authority boundary. The One-command local stack, Research Synthesis Hero Stack, and seven Operator runbooks continue through the existing event/reducer path.
 
-### Reproducible distributions
+### Reproducible packaging
 
-- pinned the build backend to `setuptools==83.0.0` and `wheel==0.47.0`;
-- pinned release/CI frontends to `build==1.5.0` and `twine==6.2.0`;
-- migrated package license metadata to the SPDX form with an explicit license file;
-- built the wheel and source distribution twice under a recorded source epoch;
-- required byte-identical names, sizes, and SHA-256 hashes between both builds;
-- retained clean-environment wheel installation and installed CLI smoke tests.
+- pinned setuptools `83.0.0` and wheel `0.47.0` in the isolated build system;
+- pinned build `1.5.0` and twine `6.2.0` in CI and release publication;
+- migrated to PEP 639 `license = "MIT"` and `license-files = ["LICENSE"]` metadata;
+- derived `SOURCE_DATE_EPOCH` from the exact release commit and fixed `PYTHONHASHSEED=0`;
+- required two independent builds to produce identical wheel and source-distribution hashes;
+- retained clean-wheel installation plus installed adoption-contract and runbook smoke tests.
 
 ### Immutable publication
 
-- limited automatic publication to package-version changes; manual dispatch remains explicit;
-- required both `aasm/ci-summary` and `aasm/formal-assurance` on the exact `main` commit;
-- removed release asset overwrite and `--clobber` behavior;
-- created a release only when the version tag does not already exist;
-- read the remote release back and verified the exact tag target, asset-name set, sizes, and SHA-256 digests;
-- added release-failure status publication without moving or rewriting an existing tag;
-- kept the credential-free PyPI Trusted Publisher job externally gated.
-
-### Historical release evidence
-
-- replaced privileged historical-release backfill with `historical-release-report.json`;
-- classified old tags as `VERIFIED`, `PENDING_OWNER_PUBLICATION`, or `MISMATCH`;
-- made missing owner-only historical tags visible but non-blocking for a correct current release;
-- retained failure on a real historical tag/commit mismatch;
-- added the historical report to checksums, the JSON manifest, and the GitHub Release asset set.
+- established an explicit no-overwrite policy for versioned release assets;
+- gated release on the exact `main` commit plus both `aasm/ci-summary` and `aasm/formal-assurance` success;
+- removed tag-push and `--clobber` asset-overwrite paths;
+- required existing tags to resolve to the exact recorded commit;
+- required the complete GitHub asset set, byte counts, and SHA-256 digests to match local release files;
+- added `historical-release-report.json` and included it in checksums and the release manifest;
+- represented unavailable older refs as `PENDING_OWNER_PUBLICATION` instead of failing the current release or claiming they were published;
+- added explicit release-hardening regression contracts.
 
 ### Planning
 
 - expanded the execution roadmap through v0.34.0;
 - made v0.29.0 the Thin LangGraph Adapter;
-- planned adapter conformance, hierarchical decision scopes, runtime/formal trace conformance, signed provenance, and distributed recovery certification with explicit exit gates.
-
-### Compatibility
-
-- package/runtime version is `0.28.1`;
-- adoption contract remains `aasm.adoption.v1 / 0.4.0`;
-- remote protocol remains `aasm.remote.v1 / 0.19.0`;
-- v0.28.0 — Distribution and Operator Readiness remains the capability baseline carried by this hardening release.
+- planned adapter conformance, hierarchical decision scopes, runtime/formal trace conformance, signed provenance,and distributed recovery certification with explicit exit gates.
 
 ## [0.28.0] - 2026-08-11
 
@@ -84,7 +83,7 @@ AASM v0.28.0 adds clean distribution, immutable release evidence, a compatibilit
 - added a clean-wheel build/install job to ordinary CI;
 - required release-history, wheel, source-distribution, installed-contract, and installed-runbook checks;
 - extended formal workflow triggers and static contracts to release and runbook surfaces;
-- retained Python 3.11–3.13, PostgreSQL, Docker Compose, Control Center JavaScript, TLA+, and SPIN gates.
+- retained Python 3.11->3.13, PostgreSQL, Docker Compose, Control Center JavaScript, TLA+, it and SPIN gates.
 
 ### Compatibility
 

@@ -1,6 +1,6 @@
 from copy import deepcopy as _deepcopy
 
-__version__ = "0.28.1"
+__version__ = "0.28.2"
 REMOTE_PROTOCOL_NAME = "aasm.remote.v1"
 REMOTE_PROTOCOL_VERSION = "0.19.0"
 
@@ -198,7 +198,7 @@ SUPPORTED_INSPECTION_SURFACES = [
 PUBLIC_API_CONTRACT = {
     "contract_id": "aasm.adoption.v1",
     "schema_version": 1,
-    "contract_version": "0.4.0",
+    "contract_version": "0.4.1",
     "runtime_version": __version__,
     "project_status": "EXPERIMENTAL",
     "remote_protocol": {
@@ -260,6 +260,8 @@ PUBLIC_API_CONTRACT = {
         "checksums": "SHA256SUMS.txt",
         "historical_report": "historical-release-report.json",
         "reproducible_builds": True,
+        "source_distribution_self_test": True,
+        "source_distribution_scope": "FULL_REPOSITORY_CONTRACT",
         "historical_release_policy": "REPORT_ONLY",
         "github_release_assets": [
             "wheel",

@@ -18,6 +18,7 @@
 ./FILE_LIST.txt
 ./GOVERNANCE.md
 ./LICENSE
+./MANIFEST.in
 ./MANIFEST.md
 ./README.md
 ./ROADMAP.md
@@ -330,6 +331,7 @@
 ./tests/test_replay_fork.py
 ./tests/test_scheduler.py
 ./tests/test_schemas.py
+./tests/test_sdist_smoke.py
 ./tests/test_team_protocol.py
 ./tests/test_v18_provider_artifacts_controls.py
 ./tests/test_v19_mission_observability_supervisors.py
@@ -343,4 +345,5 @@
 ./tests/test_v27_local_stack.py
 ./tests/test_v28_distribution.py
 ./tests/test_v28_operator_runbooks.py
+./tests/test_v28_sdist_selfcontained.py
 ./tests/test_workers_leases.py

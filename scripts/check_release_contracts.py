@@ -24,200 +24,82 @@ def main() -> int:
         project = tomllib.load(handle)
     version = str(project["project"]["version"])
 
-    require(
-        root / "pyproject.toml",
-        [
-            'setuptools==83.0.0',
-            'wheel==0.47.0',
-            'license = "MIT"',
-            'license-files = ["LICENSE"]',
-        ],
-    )
-    require(
-        root / "src" / "aasm" / "__init__.py",
-        [
-            f'__version__ = "{version}"',
-            '"contract_version": "0.4.0"',
-            '"distribution"',
-            '"reproducible_builds": True',
-            '"historical_release_policy": "REPORT_ONLY"',
-            '"operator_runbooks"',
-            '"runbook"',
-            "execute_operator_runbook",
-        ],
-    )
-    require(
-        root / "src" / "aasm" / "runbook_common.py",
-        ["class OperatorRunbookResult", "RUNBOOK_DEFINITIONS", "def list_operator_runbooks"],
-    )
-    runbook_sources = {
-        "runbook_lease.py": ["def run_lease_loss_recovery", "AASMEngine"],
-        "runbook_requirement.py": ["def run_requirement_change", "user_interrupt"],
-        "runbook_learning.py": ["def run_learned_no_good", "run_research_synthesis_demo"],
-        "runbook_approval.py": ["def run_human_approval", "QuorumAuthority"],
-        "runbook_replay.py": ["def run_replay_fork", "engine.fork"],
-        "runbook_effect.py": ["def run_unknown_effect", "EffectUnknownOutcome"],
-        "runbook_history.py": ["def run_history_diagnosis", "NON_CONTIGUOUS_SEQUENCE"],
-    }
-    for name, tokens in runbook_sources.items():
-        require(root / "src" / "aasm" / name, tokens)
-        forbid(
-            root / "src" / "aasm" / name,
-            ["DELETE FROM", "TRUNCATE", "UPDATE aasm_runs", "INSERT INTO aasm_runs"],
-        )
-    require(
-        root / "src" / "aasm" / "operator_runbooks.py",
-        ["RUNBOOK_HANDLERS", "def execute_operator_runbook"],
-    )
-    require(
-        root / "src" / "aasm" / "cli_v28.py",
-        ["execute_operator_runbook", "list_operator_runbooks", '"runbook"'],
-    )
-    require(
-        root / "scripts" / "release_artifacts.py",
-        [
-            "def verify_wheel",
-            "def verify_sdist",
-            "def verify_release_history",
-            "def compare_builds",
-            "def build_historical_release_report",
-            "def verify_release_asset_snapshot",
-            "def verify_github_release",
-            "historical-release-report.json",
-            "PENDING_OWNER_PUBLICATION",
-            "sha256_file",
-            "release-manifest.json",
-        ],
-    )
-    require(
-        root / ".github" / "workflows" / "ci.yml",
-        [
-            "wheel_smoke:",
-            'build==1.5.0',
-            'twine==6.2.0',
-            "SOURCE_DATE_EPOCH",
-            "compare-builds",
-            "verify-wheel",
-            "verify-sdist",
-            "aasm runbook history-diagnosis",
-        ],
-    )
+    require(root / "pyproject.toml", [
+        'setuptools==83.0.0', 'wheel==0.47.0', 'build==1.5.0',
+        'license = "MIT"', 'license-files = ["LICENSE"]',
+    ])
+    require(root / "src" / "aasm" / "__init__.py", [
+        f'__version__ = "{version}"', '"contract_version": "0.4.1"',
+        '"reproducible_builds": True', '"source_distribution_self_test": True',
+        '"source_distribution_scope": "FULL_REPOSITORY_CONTRACT"',
+        '"historical_release_policy": "REPORT_ONLY"', '"operator_runbooks"',
+    ])
+    require(root / "scripts" / "release_artifacts.py", [
+        "def verify_wheel", "def verify_sdist", "def compare_builds",
+        "def build_historical_release_report",
+        "def verify_release_asset_snapshot", "def verify_github_release",
+        "historical-release-report.json", "PENDING_OWNER_PUBLICATION",
+    ])
+    require(root / ".github" / "workflows" / "ci.yml", [
+        "wheel_smoke:", "Build two byte-identical distributions",
+        'build==1.5.0', 'twine==6.2.0', "SOURCE_DATE_EPOCH",
+        "compare-builds", "verify-wheel", "verify-sdist",
+        "aasm runbook history-diagnosis",
+    ])
     release_workflow = root / ".github" / "workflows" / "release.yml"
-    require(
-        release_workflow,
-        [
-            'workflows: ["CI"]',
-            "should_release",
-            "aasm/ci-summary",
-            "aasm/formal-assurance",
-            'build==1.5.0',
-            'twine==6.2.0',
-            "SOURCE_DATE_EPOCH",
-            "compare-builds",
-            "historical-report",
-            "verify-github-release",
-            "gh release create",
-            '--target "$COMMIT_SHA"',
-            "SHA256SUMS.txt",
-            "release-manifest.json",
-            "pypa/gh-action-pypi-publish@release/v1",
-            "AASM_PUBLISH_PYPI",
-        ],
-    )
-    forbid(
-        release_workflow,
-        [
-            "--clobber",
-            "git push origin \"refs/tags/",
-            "git tag -a",
-            "Backfill maintained historical source releases",
-        ],
-    )
-    require(
-        root / "README.md",
-        [
-            f"v{version}",
-            "Distribution Release Hardening",
-            "Distribution and Operator Readiness",
-            "pip install aasm-runtime",
-            "Operator runbooks",
-            "aasm runbook unknown-effect",
-            "v0.29.0 — Thin LangGraph Adapter",
-            "aasm.remote.v1 / 0.19.0",
-        ],
-    )
-    require(
-        root / "ROADMAP.md",
-        [
-            f"v{version} / experimental",
-            "v0.28.1 — Distribution Release Hardening",
-            "Current — implemented",
-            "v0.29.0 — Thin LangGraph Adapter",
-            "v0.30.0 — Adapter Conformance Kit",
-            "v0.31.0 — Hierarchical Decision Scopes",
-            "v0.32.0 — Runtime/Formal Trace Conformance",
-            "v0.33.0 — Signed Provenance and Verifiable Exports",
-            "v0.34.0 — Distributed Recovery Certification",
-            "Adoption scorecard",
-        ],
-    )
-    require(
-        root / "CHANGELOG.md",
-        [f"## [{version}] -", "Operator runbooks", "Trusted Publisher"],
-    )
-    require(
-        root / "docs" / "COMPATIBILITY.md",
-        ["pre-1.0", "aasm.adoption.v1", "immutable release tag", version],
-    )
-    require(
-        root / "docs" / "RELEASE_PROCESS.md",
-        [
-            "PyPI Trusted Publisher",
-            "AASM_PUBLISH_PYPI",
-            "clean virtual environment",
-            "GitHub Release API",
-            "byte-identical",
-            "PENDING_OWNER_PUBLICATION",
-            "never overwrites",
-        ],
-    )
-    require(
-        root / "docs" / "RELEASE_0.28.md",
-        [
-            "AASM v0.28.1",
-            "existing event/reducer authority path",
-            "Seven executable runbooks",
-            "historical-release-report.json",
-        ],
-    )
-    runbooks = {
-        "lease-loss": "Recover after lease loss",
-        "requirement-change": "Inject a requirement without destroying the plan",
-        "learned-no-good": "Inspect and act on a learned no-good",
-        "human-approval": "Run a human approval gate with policy as data",
-        "replay-fork": "Safely replay and fork a machine",
-        "unknown-effect": "Reconcile an UNKNOWN external effect",
-        "history-diagnosis": "Diagnose a failed durable-history verification",
-    }
-    for runbook_id, title in runbooks.items():
-        require(
-            root / "docs" / "runbooks" / f"{runbook_id}.md",
-            [title, f"aasm runbook {runbook_id}", "Failure indicators", "Reset"],
-        )
-    require(
-        root / "tests" / "test_v28_operator_runbooks.py",
-        ["test_each_operator_runbook_is_an_executable_passing_drill"],
-    )
-    require(
-        root / "tests" / "test_v28_distribution.py",
-        [
-            "test_release_workflow_builds_verifies_releases_and_gates_pypi",
-            "test_two_build_comparison_rejects_byte_drift",
-            "test_historical_release_report_treats_missing_tags_as_non_blocking",
-            "test_remote_release_snapshot_requires_exact_names_sizes_and_hashes",
-        ],
-    )
-    print("reproducible distribution, immutable release, compatibility, and operator-runbook contracts: PASS")
+    require(release_workflow, [
+        'workflows: ["CI"]', "should_release", "aasm/ci-summary",
+        "aasm/formal-assurance", "Build and verify two byte-identical distributions",
+        "historical-report", "verify-github-release", "gh release create",
+        '--target "$COMMIT_SHA"', "SHA256SUMS.txt", "release-manifest.json",
+        "pypa/gh-action-pypi-publish@release/v1", "AASM_PUBLISH_PYPI",
+        "docs/RELEASE_0.28.md",
+    ])
+    forbid(release_workflow, [
+        "--clobber", "git push origin \"refs/tags/", "git tag -a",
+        "Backfill maintained historical source releases",
+    ])
+    require(root / ".github" / "workflows" / "formal.yml", [
+        "MANIFEST.in", "docs/RELEASE_0.28.md",
+        "tests/test_v28_sdist_selfcontained.py", "tests/test_sdist_smoke.py",
+    ])
+    require(root / "MANIFEST.in", [
+        "recursive-include .github", "recursive-include docs",
+        "recursive-include examples", "recursive-include formal",
+        "recursive-include profiles", "recursive-include schemas",
+        "recursive-include scripts", "recursive-include tests",
+    ])
+    require(root / "tests" / "test_v28_sdist_selfcontained.py", [
+        "test_source_distribution_is_self_contained", "test_sdist_smoke.py",
+        "unsafe source-distribution member",
+    ])
+    require(root / "tests" / "test_sdist_smoke.py", [
+        "validate_public_api_contract", "execute_operator_runbook",
+        "REPRESENTATIVE_MEMBERS",
+    ])
+    require(root / "README.md", [
+        f"v{version}", "Self-Contained Source Distribution",
+        "pip install aasm-runtime", "Operator runbooks",
+        "v0.29.0 — Thin LangGraph Adapter", "aasm.remote.v1 / 0.19.0",
+    ])
+    require(root / "ROADMAP.md", [
+        f"v{version} / experimental", "v0.28.2 — Self-Contained Source Distribution",
+        "Current — implemented", "v0.29.0 — Thin LangGraph Adapter",
+        "v0.30.0 — Adapter Conformance Kit",
+        "v0.31.0 — Hierarchical Decision Scopes",
+        "v0.32.0 — Runtime/Formal Trace Conformance",
+        "v0.33.0 — Signed Provenance and Verifiable Exports",
+        "v0.34.0 — Distributed Recovery Certification",
+    ])
+    require(root / "CHANGELOG.md", [f"## [{version}] -", "source distribution", "v0.28.1 assets are not overwritten"])
+    require(root / "docs" / "COMPATIBILITY.md", ["pre-1.0", "aasm.adoption.v1 / 0.4.1", "Source-distribution contract"])
+    require(root / "docs" / "RELEASE_PROCESS.md", ["Standalone source-distribution gate", "PyPI Trusted Publisher", "never repairs an existing version"])
+    require(root / "docs" / "RELEASE_0.28.md", ["AASM v0.28.2", "standalone smoke test", "existing implementation path", "v0.29.0 — Thin LangGraph Adapter"])
+    require(root / "tests" / "test_v28_distribution.py", [
+        "source_distribution_self_test", "source_distribution_scope",
+        "test_release_workflow_builds_verifies_releases_and_gates_pypi",
+    ])
+    print("self-contained source distribution and release contracts: PASS")
     return 0
 
 

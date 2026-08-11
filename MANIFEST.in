@@ -1,0 +1,19 @@
+include README.md LICENSE pyproject.toml
+include CHANGELOG.md CHANGELOG_0.18_AND_EARLIER.md CHANGELOG_0.27_AND_EARLIER.md
+include CODE_OF_CONDUCT.md CONTRIBUTING.md GOVERNANCE.md MANIFEST.md ROADMAP.md
+include SECURITY.md SKILL.md SUPPORT.md WHY_AASM.md FILE_LIST.txt
+include Dockerfile compose.yaml release-history.json
+recursive-include .github *.md *.yml *.yaml
+recursive-include docs *.md
+recursive-include examples *.py *.json *.yaml *.yml
+recursive-include formal *
+recursive-include profiles *.md *.json *.yaml *.yml
+recursive-include schemas *.json
+recursive-include scripts *.py
+recursive-include src/aasm/reference_data *.json
+recursive-include tests *.py *.md *.json *.yaml *.yml
+prune build
+prune dist
+prune .git
+prune .venv
+global-exclude __pycache__ *.py[cod] .DS_Store

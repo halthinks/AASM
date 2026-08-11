@@ -23,7 +23,7 @@ def _release_module():
 
 
 def test_distribution_metadata_and_adoption_contract_are_aligned():
-    assert __version__ == "0.28.1"
+    assert __version__ == "0.28.2"
     contract = public_api_contract()
     assert contract["runtime_version"] == __version__
     assert contract["distribution"]["package"] == "aasm-runtime"
@@ -32,6 +32,8 @@ def test_distribution_metadata_and_adoption_contract_are_aligned():
     )
     assert contract["distribution"]["checksums"] == "SHA256SUMS.txt"
     assert contract["distribution"]["reproducible_builds"] is True
+    assert contract["distribution"]["source_distribution_self_test"] is True
+    assert contract["distribution"]["source_distribution_scope"] == "FULL_REPOSITORY_CONTRACT"
     assert contract["distribution"]["historical_release_policy"] == "REPORT_ONLY"
     assert set(contract["operator_runbooks"]) == {
         "lease-loss",
@@ -58,15 +60,15 @@ def test_release_history_is_valid_and_names_maintained_tags():
 
 def test_release_artifact_tool_verifies_wheel_members_and_metadata(tmp_path):
     module = _release_module()
-    wheel = tmp_path / "aasm_runtime-0.28.1-py3-none-any.whl"
+    wheel = tmp_path / "aasm_runtime-0.28.2-py3-none-any.whl"
     with zipfile.ZipFile(wheel, "w") as archive:
         archive.writestr(
-            "aasm_runtime-0.28.1.dist-info/METADATA",
-            "Metadata-Version: 2.4\nName: aasm-runtime\nVersion: 0.28.1\n",
+            "aasm_runtime-0.28.2.dist-info/METADATA",
+            "Metadata-Version: 2.4\nName: aasm-runtime\nVersion: 0.28.2\n",
         )
         for name in module.REQUIRED_WHEEL_MEMBERS:
             archive.writestr(name, "{}\n" if name.endswith(".json") else "# fixture\n")
-    report = module.verify_wheel(wheel, expected_version="0.28.1")
+    report = module.verify_wheel(wheel, expected_version="0.28.2")
     assert report["valid"] is True, report
     assert len(report["sha256"]) == 64
 
@@ -75,8 +77,8 @@ def test_release_artifact_manifest_is_deterministic_and_checksummed(tmp_path):
     module = _release_module()
     dist = tmp_path / "dist"
     dist.mkdir()
-    (dist / "aasm_runtime-0.28.1-py3-none-any.whl").write_bytes(b"wheel")
-    (dist / "aasm_runtime-0.28.1.tar.gz").write_bytes(b"sdist")
+    (dist / "aasm_runtime-0.28.2-py3-none-any.whl").write_bytes(b"wheel")
+    (dist / "aasm_runtime-0.28.2.tar.gz").write_bytes(b"sdist")
     (dist / "historical-release-report.json").write_text(
         '{"valid": true}\n', encoding="utf-8"
     )
@@ -90,14 +92,14 @@ def test_release_artifact_manifest_is_deterministic_and_checksummed(tmp_path):
     )
     assert manifest["schema_version"] == 2
     assert manifest["package"] == "aasm-runtime"
-    assert manifest["version"] == "0.28.1"
+    assert manifest["version"] == "0.28.2"
     assert [row["name"] for row in manifest["files"]] == [
-        "aasm_runtime-0.28.1-py3-none-any.whl",
-        "aasm_runtime-0.28.1.tar.gz",
+        "aasm_runtime-0.28.2-py3-none-any.whl",
+        "aasm_runtime-0.28.2.tar.gz",
         "historical-release-report.json",
     ]
     text = checksums.read_text(encoding="utf-8")
-    assert "aasm_runtime-0.28.1-py3-none-any.whl" in text
+    assert "aasm_runtime-0.28.2-py3-none-any.whl" in text
     assert "historical-release-report.json" in text
     assert json.loads(manifest_path.read_text(encoding="utf-8")) == manifest
 
@@ -109,10 +111,10 @@ def test_two_build_comparison_rejects_byte_drift(tmp_path):
     left.mkdir()
     right.mkdir()
     for directory in (left, right):
-        (directory / "aasm_runtime-0.28.1-py3-none-any.whl").write_bytes(b"wheel")
-        (directory / "aasm_runtime-0.28.1.tar.gz").write_bytes(b"sdist")
+        (directory / "aasm_runtime-0.28.2-py3-none-any.whl").write_bytes(b"wheel")
+        (directory / "aasm_runtime-0.28.2.tar.gz").write_bytes(b"sdist")
     assert module.compare_builds(left, right)["valid"] is True
-    (right / "aasm_runtime-0.28.1.tar.gz").write_bytes(b"changed")
+    (right / "aasm_runtime-0.28.2.tar.gz").write_bytes(b"changed")
     report = module.compare_builds(left, right)
     assert report["valid"] is False
     assert "non-reproducible artifact" in " ".join(report["errors"])
@@ -159,8 +161,8 @@ def test_remote_release_snapshot_requires_exact_names_sizes_and_hashes(tmp_path)
     dist = tmp_path / "dist"
     dist.mkdir()
     names = [
-        "aasm_runtime-0.28.1-py3-none-any.whl",
-        "aasm_runtime-0.28.1.tar.gz",
+        "aasm_runtime-0.28.2-py3-none-any.whl",
+        "aasm_runtime-0.28.2.tar.gz",
         "historical-release-report.json",
         "SHA256SUMS.txt",
         "release-manifest.json",
@@ -168,7 +170,7 @@ def test_remote_release_snapshot_requires_exact_names_sizes_and_hashes(tmp_path)
     for index, name in enumerate(names):
         (dist / name).write_bytes(f"asset-{index}".encode())
     release = {
-        "tag_name": "v0.28.1",
+        "tag_name": "v0.28.2",
         "draft": False,
         "assets": [
             {
@@ -183,7 +185,7 @@ def test_remote_release_snapshot_requires_exact_names_sizes_and_hashes(tmp_path)
         dist,
         release=release,
         resolved_tag_commit="a" * 40,
-        expected_tag="v0.28.1",
+        expected_tag="v0.28.2",
         expected_commit="a" * 40,
     )
     assert report["valid"] is True, report
@@ -192,7 +194,7 @@ def test_remote_release_snapshot_requires_exact_names_sizes_and_hashes(tmp_path)
         dist,
         release=release,
         resolved_tag_commit="a" * 40,
-        expected_tag="v0.28.1",
+        expected_tag="v0.28.2",
         expected_commit="a" * 40,
     )["valid"] is False
 
@@ -235,7 +237,7 @@ def test_release_docs_make_external_pypi_gate_explicit():
     release_process = (ROOT / "docs" / "RELEASE_PROCESS.md").read_text(
         encoding="utf-8"
     )
-    assert "v0.28.1" in readme
+    assert "v0.28.2" in readme
     assert "v0.29.0 — Thin LangGraph Adapter" in readme
     assert "aasm.remote.v1 / 0.19.0" in readme
     assert "pre-1.0" in compatibility
@@ -244,6 +246,7 @@ def test_release_docs_make_external_pypi_gate_explicit():
     assert "AASM_PUBLISH_PYPI" in release_process
     assert "GitHub Release API" in release_process
     assert "PENDING_OWNER_PUBLICATION" in release_process
+    assert "Standalone source-distribution gate" in release_process
 
 
 def test_release_artifact_cli_reports_project_version():
@@ -254,4 +257,4 @@ def test_release_artifact_cli_reports_project_version():
         text=True,
         capture_output=True,
     )
-    assert completed.stdout.strip() == "0.28.1"
+    assert completed.stdout.strip() == "0.28.2"

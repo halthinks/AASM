@@ -8,8 +8,8 @@ AASM has three separate identities:
 
 | Identity | Current value | Meaning |
 |---|---|---|
-| Package/runtime | `0.28.1` | Python distribution and current server implementation |
-| Adoption contract | `aasm.adoption.v1 / 0.4.0` | Supported imports, methods, commands, endpoints, and runbooks |
+| Package/runtime | `0.28.2` | Python distribution and current server implementation |
+| Adoption contract | `aasm.adoption.v1 / 0.4.1` | Supported imports, methods, commands, endpoints, and runbooks |
 | Remote protocol | `aasm.remote.v1 / 0.19.0` | Compatibility identity used by existing remote clients |
 
 A package release does not automatically require a wire-protocol version change.
@@ -20,17 +20,11 @@ A package release does not automatically require a wire-protocol version change.
 
 Documented golden-path behavior declared by `aasm.adoption.v1`.
 
-A breaking change to this surface requires:
-
-- a changelog entry;
-- an explicit version change;
-- migration or deprecation guidance when practical;
-- updated contract tests;
-- a clean-wheel installation test.
+A breaking change to this surface requires a changelog entry, an explicit version change, migration or deprecation guidance when practical, updated contract tests, and a clean-wheel installation test.
 
 ### EXPERIMENTAL
 
-Available for evaluation but may change between pre-1.0 releases. Experimental does not mean undocumented or untested; it means no long-term compatibility promise has been made yet.
+Available for evaluation but may change between pre-1.0 releases.
 
 ### INTERNAL
 
@@ -38,84 +32,39 @@ No compatibility promise. Applications should not import versioned runtime modul
 
 ## Canonical public path
 
-Inspect the current contract:
-
 ```bash
 aasm adoption-contract
 ```
 
-Or:
-
 ```python
 from aasm import public_api_contract
-
 contract = public_api_contract()
 ```
 
-The contract names:
+## Snapshot, event, and profile compatibility
 
-- supported package imports;
-- supported `AASMEngine` methods;
-- supported CLI commands;
-- supported inspection surfaces;
-- supported HTTP endpoints;
-- reference application and local-stack entry points;
-- executable operator runbooks;
-- reproducible distribution and historical-release evidence policies.
-
-## Snapshot and event compatibility
-
-AASM replays the authoritative event stream through the production reducer. New fields are expected to have backward-compatible defaults when older snapshots are deserialized.
-
-Compatibility does not authorize silent rewriting of historical events. Migrations must preserve provenance and must not make an old history claim that a newer event occurred.
-
-## Profile/package compatibility
-
-A profile identity is the tuple:
-
-```text
-profile_id + profile_version + fingerprint
-```
-
-Changing a profile contract requires a new semantic version and fingerprint. Activation requires conformance and an explicit migration rather than silent replacement.
+AASM replays the authoritative event stream through the production reducer. Migrations preserve provenance and do not rewrite historical events. A profile identity is `profile_id + profile_version + fingerprint`; changing it requires a new version, conformance, and an explicit migration.
 
 ## Release artifacts
 
-An immutable release is identified by:
+A release is identified by its immutable release tag, exact commit SHA, wheel/sdist SHA-256, and `release-manifest.json`.
 
-```text
-immutable release tag
-+ exact commit SHA
-+ wheel/sdist SHA-256
-+ historical-release-report.json SHA-256
-+ release-manifest.json
-```
+The workflow uses a **no-move policy** for tags and a **no-overwrite policy** for assets. An existing tag must resolve to the recorded commit; the asset set, every digest, and every byte count must match. Missing or changed assets fail. Corrections require a new package version.
 
-The release tag is created through the GitHub Release API at the exact tested commit. The workflow then reads the resulting tag ref back and fails if it does not resolve to that commit.
+The build toolchain is exactly pinned, and `SOURCE_DATE_EPOCH` is derived from the commit so reruns reproduce the same Python distributions.
 
-AASM v0.28.1 requires two independent distribution builds to produce byte-identical wheel and source-distribution files. After publication, the workflow reads back the complete remote asset set and verifies every name, byte count, and SHA-256 digest.
+## Historical release references
 
-Release files are never overwritten with different bytes under the same version. An existing release is verified, not repaired in place. A correction requires a new package version.
-
-Historical tags that predate automated publishing are evidence, not a side effect of the current release. `historical-release-report.json` records:
-
-- `VERIFIED` when the tag resolves to the recorded commit;
-- `PENDING_OWNER_PUBLICATION` when the tag is absent and owner-level publication is still required;
-- `MISMATCH` when an existing tag resolves to a different commit.
-
-A missing historical tag does not invalidate a correctly built current release. A mismatch does.
+`release-history.json` records exact maintained pre-automation commits. `historical-release-report.json` verifies existing historical tags and records missing tags as `PENDING_OWNER_PUBLICATION`. Missing older refs do not block the current binary release and are not falsely claimed as published.
 
 ## Deprecation before 1.0
 
-For a supported surface, AASM will normally:
-
-1. document the replacement;
-2. retain the old surface for at least one subsequent minor release when practical;
-3. emit a clear warning where runtime warnings are appropriate;
-4. remove it only with an explicit changelog entry.
-
-Security or correctness defects may require faster removal. Such changes will be called out prominently.
+Supported replacements are documented and normally retain the old path for at least one subsequent minor release when practical. Correctness or security defects may require faster removal.
 
 ## What this policy does not guarantee
 
-This policy does not make domain evidence true, guarantee external-service behavior, or certify third-party adapters. It defines how the AASM control-plane interface itself evolves.
+This policy does not make domain evidence true, guarantee external-service behavior, or certify third-party adapters.
+
+## Source-distribution contract
+
+Beginning with v0.28.2, the source distribution includes the repository-level profiles, schemas, formal models, runbooks, workflows, examples, scripts, and tests required by its standalone smoke gate. This packaging promise does not make internal modules part of the supported Python API.

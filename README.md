@@ -12,7 +12,7 @@ AASM keeps the official state of a job outside the language model. Models can pr
 [![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.28.1%20experimental-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.28.2%20experimental-orange)](ROADMAP.md)
 
 [Run the full stack](#one-command-start) · [Install](#install-aasm) · [Operator runbooks](#operator-runbooks) · [Why AASM?](WHY_AASM.md) · [Roadmap](ROADMAP.md)
 
@@ -22,19 +22,26 @@ AASM keeps the official state of a job outside the language model. Models can pr
 
 ## Current release
 
-**v0.28.1 — Distribution Release Hardening**
+**v0.28.2 — Self-Contained Source Distribution**
 
 | Item | Current state |
 |---|---|
-| **Package/runtime** | **v0.28.1** |
+| **Package/runtime** | **v0.28.2** |
 | **Project status** | Experimental / pre-1.0 |
-| **Current milestone** | **Distribution Release Hardening** |
-| **Prior capability release** | **v0.28.0 — Distribution and Operator Readiness** |
+| **Current milestone** | **Self-Contained Source Distribution** |
+| **Prior release** | **v0.28.1 — Distribution Release Hardening** |
 | **One-command application** | PostgreSQL + runtime + Control Center + worker + Research Synthesis Hero Stack |
 | **Next release** | **v0.29.0 — Thin LangGraph Adapter** |
 | **Remote compatibility protocol** | `aasm.remote.v1 / 0.19.0` |
 
-v0.28.1 does not add a second runtime. It hardens the distribution boundary around the working v0.28.0 implementation:
+v0.28.2 does not add a second runtime. It closes the last packaging gap around the working v0.28.1 implementation:
+
+- the source distribution now contains the repository-level contracts its bundled tests inspect;
+- an extracted source distribution runs a standalone smoke test without a Git checkout;
+- profiles, schemas, formal models, workflows, runbooks, examples, and release scripts are included;
+- wheel behavior, runtime authority, remote protocol, and operator semantics remain unchanged.
+
+v0.28.1 already hardened reproducible publication:
 
 - build dependencies are exact and declared;
 - two clean builds must produce byte-identical wheel and source-distribution files;
@@ -43,7 +50,7 @@ v0.28.1 does not add a second runtime. It hardens the distribution boundary arou
 - the remote tag, asset set, byte sizes, and SHA-256 digests are read back and verified;
 - historical tags are inspected and reported without making old-tag permissions release-critical.
 
-The package version and wire-protocol version are intentionally separate. AASM v0.28.1 can evolve while compatible remote clients continue to use `aasm.remote.v1 / 0.19.0`.
+The package version and wire-protocol version are intentionally separate. AASM v0.28.2 can evolve while compatible remote clients continue to use `aasm.remote.v1 / 0.19.0`.
 
 > **Models propose. AASM decides what may become durable state.**
 
@@ -96,11 +103,11 @@ See [One-Command Local Full Stack](docs/LOCAL_FULL_STACK.md).
 
 Every maintained release builds twice, inspects its contents, clean-installs the wheel, records SHA-256 values, publishes once, and verifies the exact remote assets.
 
-For v0.28.1:
+For v0.28.2:
 
 ```bash
 pip install \
-  https://github.com/halthinks/AASM/releases/download/v0.28.1/aasm_runtime-0.28.1-py3-none-any.whl
+  https://github.com/halthinks/AASM/releases/download/v0.28.2/aasm_runtime-0.28.2-py3-none-any.whl
 ```
 
 Verify the installed package:
@@ -113,14 +120,16 @@ aasm runbook history-diagnosis
 The release contains:
 
 ```text
-aasm_runtime-0.28.1-py3-none-any.whl
-aasm_runtime-0.28.1.tar.gz
+aasm_runtime-0.28.2-py3-none-any.whl
+aasm_runtime-0.28.2.tar.gz
 historical-release-report.json
 SHA256SUMS.txt
 release-manifest.json
 ```
 
 `historical-release-report.json` records each maintained pre-automation tag as `VERIFIED`, `PENDING_OWNER_PUBLICATION`, or `MISMATCH`. Missing historical tags are visible but do not invalidate a correctly built current release. A real tag/commit mismatch does.
+
+The `.tar.gz` source distribution includes the profiles, schemas, formal models, runbooks, workflows, examples, release scripts, and tests needed to validate the packaged source outside a Git checkout.
 
 ## PyPI
 
@@ -242,7 +251,7 @@ This keeps the architecture faithful to its AVATAR/labelled-splitting inspiratio
 
 # Operator runbooks
 
-v0.28.0 — Distribution and Operator Readiness turned operational claims into executable drills. v0.28.1 preserves those seven procedures and hardens how their package is released.
+v0.28.0 introduced executable operational drills; v0.28.1 hardened their immutable release; v0.28.2 makes the source distribution self-contained and self-testing.
 
 List them:
 
