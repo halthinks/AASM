@@ -6,11 +6,29 @@ on:
     paths:
       - "formal/**"
       - "pyproject.toml"
-      - "src/aasm/model.py"
+      - "schemas/assurance-state.schema.json"
+      - "schemas/history-check-report.schema.json"
+      - "scripts/check_formal_models.py"
       - "src/aasm/assurance.py"
+      - "src/aasm/calculus.py"
       - "src/aasm/conflict_minimization.py"
+      - "src/aasm/core/reducer.py"
+      - "src/aasm/decision_backends.py"
+      - "src/aasm/domain_adapters.py"
+      - "src/aasm/model.py"
+      - "src/aasm/observability.py"
+      - "src/aasm/persistence/serde.py"
+      - "src/aasm/runtime_v21.py"
+      - "src/aasm/runtime_v22.py"
+      - "src/aasm/runtime_v23.py"
       - "src/aasm/runtime_v24.py"
       - "src/aasm/runtime_v25.py"
+      - "tests/test_conflict_minimization_stabilization.py"
+      - "tests/test_decision_backend_budgets.py"
+      - "tests/test_v21_calculus.py"
+      - "tests/test_v23_decision_backends.py"
+      - "tests/test_v24_assurance.py"
+      - "tests/test_v25_observability.py"
       - ".github/workflows/formal.yml"
   workflow_dispatch:
 
@@ -21,6 +39,7 @@ permissions:
 jobs:
   model_check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
@@ -28,7 +47,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Validate model source contracts
+      - name: Validate model and runtime source contracts
         run: python scripts/check_formal_models.py
 
       - name: Read pinned toolchain
@@ -60,7 +79,7 @@ jobs:
             -config AASMCalculus.cfg \
             AASMCalculus.tla
 
-      - name: Verify bounded Promela model
+      - name: Verify bounded Promela model and fairness property
         shell: bash
         run: |
           set -euo pipefail
@@ -77,7 +96,7 @@ jobs:
           cd formal
           /tmp/spin-src/Src/spin -a aasm_calculus.pml
           gcc -O2 -o /tmp/aasm-pan pan.c
-          /tmp/aasm-pan -m100000 | tee /tmp/aasm-spin.log
+          /tmp/aasm-pan -a -m100000 | tee /tmp/aasm-spin.log
           grep -Eq 'errors:[[:space:]]*0' /tmp/aasm-spin.log
           if grep -Eq 'errors:[[:space:]]*[1-9][0-9]*' /tmp/aasm-spin.log; then
             echo "SPIN reported verification errors"
