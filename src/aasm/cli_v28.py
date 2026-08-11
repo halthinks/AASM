@@ -14,7 +14,7 @@ def _runbook(args):
     if args.runbook_id == "list":
         payload = {"runbooks": list_operator_runbooks()}
         _v27._v25._json(payload)
-        return payload
+        return None
     target = getattr(args, "store", None) or getattr(args, "db", None)
     store = open_store(target) if target else None
     try:
@@ -23,7 +23,7 @@ def _runbook(args):
         _v27._v25._json(payload)
         if not result.valid:
             raise SystemExit(2)
-        return result
+        return None
     finally:
         if store is not None:
             store.close()
