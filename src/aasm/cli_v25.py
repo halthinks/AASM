@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 
 from . import cli_v22 as _v22
+from . import validate_public_api_contract
 from .decision_backends import BackendBudget
 from .runtime_v25 import AASMEngine
 
@@ -23,6 +24,10 @@ def _stored(commands, name: str, help_text: str, func):
     _v22._base._store_args(command)
     command.set_defaults(func=func)
     return command
+
+
+def _adoption_contract(_args):
+    _json(validate_public_api_contract())
 
 
 def _backend_report(args):
@@ -77,6 +82,12 @@ def _inspect(args):
 def build_parser():
     parser = _v22.build_parser()
     commands = _subparsers(parser)
+
+    command = commands.add_parser(
+        "adoption-contract",
+        help="print and validate the canonical supported AASM adoption surface",
+    )
+    command.set_defaults(func=_adoption_contract)
 
     _stored(commands, "backends", "inspect registered decision backends and candidate history", _backend_report)
 
