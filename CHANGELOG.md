@@ -15,7 +15,8 @@ AASM v0.28.0 adds clean distribution, immutable release evidence, a compatibilit
 - added clean-environment installation and installed-CLI smoke tests;
 - added deterministic SHA-256 and JSON release manifests;
 - added `release-history.json` for exact maintained historical release commits;
-- added automatic annotated tags and GitHub Releases after CI and formal assurance pass;
+- added automatic immutable release tags and GitHub Releases through the GitHub Release API after CI and formal assurance pass;
+- added explicit tag-target verification against the exact tested commit;
 - added immutable wheel, source distribution, checksum, and manifest assets;
 - added an externally gated PyPI Trusted Publisher job with no long-lived credential;
 - added the `aasm/release` commit status;
