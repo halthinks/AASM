@@ -71,7 +71,8 @@ def test_cli_adoption_contract_is_machine_readable(capsys):
     payload = json.loads(capsys.readouterr().out)
     assert payload["valid"] is True
     assert payload["contract"]["contract_id"] == "aasm.adoption.v1"
-    assert payload["contract"]["runtime_version"] == "0.25.2"
+    assert payload["contract"]["runtime_version"] == "0.26.0"
+    assert payload["contract"]["reference_application"]["id"] == "research-synthesis"
     assert "inspect_machine" in payload["contract"]["supported_engine_methods"]
 
 
