@@ -1,0 +1,27 @@
+{
+  "causal_interpretation": "supports a retrieval-practice effect when exposure time is matched",
+  "comparator": "three exposure-matched rereading sessions",
+  "design": "randomized controlled study",
+  "intervention": "three spaced retrieval sessions",
+  "license": "CC0-1.0",
+  "limitations": [
+    "single institution",
+    "novice-only population"
+  ],
+  "outcome": "delayed retention at 14 days",
+  "population": {
+    "n": 120,
+    "prior_knowledge": "novice"
+  },
+  "result": {
+    "confidence_interval": [
+      7.4,
+      16.2
+    ],
+    "effect_points": 11.8
+  },
+  "study_id": "alpha-2019",
+  "synthetic": true,
+  "title": "Matched-exposure retrieval practice in novice learners",
+  "year": 2019
+}
