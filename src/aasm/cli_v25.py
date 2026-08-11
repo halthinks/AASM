@@ -30,7 +30,12 @@ def _backend_report(args):
 
 
 def _backend_generate(args):
-    budget = BackendBudget(max_candidates=args.max_candidates, max_combinations=args.max_combinations)
+    budget = BackendBudget(
+        max_candidates=args.max_candidates,
+        max_combinations=args.max_combinations,
+        max_cost=args.max_cost,
+        max_latency_ms=args.max_latency_ms,
+    )
     _v22._base._with_engine(
         args,
         lambda engine: _json(
@@ -79,6 +84,8 @@ def build_parser():
     command.add_argument("--backend", default="aasm.finite-domain")
     command.add_argument("--max-candidates", type=int, default=32)
     command.add_argument("--max-combinations", type=int, default=100000)
+    command.add_argument("--max-cost", type=float)
+    command.add_argument("--max-latency-ms", type=float)
     command.add_argument("--continuation")
 
     command = _stored(commands, "candidates", "inspect durable candidate lifecycle records", _candidate_records)
@@ -87,12 +94,12 @@ def build_parser():
     command = _stored(commands, "candidate-select", "select an admissible candidate", _candidate_select)
     command.add_argument("--candidate-id", required=True)
 
-    command = _stored(commands, "candidate-activate", "revalidate and activate a selected candidate", _candidate_activate)
+    command = _stored(commands, "candidate-activate", "revalidate and atomically activate a selected candidate", _candidate_activate)
     command.add_argument("--candidate-id", required=True)
 
     _stored(commands, "assurance", "inspect assurance policy certificates and history checks", _assurance)
 
-    command = _stored(commands, "history-check", "verify durable event-history properties", _history_check)
+    command = _stored(commands, "history-check", "replay and verify durable event history", _history_check)
     command.add_argument("--no-persist", action="store_true")
 
     command = commands.choices["inspect"]
@@ -104,6 +111,7 @@ def build_parser():
             "decisions",
             "obligations",
             "evidence",
+            "causal",
             "conflicts",
             "fairness",
             "packages",
@@ -112,7 +120,7 @@ def build_parser():
             "calculus",
             "profile",
         ],
-        help="return a v0.25 domain-neutral projection instead of the legacy full run export",
+        help="return a domain-neutral machine projection instead of the legacy full run export",
     )
     command.set_defaults(func=_inspect)
     return parser
