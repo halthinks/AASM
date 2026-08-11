@@ -69,6 +69,8 @@ from .decision_backends import (
 from .assurance import (
     AssurancePolicy, CertificateRecord, CertificateVerification, HistoryIssue,
     HistoryCheckReport, ProjectionCertificateVerifier, DetachedDigestVerifier,
+    default_assurance_policy, normalize_assurance_state,
+    hard_constraint_certification_issues, assert_hard_constraint_certification,
     projection_payload, check_history,
 )
 from .conflict_minimization import (
@@ -76,8 +78,8 @@ from .conflict_minimization import (
 )
 from .observability import (
     ObservableGraph, decision_graph, obligation_graph, evidence_graph,
-    conflict_timeline, fairness_debt, event_timeline, package_history,
-    observability_report,
+    causal_graph, conflict_timeline, fairness_debt, event_timeline,
+    package_history, observability_report,
 )
 from .graph import PlanNode, PlanEdge, PlanGraph
 from .evidence import EvidenceRecord, EvidenceLedger
