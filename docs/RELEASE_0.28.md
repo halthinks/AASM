@@ -10,8 +10,10 @@ The release pipeline now produces:
 - a source distribution;
 - `SHA256SUMS.txt`;
 - `release-manifest.json`;
-- an annotated Git tag;
+- an immutable GitHub release tag created at the exact tested commit;
 - a GitHub Release with immutable assets.
+
+The workflow creates the tag through the GitHub Release API, reads the tag ref back, and fails if it does not resolve to the exact commit that passed CI and formal assurance. It never moves an existing tag.
 
 The wheel is installed into a clean virtual environment before release. That installed package must validate `aasm.adoption.v1` and execute an operator runbook.
 
@@ -52,7 +54,7 @@ No runbook writes AASM tables or snapshots directly.
 ## Version boundary
 
 ```text
-package/runtime:  aasm-runtime 0.28.0
+package/runtime:   aasm-runtime 0.28.0
 adoption contract: aasm.adoption.v1 / 0.4.0
 remote protocol:   aasm.remote.v1 / 0.19.0
 ```
