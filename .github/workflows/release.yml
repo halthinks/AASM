@@ -135,35 +135,6 @@ jobs:
           assert json.load(open('/tmp/runbook.json'))['valid'] is True
           PY
 
-      - name: Backfill maintained annotated tags and source releases
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          python - <<'PY' > /tmp/aasm-release-history.tsv
-          import json
-          for row in json.load(open('release-history.json'))['releases']:
-              print(f"{row['tag']}\t{row['commit']}\t{row['title']}")
-          PY
-          while IFS=$'\t' read -r tag commit title; do
-            if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
-              actual="$(git rev-list -n 1 "$tag")"
-              test "$actual" = "$commit"
-            else
-              git tag -a "$tag" "$commit" -m "$title"
-              git push origin "refs/tags/$tag"
-            fi
-            if ! gh release view "$tag" >/dev/null 2>&1; then
-              gh release create "$tag" \
-                --verify-tag \
-                --title "$title" \
-                --notes "Historical immutable source release for commit $commit. Binary artifacts begin with v0.28.0."
-            fi
-          done < /tmp/aasm-release-history.tsv
-
       - name: Publish the current GitHub release and immutable assets
         shell: bash
         env:
@@ -172,26 +143,66 @@ jobs:
           COMMIT_SHA: ${{ steps.release.outputs.commit_sha }}
         run: |
           set -euo pipefail
-          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            actual="$(git rev-list -n 1 "$TAG")"
-            test "$actual" = "$COMMIT_SHA"
-          else
-            git tag -a "$TAG" "$COMMIT_SHA" -m "AASM $TAG — Distribution and Operator Readiness"
-            git push origin "refs/tags/$TAG"
-          fi
+          tag_commit() {
+            local tag="$1" type sha
+            read -r type sha < <(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" --jq '"\(.object.type) \(.object.sha)"')
+            if [ "$type" = "tag" ]; then
+              gh api "repos/$GITHUB_REPOSITORY/git/tags/$sha" --jq '.object.sha'
+            else
+              printf '%s\n' "$sha"
+            fi
+          }
           if gh release view "$TAG" >/dev/null 2>&1; then
+            actual="$(tag_commit "$TAG")"
+            test "$actual" = "$COMMIT_SHA"
             gh release upload "$TAG" dist/* --clobber
           else
             gh release create "$TAG" dist/* \
-              --verify-tag \
+              --target "$COMMIT_SHA" \
               --title "AASM $TAG — Distribution and Operator Readiness" \
               --notes-file docs/RELEASE_0.28.md
+            actual="$(tag_commit "$TAG")"
+            test "$actual" = "$COMMIT_SHA"
           fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" \
             -f state=success \
             -f context='aasm/release' \
-            -f description='tag, GitHub release, wheel, sdist, checksums, and manifest published' \
+            -f description='release tag, wheel, sdist, checksums, and manifest published' \
             -f target_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+
+      - name: Backfill maintained historical source releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag_commit() {
+            local tag="$1" type sha
+            read -r type sha < <(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" --jq '"\(.object.type) \(.object.sha)"')
+            if [ "$type" = "tag" ]; then
+              gh api "repos/$GITHUB_REPOSITORY/git/tags/$sha" --jq '.object.sha'
+            else
+              printf '%s\n' "$sha"
+            fi
+          }
+          python - <<'PY' > /tmp/aasm-release-history.tsv
+          import json
+          for row in json.load(open('release-history.json'))['releases']:
+              print(f"{row['tag']}\t{row['commit']}\t{row['title']}")
+          PY
+          while IFS=$'\t' read -r tag commit title; do
+            if gh release view "$tag" >/dev/null 2>&1; then
+              actual="$(tag_commit "$tag")"
+              test "$actual" = "$commit"
+            else
+              gh release create "$tag" \
+                --target "$commit" \
+                --title "$title" \
+                --notes "Historical immutable source release for commit $commit. Binary artifacts begin with v0.28.0."
+              actual="$(tag_commit "$tag")"
+              test "$actual" = "$commit"
+            fi
+          done < /tmp/aasm-release-history.tsv
 
       - uses: actions/upload-artifact@v7
         with:
