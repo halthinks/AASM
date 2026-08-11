@@ -2,6 +2,34 @@
 
 All notable user-visible changes to AASM are documented here. Detailed history through v0.18 is preserved in [`CHANGELOG_0.18_AND_EARLIER.md`](CHANGELOG_0.18_AND_EARLIER.md).
 
+## [0.25.2] - 2026-08-11
+
+AASM v0.25.2 begins the Adoption and Operability program by defining one supported golden path over the existing v0.25.1 runtime.
+
+### Added
+
+- package-level `__version__` and explicit separation from the stable `aasm.remote.v1 / 0.19.0` compatibility protocol;
+- machine-readable `aasm.adoption.v1` public API contract;
+- inventories of supported top-level imports, `AASMEngine` methods, CLI commands, inspection surfaces, and HTTP endpoints;
+- explicit `SUPPORTED`, `EXPERIMENTAL`, and `INTERNAL` compatibility meanings for the pre-1.0 project;
+- `public_api_contract()` and `validate_public_api_contract()`;
+- `aasm adoption-contract` CLI output;
+- `GET /adoption-contract` HTTP output;
+- regression coverage for Python, CLI, and remote contract inspection.
+
+### Architecture and adoption
+
+- declared that reference applications, Control Center additions, runbooks, and external adapters must use the existing event/reducer runtime and authority boundary;
+- prohibited parallel runtimes, alternate reducers, private snapshot mutation, and direct database writes as adoption shortcuts;
+- replaced the architecture-first near-term roadmap with a release-gated adoption sequence: research-synthesis hero stack, one-command local stack, distribution/runbooks, and a thin LangGraph adapter;
+- added measurable adoption scorecard gates for startup time, replay equality, contradiction visibility, learned no-good reuse, causal backjumping, work preservation, and operator drills.
+
+### Documentation
+
+- kept the current package/runtime version, next planned release, and separate remote-protocol version visible near the top of the README;
+- documented the canonical adoption surface in the README and architecture guide;
+- made the formal release-by-release implementation plan the primary roadmap.
+
 ## [0.25.1] - 2026-08-10
 
 AASM v0.25.1 stabilizes the v0.23–v0.25 architecture and closes the assurance, atomicity, replay, formal-model, and readability defects found during source-level review.
