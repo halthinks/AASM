@@ -83,11 +83,13 @@ Changing a profile contract requires a new semantic version and fingerprint. Act
 An immutable release is identified by:
 
 ```text
-annotated Git tag
+immutable release tag
 + exact commit SHA
 + wheel/sdist SHA-256
 + release-manifest.json
 ```
+
+The release tag is created through the GitHub Release API at the exact tested commit. The workflow then reads the resulting tag ref back and fails if it does not resolve to that commit.
 
 Release files are never overwritten with different bytes under the same version. A correction requires a new package version.
 
