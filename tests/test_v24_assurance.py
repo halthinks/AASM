@@ -78,10 +78,12 @@ def test_exact_bounded_conflict_minimization_finds_small_core():
 
 def test_runtime_history_check_is_persistable_and_clean():
     engine = AASMEngine(ProblemSpec("history"))
+    checked_boundary = engine.events[-1].event_id
     report = engine.check_durable_history()
     assert report["status"] == "PASS"
     assert report["valid"] is True
-    assert report["checked_event_id"] == engine.events[0].event_id
+    assert report["checked_event_id"] == checked_boundary
+    assert report["checked_event_id"] != engine.events[-1].event_id
     assert report["reconstructed_snapshot_hash"] == report["persisted_snapshot_hash"]
     assert engine.assurance_report()["history_check_count"] == 1
 
@@ -154,7 +156,9 @@ def test_adopting_minimized_core_creates_immutable_successor_explanation():
     assert report["explanations"]["X1"] == original
     assert successor_id != "X1"
     assert {row["subject"] for row in report["explanations"][successor_id]["assumption_literals"]} == {"a", "c"}
-    assert report["explanations"][successor_id]["supersedes_explanation_id"] == "X1"
+    lineage = report["explanations"][successor_id]["certificate"]["aasm_lineage"]
+    assert lineage["supersedes_explanation_id"] == "X1"
+    assert lineage["version"] == 2
 
 
 def test_root_conflict_core_cannot_be_adopted_as_no_good_explanation():
