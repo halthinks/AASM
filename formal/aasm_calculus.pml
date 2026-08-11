@@ -29,8 +29,7 @@ byte fairness_debt = 0;
 inline AGE_FAIRNESS()
 {
     if
-    :: unresolved_mandatory && fairness_debt < MAX_FAIRNESS_DEBT ->
-         fairness_debt++
+    :: (unresolved_mandatory && fairness_debt < MAX_FAIRNESS_DEBT) -> fairness_debt++
     :: else -> skip
     fi
 }
@@ -50,12 +49,12 @@ active proctype AASM()
 {
     CHECK_INVARIANTS();
     do
-    :: phase == MODEL && candidate_mask == 0 && CAN_DELAY ->
+    :: (phase == MODEL && candidate_mask == 0 && CAN_DELAY) ->
          candidate_mask = 3;
          AGE_FAIRNESS();
          CHECK_INVARIANTS()
 
-    :: phase == MODEL && candidate_mask != 0 && CAN_DELAY ->
+    :: (phase == MODEL && candidate_mask != 0 && CAN_DELAY) ->
          atomic {
              active_mask = candidate_mask;
              candidate_mask = 0;
@@ -64,37 +63,34 @@ active proctype AASM()
          };
          CHECK_INVARIANTS()
 
-    :: phase == EXECUTE && CAN_DELAY ->
+    :: (phase == EXECUTE && CAN_DELAY) ->
          phase = VERIFY;
          AGE_FAIRNESS();
          CHECK_INVARIANTS()
 
-    :: (phase == EXECUTE || phase == VERIFY) && CAN_DELAY ->
+    :: ((phase == EXECUTE || phase == VERIFY) && CAN_DELAY) ->
          phase = CONFLICT;
          conflict_open = true;
          resolved_conflict = false;
          AGE_FAIRNESS();
          CHECK_INVARIANTS()
 
-    :: phase == CONFLICT && conflict_open && !soft_knowledge && CAN_DELAY ->
+    :: (phase == CONFLICT && conflict_open && !soft_knowledge && CAN_DELAY) ->
          soft_knowledge = true;
          AGE_FAIRNESS();
          CHECK_INVARIANTS()
 
-    :: phase == CONFLICT && conflict_open && soft_knowledge
-       && !registered_certificate && CAN_DELAY ->
+    :: (phase == CONFLICT && conflict_open && soft_knowledge && !registered_certificate && CAN_DELAY) ->
          registered_certificate = true;
          AGE_FAIRNESS();
          CHECK_INVARIANTS()
 
-    :: phase == CONFLICT && conflict_open && registered_certificate
-       && !verified_certificate && CAN_DELAY ->
+    :: (phase == CONFLICT && conflict_open && registered_certificate && !verified_certificate && CAN_DELAY) ->
          verified_certificate = true;
          AGE_FAIRNESS();
          CHECK_INVARIANTS()
 
-    :: phase == CONFLICT && conflict_open && soft_knowledge
-       && verified_certificate && !hard_knowledge && CAN_DELAY ->
+    :: (phase == CONFLICT && conflict_open && soft_knowledge && verified_certificate && !hard_knowledge && CAN_DELAY) ->
          hard_knowledge = true;
          conflict_open = false;
          resolved_conflict = true;
@@ -102,15 +98,14 @@ active proctype AASM()
          AGE_FAIRNESS();
          CHECK_INVARIANTS()
 
-    :: phase == CONFLICT && conflict_open && CAN_DELAY ->
+    :: (phase == CONFLICT && conflict_open && CAN_DELAY) ->
          conflict_open = false;
          resolved_conflict = true;
          phase = MODEL;
          AGE_FAIRNESS();
          CHECK_INVARIANTS()
 
-    :: (phase == MODEL || phase == EXECUTE || phase == VERIFY)
-       && epoch < MAX_EPOCH && CAN_DELAY ->
+    :: ((phase == MODEL || phase == EXECUTE || phase == VERIFY) && epoch < MAX_EPOCH && CAN_DELAY) ->
          atomic {
              active_mask = 0;
              candidate_mask = 0;
@@ -120,26 +115,26 @@ active proctype AASM()
          };
          CHECK_INVARIANTS()
 
-    :: phase == RESTART && CAN_DELAY ->
+    :: (phase == RESTART && CAN_DELAY) ->
          phase = MODEL;
          AGE_FAIRNESS();
          CHECK_INVARIANTS()
 
-    :: !TERMINAL && locked && CAN_DELAY ->
+    :: (!TERMINAL && locked && CAN_DELAY) ->
          locked = false;
          AGE_FAIRNESS();
          CHECK_INVARIANTS()
 
-    :: !TERMINAL && unresolved_mandatory ->
+    :: (!TERMINAL && unresolved_mandatory) ->
          unresolved_mandatory = false;
          fairness_debt = 0;
          CHECK_INVARIANTS()
 
-    :: !TERMINAL && !unresolved_mandatory ->
+    :: (!TERMINAL && !unresolved_mandatory) ->
          phase = COMPLETE;
          CHECK_INVARIANTS()
 
-    :: !TERMINAL ->
+    :: (!TERMINAL) ->
          phase = FAIL;
          CHECK_INVARIANTS()
 
