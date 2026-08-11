@@ -22,7 +22,10 @@ def test_remote_v25_observability_and_backend_views(tmp_path):
         client = AASMRemoteClient(f"http://127.0.0.1:{server.server_port}", "secret")
         health = client.health()
         assert health["version"] == "0.19.0"
-        assert health["runtime_version"] == "0.25.1"
+        assert health["runtime_version"] == "0.25.2"
+        contract = client._request("GET", "/adoption-contract")
+        assert contract["valid"] is True
+        assert contract["contract"]["contract_id"] == "aasm.adoption.v1"
         report = client._request("GET", f"/v1/machines/{machine_id}/inspect/summary")
         assert report["machine_id"] == machine_id
         assert report["decision_graph"]["nodes"][0]["id"] == "D1"
