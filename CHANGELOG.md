@@ -4,6 +4,50 @@ All notable user-visible changes to AASM are documented here.
 
 Detailed history through v0.27.0 is preserved in [`CHANGELOG_0.27_AND_EARLIER.md`](CHANGELOG_0.27_AND_EARLIER.md). History through v0.18 is also available separately in [`CHANGELOG_0.18_AND_EARLIER.md`](CHANGELOG_0.18_AND_EARLIER.md).
 
+## [0.28.1] - 2026-08-11
+
+AASM v0.28.1 hardens the real release boundary exposed by v0.28.0 publication. It keeps the same `aasm.adoption.v1` runtime, Research Synthesis Hero Stack, One-command local stack, formal assurance, and seven Operator runbooks. No parallel runtime or alternate state authority was added.
+
+### Reproducible distributions
+
+- pinned the build backend to `setuptools==83.0.0` and `wheel==0.47.0`;
+- pinned release/CI frontends to `build==1.5.0` and `twine==6.2.0`;
+- migrated package license metadata to the SPDX form with an explicit license file;
+- built the wheel and source distribution twice under a recorded source epoch;
+- required byte-identical names, sizes, and SHA-256 hashes between both builds;
+- retained clean-environment wheel installation and installed CLI smoke tests.
+
+### Immutable publication
+
+- limited automatic publication to package-version changes; manual dispatch remains explicit;
+- required both `aasm/ci-summary` and `aasm/formal-assurance` on the exact `main` commit;
+- removed release asset overwrite and `--clobber` behavior;
+- created a release only when the version tag does not already exist;
+- read the remote release back and verified the exact tag target, asset-name set, sizes, and SHA-256 digests;
+- added release-failure status publication without moving or rewriting an existing tag;
+- kept the credential-free PyPI Trusted Publisher job externally gated.
+
+### Historical release evidence
+
+- replaced privileged historical-release backfill with `historical-release-report.json`;
+- classified old tags as `VERIFIED`, `PENDING_OWNER_PUBLICATION`, or `MISMATCH`;
+- made missing owner-only historical tags visible but non-blocking for a correct current release;
+- retained failure on a real historical tag/commit mismatch;
+- added the historical report to checksums, the JSON manifest, and the GitHub Release asset set.
+
+### Planning
+
+- expanded the execution roadmap through v0.34.0;
+- made v0.29.0 the Thin LangGraph Adapter;
+- planned adapter conformance, hierarchical decision scopes, runtime/formal trace conformance, signed provenance, and distributed recovery certification with explicit exit gates.
+
+### Compatibility
+
+- package/runtime version is `0.28.1`;
+- adoption contract remains `aasm.adoption.v1 / 0.4.0`;
+- remote protocol remains `aasm.remote.v1 / 0.19.0`;
+- v0.28.0 — Distribution and Operator Readiness remains the capability baseline carried by this hardening release.
+
 ## [0.28.0] - 2026-08-11
 
 AASM v0.28.0 adds clean distribution, immutable release evidence, a compatibility policy, and executable operator recovery procedures without introducing a parallel runtime. It carries forward the One-command local stack and Research Synthesis Hero Stack through the same `aasm.adoption.v1` path.

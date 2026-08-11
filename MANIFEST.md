@@ -2,7 +2,7 @@
 
 `main` is identified by its Git commit SHA. `FILE_LIST.txt` is the tracked source inventory and is checked in CI.
 
-A moving branch cannot carry a permanently current checksum file. Checksums are generated only for an exact build/tag/release.
+A moving branch cannot carry a permanently current checksum file. Checksums are generated only for an exact build, tag, and release.
 
 ## Verify the tracked inventory
 
@@ -16,15 +16,24 @@ When files are intentionally added or removed:
 python scripts/release_manifest.py --write-file-list
 ```
 
-## Verify release artifacts
+## Verify reproducible distributions
 
 ```bash
-python -m build
-python scripts/release_artifacts.py verify-wheel dist/*.whl
-python scripts/release_artifacts.py verify-sdist dist/*.tar.gz
+export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+export PYTHONHASHSEED=0
+python -m build --outdir dist-a
+rm -rf build *.egg-info src/*.egg-info
+python -m build --outdir dist-b
+python scripts/release_artifacts.py compare-builds dist-a dist-b
+python scripts/release_artifacts.py verify-wheel dist-a/*.whl
+python scripts/release_artifacts.py verify-sdist dist-a/*.tar.gz
 ```
 
-## Generate immutable release manifests
+A release candidate is invalid unless both builds are byte-identical.
+
+## Generate immutable release evidence
+
+After writing `historical-release-report.json`:
 
 ```bash
 python scripts/release_artifacts.py manifest dist \
@@ -44,13 +53,15 @@ immutable vVERSION release tag
 exact Git commit SHA
 wheel SHA-256
 source-distribution SHA-256
+historical-release-report.json SHA-256
 release-manifest.json
+exact remote asset set and byte sizes
 ```
 
-The GitHub Release API creates the missing release tag at the exact tested commit. The workflow immediately reads the tag ref back and verifies the target.
+The GitHub Release API creates a missing release tag at the exact tested commit. The workflow immediately reads the tag ref and every asset back and verifies the target, name, size, and SHA-256 digest.
 
-An existing tag must never be moved to a different commit. Existing PyPI files cannot be replaced. Corrections require a new package version.
+An existing tag must never be moved to a different commit. Existing GitHub or PyPI files cannot be replaced. Corrections require a new package version.
 
 ## Historical release map
 
-`release-history.json` records exact commits for maintained releases created before automated release publishing. The release workflow may create a missing source-only GitHub Release at the recorded commit and refuses any tag/commit mismatch.
+`release-history.json` records exact commits for maintained releases created before automated release publishing. The release workflow does not create those old tags. It emits `historical-release-report.json` and treats an absent tag as `PENDING_OWNER_PUBLICATION`, an exact tag as `VERIFIED`, and a wrong tag target as `MISMATCH`.

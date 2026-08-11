@@ -12,7 +12,7 @@ AASM keeps the official state of a job outside the language model. Models can pr
 [![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.28.0%20experimental-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.28.1%20experimental-orange)](ROADMAP.md)
 
 [Run the full stack](#one-command-start) · [Install](#install-aasm) · [Operator runbooks](#operator-runbooks) · [Why AASM?](WHY_AASM.md) · [Roadmap](ROADMAP.md)
 
@@ -22,18 +22,28 @@ AASM keeps the official state of a job outside the language model. Models can pr
 
 ## Current release
 
-**v0.28.0 — Distribution and Operator Readiness**
+**v0.28.1 — Distribution Release Hardening**
 
 | Item | Current state |
 |---|---|
-| **Package/runtime** | **v0.28.0** |
+| **Package/runtime** | **v0.28.1** |
 | **Project status** | Experimental / pre-1.0 |
-| **Current milestone** | **Distribution and Operator Readiness** |
+| **Current milestone** | **Distribution Release Hardening** |
+| **Prior capability release** | **v0.28.0 — Distribution and Operator Readiness** |
 | **One-command application** | PostgreSQL + runtime + Control Center + worker + Research Synthesis Hero Stack |
 | **Next release** | **v0.29.0 — Thin LangGraph Adapter** |
 | **Remote compatibility protocol** | `aasm.remote.v1 / 0.19.0` |
 
-The package version and wire-protocol version are intentionally separate. AASM v0.28.0 can evolve while compatible remote clients continue to use `aasm.remote.v1 / 0.19.0`.
+v0.28.1 does not add a second runtime. It hardens the distribution boundary around the working v0.28.0 implementation:
+
+- build dependencies are exact and declared;
+- two clean builds must produce byte-identical wheel and source-distribution files;
+- a release is attempted only for an explicit dispatch or a package-version change;
+- an existing release is never overwritten or repaired in place;
+- the remote tag, asset set, byte sizes, and SHA-256 digests are read back and verified;
+- historical tags are inspected and reported without making old-tag permissions release-critical.
+
+The package version and wire-protocol version are intentionally separate. AASM v0.28.1 can evolve while compatible remote clients continue to use `aasm.remote.v1 / 0.19.0`.
 
 > **Models propose. AASM decides what may become durable state.**
 
@@ -84,13 +94,13 @@ See [One-Command Local Full Stack](docs/LOCAL_FULL_STACK.md).
 
 ## Immutable GitHub release wheel
 
-Every maintained release now builds, inspects, clean-installs, and publishes a wheel and source distribution with SHA-256 checksums and a machine-readable manifest.
+Every maintained release builds twice, inspects its contents, clean-installs the wheel, records SHA-256 values, publishes once, and verifies the exact remote assets.
 
-For v0.28.0:
+For v0.28.1:
 
 ```bash
 pip install \
-  https://github.com/halthinks/AASM/releases/download/v0.28.0/aasm_runtime-0.28.0-py3-none-any.whl
+  https://github.com/halthinks/AASM/releases/download/v0.28.1/aasm_runtime-0.28.1-py3-none-any.whl
 ```
 
 Verify the installed package:
@@ -99,6 +109,18 @@ Verify the installed package:
 aasm adoption-contract
 aasm runbook history-diagnosis
 ```
+
+The release contains:
+
+```text
+aasm_runtime-0.28.1-py3-none-any.whl
+aasm_runtime-0.28.1.tar.gz
+historical-release-report.json
+SHA256SUMS.txt
+release-manifest.json
+```
+
+`historical-release-report.json` records each maintained pre-automation tag as `VERIFIED`, `PENDING_OWNER_PUBLICATION`, or `MISMATCH`. Missing historical tags are visible but do not invalidate a correctly built current release. A real tag/commit mismatch does.
 
 ## PyPI
 
@@ -214,11 +236,13 @@ Repair, causal backjump, or knowledge-preserving restart
 
 A model, heuristic, person, or solver may propose a candidate. Only the AASM kernel can make it durable.
 
+This keeps the architecture faithful to its AVATAR/labelled-splitting inspiration: conditional components may be activated or locked reversibly, conflicts become durable blocking information, fairness keeps obligations from remaining hidden forever, and restart discards speculation rather than verified knowledge.
+
 ---
 
 # Operator runbooks
 
-v0.28.0 turns operational claims into executable drills. Every runbook has a one-page procedure and a regression test using the existing runtime path.
+v0.28.0 — Distribution and Operator Readiness turned operational claims into executable drills. v0.28.1 preserves those seven procedures and hardens how their package is released.
 
 List them:
 
@@ -333,7 +357,7 @@ Reference applications, adapters, local-stack services, release tooling, Control
 | Distributed workers | Registration, heartbeat, leases, expiry, reclaim, quotas, and stale-result rejection |
 | Controlled effects | Authorization, idempotency, ownership, UNKNOWN outcomes, and reconciliation |
 | Observability | Decision, Obligation, Evidence, causal graphs, timelines, and fairness debt |
-| Release integrity | Clean-wheel test, source distribution test, hashes, manifest, tags, and GitHub assets |
+| Release integrity | Byte-identical double build, clean-wheel test, exact hashes, no overwrite, and remote asset verification |
 
 ---
 
@@ -344,6 +368,12 @@ AASM is pre-1.0 experimental software. The supported public imports, engine meth
 AASM strengthens legality, durability, replay, provenance, and machine-level assurance. It does not prove that a scientific model is physically correct, a sensor was calibrated, a human report was honest, or an external service told the truth.
 
 See [Compatibility Policy](docs/COMPATIBILITY.md), [Formal Assurance](docs/FORMAL_ASSURANCE.md), and [Release Process](docs/RELEASE_PROCESS.md).
+
+---
+
+# Next phases
+
+The execution plan is maintained in [ROADMAP.md](ROADMAP.md). The next release is **v0.29.0 — Thin LangGraph Adapter**, followed by adapter conformance, hierarchical decision scopes, runtime/formal trace conformance, signed provenance, and distributed recovery certification. Each phase has an explicit user outcome, implementation boundary, and exit gate.
 
 ---
 

@@ -1,6 +1,6 @@
 from copy import deepcopy as _deepcopy
 
-__version__ = "0.28.0"
+__version__ = "0.28.1"
 REMOTE_PROTOCOL_NAME = "aasm.remote.v1"
 REMOTE_PROTOCOL_VERSION = "0.19.0"
 
@@ -258,7 +258,16 @@ PUBLIC_API_CONTRACT = {
         "release_workflow": ".github/workflows/release.yml",
         "release_history": "release-history.json",
         "checksums": "SHA256SUMS.txt",
-        "github_release_assets": ["wheel", "source distribution", "checksums", "manifest"],
+        "historical_report": "historical-release-report.json",
+        "reproducible_builds": True,
+        "historical_release_policy": "REPORT_ONLY",
+        "github_release_assets": [
+            "wheel",
+            "source distribution",
+            "checksums",
+            "manifest",
+            "historical release report",
+        ],
         "pypi_trusted_publishing": True,
         "pypi_status": "EXTERNAL_TRUSTED_PUBLISHER_BINDING_REQUIRED",
     },

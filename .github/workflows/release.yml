@@ -23,21 +23,21 @@ concurrency:
 permissions: {}
 
 jobs:
-  build_release:
+  release_intent:
     if: >-
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.head_branch == 'main') ||
       github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
     permissions:
-      contents: write
-      statuses: write
+      contents: read
     outputs:
-      version: ${{ steps.release.outputs.version }}
-      tag: ${{ steps.release.outputs.tag }}
-      commit_sha: ${{ steps.release.outputs.commit_sha }}
+      ref: ${{ steps.source.outputs.ref }}
+      should_release: ${{ steps.intent.outputs.should_release }}
+      version: ${{ steps.intent.outputs.version }}
+      tag: ${{ steps.intent.outputs.tag }}
+      commit_sha: ${{ steps.intent.outputs.commit_sha }}
     steps:
       - name: Resolve release commit
         id: source
@@ -59,13 +59,80 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ steps.source.outputs.ref }}
+          fetch-depth: 2
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Release only explicit or version-changing commits
+        id: intent
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          commit_sha="$(git rev-parse HEAD)"
+          version="$(python scripts/release_artifacts.py version)"
+          tag="v$version"
+          previous_version=""
+          if git cat-file -e HEAD^:pyproject.toml 2>/dev/null; then
+            git show HEAD^:pyproject.toml > /tmp/aasm-previous-pyproject.toml
+            previous_version="$(python -c 'import tomllib; print(tomllib.load(open("/tmp/aasm-previous-pyproject.toml", "rb"))["project"]["version"])')"
+          fi
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ "$version" != "$previous_version" ]; then
+            should_release=true
+          else
+            should_release=false
+          fi
+          echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "should_release=$should_release" >> "$GITHUB_OUTPUT"
+          printf 'release intent: version=%s previous=%s should_release=%s\n' \
+            "$version" "${previous_version:-none}" "$should_release"
+
+  no_release:
+    needs: release_intent
+    if: needs.release_intent.outputs.should_release != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - name: Publish a successful no-release status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ needs.release_intent.outputs.commit_sha }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" \
+            -f state=success \
+            -f context='aasm/release' \
+            -f description='no package version change; release not required' \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+  build_release:
+    needs: release_intent
+    if: needs.release_intent.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      statuses: write
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      commit_sha: ${{ steps.release.outputs.commit_sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release_intent.outputs.ref }}
           fetch-depth: 0
 
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
-      - name: Require an exact main commit and successful formal assurance
+      - name: Require the exact main commit and both release gates
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -74,57 +141,88 @@ jobs:
           commit_sha="$(git rev-parse HEAD)"
           main_sha="$(git rev-parse origin/main)"
           test "$commit_sha" = "$main_sha"
-          state=""
-          for _ in $(seq 1 90); do
-            state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" --jq '[.statuses[] | select(.context == "aasm/formal-assurance")][0].state // ""')"
-            if [ "$state" = "success" ]; then
-              break
-            fi
-            if [ "$state" = "failure" ] || [ "$state" = "error" ]; then
-              echo "formal assurance failed for $commit_sha"
-              exit 1
-            fi
-            sleep 10
+          for context in aasm/ci-summary aasm/formal-assurance; do
+            state=""
+            for _ in $(seq 1 90); do
+              state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" \
+                --jq "[.statuses[] | select(.context == \"$context\")][0].state // \"\"")"
+              if [ "$state" = "success" ]; then
+                break
+              fi
+              if [ "$state" = "failure" ] || [ "$state" = "error" ]; then
+                echo "$context failed for $commit_sha"
+                exit 1
+              fi
+              sleep 10
+            done
+            test "$state" = "success"
           done
-          test "$state" = "success"
 
-      - name: Build and verify immutable distributions
+      - name: Build and verify two byte-identical distributions
         id: release
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --upgrade pip build twine
+          python -m pip install "build==1.5.0" "twine==6.2.0"
           python scripts/release_artifacts.py verify-history release-history.json
           version="$(python scripts/release_artifacts.py version)"
           tag="v$version"
           commit_sha="$(git rev-parse HEAD)"
           python scripts/release_artifacts.py verify-tag "$tag"
-          rm -rf build dist *.egg-info src/*.egg-info
-          python -m build
+          rm -rf build dist dist-a dist-b *.egg-info src/*.egg-info
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+          export PYTHONHASHSEED=0
+          python -m build --outdir dist-a
+          rm -rf build *.egg-info src/*.egg-info
+          python -m build --outdir dist-b
+          python scripts/release_artifacts.py compare-builds dist-a dist-b
+          mv dist-a dist
+          rm -rf dist-b
           python -m twine check dist/*
           wheel="$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
           sdist="$(find dist -maxdepth 1 -name '*.tar.gz' -print -quit)"
           python scripts/release_artifacts.py verify-wheel "$wheel" --expected-version "$version"
           python scripts/release_artifacts.py verify-sdist "$sdist" --expected-version "$version"
-          python scripts/release_artifacts.py manifest dist \
-            --checksums dist/SHA256SUMS.txt \
-            --json dist/release-manifest.json \
-            --commit-sha "$commit_sha"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
 
+      - name: Report historical tag state without privileged backfill
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ steps.release.outputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          python scripts/release_artifacts.py historical-report release-history.json \
+            --repository "$GITHUB_REPOSITORY" \
+            --output dist/historical-release-report.json \
+            --release-commit "$COMMIT_SHA"
+
+      - name: Generate immutable checksums and manifest
+        shell: bash
+        env:
+          COMMIT_SHA: ${{ steps.release.outputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          python scripts/release_artifacts.py manifest dist \
+            --checksums dist/SHA256SUMS.txt \
+            --json dist/release-manifest.json \
+            --commit-sha "$COMMIT_SHA"
+
       - name: Install and exercise the built wheel in a clean environment
         shell: bash
+        env:
+          EXPECTED_VERSION: ${{ steps.release.outputs.version }}
         run: |
           set -euo pipefail
           python -m venv /tmp/aasm-release-venv
-          /tmp/aasm-release-venv/bin/python -m pip install --upgrade pip
           /tmp/aasm-release-venv/bin/python -m pip install dist/*.whl
           /tmp/aasm-release-venv/bin/python - <<'PY'
+          import os
           import aasm
           report = aasm.validate_public_api_contract()
-          assert aasm.__version__ == "0.28.0"
+          assert aasm.__version__ == os.environ["EXPECTED_VERSION"]
           assert report["valid"], report
           PY
           /tmp/aasm-release-venv/bin/aasm adoption-contract > /tmp/adoption-contract.json
@@ -135,7 +233,7 @@ jobs:
           assert json.load(open('/tmp/runbook.json'))['valid'] is True
           PY
 
-      - name: Publish the current GitHub release and immutable assets
+      - name: Publish once and verify every remote asset byte
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -143,66 +241,28 @@ jobs:
           COMMIT_SHA: ${{ steps.release.outputs.commit_sha }}
         run: |
           set -euo pipefail
-          tag_commit() {
-            local tag="$1" type sha
-            read -r type sha < <(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" --jq '"\(.object.type) \(.object.sha)"')
-            if [ "$type" = "tag" ]; then
-              gh api "repos/$GITHUB_REPOSITORY/git/tags/$sha" --jq '.object.sha'
-            else
-              printf '%s\n' "$sha"
-            fi
-          }
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            actual="$(tag_commit "$TAG")"
-            test "$actual" = "$COMMIT_SHA"
-            gh release upload "$TAG" dist/* --clobber
-          else
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
             gh release create "$TAG" dist/* \
               --target "$COMMIT_SHA" \
-              --title "AASM $TAG — Distribution and Operator Readiness" \
+              --title "AASM $TAG — Distribution Release Hardening" \
               --notes-file docs/RELEASE_0.28.md
-            actual="$(tag_commit "$TAG")"
-            test "$actual" = "$COMMIT_SHA"
           fi
+          verified=false
+          for _ in $(seq 1 12); do
+            if python scripts/release_artifacts.py verify-github-release "$TAG" dist \
+              --repository "$GITHUB_REPOSITORY" \
+              --expected-commit "$COMMIT_SHA"; then
+              verified=true
+              break
+            fi
+            sleep 5
+          done
+          test "$verified" = "true"
           gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" \
             -f state=success \
             -f context='aasm/release' \
-            -f description='release tag, wheel, sdist, checksums, and manifest published' \
+            -f description='reproducible build and exact immutable release assets verified' \
             -f target_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
-
-      - name: Backfill maintained historical source releases
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          tag_commit() {
-            local tag="$1" type sha
-            read -r type sha < <(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" --jq '"\(.object.type) \(.object.sha)"')
-            if [ "$type" = "tag" ]; then
-              gh api "repos/$GITHUB_REPOSITORY/git/tags/$sha" --jq '.object.sha'
-            else
-              printf '%s\n' "$sha"
-            fi
-          }
-          python - <<'PY' > /tmp/aasm-release-history.tsv
-          import json
-          for row in json.load(open('release-history.json'))['releases']:
-              print(f"{row['tag']}\t{row['commit']}\t{row['title']}")
-          PY
-          while IFS=$'\t' read -r tag commit title; do
-            if gh release view "$tag" >/dev/null 2>&1; then
-              actual="$(tag_commit "$tag")"
-              test "$actual" = "$commit"
-            else
-              gh release create "$tag" \
-                --target "$commit" \
-                --title "$title" \
-                --notes "Historical immutable source release for commit $commit. Binary artifacts begin with v0.28.0."
-              actual="$(tag_commit "$tag")"
-              test "$actual" = "$commit"
-            fi
-          done < /tmp/aasm-release-history.tsv
 
       - uses: actions/upload-artifact@v7
         with:
@@ -211,8 +271,29 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
+  release_failure:
+    needs: [release_intent, build_release]
+    if: >-
+      always() &&
+      needs.release_intent.outputs.should_release == 'true' &&
+      needs.build_release.result != 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - name: Publish failed release status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ needs.release_intent.outputs.commit_sha }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" \
+            -f state=failure \
+            -f context='aasm/release' \
+            -f description='release build, verification, or publication failed' \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
   publish_pypi:
-    needs: build_release
+    needs: [release_intent, build_release]
     if: >-
       needs.build_release.result == 'success' &&
       ((github.event_name == 'workflow_dispatch' && inputs.publish_pypi) ||
@@ -229,7 +310,11 @@ jobs:
           name: aasm-${{ needs.build_release.outputs.version }}-distributions
           path: dist
       - name: Keep only Python distributions for PyPI
-        run: rm -f dist/SHA256SUMS.txt dist/release-manifest.json
+        run: |
+          find dist -maxdepth 1 -type f \
+            ! -name '*.whl' \
+            ! -name '*.tar.gz' \
+            -delete
       - name: Publish through the configured PyPI Trusted Publisher
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

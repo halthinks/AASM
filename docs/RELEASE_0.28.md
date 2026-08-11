@@ -1,27 +1,10 @@
-# AASM v0.28.0 — Distribution and Operator Readiness
+# AASM v0.28.1 — Distribution Release Hardening
 
-AASM v0.28.0 closes the next adoption gap: the system can now be distributed as an inspected wheel and operated through tested recovery procedures.
+AASM v0.28.1 repairs the release boundary exposed while publishing v0.28.0. The deterministic runtime, calculus, assurance system, local stack, and Operator runbooks continue through the same public AASM path.
 
-## Distribution
+## What remains from v0.28.0
 
-The release pipeline now produces:
-
-- a wheel;
-- a source distribution;
-- `SHA256SUMS.txt`;
-- `release-manifest.json`;
-- an immutable GitHub release tag created at the exact tested commit;
-- a GitHub Release with immutable assets.
-
-The workflow creates the tag through the GitHub Release API, reads the tag ref back, and fails if it does not resolve to the exact commit that passed CI and formal assurance. It never moves an existing tag.
-
-The wheel is installed into a clean virtual environment before release. That installed package must validate `aasm.adoption.v1` and execute an operator runbook.
-
-The workflow can publish to PyPI through Trusted Publishing after the external `aasm-runtime` PyPI publisher binding is configured. The repository contains no long-lived PyPI credential.
-
-## Operator readiness
-
-Seven executable runbooks cover:
+v0.28.0 — Distribution and Operator Readiness delivered inspected Python distributions, a compatibility policy, and Seven executable runbooks:
 
 1. lease-loss recovery;
 2. additive requirement injection;
@@ -31,14 +14,48 @@ Seven executable runbooks cover:
 6. `UNKNOWN` effect reconciliation;
 7. durable-history diagnosis.
 
-Each runbook uses ordinary AASM APIs and returns a machine-readable PASS/FAIL report. The matching one-page document gives the starting state, commands, expected evidence, failure indicators, and reset procedure.
+Each runbook still uses ordinary AASM APIs and returns a machine-readable PASS/FAIL report.
+
+## Distribution hardening
+
+The v0.28.1 pipeline now requires:
+
+- exact build-backend and build-frontend versions;
+- two independent builds under the same recorded source epoch;
+- byte-identical wheel and source-distribution files;
+- clean-wheel installation and installed CLI smoke tests;
+- successful ordinary CI and formal assurance on the exact commit;
+- one-time GitHub Release creation without asset overwrite;
+- remote tag-target, asset-name, byte-size, and SHA-256 verification.
+
+The published asset set is:
+
+```text
+aasm_runtime-0.28.1-py3-none-any.whl
+aasm_runtime-0.28.1.tar.gz
+historical-release-report.json
+SHA256SUMS.txt
+release-manifest.json
+```
+
+## Historical release boundary
+
+Old workflow-bearing commits can require owner-level permission for retrospective tag publication. That boundary no longer causes a valid current release to fail after its own assets were already published.
+
+`historical-release-report.json` records:
+
+- `VERIFIED` for an old tag at the recorded commit;
+- `PENDING_OWNER_PUBLICATION` for a missing tag;
+- `MISMATCH` for an old tag at the wrong commit.
+
+A missing tag is visible and non-blocking. A mismatch is blocking.
 
 ## Working-path rule
 
-v0.28.0 does not create an operations-only runtime.
+v0.28.1 does not create a release-only runtime.
 
 ```text
-operator command
+operator or release command
   ↓
 public AASM API
   ↓
@@ -49,14 +66,14 @@ existing Memory / SQLite / PostgreSQL store
 existing calculus, assurance, effects, workers, leases, replay, and observability
 ```
 
-No runbook writes AASM tables or snapshots directly.
+No runbook or release operation writes AASM tables or snapshots directly.
 
 ## Version boundary
 
 ```text
-package/runtime:   aasm-runtime 0.28.0
+package/runtime:   aasm-runtime 0.28.1
 adoption contract: aasm.adoption.v1 / 0.4.0
 remote protocol:   aasm.remote.v1 / 0.19.0
 ```
 
-The next release is **v0.29.0 — Thin LangGraph Adapter**.
+The next release is **v0.29.0 — Thin LangGraph Adapter**. The complete plan through v0.34.0 is in `ROADMAP.md`.

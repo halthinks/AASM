@@ -51,13 +51,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-      - name: Build wheel and source distribution
+      - name: Build two byte-identical distributions
         run: |
-          python -m pip install --upgrade pip build twine
-          python -m build
+          set -euo pipefail
+          python -m pip install "build==1.5.0" "twine==6.2.0"
+          rm -rf build dist dist-a dist-b *.egg-info src/*.egg-info
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+          export PYTHONHASHSEED=0
+          python -m build --outdir dist-a
+          rm -rf build *.egg-info src/*.egg-info
+          python -m build --outdir dist-b
+          python scripts/release_artifacts.py compare-builds dist-a dist-b
+          mv dist-a dist
+          rm -rf dist-b
           python -m twine check dist/*
       - name: Verify release contents and metadata
         run: |
@@ -66,12 +77,15 @@ jobs:
           python scripts/release_artifacts.py verify-sdist "$(find dist -maxdepth 1 -name '*.tar.gz' -print -quit)"
       - name: Install the wheel in a clean environment
         run: |
+          set -euo pipefail
+          expected_version="$(python scripts/release_artifacts.py version)"
+          export EXPECTED_VERSION="$expected_version"
           python -m venv /tmp/aasm-wheel
-          /tmp/aasm-wheel/bin/python -m pip install --upgrade pip
           /tmp/aasm-wheel/bin/python -m pip install dist/*.whl
           /tmp/aasm-wheel/bin/python - <<'PY'
+          import os
           import aasm
-          assert aasm.__version__ == "0.28.0"
+          assert aasm.__version__ == os.environ["EXPECTED_VERSION"]
           assert aasm.validate_public_api_contract()["valid"] is True
           PY
           /tmp/aasm-wheel/bin/aasm adoption-contract > /tmp/aasm-contract.json
@@ -148,7 +162,7 @@ jobs:
         run: |
           if [ "$TEST_RESULT" = "success" ] && [ "$WHEEL_RESULT" = "success" ] && [ "$POSTGRES_RESULT" = "success" ] && [ "$COMPOSE_RESULT" = "success" ]; then
             state=success
-            description="unit matrix, clean wheel, PostgreSQL, and Compose full-stack smoke passed"
+            description="unit matrix, reproducible wheel, PostgreSQL, and Compose smoke passed"
           else
             state=failure
             description="unit=$TEST_RESULT wheel=$WHEEL_RESULT postgres=$POSTGRES_RESULT compose=$COMPOSE_RESULT"

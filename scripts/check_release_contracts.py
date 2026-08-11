@@ -21,14 +21,26 @@ def forbid(path: Path, tokens: list[str]) -> None:
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     with (root / "pyproject.toml").open("rb") as handle:
-        version = str(tomllib.load(handle)["project"]["version"])
+        project = tomllib.load(handle)
+    version = str(project["project"]["version"])
 
+    require(
+        root / "pyproject.toml",
+        [
+            'setuptools==83.0.0',
+            'wheel==0.47.0',
+            'license = "MIT"',
+            'license-files = ["LICENSE"]',
+        ],
+    )
     require(
         root / "src" / "aasm" / "__init__.py",
         [
             f'__version__ = "{version}"',
             '"contract_version": "0.4.0"',
             '"distribution"',
+            '"reproducible_builds": True',
+            '"historical_release_policy": "REPORT_ONLY"',
             '"operator_runbooks"',
             '"runbook"',
             "execute_operator_runbook",
@@ -67,6 +79,12 @@ def main() -> int:
             "def verify_wheel",
             "def verify_sdist",
             "def verify_release_history",
+            "def compare_builds",
+            "def build_historical_release_report",
+            "def verify_release_asset_snapshot",
+            "def verify_github_release",
+            "historical-release-report.json",
+            "PENDING_OWNER_PUBLICATION",
             "sha256_file",
             "release-manifest.json",
         ],
@@ -75,7 +93,10 @@ def main() -> int:
         root / ".github" / "workflows" / "ci.yml",
         [
             "wheel_smoke:",
-            "python -m build",
+            'build==1.5.0',
+            'twine==6.2.0',
+            "SOURCE_DATE_EPOCH",
+            "compare-builds",
             "verify-wheel",
             "verify-sdist",
             "aasm runbook history-diagnosis",
@@ -86,21 +107,37 @@ def main() -> int:
         release_workflow,
         [
             'workflows: ["CI"]',
+            "should_release",
+            "aasm/ci-summary",
             "aasm/formal-assurance",
+            'build==1.5.0',
+            'twine==6.2.0',
+            "SOURCE_DATE_EPOCH",
+            "compare-builds",
+            "historical-report",
+            "verify-github-release",
             "gh release create",
             '--target "$COMMIT_SHA"',
-            "tag_commit()",
             "SHA256SUMS.txt",
             "release-manifest.json",
             "pypa/gh-action-pypi-publish@release/v1",
             "AASM_PUBLISH_PYPI",
         ],
     )
-    forbid(release_workflow, ["git push origin \"refs/tags/", "git tag -a"])
+    forbid(
+        release_workflow,
+        [
+            "--clobber",
+            "git push origin \"refs/tags/",
+            "git tag -a",
+            "Backfill maintained historical source releases",
+        ],
+    )
     require(
         root / "README.md",
         [
             f"v{version}",
+            "Distribution Release Hardening",
             "Distribution and Operator Readiness",
             "pip install aasm-runtime",
             "Operator runbooks",
@@ -113,9 +150,14 @@ def main() -> int:
         root / "ROADMAP.md",
         [
             f"v{version} / experimental",
-            "v0.28.0 — Distribution and Operator Readiness",
+            "v0.28.1 — Distribution Release Hardening",
             "Current — implemented",
             "v0.29.0 — Thin LangGraph Adapter",
+            "v0.30.0 — Adapter Conformance Kit",
+            "v0.31.0 — Hierarchical Decision Scopes",
+            "v0.32.0 — Runtime/Formal Trace Conformance",
+            "v0.33.0 — Signed Provenance and Verifiable Exports",
+            "v0.34.0 — Distributed Recovery Certification",
             "Adoption scorecard",
         ],
     )
@@ -125,7 +167,7 @@ def main() -> int:
     )
     require(
         root / "docs" / "COMPATIBILITY.md",
-        ["pre-1.0", "aasm.adoption.v1", "immutable release tag"],
+        ["pre-1.0", "aasm.adoption.v1", "immutable release tag", version],
     )
     require(
         root / "docs" / "RELEASE_PROCESS.md",
@@ -134,11 +176,19 @@ def main() -> int:
             "AASM_PUBLISH_PYPI",
             "clean virtual environment",
             "GitHub Release API",
+            "byte-identical",
+            "PENDING_OWNER_PUBLICATION",
+            "never overwrites",
         ],
     )
     require(
         root / "docs" / "RELEASE_0.28.md",
-        ["AASM v0.28.0", "existing event/reducer authority path", "Seven executable runbooks"],
+        [
+            "AASM v0.28.1",
+            "existing event/reducer authority path",
+            "Seven executable runbooks",
+            "historical-release-report.json",
+        ],
     )
     runbooks = {
         "lease-loss": "Recover after lease loss",
@@ -160,9 +210,14 @@ def main() -> int:
     )
     require(
         root / "tests" / "test_v28_distribution.py",
-        ["test_release_workflow_builds_verifies_releases_and_gates_pypi"],
+        [
+            "test_release_workflow_builds_verifies_releases_and_gates_pypi",
+            "test_two_build_comparison_rejects_byte_drift",
+            "test_historical_release_report_treats_missing_tags_as_non_blocking",
+            "test_remote_release_snapshot_requires_exact_names_sizes_and_hashes",
+        ],
     )
-    print("distribution, immutable-release, compatibility, and operator-runbook contracts: PASS")
+    print("reproducible distribution, immutable release, compatibility, and operator-runbook contracts: PASS")
     return 0
 
 
