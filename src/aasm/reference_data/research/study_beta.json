@@ -1,0 +1,27 @@
+{
+  "causal_interpretation": "retrieval schedule improved retention",
+  "comparator": "standard rereading",
+  "design": "randomized controlled study",
+  "intervention": "retrieval schedule with feedback",
+  "license": "CC0-1.0",
+  "limitations": [
+    "retrieval arm received 31 percent more total study time",
+    "feedback differed between groups"
+  ],
+  "outcome": "delayed retention at 30 days",
+  "population": {
+    "n": 200,
+    "prior_knowledge": "mixed"
+  },
+  "result": {
+    "confidence_interval": [
+      6.1,
+      15.1
+    ],
+    "effect_points": 10.6
+  },
+  "study_id": "beta-2020",
+  "synthetic": true,
+  "title": "Retrieval schedule with unequal study time",
+  "year": 2020
+}
