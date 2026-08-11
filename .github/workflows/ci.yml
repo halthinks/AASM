@@ -59,13 +59,91 @@ jobs:
       - name: Build two byte-identical distributions
         run: |
           set -euo pipefail
+          normalize_sdist() {
+            python - "$1" "$SOURCE_DATE_EPOCH" <<'PY'
+          from __future__ import annotations
+          import copy
+          import gzip
+          import io
+          import os
+          from pathlib import Path
+          import sys
+          import tarfile
+          import tempfile
+
+          dist_dir = Path(sys.argv[1])
+          epoch = int(sys.argv[2])
+          sdists = sorted(dist_dir.glob("*.tar.gz"))
+          if len(sdists) != 1:
+              raise SystemExit(f"expected one sdist in {dist_dir}, found {sdists}")
+          sdist = sdists[0]
+          with tarfile.open(sdist, "r:gz") as source:
+              members = []
+              for original in source.getmembers():
+                  payload = None
+                  if original.isfile():
+                      extracted = source.extractfile(original)
+                      if extracted is None:
+                          raise SystemExit(f"cannot read {original.name}")
+                      payload = extracted.read()
+                  members.append((original, payload))
+
+          def normalized_mode(member: tarfile.TarInfo) -> int:
+              if member.isdir():
+                  return 0o755
+              if member.issym() or member.islnk():
+                  return 0o777
+              return 0o755 if member.mode & 0o111 else 0o644
+
+          fd, temporary_name = tempfile.mkstemp(
+              prefix=f".{sdist.name}.", suffix=".tmp", dir=sdist.parent
+          )
+          os.close(fd)
+          temporary = Path(temporary_name)
+          try:
+              with temporary.open("wb") as raw:
+                  with gzip.GzipFile(
+                      filename="",
+                      mode="wb",
+                      fileobj=raw,
+                      compresslevel=9,
+                      mtime=epoch,
+                  ) as compressed:
+                      with tarfile.open(
+                          fileobj=compressed,
+                          mode="w",
+                          format=tarfile.PAX_FORMAT,
+                      ) as target:
+                          for original, payload in sorted(
+                              members, key=lambda item: item[0].name
+                          ):
+                              member = copy.copy(original)
+                              member.mtime = epoch
+                              member.uid = 0
+                              member.gid = 0
+                              member.uname = ""
+                              member.gname = ""
+                              member.mode = normalized_mode(member)
+                              member.pax_headers = {}
+                              target.addfile(
+                                  member,
+                                  io.BytesIO(payload) if payload is not None else None,
+                              )
+              temporary.replace(sdist)
+          finally:
+              if temporary.exists():
+                  temporary.unlink()
+          PY
+          }
           python -m pip install "build==1.5.0" "twine==6.2.0"
           rm -rf build dist dist-a dist-b *.egg-info src/*.egg-info
           export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
           export PYTHONHASHSEED=0
           python -m build --outdir dist-a
+          normalize_sdist dist-a
           rm -rf build *.egg-info src/*.egg-info
           python -m build --outdir dist-b
+          normalize_sdist dist-b
           python scripts/release_artifacts.py compare-builds dist-a dist-b
           mv dist-a dist
           rm -rf dist-b
