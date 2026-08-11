@@ -5,7 +5,13 @@ import os
 from http.server import ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
-from . import server_v19 as _base
+from . import (
+    REMOTE_PROTOCOL_NAME,
+    REMOTE_PROTOCOL_VERSION,
+    __version__,
+    server_v19 as _base,
+    validate_public_api_contract,
+)
 from .decision_backends import BackendBudget
 from .runtime_v25 import AASMEngine
 
@@ -21,7 +27,7 @@ def make_handler(store_target: str, token: str | None = None, provisioners=None,
     base_handler = _base.make_handler(store_target, token, provisioners, artifacts)
 
     class Handler(base_handler):
-        server_version = "AASM/0.25.1"
+        server_version = f"AASM/{__version__}"
 
         def _v25_machine_resource(self):
             parsed = urlparse(self.path)
@@ -36,11 +42,13 @@ def make_handler(store_target: str, token: str | None = None, provisioners=None,
                     200,
                     {
                         "ok": True,
-                        "protocol": "aasm.remote.v1",
-                        "version": "0.19.0",
-                        "runtime_version": "0.25.1",
+                        "protocol": REMOTE_PROTOCOL_NAME,
+                        "version": REMOTE_PROTOCOL_VERSION,
+                        "runtime_version": __version__,
                     },
                 )
+            if self.path == "/adoption-contract":
+                return self._json(200, validate_public_api_contract())
             parsed = self._v25_machine_resource()
             if parsed is None:
                 return super().do_GET()
