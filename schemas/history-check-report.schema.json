@@ -9,12 +9,19 @@
     "status": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
     "machine_id": {"type": "string"},
     "checked_sequence": {"type": "integer", "minimum": 0},
+    "checked_event_id": {"type": ["string", "null"]},
     "valid": {"type": "boolean"},
+    "reconstructed_snapshot_hash": {"type": ["string", "null"]},
+    "persisted_snapshot_hash": {"type": ["string", "null"]},
+    "reconstructed_version": {"type": ["integer", "null"], "minimum": 0},
+    "persisted_version": {"type": ["integer", "null"], "minimum": 0},
+    "recorded_sequence": {"type": "integer", "minimum": 0},
     "issues": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["code", "message", "severity"],
+        "additionalProperties": false,
+        "required": ["code", "message", "severity", "sequence", "data"],
         "properties": {
           "code": {"type": "string"},
           "message": {"type": "string"},
