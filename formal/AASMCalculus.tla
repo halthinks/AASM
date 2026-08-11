@@ -1,7 +1,7 @@
 ----------------------------- MODULE AASMCalculus -----------------------------
 EXTENDS Naturals, TLC
 
-CONSTANTS Decisions, Obligations
+CONSTANTS Decisions, Obligations, MaxEpoch
 
 VARIABLES phase, active, locked, hardKnowledge, certifiedKnowledge,
           conflictOpen, resolvedConflict, unresolvedMandatory, epoch
@@ -50,6 +50,7 @@ LearnCertified ==
 
 Restart ==
     /\ phase \notin Terminal
+    /\ epoch < MaxEpoch
     /\ phase' = "RESTART"
     /\ active' \in SUBSET active
     /\ epoch' = epoch + 1
@@ -103,7 +104,7 @@ TypeOK ==
     /\ hardKnowledge \in SUBSET Decisions
     /\ certifiedKnowledge \in SUBSET Decisions
     /\ unresolvedMandatory \in SUBSET Obligations
-    /\ epoch \in Nat
+    /\ epoch \in 0..MaxEpoch
 
 HardRequiresCertificate == hardKnowledge \subseteq certifiedKnowledge
 CompleteIsSafe == phase = "COMPLETE" => unresolvedMandatory = {}
