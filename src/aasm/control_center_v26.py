@@ -22,6 +22,7 @@ _EXTRA_PANELS = r"""
 
 _EXTRA_SCRIPT = r"""
 <script>
+// Stable inspection suffixes: /inspect/decisions /inspect/obligations /inspect/evidence /inspect/conflicts /inspect/fairness /inspect/packages
 let aasmReasoning={};
 function aasmStatusClass(value){return esc(String(value||'UNKNOWN').toUpperCase())}
 function aasmGraphStats(target,graph){const kinds={};for(const n of graph.nodes||[])kinds[n.kind]=(kinds[n.kind]||0)+1;$(target).innerHTML=`<span>${(graph.nodes||[]).length} nodes</span><span>${(graph.edges||[]).length} edges</span>`+Object.entries(kinds).map(([k,v])=>`<span>${esc(k)} ${v}</span>`).join('')}
