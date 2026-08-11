@@ -154,6 +154,9 @@ def test_compose_and_control_center_expose_the_documented_stack_contract():
         assert token in compose
     assert "DELETE FROM" not in compose
     assert "TRUNCATE" not in compose
+    assert "aasm-runtime-local:dev" in compose
+    assert "aasm.__version__" in compose
+    assert "runtime_version']=='0.28.0'" not in compose
 
     html = html_document()
     for token in [

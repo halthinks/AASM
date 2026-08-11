@@ -3,7 +3,7 @@ name: aasm-local
 x-aasm-image: &aasm-image
   build:
     context: .
-  image: aasm-runtime-local:0.28.0
+  image: aasm-runtime-local:dev
 
 x-aasm-environment: &aasm-environment
   AASM_STORE: postgresql://aasm:aasm@postgres:5432/aasm
@@ -67,9 +67,9 @@ services:
         - python
         - -c
         - >-
-          import json,urllib.request;
+          import json,urllib.request,aasm;
           value=json.load(urllib.request.urlopen('http://127.0.0.1:8787/health',timeout=3));
-          assert value['ok'] and value['runtime_version']=='0.28.0'
+          assert value['ok'] and value['runtime_version']==aasm.__version__
       interval: 4s
       timeout: 4s
       retries: 30
