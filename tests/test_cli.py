@@ -4,6 +4,7 @@ from aasm.cli import build_parser
 def test_cli_exposes_durable_commands():
     parser = build_parser()
     cases = [
+        (["adoption-contract"], "adoption-contract"),
         (["demo"], "demo"),
         (["runs", "--db", "x.db"], "runs"),
         (["runs", "--store", "postgresql://example/aasm"], "runs"),
@@ -59,6 +60,19 @@ def test_cli_exposes_durable_commands():
     ]
     for argv, command in cases:
         assert parser.parse_args(argv).command == command
+
+
+def test_cli_adoption_contract_is_machine_readable(capsys):
+    import json
+
+    from aasm.cli import main
+
+    main(["adoption-contract"])
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["valid"] is True
+    assert payload["contract"]["contract_id"] == "aasm.adoption.v1"
+    assert payload["contract"]["runtime_version"] == "0.25.2"
+    assert "inspect_machine" in payload["contract"]["supported_engine_methods"]
 
 
 def test_cli_effects_lists_persisted_effect(tmp_path, capsys):
