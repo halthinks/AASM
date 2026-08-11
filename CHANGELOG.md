@@ -2,6 +2,41 @@
 
 All notable user-visible changes to AASM are documented here. Detailed history through v0.18 is preserved in [`CHANGELOG_0.18_AND_EARLIER.md`](CHANGELOG_0.18_AND_EARLIER.md).
 
+## [0.27.0] - 2026-08-11
+
+AASM v0.27.0 makes the v0.26 reference application operable as a one-command PostgreSQL, runtime, worker, and Control Center stack while preserving the existing event/reducer authority path.
+
+### One-command local stack
+
+- added `compose.yaml` with PostgreSQL 17, canonical bootstrap, runtime, default worker, optional second worker, and explicit `stackctl` service;
+- added a reproducible Python 3.13 image with the PostgreSQL extra installed;
+- added live setup and completed reference machines seeded through `run_research_synthesis_demo()`;
+- added stack discovery metadata without moving authoritative machine state out of PostgreSQL;
+- added authenticated `GET /demo-stack` and a root redirect into the existing Control Center;
+- added automatic Control Center loading of the selected stack machine;
+- added local stack status, fresh, complete, select, verify, check, and worker commands;
+- added a deterministic worker that uses the existing remote registration, heartbeat, claim-next, lease, telemetry, and completion APIs;
+- added an optional second worker through the `two-workers` Compose profile;
+- made normal reset non-destructive by creating a fresh canonical machine while retaining prior histories;
+- documented explicit destructive volume reset separately.
+
+### Public adoption surface
+
+- advanced `aasm.adoption.v1` to contract version `0.3.0`;
+- added the local stack, worker lease path, `/demo-stack`, root/UI routes, and stack CLI to the supported surface;
+- routed the public CLI, server, and Control Center through their v0.27 entry modules;
+- retained `runtime_v25.AASMEngine` as the machine authority instead of creating a parallel stack runtime;
+- retained `aasm.remote.v1 / 0.19.0` as the separate remote compatibility protocol.
+
+### Verification and documentation
+
+- added SQLite stack bootstrap, worker, non-destructive reset, HTTP discovery, and replay tests;
+- added Docker Compose configuration validation and an end-to-end Compose smoke gate;
+- expanded Control Center JavaScript validation to all embedded script blocks;
+- added `docs/LOCAL_FULL_STACK.md` and `docs/RELEASE_0.27.md`;
+- rewrote the README around `docker compose up --build` while preserving the human-readable Decision, Obligation, and Evidence explanation;
+- updated the formal source-contract gate to enforce stack topology, working-path reuse, version visibility, and release documentation.
+
 ## [0.26.0] - 2026-08-11
 
 AASM v0.26.0 delivers the first complete adoption-grade reference application without adding a parallel runtime or bypassing the existing authority boundary.
