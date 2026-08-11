@@ -113,6 +113,7 @@ def main() -> int:
     )
 
     version = project_version(root / "pyproject.toml")
+    require(root / "pyproject.toml", ["reference_data/research/*.json"])
     require(
         root / "src" / "aasm" / "__init__.py",
         [
@@ -121,6 +122,8 @@ def main() -> int:
             'REMOTE_PROTOCOL_VERSION = "0.19.0"',
             "PUBLIC_API_CONTRACT",
             '"contract_id": "aasm.adoption.v1"',
+            '"reference_application"',
+            "run_research_synthesis_demo",
             "def public_api_contract",
             "def validate_public_api_contract",
             "existing event/reducer runtime",
@@ -128,7 +131,13 @@ def main() -> int:
     )
     require(
         root / "src" / "aasm" / "cli_v25.py",
-        ["adoption-contract", "validate_public_api_contract"],
+        [
+            "adoption-contract",
+            "validate_public_api_contract",
+            '"research-synthesis"',
+            "run_research_synthesis_demo",
+            'commands.choices["demo"]',
+        ],
     )
     require(
         root / "src" / "aasm" / "server_v25.py",
@@ -140,26 +149,83 @@ def main() -> int:
         ],
     )
     require(
+        root / "src" / "aasm" / "research_profile.py",
+        [
+            "def research_profile",
+            "def research_package",
+            'profile_id="aasm.research-synthesis"',
+            "ResearchProfileRegistry",
+            '"hero_profile": True',
+        ],
+    )
+    require(
+        root / "src" / "aasm" / "research_demo.py",
+        [
+            "def verify_research_corpus",
+            "def run_research_synthesis_demo",
+            "LC-retrieval-only",
+            "CERT-retrieval-only",
+            "backjump_conflict",
+            "user_interrupt",
+            "check_durable_history",
+            "engine.replay()",
+        ],
+    )
+    require(
+        root / "src" / "aasm" / "control_center_v26.py",
+        [
+            "v19_html_document",
+            "Decision Graph",
+            "Obligation Graph",
+            "Evidence Graph",
+            "learned no-good",
+            "/inspect/conflicts",
+        ],
+    )
+    require(
+        root / "src" / "aasm" / "reference_data" / "research" / "manifest.json",
+        [
+            '"corpus_id": "aasm-research-corpus-v1"',
+            '"network_required": false',
+            '"model_key_required": false',
+            '"synthetic": true',
+        ],
+    )
+    require(
+        root / "profiles" / "research" / "profile.json",
+        [
+            '"profile_id": "aasm.research-synthesis"',
+            '"profile_version": "1.0.0"',
+            '"hero_profile": true',
+        ],
+    )
+    require(
         root / "README.md",
         [
             f"v{version}",
             "Models propose. AASM decides",
             "Canonical adoption surface",
             "aasm adoption-contract",
-            "Research Synthesis Hero Stack",
+            "Run the Research Synthesis Hero Demo",
+            "v0.27.0 — One-Command Local Full Stack",
         ],
     )
     require(
         root / "CHANGELOG.md",
-        [f"## [{version}] -", "aasm.adoption.v1", "parallel runtimes"],
+        [
+            f"## [{version}] -",
+            "Research Synthesis Hero Stack",
+            "aasm.adoption.v1",
+            "parallel runtimes",
+        ],
     )
     require(
         root / "ROADMAP.md",
         [
             f"v{version} / experimental",
             "Program rule: extend the working path",
-            "Step 1 executed",
-            "v0.26.0 — Research Synthesis Hero Stack",
+            "Current — implemented",
+            "v0.27.0 — One-Command Local Full Stack",
             "Adoption scorecard",
         ],
     )
@@ -171,8 +237,32 @@ def main() -> int:
             "GET /adoption-contract",
         ],
     )
+    require(
+        root / "docs" / "RESEARCH_SYNTHESIS_DEMO.md",
+        [
+            "existing event/reducer runtime",
+            "aasm demo",
+            "LC-retrieval-only",
+            "exact replay",
+        ],
+    )
+    require(
+        root / "WHY_AASM.md",
+        [
+            "Stateless retry baseline",
+            "AASM reference run",
+            "Failed interpretation blocked from recurring",
+        ],
+    )
+    require(
+        root / "tests" / "test_v26_research_synthesis.py",
+        [
+            "test_complete_reference_run_demonstrates_learning_backjump_and_preservation",
+            "test_control_center_extends_existing_dashboard_with_reasoning_surfaces",
+        ],
+    )
 
-    print("formal, runtime, release, and adoption source contracts: PASS")
+    print("formal, runtime, release, adoption, and hero-stack source contracts: PASS")
     return 0
 
 
