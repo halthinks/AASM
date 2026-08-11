@@ -1,0 +1,122 @@
+name: aasm-local
+
+x-aasm-image: &aasm-image
+  build:
+    context: .
+  image: aasm-runtime-local:0.27.0
+
+x-aasm-environment: &aasm-environment
+  AASM_STORE: postgresql://aasm:aasm@postgres:5432/aasm
+  AASM_DEMO_STATE: /var/lib/aasm-demo/stack-state.json
+  AASM_PUBLIC_URL: http://localhost:${AASM_PORT:-8787}
+  AASM_URL: http://runtime:8787
+  AASM_SERVER_TOKEN: ${AASM_DEMO_TOKEN:-aasm-local-demo}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: aasm
+      POSTGRES_PASSWORD: aasm
+      POSTGRES_DB: aasm
+    volumes:
+      - aasm-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aasm -d aasm"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  bootstrap:
+    <<: *aasm-image
+    command: ["python", "-m", "aasm.demo_stack", "bootstrap"]
+    environment: *aasm-environment
+    volumes:
+      - aasm-demo-state:/var/lib/aasm-demo
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  runtime:
+    <<: *aasm-image
+    command:
+      - sh
+      - -c
+      - >-
+        exec aasm serve
+        --store "$$AASM_STORE"
+        --host 0.0.0.0
+        --port 8787
+        --token "$$AASM_SERVER_TOKEN"
+        --demo-state "$$AASM_DEMO_STATE"
+    environment: *aasm-environment
+    volumes:
+      - aasm-demo-state:/var/lib/aasm-demo:ro
+    ports:
+      - "${AASM_PORT:-8787}:8787"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      bootstrap:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import json,urllib.request;
+          value=json.load(urllib.request.urlopen('http://127.0.0.1:8787/health',timeout=3));
+          assert value['ok'] and value['runtime_version']=='0.27.0'
+      interval: 4s
+      timeout: 4s
+      retries: 30
+      start_period: 5s
+    restart: unless-stopped
+
+  worker-1:
+    <<: *aasm-image
+    command: ["python", "-m", "aasm.demo_stack", "worker", "--idle-sleep", "10"]
+    environment:
+      <<: *aasm-environment
+      AASM_WORKER_ID: demo-worker-1
+    volumes:
+      - aasm-demo-state:/var/lib/aasm-demo:ro
+    depends_on:
+      runtime:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker-2:
+    <<: *aasm-image
+    profiles: ["two-workers"]
+    command: ["python", "-m", "aasm.demo_stack", "worker", "--idle-sleep", "10"]
+    environment:
+      <<: *aasm-environment
+      AASM_WORKER_ID: demo-worker-2
+    volumes:
+      - aasm-demo-state:/var/lib/aasm-demo:ro
+    depends_on:
+      runtime:
+        condition: service_healthy
+    restart: unless-stopped
+
+  stackctl:
+    <<: *aasm-image
+    profiles: ["tools"]
+    entrypoint: ["python", "-m", "aasm.demo_stack"]
+    command: ["status"]
+    environment: *aasm-environment
+    volumes:
+      - aasm-demo-state:/var/lib/aasm-demo
+    depends_on:
+      postgres:
+        condition: service_healthy
+      bootstrap:
+        condition: service_completed_successfully
+
+volumes:
+  aasm-postgres:
+  aasm-demo-state:
