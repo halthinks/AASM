@@ -6,13 +6,18 @@ on:
     paths:
       - "formal/**"
       - "pyproject.toml"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "compose.yaml"
       - "README.md"
       - "ROADMAP.md"
       - "CHANGELOG.md"
       - "WHY_AASM.md"
       - "docs/ARCHITECTURE.md"
+      - "docs/LOCAL_FULL_STACK.md"
       - "docs/RESEARCH_SYNTHESIS_DEMO.md"
       - "docs/RELEASE_0.26.md"
+      - "docs/RELEASE_0.27.md"
       - "profiles/research/**"
       - "schemas/assurance-state.schema.json"
       - "schemas/history-check-report.schema.json"
@@ -20,13 +25,17 @@ on:
       - "src/aasm/__init__.py"
       - "src/aasm/assurance.py"
       - "src/aasm/calculus.py"
+      - "src/aasm/cli.py"
       - "src/aasm/cli_v22.py"
       - "src/aasm/cli_v25.py"
+      - "src/aasm/cli_v27.py"
       - "src/aasm/conflict_minimization.py"
       - "src/aasm/control_center.py"
       - "src/aasm/control_center_v26.py"
+      - "src/aasm/control_center_v27.py"
       - "src/aasm/core/reducer.py"
       - "src/aasm/decision_backends.py"
+      - "src/aasm/demo_stack.py"
       - "src/aasm/domain_adapters.py"
       - "src/aasm/model.py"
       - "src/aasm/observability.py"
@@ -40,7 +49,10 @@ on:
       - "src/aasm/runtime_v23.py"
       - "src/aasm/runtime_v24.py"
       - "src/aasm/runtime_v25.py"
+      - "src/aasm/server.py"
       - "src/aasm/server_v25.py"
+      - "src/aasm/server_v27.py"
+      - "src/aasm/worker_loop.py"
       - "tests/test_cli.py"
       - "tests/test_conflict_minimization_stabilization.py"
       - "tests/test_decision_backend_budgets.py"
@@ -50,6 +62,8 @@ on:
       - "tests/test_v25_observability.py"
       - "tests/test_v25_remote_observability.py"
       - "tests/test_v26_research_synthesis.py"
+      - "tests/test_v27_local_stack.py"
+      - ".github/workflows/ci.yml"
       - ".github/workflows/formal.yml"
   workflow_dispatch:
 
@@ -68,7 +82,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Validate model, runtime, release, adoption, and hero-stack contracts
+      - name: Validate model runtime release adoption hero-stack and local-stack contracts
         run: python scripts/check_formal_models.py
 
       - name: Read pinned toolchain
@@ -138,7 +152,7 @@ jobs:
           print(json.dumps({
               "state": os.environ["state"],
               "context": "aasm/formal-assurance",
-              "description": f"TLC, SPIN, and adoption contracts {os.environ['RESULT']}",
+              "description": f"TLC, SPIN, adoption, and local-stack contracts {os.environ['RESULT']}",
               "target_url": f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
           }))
           PY
