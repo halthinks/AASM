@@ -13,36 +13,51 @@ byte epoch = 0;
 #define COMPLETE_SAFE (phase != COMPLETE || !unresolved_mandatory)
 #define RESOLVED_NOT_OPEN (!resolved_conflict || !conflict_open)
 
+inline CHECK_INVARIANTS()
+{
+    assert(HARD_REQUIRES_CERT);
+    assert(COMPLETE_SAFE);
+    assert(RESOLVED_NOT_OPEN)
+}
+
 active proctype AASM()
 {
+    CHECK_INVARIANTS();
     do
-    :: phase == MODEL -> phase = EXECUTE
+    :: phase == MODEL ->
+         phase = EXECUTE;
+         CHECK_INVARIANTS()
     :: (phase == EXECUTE || phase == VERIFY) ->
          if
          :: phase = VERIFY
          :: phase = CONFLICT; conflict_open = true; resolved_conflict = false
-         fi
+         fi;
+         CHECK_INVARIANTS()
     :: phase == CONFLICT && conflict_open ->
          certified_knowledge = true;
          hard_knowledge = true;
          conflict_open = false;
          resolved_conflict = true;
-         phase = MODEL
-    :: !TERMINAL -> phase = RESTART; epoch++
-    :: phase == RESTART -> phase = MODEL
-    :: !TERMINAL && unresolved_mandatory -> unresolved_mandatory = false
-    :: !TERMINAL && !unresolved_mandatory -> phase = COMPLETE
-    :: !TERMINAL -> phase = FAIL
-    :: TERMINAL -> skip
+         phase = MODEL;
+         CHECK_INVARIANTS()
+    :: !TERMINAL ->
+         phase = RESTART;
+         epoch++;
+         CHECK_INVARIANTS()
+    :: phase == RESTART ->
+         phase = MODEL;
+         CHECK_INVARIANTS()
+    :: !TERMINAL && unresolved_mandatory ->
+         unresolved_mandatory = false;
+         CHECK_INVARIANTS()
+    :: !TERMINAL && !unresolved_mandatory ->
+         phase = COMPLETE;
+         CHECK_INVARIANTS()
+    :: !TERMINAL ->
+         phase = FAIL;
+         CHECK_INVARIANTS()
+    :: TERMINAL ->
+         CHECK_INVARIANTS();
+         skip
     od
-}
-
-never {
-T0_init:
-    if
-    :: (!HARD_REQUIRES_CERT || !COMPLETE_SAFE || !RESOLVED_NOT_OPEN) -> goto accept_all
-    :: else -> goto T0_init
-    fi;
-accept_all:
-    skip
 }
