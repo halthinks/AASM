@@ -9,6 +9,7 @@ on:
       - "Dockerfile"
       - ".dockerignore"
       - "compose.yaml"
+      - "FILE_LIST.txt"
       - "README.md"
       - "ROADMAP.md"
       - "CHANGELOG.md"
