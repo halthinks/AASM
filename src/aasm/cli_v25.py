@@ -5,6 +5,7 @@ import argparse
 from . import cli_v22 as _v22
 from . import validate_public_api_contract
 from .decision_backends import BackendBudget
+from .research_demo import run_research_synthesis_demo
 from .runtime_v25 import AASMEngine
 
 _v22._base.AASMEngine = AASMEngine
@@ -28,6 +29,24 @@ def _stored(commands, name: str, help_text: str, func):
 
 def _adoption_contract(_args):
     _json(validate_public_api_contract())
+
+
+def _demo(args):
+    if args.scenario == "classic":
+        return _v22._base._demo(args)
+    target = getattr(args, "store", None) or getattr(args, "db", None)
+    store = _v22._base.open_store(target) if target else None
+    try:
+        result = run_research_synthesis_demo(
+            store=store,
+            mode=args.mode,
+            output_dir=args.output_dir,
+        )
+        _json(result.to_dict())
+        return result
+    finally:
+        if store is not None:
+            store.close()
 
 
 def _backend_report(args):
@@ -88,6 +107,25 @@ def build_parser():
         help="print and validate the canonical supported AASM adoption surface",
     )
     command.set_defaults(func=_adoption_contract)
+
+    demo = commands.choices["demo"]
+    demo.add_argument(
+        "--scenario",
+        choices=["classic", "research-synthesis"],
+        default="classic",
+        help="run the original smoke demo or the offline research-synthesis hero stack",
+    )
+    demo.add_argument(
+        "--mode",
+        choices=["setup", "complete"],
+        default="complete",
+        help="stop before the known contradiction or run the full reference trajectory",
+    )
+    demo.add_argument(
+        "--output-dir",
+        help="write the final synthesis, replay report, machine export, and commands",
+    )
+    demo.set_defaults(func=_demo)
 
     _stored(commands, "backends", "inspect registered decision backends and candidate history", _backend_report)
 
