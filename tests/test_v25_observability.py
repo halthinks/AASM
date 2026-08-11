@@ -22,7 +22,7 @@ def test_adoption_contract_validates_existing_golden_path():
     assert report["valid"] is True
     assert report["errors"] == []
     assert report["contract"]["contract_id"] == "aasm.adoption.v1"
-    assert report["contract"]["runtime_version"] == __version__ == "0.25.2"
+    assert report["contract"]["runtime_version"] == __version__
     assert PUBLIC_API_CONTRACT["remote_protocol"] == {
         "name": "aasm.remote.v1",
         "version": "0.19.0",
