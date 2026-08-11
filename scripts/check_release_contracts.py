@@ -81,19 +81,22 @@ def main() -> int:
             "aasm runbook history-diagnosis",
         ],
     )
+    release_workflow = root / ".github" / "workflows" / "release.yml"
     require(
-        root / ".github" / "workflows" / "release.yml",
+        release_workflow,
         [
             'workflows: ["CI"]',
             "aasm/formal-assurance",
-            "git tag -a",
             "gh release create",
+            '--target "$COMMIT_SHA"',
+            "tag_commit()",
             "SHA256SUMS.txt",
             "release-manifest.json",
             "pypa/gh-action-pypi-publish@release/v1",
             "AASM_PUBLISH_PYPI",
         ],
     )
+    forbid(release_workflow, ["git push origin \"refs/tags/", "git tag -a"])
     require(
         root / "README.md",
         [
@@ -122,11 +125,16 @@ def main() -> int:
     )
     require(
         root / "docs" / "COMPATIBILITY.md",
-        ["pre-1.0", "aasm.adoption.v1", "annotated Git tag"],
+        ["pre-1.0", "aasm.adoption.v1", "immutable release tag"],
     )
     require(
         root / "docs" / "RELEASE_PROCESS.md",
-        ["PyPI Trusted Publisher", "AASM_PUBLISH_PYPI", "clean virtual environment"],
+        [
+            "PyPI Trusted Publisher",
+            "AASM_PUBLISH_PYPI",
+            "clean virtual environment",
+            "GitHub Release API",
+        ],
     )
     require(
         root / "docs" / "RELEASE_0.28.md",
