@@ -107,11 +107,14 @@ def test_release_workflow_builds_verifies_releases_and_gates_pypi():
         "verify-sdist",
         "SHA256SUMS.txt",
         "gh release create",
-        "git tag -a",
+        '--target "$COMMIT_SHA"',
+        "tag_commit()",
         "pypa/gh-action-pypi-publish@release/v1",
         "AASM_PUBLISH_PYPI",
     ]:
         assert token in workflow
+    assert "git tag -a" not in workflow
+    assert 'git push origin "refs/tags/' not in workflow
 
 
 def test_release_docs_make_external_pypi_gate_explicit():
@@ -126,8 +129,10 @@ def test_release_docs_make_external_pypi_gate_explicit():
     assert "v0.29.0 — Thin LangGraph Adapter" in readme
     assert "aasm.remote.v1 / 0.19.0" in readme
     assert "pre-1.0" in compatibility
+    assert "immutable release tag" in compatibility
     assert "PyPI Trusted Publisher" in release_process
     assert "AASM_PUBLISH_PYPI" in release_process
+    assert "GitHub Release API" in release_process
 
 
 def test_release_artifact_cli_reports_project_version():
