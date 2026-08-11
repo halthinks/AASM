@@ -39,6 +39,7 @@ def main() -> int:
             "FairnessProgress",
             "Restart",
             "TerminalStutter",
+            "pendingCandidate = {}",
         ],
     )
     forbid(tla, ["LearnCertified =="])
@@ -65,6 +66,7 @@ def main() -> int:
             "MAX_FAIRNESS_DEBT",
             "fairness_progress",
             "RESTART",
+            "candidate_mask == 0 && !unresolved_mandatory",
         ],
     )
 
@@ -76,6 +78,8 @@ def main() -> int:
             "effective_strength = \"SOFT\"",
             "assert_hard_constraint_certification",
             "def promote_constraint_hard",
+            "aasm_lineage",
+            "supersedes_explanation_id",
         ],
     )
     require(
@@ -101,7 +105,16 @@ def main() -> int:
         ["def causal_graph", "def _closed_graph", "EXPOSE_OR_DISPOSITION"],
     )
 
-    print("formal and runtime assurance source contracts: PASS")
+    require(root / "pyproject.toml", ['version = "0.25.1"'])
+    require(root / "README.md", ["v0.25.1", "Models propose. AASM decides"])
+    require(root / "CHANGELOG.md", ["## [0.25.1] - 2026-08-10"])
+    require(root / "ROADMAP.md", ["v0.25.1 / experimental"])
+    require(
+        root / "src" / "aasm" / "server_v25.py",
+        ['server_version = "AASM/0.25.1"', '"runtime_version": "0.25.1"'],
+    )
+
+    print("formal, runtime, and release source contracts: PASS")
     return 0
 
 
