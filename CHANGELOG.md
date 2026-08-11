@@ -2,6 +2,42 @@
 
 All notable user-visible changes to AASM are documented here. Detailed history through v0.18 is preserved in [`CHANGELOG_0.18_AND_EARLIER.md`](CHANGELOG_0.18_AND_EARLIER.md).
 
+## [0.26.0] - 2026-08-11
+
+AASM v0.26.0 delivers the first complete adoption-grade reference application without adding a parallel runtime or bypassing the existing authority boundary.
+
+### Research Synthesis Hero Stack
+
+- added the built-in `aasm.research-synthesis@1.0.0` profile and package manifest;
+- added explicit research decision namespaces, persistent obligations, evidence contracts, fairness defaults, model-routing defaults, governance defaults, and controlled profile evolution;
+- added a fixed synthetic CC0 offline corpus with a recorded SHA-256 manifest;
+- added deterministic setup and complete reference-run modes;
+- added a known contradiction that produces a validated explanation, soft no-good, independently verified certificate, hard learned constraint, and non-chronological backjump;
+- demonstrated preservation of an unrelated structured-report decision after the causal backjump;
+- demonstrated that the failed `retrieval_only` model is blocked from recurring;
+- injected a mid-run prior-knowledge requirement through the existing change-impact pathway;
+- restored subgroup work through an existing conditional lock break;
+- produced a known-good structured synthesis with claim-level evidence IDs and machine provenance;
+- added exact event replay and reconstructed-versus-persisted history verification;
+- added generated run summary, final artifact, machine export, history result, machine identity, and replay-command files.
+
+### Product surface
+
+- extended the existing `aasm demo` command with `--scenario research-synthesis` and `--mode setup|complete`;
+- added programmatic `run_research_synthesis_demo()`, corpus verification, and research profile/package helpers;
+- added the research profile to the canonical built-in registry;
+- extended the existing Control Center with Decision, Obligation, Evidence, conflict/backjump, fairness, profile-history, and final-artifact panels;
+- added the reference application to `aasm.adoption.v1`;
+- packaged the fixed research corpus in the Python distribution.
+
+### Documentation and verification
+
+- added `WHY_AASM.md` as a reproducible baseline comparison;
+- added `docs/RESEARCH_SYNTHESIS_DEMO.md` and `docs/RELEASE_0.26.md`;
+- kept v0.26.0, the next v0.27.0 milestone, and the separate remote protocol visible at the top of the README;
+- added profile fingerprint, corpus digest, setup, complete-run, replay, artifact, CLI, and Control Center regression coverage;
+- retained the ordinary event/reducer runtime, stores, calculus, assurance boundary, CLI, HTTP, and Control Center implementation path.
+
 ## [0.25.2] - 2026-08-11
 
 AASM v0.25.2 begins the Adoption and Operability program by defining one supported golden path over the existing v0.25.1 runtime.
