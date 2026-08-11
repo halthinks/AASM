@@ -1,251 +1,316 @@
 <div align="center">
 
 # AASM
+
 ## Algorithmic Agent State Machine
 
-**A durable, deterministic control plane for agents, tools, humans, models, and real work.**
+**A durable control system for agents, tools, models, humans, and real work.**
 
-AASM keeps probabilistic reasoning inside explicit machine authority: state is durable, transitions are legal or illegal, plans are graphs, effects require authorization, evidence governs commitment, contradictions become learned constraints, candidate generation is replaceable, and use-case meaning arrives through domain-neutral profile packages rather than being baked into the kernel.
+AASM keeps the official state of a job outside the language model. Models may suggest what to do, but the runtime decides what is legal, records what happened, preserves evidence, and recovers from bad assumptions without throwing away unrelated work.
 
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
+[![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.25.0%20experimental-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.25.1%20experimental-orange)](ROADMAP.md)
 
-[**Quick start**](#quick-start) · [**Architecture**](#architecture) · [**Packages**](#profile-packages) · [**Decision backends**](#decision-backends) · [**Assurance**](#formal-assurance) · [**Observability**](#observability)
+[Get started](#five-minute-start) · [Download ZIP](https://github.com/halthinks/AASM/archive/refs/heads/main.zip) · [See examples](examples/) · [Read the architecture](docs/ARCHITECTURE.md)
 
 </div>
 
 ---
 
-## What AASM is
+## What problem does AASM solve?
 
-Most agent frameworks concentrate on giving a model tools. AASM concentrates on the systems problem underneath them:
+A capable agent can still lose track of what it decided, repeat failed work, hide unfinished requirements, or modify the wrong part of a project after a test fails. A long conversation is not a reliable control system.
 
-> **How do you govern what an intelligent system is allowed to do next, preserve what happened, recover selectively, coordinate real work, and learn from contradictions without giving probabilistic components authority over durable state?**
+AASM gives the work an official machine state.
 
-AASM is a Python runtime, CLI, event model, and control plane with:
+Imagine an agent is building a service:
 
-- explicit machine states and legal transitions;
-- event-sourced replay, checkpoints, and historical forks;
-- SQLite and PostgreSQL persistence;
-- plan graphs, scheduling, memory, evidence, and provenance;
-- external-effect proposal, authorization, idempotency, and reconciliation;
-- distributed workers, heartbeats, leases, quotas, mission controls, and telemetry;
-- optional Planner / Builder / Verifier orchestration;
-- a formal decision/obligation calculus with conflict learning;
-- versioned domain-neutral profile packages;
-- replaceable decision-generation backends;
-- independently checkable assurance records;
-- generic Decision, Obligation, Evidence, conflict, fairness, package, candidate, and assurance observability.
+1. It chooses PostgreSQL.
+2. Tasks that only matter for SQLite are temporarily hidden, but not deleted.
+3. An integration test proves that the selected schema is incompatible.
+4. AASM records the evidence and the exact decisions responsible for the conflict.
+5. It returns to the schema decision instead of randomly editing the most recent files.
+6. Unrelated work, such as a valid cache implementation, stays intact.
+7. The failed combination becomes reusable knowledge, so the same plan is not selected again.
 
-The operating principle is:
+That is the core idea:
 
-> **Models propose. Algorithms organize. Policy authorizes. Evidence validates. Contradictions teach. Durable state governs what happens next.**
+> **Models propose. AASM decides what may become durable state.**
+
+AASM is not a language model and it does not replace one. It is the deterministic runtime around models, tools, workers, and people.
 
 ---
 
-## Release architecture
+## The three things to remember
+
+### Decisions
+
+A decision is a named choice or assumption, such as:
 
 ```text
-v0.21  Formal conflict-learning calculus
-       decisions · obligations · locks · conflicts · explanations
-       learned no-goods · backjumping · fairness · restart
-
-v0.22  Domain-neutral package/profile contract
-       profiles · packages · bindings · adapters · migrations
-       semantic-result envelope · governed profile evolution
-
-v0.23  Replaceable decision backends
-       finite-domain · human · callback/model · portfolio
-       candidate batches · lifecycle · selection · activation
-
-v0.24  Formal assurance
-       certificates · independent verification · history checks
-       conflict-core minimization · certificate-gated hard knowledge
-
-v0.25  Generic observability
-       Decision/Obligation/Evidence graphs · conflicts · fairness debt
-       package history · candidate history · assurance history
+database = postgres
+schema = v2
+inspection_method = thermal_camera
 ```
 
-These layers are additive. The core stays domain-neutral and role-agnostic.
+AASM records which decisions are active, what they depend on, why they changed, and which work they authorize.
+
+### Obligations
+
+An obligation is work that must eventually be handled. It cannot quietly disappear because the current plan makes it inconvenient.
+
+Examples include:
+
+```text
+run the compatibility test
+collect the missing measurement
+review the safety evidence
+publish the required artifact
+```
+
+An obligation must be completed, rejected with a reason, superseded, or proven impossible.
+
+### Evidence
+
+Evidence is the durable reason AASM accepts or rejects something. It can come from tests, tools, humans, simulations, sensors, or external systems.
+
+AASM records provenance and relationships. It does not pretend that every piece of evidence is automatically true.
 
 ---
 
-## Quick start
+## How a run works
+
+```text
+Goal
+  ↓
+Candidate decisions are proposed
+  ↓
+AASM checks authority, dependencies, constraints, and fairness
+  ↓
+One complete candidate is activated atomically
+  ↓
+Authorized work runs
+  ↓
+Evidence is collected
+  ↓
+Success is committed, or a conflict is explained
+  ↓
+Repair, causal backjump, or restart
+```
+
+The important boundary is that proposal and authority are separate. A model, heuristic, human, or solver may propose a candidate. Only the AASM kernel can activate it or change durable state.
+
+---
+
+## Five-minute start
+
+AASM requires Python 3.11 or newer.
 
 ```bash
 git clone https://github.com/halthinks/AASM.git
 cd AASM
 python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
+```
+
+Activate the environment:
+
+```bash
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+# macOS or Linux
+source .venv/bin/activate
+```
+
+Install the package:
+
+```bash
 pip install -e .
 ```
 
-Create a machine:
+Create a small machine:
 
 ```python
-from aasm import AASMEngine, ProblemSpec
+from aasm import (
+    AASMEngine,
+    DecisionRecord,
+    ObligationRecord,
+    ProblemSpec,
+)
 
-engine = AASMEngine(ProblemSpec("Investigate a problem"))
-print(engine.snapshot.machine_id)
+engine = AASMEngine(ProblemSpec("Prepare a field test"))
+
+engine.register_decision(
+    DecisionRecord("D-site-a", "test_site", "site-a")
+)
+engine.activate_decision("D-site-a")
+
+engine.register_obligation(
+    ObligationRecord(
+        "O-weather",
+        "Confirm that weather conditions are safe",
+        decision_dependencies=["D-site-a"],
+    )
+)
+
 print(engine.inspect_machine("summary"))
 ```
 
-Run the CLI:
+For durable local storage:
+
+```python
+from aasm import AASMEngine, ProblemSpec, SQLiteStore
+
+store = SQLiteStore("aasm-runs.db")
+engine = AASMEngine(
+    ProblemSpec("Run a durable investigation"),
+    store=store,
+)
+print(engine.snapshot.machine_id)
+```
+
+The CLI is available after installation:
 
 ```bash
 aasm --help
 ```
 
-For durable storage, use the existing SQLite or PostgreSQL stores. Existing v0.21/v0.22 snapshots remain readable; missing v0.23/v0.24 state is initialized to the canonical empty state during deserialization.
-
 ---
 
-## Architecture
+## What happens when a plan is wrong?
 
-```text
-                  Domain package / profile
-               meaning · policies · adapters
-                          |
-                          v
-                 DecisionRequest
-                          |
-          +---------------+---------------+
-          |               |               |
-   finite-domain         human        model/solver/
-      backend            input         portfolio
-          |               |               |
-          +---------- CandidateBatch -----+
-                          |
-                          v
-                 deterministic AASM
-          identity · parents · pinned state
-        hard constraints · fairness · authority
-                          |
-                          v
-                    active model
-                          |
-                          v
-                conditional obligations
-                          |
-                          v
-              execution / observation
-                          |
-                          v
-                     evidence
-                          |
-                          v
-          verify -> conflict -> explanation
-                          |
-                          v
-                   learned constraint
-                          |
-             +------------+------------+
-             |            |            |
-           repair      backjump      restart
-```
+AASM does not reduce every failure to `FAILED`.
 
-A backend can propose a candidate. It cannot activate a decision, commit an obligation, authorize an external effect, replace a package binding, or install hard machine knowledge.
+It can distinguish among:
 
----
-
-## Formal conflict-learning calculus
-
-The v0.21 calculus maintains durable:
-
-- **Decisions** — named choices and assumptions;
-- **Obligations** — work that must eventually be satisfied, rejected, superseded, or proven impossible;
-- **Evidence** — observations and claims with lineage;
-- **Locks** — model-relative temporary suppression, never silent deletion;
-- **Conflicts** — contradictions tied to evidence and an active-model snapshot;
-- **Explanations** — the assumptions materially responsible for a conflict;
-- **Learned constraints** — guarded no-goods restricting future search;
-- **Fairness records** — deterministic accounting preventing persistent obligations from remaining hidden forever.
-
-A validated incompatibility can be represented as:
-
-```text
-guard => NOT (assumption_1 AND assumption_2 AND ... AND assumption_n)
-```
-
-Backjumping follows causal dependency instead of chronological creation order. `restart_search()` discards speculative assignments while preserving validated knowledge and durable execution state.
-
-See [`docs/FORMAL_CALCULUS.md`](docs/FORMAL_CALCULUS.md).
-
----
-
-## Profile packages
-
-AASM does not require one domain ontology.
-
-| Object | Meaning |
+| Situation | AASM response |
 |---|---|
-| **Package** | Distributable profiles, optional adapters, schemas, migrations, docs, examples, and tests. |
-| **Profile** | One immutable, versioned use-case contract. |
-| **Binding** | The exact profile/package identity and run configuration attached to a machine. |
-| **Run** | The actual event-sourced execution history under that binding. |
+| A temporary tool error | Retry or repair under policy |
+| Missing information | Create or expose an obligation |
+| A contradicted assumption | Record a conflict and explanation |
+| A bad earlier decision | Backjump to the causal decision |
+| Search has become unproductive | Restart speculative search while keeping learned knowledge |
+| A combination must never recur | Learn a blocking constraint |
 
-Package design is an engineering craft. Authors decide which decisions deserve names, which obligations persist, what evidence is sufficient, how conflicts are explained, and what belongs in reusable contract versus run configuration.
+A conflict is connected to evidence and to the decisions that caused it. AASM can therefore return to the relevant earlier choice instead of undoing everything that happened afterward.
 
-Runs adapt naturally under a stable profile. **Profiles do not silently self-modify.** Repeated evidence can create a `ProfileEvolutionProposal`, but changing the contract requires a new version, new fingerprint, conformance, an explicit migration, and authorized activation.
+---
 
-See [`docs/PROFILE_PACKAGES.md`](docs/PROFILE_PACKAGES.md) and [`docs/EXTENSION_CONTRACT.md`](docs/EXTENSION_CONTRACT.md).
+## Advanced ideas, in plain English
+
+### Conditional locks: hidden is not deleted
+
+Work can be irrelevant under the current decision model. AASM may lock it temporarily, but the lock records the assumption that made it irrelevant.
+
+When that assumption changes, the lock breaks and the work becomes visible again.
+
+### Backjumping: repair the cause, not the latest symptom
+
+Suppose a test fails after six later tasks have been completed, but the real cause is the second design decision. AASM can return directly to that decision and preserve later work that does not depend on it.
+
+### Restart: start a new search without forgetting
+
+A restart discards speculative assignments and temporary ordering. It retains evidence, verified artifacts, failed assumptions, learned constraints, and provenance.
+
+### Fairness debt: unfinished work cannot stay hidden forever
+
+AASM tracks how long persistent obligations remain unavailable or locked. Policy can force review, exposure, deferral, or a terminal disposition.
+
+### Certificate-gated hard knowledge
+
+A learned constraint starts soft when strict assurance is enabled. It becomes hard only after a durable certificate is independently verified against the exact current constraint projection.
+
+Changing the constraint body, guard, provenance, scope, or intended strength breaks that coverage.
+
+---
+
+## Major capabilities
+
+| Capability | What it gives you |
+|---|---|
+| Durable state and replay | Reconstruct a run from its event history instead of trusting a transcript |
+| Legal transitions | Explicit rules for what the machine may do next |
+| Plans and checkpoints | Graph-based work, selective revalidation, replay, and historical forks |
+| Authority and effects | Proposal, approval, idempotency, execution ownership, and reconciliation for external actions |
+| Conflict learning | Evidence-backed explanations, blocking constraints, backjumping, and restart |
+| Decision backends | Finite-domain, human, callback/model, and portfolio proposal sources |
+| Profile packages | Versioned domain meaning outside the kernel |
+| Formal assurance | Certificate policy, replay verification, conflict-core minimization, bounded TLA+, and SPIN checks |
+| Observability | Closed Decision, Obligation, Evidence, and causal graphs plus timelines and fairness debt |
+| Distributed work | Workers, leases, heartbeats, quotas, telemetry, and mission controls |
 
 ---
 
 ## Decision backends
 
-v0.23 makes search replaceable.
+A decision backend proposes complete candidate assignments. Built-in reference backends include:
 
-Built-in backend primitives include:
+- `FiniteDomainDecisionBackend` for deterministic, paginated finite search;
+- `HumanDecisionBackend` for structured human input;
+- `CallbackDecisionBackend` for models, heuristics, or external systems;
+- `PortfolioDecisionBackend` for combining several sources while preserving provenance.
 
-- `FiniteDomainDecisionBackend` — deterministic finite-domain enumeration with stable pagination;
-- `HumanDecisionBackend` — structured human proposal packets;
-- `CallbackDecisionBackend` — provider-neutral callback for heuristics, models, or external systems;
-- `PortfolioDecisionBackend` — combines and deduplicates several proposal sources;
-- `DecisionBackendRegistry` — explicit backend registry and capability routing.
+Budgets can limit candidates, combinations, declared cost, and latency. Candidate activation is all-or-nothing: AASM stages the entire model, checks it, and commits it once.
 
-Candidate lifecycle is durable:
+A callback timeout limits how long the caller waits. It is **not** a security sandbox. Run untrusted callback code in a separate process or isolation boundary.
 
-```text
-PROPOSED -> ADMISSIBLE | REJECTED -> SELECTED -> ACTIVATED -> SUPERSEDED
-```
-
-Before selection or activation, AASM revalidates the candidate against current canonical state. Scores never override feasibility.
-
-See [`docs/DECISION_BACKENDS.md`](docs/DECISION_BACKENDS.md).
+See [Decision Backends](docs/DECISION_BACKENDS.md).
 
 ---
 
-## Formal assurance
+## Profiles and packages
 
-v0.24 adds a separate assurance layer around learned machine knowledge.
+AASM keeps use-case meaning outside the core runtime.
 
-- `CertificateRecord` fingerprints exactly what is being certified;
-- `ProjectionCertificateVerifier` independently checks that a certificate covers the current learned-constraint projection;
-- `DetachedDigestVerifier` verifies external artifacts by SHA-256;
-- verified certificates can gate explicit promotion of a soft constraint to hard;
-- `check_history()` verifies durable event-history properties;
-- `minimize_conflict_core()` supports greedy irreducible and exact-bounded causal-core reduction through an explicit `ConflictOracle`.
+A profile can define:
 
-AASM can verify machine-level coverage and provenance. It does not manufacture domain truth: a valid digest does not prove a simulation is physically accurate, and a formally covered constraint does not make bad evidence good.
+- the decisions meaningful to a domain;
+- persistent obligations;
+- evidence requirements;
+- fairness policy;
+- adapters and validation contracts;
+- migration rules between profile versions.
 
-See [`docs/FORMAL_ASSURANCE.md`](docs/FORMAL_ASSURANCE.md).
+This lets the same kernel govern software work, investigations, laboratory procedures, operations, field studies, robotics workflows, or other structured activity without hard-coding one ontology.
+
+Profiles do not silently rewrite themselves. A contract change requires a new version, a new fingerprint, conformance checks, an explicit migration, and authorized activation.
+
+See [Profile Packages](docs/PROFILE_PACKAGES.md) and the [Extension Contract](docs/EXTENSION_CONTRACT.md).
 
 ---
 
-## Observability
+## Assurance and replay verification
 
-v0.25 exposes generic machine projections through:
+`engine.check_durable_history()` replays the authoritative event stream and compares the reconstructed snapshot with persisted state.
+
+The verifier checks, among other things:
+
+- contiguous event sequence and unique event identities;
+- machine and state continuity;
+- legal transitions and terminal-state behavior;
+- exact replay-versus-persistence equality;
+- calculus invariants and active locks;
+- profile fingerprints;
+- unresolved mandatory obligations at completion;
+- certificate coverage for active hard constraints.
+
+The repository also runs bounded TLA+ and Promela/SPIN models. Those models check selected control properties such as staged certification, atomic candidate activation, restart preservation, safe completion, and bounded fairness. They are useful formal evidence, but they are not a proof that every adapter, external service, measurement, or domain model is correct.
+
+See [Formal Assurance](docs/FORMAL_ASSURANCE.md) and [`formal/`](formal/).
+
+---
+
+## Inspecting a machine
 
 ```python
 engine.inspect_machine("summary")
 engine.inspect_machine("decisions")
 engine.inspect_machine("obligations")
 engine.inspect_machine("evidence")
+engine.inspect_machine("causal")
 engine.inspect_machine("conflicts")
 engine.inspect_machine("fairness")
 engine.inspect_machine("packages")
@@ -253,71 +318,85 @@ engine.inspect_machine("candidates")
 engine.inspect_machine("assurance")
 ```
 
-The built-in views include:
+The causal graph connects decisions, obligations, evidence, locks, conflicts, explanations, constraints, certificates, verifications, and candidate models. Every edge endpoint is represented in the graph, so consumers do not receive dangling references.
 
-- Decision Graph;
-- Obligation Graph;
-- Evidence Graph;
-- conflict/backjump timeline;
-- search-restart and profile/candidate/assurance event timeline;
-- fairness debt;
-- profile binding/migration history;
-- candidate backend history;
-- certificate/history-check/minimization summary.
-
-These views describe AASM objects rather than a specific industry or workflow.
-
-See [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md).
+See [Observability](docs/OBSERVABILITY.md).
 
 ---
 
-## Optional agent topology
+## Where AASM fits
 
-Planner / Builder / Verifier remains optional.
+AASM is useful when the work matters enough that “the model probably remembers” is not an acceptable control strategy.
 
-AASM does **not** require:
+Common fits include:
 
-- one LLM provider;
-- OpenAI or Codex;
-- Planner / Builder / Verifier;
-- SAT or SMT;
-- source-code repositories;
-- one evidence ontology;
-- one user interface;
-- one execution topology.
+- long-running coding or infrastructure agents;
+- multi-agent planning and execution;
+- experiments and research procedures;
+- operations and incident response;
+- controlled external effects;
+- human-in-the-loop workflows;
+- replayable investigations;
+- domain systems that need explicit obligations, evidence, and recovery.
 
-Packages and decision backends are extension contracts, not kernel assumptions.
-
----
-
-## Safety and correctness boundary
-
-AASM is experimental software. It strengthens execution governance, provenance, replay, and machine-level assurance; it does not automatically certify domain correctness or safety.
-
-External effects remain behind explicit effect authorization and reconciliation. Model output is proposal data. Human or model confidence does not bypass evidence contracts, learned hard constraints, profile boundaries, or authority policy.
+AASM does not require one model provider, one agent role layout, SAT/SMT, Planner/Builder/Verifier, source-code repositories, or a particular user interface.
 
 ---
 
-## Documentation
+## What AASM does not guarantee
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- [`docs/FORMAL_CALCULUS.md`](docs/FORMAL_CALCULUS.md)
-- [`docs/PROFILE_PACKAGES.md`](docs/PROFILE_PACKAGES.md)
-- [`docs/EXTENSION_CONTRACT.md`](docs/EXTENSION_CONTRACT.md)
-- [`docs/DECISION_BACKENDS.md`](docs/DECISION_BACKENDS.md)
-- [`docs/FORMAL_ASSURANCE.md`](docs/FORMAL_ASSURANCE.md)
-- [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md)
-- [`ROADMAP.md`](ROADMAP.md)
-- [`CHANGELOG.md`](CHANGELOG.md)
+AASM strengthens control, replay, provenance, and machine-level assurance. It does not manufacture truth.
 
-Release notes: [`v0.21`](docs/RELEASE_0.21.md) · [`v0.22`](docs/RELEASE_0.22.md) · [`v0.23`](docs/RELEASE_0.23.md) · [`v0.24`](docs/RELEASE_0.24.md) · [`v0.25`](docs/RELEASE_0.25.md)
+A verified certificate may prove that a particular artifact or constraint matches what was checked. It does not automatically prove that:
+
+- a scientific model is physically accurate;
+- a sensor was calibrated;
+- a human report was honest;
+- a legal interpretation is correct;
+- an external service returned the truth;
+- an adapter is safe to execute.
+
+AASM is experimental software. Use independent domain validation and appropriate safety controls for consequential systems.
+
+---
+
+## Runtime and protocol versions
+
+The Python package and current runtime are **v0.25.1**.
+
+The remote server still reports the stable compatibility protocol as:
+
+```text
+aasm.remote.v1 / 0.19.0
+```
+
+That protocol number is intentionally separate from the package/runtime release number.
+
+---
+
+## Documentation by audience
+
+| Start here when you are… | Read |
+|---|---|
+| New to AASM | [Use Cases](docs/USE_CASES.md), [Durable Runtime](docs/DURABLE_RUNTIME.md), and the examples |
+| Designing an agent system | [Architecture](docs/ARCHITECTURE.md), [Formal Calculus](docs/FORMAL_CALCULUS.md), [Decision Backends](docs/DECISION_BACKENDS.md) |
+| Building a domain package | [Profile Packages](docs/PROFILE_PACKAGES.md), [Extension Contract](docs/EXTENSION_CONTRACT.md) |
+| Reviewing correctness | [Formal Assurance](docs/FORMAL_ASSURANCE.md), [`formal/`](formal/), [Replay and Forks](docs/REPLAY_FORK.md) |
+| Operating workers or services | [Distributed Workers](docs/DISTRIBUTED_WORKERS.md), [Mission Controls](docs/MISSION_CONTROLS_OBSERVABILITY.md), [Remote Execution](docs/REMOTE_EXECUTION.md) |
+| Integrating external actions | [Effect System](docs/EFFECT_SYSTEM.md), [Provider Adapters](docs/PROVIDER_ADAPTERS_ARTIFACTS_CONTROLS.md) |
+
+Additional project documents:
+
+[Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Support](SUPPORT.md)
 
 ---
 
 ## Contributing
 
-AASM is an early open-source project. Issues, tests, package designs, backend implementations, formal models, documentation, examples, and careful API review are welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+AASM is an early open-source project. Clear bug reports, adversarial tests, backend implementations, profile packages, formal-model improvements, examples, and documentation corrections are welcome.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+MIT — see [LICENSE](LICENSE).
