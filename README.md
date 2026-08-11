@@ -12,11 +12,27 @@ AASM keeps the official state of a job outside the language model. Models may su
 [![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.25.1%20experimental-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.25.2%20experimental-orange)](ROADMAP.md)
 
-[Get started](#five-minute-start) · [Download ZIP](https://github.com/halthinks/AASM/archive/refs/heads/main.zip) · [See examples](examples/) · [Read the architecture](docs/ARCHITECTURE.md)
+[Get started](#five-minute-start) · [Adoption contract](#canonical-adoption-surface) · [Roadmap](ROADMAP.md) · [Download ZIP](https://github.com/halthinks/AASM/archive/refs/heads/main.zip) · [Examples](examples/)
 
 </div>
+
+---
+
+## Current release and adoption program
+
+| Item | Current state |
+|---|---|
+| **Package/runtime** | **v0.25.2** |
+| **Project status** | Experimental |
+| **Completed adoption step** | Canonical supported API and implementation contract |
+| **Next release** | **v0.26.0 — Research Synthesis Hero Stack** |
+| **Remote compatibility protocol** | `aasm.remote.v1 / 0.19.0` |
+
+The immediate roadmap is no longer “add another architecture layer.” It is to make the existing runtime visible, runnable, distributable, and operable: reference application → one-command local stack → clean distribution and runbooks → thin framework adapter.
+
+See the [formal release-by-release implementation plan](ROADMAP.md).
 
 ---
 
@@ -109,6 +125,8 @@ The important boundary is that proposal and authority are separate. A model, heu
 
 AASM requires Python 3.11 or newer.
 
+> **Distribution status:** PyPI publication is an adoption-roadmap deliverable. The current supported install path is the repository checkout below; editable installation remains the contributor path.
+
 ```bash
 git clone https://github.com/halthinks/AASM.git
 cd AASM
@@ -177,6 +195,48 @@ The CLI is available after installation:
 ```bash
 aasm --help
 ```
+
+---
+
+## Canonical adoption surface
+
+AASM has many capabilities, but adopters should not have to guess which path is supported. v0.25.2 defines one machine-readable golden path over the existing runtime—without adding a wrapper runtime, second reducer, duplicate store, or alternate authority mechanism.
+
+Inspect it from Python:
+
+```python
+from aasm import public_api_contract, validate_public_api_contract
+
+contract = public_api_contract()
+report = validate_public_api_contract()
+assert report["valid"]
+```
+
+Inspect it from the CLI:
+
+```bash
+aasm adoption-contract
+```
+
+Or from the HTTP runtime:
+
+```text
+GET /adoption-contract
+```
+
+The contract identifies:
+
+- supported top-level imports;
+- supported `AASMEngine` methods;
+- supported CLI commands;
+- supported inspection surfaces;
+- supported HTTP endpoints;
+- package/runtime and remote-protocol identity;
+- what `SUPPORTED`, `EXPERIMENTAL`, and `INTERNAL` mean before 1.0.
+
+Reference applications, Control Center additions, runbooks, and framework adapters must use this path. A feature that works only by mutating snapshots privately, writing the database directly, or running a parallel orchestration loop is not an accepted AASM adoption path.
+
+See [Architecture: Canonical adoption surface](docs/ARCHITECTURE.md#8-canonical-adoption-surface).
 
 ---
 
@@ -362,7 +422,7 @@ AASM is experimental software. Use independent domain validation and appropriate
 
 ## Runtime and protocol versions
 
-The Python package and current runtime are **v0.25.1**.
+The Python package and current runtime are **v0.25.2**.
 
 The remote server still reports the stable compatibility protocol as:
 
@@ -372,14 +432,17 @@ aasm.remote.v1 / 0.19.0
 
 That protocol number is intentionally separate from the package/runtime release number.
 
+The next planned runtime release is **v0.26.0 — Research Synthesis Hero Stack**. See the [Roadmap](ROADMAP.md) for its exact work packages and exit gate.
+
 ---
 
 ## Documentation by audience
 
 | Start here when you are… | Read |
 |---|---|
-| New to AASM | [Use Cases](docs/USE_CASES.md), [Durable Runtime](docs/DURABLE_RUNTIME.md), and the examples |
-| Designing an agent system | [Architecture](docs/ARCHITECTURE.md), [Formal Calculus](docs/FORMAL_CALCULUS.md), [Decision Backends](docs/DECISION_BACKENDS.md) |
+| New to AASM | This README, [Use Cases](docs/USE_CASES.md), and the examples |
+| Evaluating adoption | [Roadmap](ROADMAP.md) and [Architecture](docs/ARCHITECTURE.md) |
+| Designing an agent system | [Formal Calculus](docs/FORMAL_CALCULUS.md), [Decision Backends](docs/DECISION_BACKENDS.md), [Durable Runtime](docs/DURABLE_RUNTIME.md) |
 | Building a domain package | [Profile Packages](docs/PROFILE_PACKAGES.md), [Extension Contract](docs/EXTENSION_CONTRACT.md) |
 | Reviewing correctness | [Formal Assurance](docs/FORMAL_ASSURANCE.md), [`formal/`](formal/), [Replay and Forks](docs/REPLAY_FORK.md) |
 | Operating workers or services | [Distributed Workers](docs/DISTRIBUTED_WORKERS.md), [Mission Controls](docs/MISSION_CONTROLS_OBSERVABILITY.md), [Remote Execution](docs/REMOTE_EXECUTION.md) |
