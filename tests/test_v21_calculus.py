@@ -145,8 +145,23 @@ def _conflicted_engine(store=None):
         certificate={"type": "reproduction", "test": "integration"},
     ))
     learned = engine.learn_constraint("X-schema", "LC-schema")
-    assert learned["strength"] == "HARD"
+    assert learned["strength"] == "SOFT"
+    assert learned["assurance_status"] == "CERTIFICATE_REQUIRED"
+    engine.register_projection_certificate("LC-schema", certificate_id="CERT-schema")
+    verification = engine.verify_projection_certificate("CERT-schema")
+    assert verification["valid"] is True
+    promoted = engine.promote_constraint_hard("LC-schema", "CERT-schema")
+    assert promoted["strength"] == "HARD"
     return engine
+
+
+def test_strict_assurance_rejects_any_uncertified_hard_commit():
+    engine = _conflicted_engine()
+    state = engine.calculus_report()
+    state["constraints"]["LC-schema"].pop("certificate_id")
+    with pytest.raises(ValueError, match="UNCERTIFIED_HARD_CONSTRAINT"):
+        engine._commit_calculus(state, "attempted assurance bypass")
+    assert engine.calculus_report()["constraints"]["LC-schema"]["certificate_id"] == "CERT-schema"
 
 
 def test_conflict_learning_and_graph_backjump_preserve_unrelated_later_work():
@@ -232,7 +247,6 @@ def test_only_authoritative_planner_can_recover_when_pbv_is_configured():
         engine.planner_recover(RecoveryDecision("builder", "BACKJUMP", "C-schema", reason="not authorized"))
     result = engine.planner_recover(RecoveryDecision("planner", "BACKJUMP", "C-schema", reason="validated contradiction"))
     assert result["backjump"]["pivot_decision_id"] == "D-db"
-
 
 
 def test_superseding_parent_suspends_active_dependent_decisions():
