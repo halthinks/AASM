@@ -1,3 +1,9 @@
+from copy import deepcopy as _deepcopy
+
+__version__ = "0.25.2"
+REMOTE_PROTOCOL_NAME = "aasm.remote.v1"
+REMOTE_PROTOCOL_VERSION = "0.19.0"
+
 from .runtime_v25 import AASMEngine, default_profile_registry
 from .model import MachineState, ProblemSpec, TaskEnvelope, Proposal, Result, CapabilitySet
 from .agents import AASMAgent, FunctionAgent
@@ -86,4 +92,153 @@ from .evidence import EvidenceRecord, EvidenceLedger
 from .resources import ResourceRecord, TaskDemand, Assignment, ScheduleResult
 from .scheduler import CapabilityScheduler
 
-__all__ = [name for name in globals() if not name.startswith("_")]
+SUPPORTED_PUBLIC_IMPORTS = [
+    "__version__",
+    "AASMEngine",
+    "ProblemSpec",
+    "MachineState",
+    "DecisionRecord",
+    "ObligationRecord",
+    "EvidenceRecord",
+    "ConflictRecord",
+    "ExplanationRecord",
+    "RecoveryDecision",
+    "CandidateModel",
+    "BackendBudget",
+    "AssurancePolicy",
+    "CertificateRecord",
+    "MemoryStore",
+    "SQLiteStore",
+    "PostgresStore",
+]
+
+SUPPORTED_ENGINE_METHODS = [
+    "register_decision",
+    "activate_decision",
+    "register_obligation",
+    "enable_obligation",
+    "set_obligation_status",
+    "add_evidence",
+    "raise_conflict",
+    "register_explanation",
+    "learn_constraint",
+    "register_projection_certificate",
+    "verify_projection_certificate",
+    "promote_constraint_hard",
+    "generate_candidate_batch",
+    "select_candidate",
+    "activate_candidate",
+    "inspect_machine",
+    "check_durable_history",
+    "backjump_conflict",
+    "restart_search",
+    "replay",
+    "fork",
+]
+
+SUPPORTED_CLI_COMMANDS = [
+    "adoption-contract",
+    "demo",
+    "inspect",
+    "history-check",
+    "candidate-generate",
+    "candidate-select",
+    "candidate-activate",
+    "assurance",
+]
+
+SUPPORTED_INSPECTION_SURFACES = [
+    "summary",
+    "decisions",
+    "obligations",
+    "evidence",
+    "causal",
+    "conflicts",
+    "fairness",
+    "packages",
+    "candidates",
+    "assurance",
+    "calculus",
+    "profile",
+]
+
+PUBLIC_API_CONTRACT = {
+    "contract_id": "aasm.adoption.v1",
+    "schema_version": 1,
+    "contract_version": "0.1.0",
+    "runtime_version": __version__,
+    "project_status": "EXPERIMENTAL",
+    "remote_protocol": {
+        "name": REMOTE_PROTOCOL_NAME,
+        "version": REMOTE_PROTOCOL_VERSION,
+    },
+    "support_policy": {
+        "SUPPORTED": (
+            "Documented golden-path surface. Breaking changes require an explicit "
+            "changelog entry and migration or deprecation guidance when practical."
+        ),
+        "EXPERIMENTAL": (
+            "Available for evaluation but may change between pre-1.0 releases."
+        ),
+        "INTERNAL": "No compatibility promise; applications should not depend on it.",
+    },
+    "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
+    "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
+    "supported_cli_commands": SUPPORTED_CLI_COMMANDS,
+    "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
+    "supported_http_endpoints": [
+        "/health",
+        "/adoption-contract",
+        "/v1/machines/{machine_id}/inspect/{surface}",
+        "/v1/machines/{machine_id}/history-check",
+    ],
+    "golden_path": [
+        "create machine",
+        "register decisions and obligations",
+        "record evidence",
+        "raise and explain conflicts",
+        "learn soft constraints and certify hard knowledge",
+        "activate complete candidates atomically",
+        "inspect, replay, backjump, restart, or fork",
+    ],
+    "implementation_rule": (
+        "Reference applications, adapters, and Control Center work must use the "
+        "existing event/reducer runtime and this public surface rather than create "
+        "a parallel authority or persistence path."
+    ),
+}
+
+
+def public_api_contract() -> dict:
+    """Return the machine-readable canonical adoption surface."""
+
+    return _deepcopy(PUBLIC_API_CONTRACT)
+
+
+def validate_public_api_contract() -> dict:
+    """Verify that every supported import and engine method still exists."""
+
+    errors: list[str] = []
+    missing_imports = [name for name in SUPPORTED_PUBLIC_IMPORTS if name not in globals()]
+    missing_methods = [
+        name for name in SUPPORTED_ENGINE_METHODS if not callable(getattr(AASMEngine, name, None))
+    ]
+    if missing_imports:
+        errors.append(f"missing supported imports: {missing_imports}")
+    if missing_methods:
+        errors.append(f"missing supported AASMEngine methods: {missing_methods}")
+    if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
+        errors.append("public API contract runtime_version does not match __version__")
+    if PUBLIC_API_CONTRACT.get("remote_protocol") != {
+        "name": REMOTE_PROTOCOL_NAME,
+        "version": REMOTE_PROTOCOL_VERSION,
+    }:
+        errors.append("public API contract remote protocol does not match package constants")
+    return {
+        "valid": not errors,
+        "errors": errors,
+        "contract": public_api_contract(),
+    }
+
+
+__all__ = ["__version__", *[name for name in globals() if not name.startswith("_")]]
