@@ -1,3 +1,4 @@
+./.dockerignore
 ./.github/ISSUE_TEMPLATE/bug.yml
 ./.github/ISSUE_TEMPLATE/config.yml
 ./.github/ISSUE_TEMPLATE/docs.yml
@@ -11,6 +12,7 @@
 ./CHANGELOG_0.18_AND_EARLIER.md
 ./CODE_OF_CONDUCT.md
 ./CONTRIBUTING.md
+./Dockerfile
 ./FILE_LIST.txt
 ./GOVERNANCE.md
 ./LICENSE
@@ -21,6 +23,7 @@
 ./SKILL.md
 ./SUPPORT.md
 ./WHY_AASM.md
+./compose.yaml
 ./docs/ADAPTIVE_MODEL_ROUTING.md
 ./docs/ARCHITECTURE.md
 ./docs/AUTOMATIC_CHECKPOINTS_FLEET_CONTROL.md
@@ -41,6 +44,7 @@
 ./docs/FORMAL_CALCULUS.md
 ./docs/GOVERNANCE_ECONOMICS.md
 ./docs/INFORMATION_CHANGE_CHECKPOINTS.md
+./docs/LOCAL_FULL_STACK.md
 ./docs/MASSIVE_COLLABORATION.md
 ./docs/MISSION_CONTROLS_OBSERVABILITY.md
 ./docs/MODEL_ECONOMICS.md
@@ -55,6 +59,7 @@
 ./docs/RELEASE_0.24.md
 ./docs/RELEASE_0.25.md
 ./docs/RELEASE_0.26.md
+./docs/RELEASE_0.27.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
 ./docs/RESEARCH_SYNTHESIS_DEMO.md
@@ -180,6 +185,7 @@
 ./src/aasm/cli_v21.py
 ./src/aasm/cli_v22.py
 ./src/aasm/cli_v25.py
+./src/aasm/cli_v27.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -188,10 +194,12 @@
 ./src/aasm/control_center.py
 ./src/aasm/control_center_v19.py
 ./src/aasm/control_center_v26.py
+./src/aasm/control_center_v27.py
 ./src/aasm/core/__init__.py
 ./src/aasm/core/reducer.py
 ./src/aasm/decision_backends.py
 ./src/aasm/definitions.py
+./src/aasm/demo_stack.py
 ./src/aasm/domain_adapters.py
 ./src/aasm/economics.py
 ./src/aasm/effects.py
@@ -263,6 +271,7 @@
 ./src/aasm/server_v21.py
 ./src/aasm/server_v22.py
 ./src/aasm/server_v25.py
+./src/aasm/server_v27.py
 ./src/aasm/supervisor_adapters.py
 ./src/aasm/team_protocol.py
 ./src/aasm/worker_loop.py
@@ -305,4 +314,5 @@
 ./tests/test_v25_observability.py
 ./tests/test_v25_remote_observability.py
 ./tests/test_v26_research_synthesis.py
+./tests/test_v27_local_stack.py
 ./tests/test_workers_leases.py
