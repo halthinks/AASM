@@ -1,6 +1,6 @@
 # AASM v0.27.0 — One-Command Local Full Stack
 
-AASM v0.27.0 turns the v0.26 Research Synthesis Hero Stack into a locally operable application.
+AASM v0.27.0 turns the v0.26 Research Synthesis Hero Stack into a locally operable application while preserving the **existing event/reducer authority path**.
 
 ## User outcome
 
