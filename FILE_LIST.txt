@@ -99,6 +99,11 @@
 ./profiles/evolve/machine.json
 ./profiles/evolve/package.json
 ./profiles/evolve/profile.json
+./profiles/expert_swarm.yaml
+./profiles/hierarchical_team.yaml
+./profiles/human_in_loop.yaml
+./profiles/planner_builder.yaml
+./profiles/quorum_governance.yaml
 ./profiles/research/README.md
 ./profiles/research/evidence-policy.json
 ./profiles/research/fairness-policy.json
@@ -106,11 +111,6 @@
 ./profiles/research/model-routing.json
 ./profiles/research/package.json
 ./profiles/research/profile.json
-./profiles/expert_swarm.yaml
-./profiles/hierarchical_team.yaml
-./profiles/human_in_loop.yaml
-./profiles/planner_builder.yaml
-./profiles/quorum_governance.yaml
 ./profiles/single_agent.yaml
 ./pyproject.toml
 ./schemas/agent-message.schema.json
