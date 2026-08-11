@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.25.0 / experimental**. This roadmap describes architectural direction, not guaranteed delivery dates.
+AASM is currently **v0.25.1 / experimental**. This roadmap describes architectural direction, not guaranteed delivery dates.
 
 ## Delivered foundation
 
@@ -48,12 +48,12 @@ AASM is currently **v0.25.0 / experimental**. This roadmap describes architectur
 
 ### v0.23 — Decision backend ecosystem
 
-- ✅ deterministic finite-domain reference backend with stable enumeration and continuation
+- ✅ deterministic finite-domain backend with incremental continuation
 - ✅ human proposal backend
 - ✅ provider-neutral callback/model backend
-- ✅ portfolio backend with candidate deduplication and provenance
-- ✅ backend capability, budget, usage, diagnostic, and batch contracts
-- ✅ durable candidate lifecycle, revalidation, selection, and activation
+- ✅ portfolio backend with candidate deduplication and multi-source provenance
+- ✅ enforced candidate, combination, cost, and latency budgets
+- ✅ durable candidate lifecycle, revalidation, selection, and atomic activation
 - ✅ backend registry and capability routing
 
 ### v0.24 — Formal assurance
@@ -61,9 +61,11 @@ AASM is currently **v0.25.0 / experimental**. This roadmap describes architectur
 - ✅ durable certificates and independent verification results
 - ✅ exact learned-constraint projection certification
 - ✅ detached SHA-256 artifact verification
-- ✅ certificate-gated hard-constraint promotion
-- ✅ durable event-history property checker
+- ✅ globally enforced certificate-gated hard knowledge
+- ✅ reducer-based durable-history replay verification
 - ✅ greedy irreducible and exact-bounded conflict-core minimization
+- ✅ immutable successor explanations for adopted minimized cores
+- ✅ bounded TLA+ and Promela/SPIN assurance models
 - ✅ backward-compatible assurance state persistence
 
 ### v0.25 — Generic observability
@@ -71,12 +73,23 @@ AASM is currently **v0.25.0 / experimental**. This roadmap describes architectur
 - ✅ Decision Graph projection
 - ✅ Obligation Graph projection
 - ✅ Evidence Graph projection
-- ✅ conflict/backjump and event-derived restart/profile/candidate/assurance timelines
-- ✅ fairness-debt view
+- ✅ closed heterogeneous causal graph
+- ✅ typed conflict, backjump, restart, profile, candidate, and assurance timelines
+- ✅ actionable fairness-debt view with thresholds and lock reasons
 - ✅ profile/package binding and migration history
-- ✅ candidate backend summary
-- ✅ assurance summary
-- ✅ generic `inspect_machine()` and CLI inspection surfaces
+- ✅ candidate backend and assurance summaries
+- ✅ canonical-store refresh for every inspection surface
+- ✅ generic `inspect_machine()` CLI and authenticated HTTP surfaces
+
+### v0.25.1 — Stabilization
+
+- ✅ closed inherited hard-constraint certification bypasses
+- ✅ all-or-nothing candidate activation
+- ✅ exact replay-versus-persistence comparison
+- ✅ conflict-minimization root and budget correctness
+- ✅ backend timeout and provenance diagnostics
+- ✅ runtime-to-formal contract checks and complete formal workflow triggers
+- ✅ human-first README and clearer architecture documentation
 
 ## Next architecture layer
 
@@ -97,12 +110,13 @@ AASM is currently **v0.25.0 / experimental**. This roadmap describes architectur
 - hierarchical fairness and obligation inheritance
 - portfolio search across independently represented abstraction layers
 
-### v0.28 — Deeper verification and visualization
+### v0.28 — Deeper production conformance and visualization
 
-- expanded TLA+/Promela models for effects, locks, fairness, profile migration, and candidate lifecycle
-- model-checking CI as an optional release gate
+- trace-conformance harness between the Python reducer and formal abstraction
+- expanded formal coverage for effects, profile migration, leases, and distributed ownership
 - richer Control Center graph/timeline views over the generic observability API
 - signed history-check reports and externally verifiable state snapshots
+- generated/property-based command-sequence testing across live execution and replay
 
 ## Continuing control-plane work
 
