@@ -1,0 +1,23 @@
+{
+  "artifact": [
+    "resolution",
+    "provenance_check"
+  ],
+  "causal_assessment": [
+    "study_result",
+    "resolution"
+  ],
+  "contradiction_resolution": [
+    "contradiction",
+    "resolution"
+  ],
+  "evidence_extraction": [
+    "study_result"
+  ],
+  "provenance_audit": [
+    "provenance_check"
+  ],
+  "source_review": [
+    "provenance_check"
+  ]
+}
