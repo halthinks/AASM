@@ -1,11 +1,46 @@
 from __future__ import annotations
 
-from aasm import AASMEngine, DecisionRecord, MemoryStore, ObligationRecord, ProblemSpec
+from aasm import (
+    AASMEngine,
+    DecisionRecord,
+    MemoryStore,
+    ObligationRecord,
+    ProblemSpec,
+    PUBLIC_API_CONTRACT,
+    __version__,
+    validate_public_api_contract,
+)
 
 
 def _assert_graph_is_closed(graph):
     node_ids = {node["id"] for node in graph["nodes"]}
     assert all(edge["src"] in node_ids and edge["dst"] in node_ids for edge in graph["edges"])
+
+
+def test_adoption_contract_validates_existing_golden_path():
+    report = validate_public_api_contract()
+    assert report["valid"] is True
+    assert report["errors"] == []
+    assert report["contract"]["contract_id"] == "aasm.adoption.v1"
+    assert report["contract"]["runtime_version"] == __version__ == "0.25.2"
+    assert PUBLIC_API_CONTRACT["remote_protocol"] == {
+        "name": "aasm.remote.v1",
+        "version": "0.19.0",
+    }
+    required_methods = {
+        "register_decision",
+        "register_obligation",
+        "add_evidence",
+        "raise_conflict",
+        "backjump_conflict",
+        "restart_search",
+        "inspect_machine",
+        "replay",
+        "fork",
+    }
+    assert required_methods.issubset(
+        set(report["contract"]["supported_engine_methods"])
+    )
 
 
 def test_observability_report_exposes_closed_generic_graphs():
