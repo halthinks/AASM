@@ -23,6 +23,14 @@ MAX_ARTIFACT_PREVIEW_CHARS = _base.MAX_ARTIFACT_PREVIEW_CHARS
 MAX_BODY_BYTES = _base.MAX_BODY_BYTES
 
 
+def _history_engine(machine_id: str, store, engine: AASMEngine) -> AASMEngine:
+    """Ensure durable-history verification receives the authoritative event stream."""
+
+    if getattr(engine, "_history_loaded", True):
+        return engine
+    return AASMEngine.resume(machine_id, store, load_history=True)
+
+
 def make_handler(store_target: str, token: str | None = None, provisioners=None, artifacts=None):
     base_handler = _base.make_handler(store_target, token, provisioners, artifacts)
 
@@ -69,7 +77,9 @@ def make_handler(store_target: str, token: str | None = None, provisioners=None,
                 elif resource == ["assurance"]:
                     payload = engine.assurance_report()
                 elif resource == ["history-check"]:
-                    payload = engine.check_durable_history(persist=False)
+                    payload = _history_engine(machine_id, store, engine).check_durable_history(
+                        persist=False
+                    )
                 else:
                     return self._json(404, {"error": "not_found"})
             except Exception as exc:
@@ -108,7 +118,9 @@ def make_handler(store_target: str, token: str | None = None, provisioners=None,
                     elif len(resource) == 3 and resource[0] == "candidates" and resource[2] == "activate":
                         out = engine.activate_candidate(resource[1])
                     elif resource == ["history-check"]:
-                        out = engine.check_durable_history(persist=bool(payload.get("persist", True)))
+                        out = _history_engine(machine_id, store, engine).check_durable_history(
+                            persist=bool(payload.get("persist", True))
+                        )
                     else:
                         return self._json(404, {"error": "not_found"})
                 finally:
