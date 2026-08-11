@@ -21,7 +21,7 @@ def make_handler(store_target: str, token: str | None = None, provisioners=None,
     base_handler = _base.make_handler(store_target, token, provisioners, artifacts)
 
     class Handler(base_handler):
-        server_version = "AASM/0.25"
+        server_version = "AASM/0.25.1"
 
         def _v25_machine_resource(self):
             parsed = urlparse(self.path)
@@ -38,7 +38,7 @@ def make_handler(store_target: str, token: str | None = None, provisioners=None,
                         "ok": True,
                         "protocol": "aasm.remote.v1",
                         "version": "0.19.0",
-                        "runtime_version": "0.25.0",
+                        "runtime_version": "0.25.1",
                     },
                 )
             parsed = self._v25_machine_resource()
