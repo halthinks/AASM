@@ -37,7 +37,8 @@ def make_handler(store_target: str, token: str | None = None, provisioners=None,
                     {
                         "ok": True,
                         "protocol": "aasm.remote.v1",
-                        "version": "0.25.0",
+                        "version": "0.19.0",
+                        "runtime_version": "0.25.0",
                     },
                 )
             parsed = self._v25_machine_resource()
