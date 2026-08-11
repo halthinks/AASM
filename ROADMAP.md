@@ -1,14 +1,14 @@
 # AASM Roadmap
 
-AASM is currently **v0.27.0 / experimental**.
+AASM is currently **v0.28.0 / experimental**.
 
-The current program is **Adoption and Operability**: make the deterministic kernel, formal calculus, assurance system, and observability understandable, runnable, distributable, and operable by people who did not build them.
+The current program is **Adoption and Operability**: make the deterministic kernel, formal calculus, assurance system, observability, and distributed runtime understandable, runnable, distributable, and operable by people who did not build them.
 
 This roadmap is an execution contract. Every release has an observable user outcome and an exit gate.
 
 ## Program rule: extend the working path
 
-Adoption work must use the implementation proven through v0.27.0:
+Adoption work must use the implementation proven through v0.28.0:
 
 ```text
 public AASM API
@@ -28,84 +28,9 @@ The program must not create a parallel runtime, alternate authority path, duplic
 |---|---|---|
 | **v0.25.2** | Canonical adoption API and implementation contract | Completed |
 | **v0.26.0** | Research Synthesis Hero Stack | Completed |
-| **v0.27.0** | One-command PostgreSQL, worker, runtime, and Control Center stack | **Current — implemented** |
-| **v0.28.0** | Clean distribution and tested operator runbooks | Next |
-| **v0.29.0** | Thin LangGraph adapter and incremental-adoption example | Planned |
-
----
-
-# v0.27.0 — One-Command Local Full Stack
-
-## Objective
-
-Make first contact operational rather than instructional.
-
-## Delivered topology
-
-```text
-Docker Compose
-├── PostgreSQL 17
-├── canonical bootstrap service
-├── AASM HTTP runtime
-├── existing Control Center
-├── one default deterministic worker
-├── optional second worker
-├── live setup reference machine
-└── completed reference machine
-```
-
-## Delivered commands
-
-```bash
-# Start everything
-docker compose up --build
-
-# Inspect stack state
-docker compose run --rm stackctl status
-
-# Non-destructive reset to a fresh canonical machine
-docker compose run --rm stackctl fresh
-
-# Create a completed trajectory
-docker compose run --rm stackctl complete
-
-# Exact durable-history and replay verification
-docker compose run --rm stackctl verify --selection completed
-
-# Full readiness check
-docker compose run --rm stackctl check
-```
-
-## Delivered behavior
-
-- ✅ PostgreSQL-backed multi-process persistence;
-- ✅ one-shot bootstrap through `run_research_synthesis_demo()`;
-- ✅ live setup machine stopped before the known contradiction;
-- ✅ completed machine containing conflict learning, certificate verification, causal backjump, steering, provenance, and replay;
-- ✅ existing HTTP runtime and Control Center;
-- ✅ transparent local demo authentication while preserving the non-loopback token rule;
-- ✅ stack discovery through authenticated `GET /demo-stack`;
-- ✅ automatic Control Center selection of the current machine;
-- ✅ deterministic worker using the existing registration, heartbeat, claim, lease, telemetry, and completion APIs;
-- ✅ optional second worker through a Compose profile;
-- ✅ non-destructive `fresh` semantics that retain prior machine histories;
-- ✅ explicit destructive volume reset through Docker Compose;
-- ✅ Python/SQLite stack tests and Docker Compose smoke tests;
-- ✅ README, release, architecture, changelog, and version visibility.
-
-## Exit gate
-
-v0.27.0 is complete when:
-
-1. `docker compose up --build` starts PostgreSQL, bootstrap, runtime, and the default worker;
-2. `http://localhost:8787/` loads the existing Control Center and selects the live setup machine;
-3. the completed reference machine is immediately inspectable;
-4. the worker completes a task through the existing remote lease path;
-5. `stackctl fresh` creates a new setup machine without deleting prior history;
-6. `stackctl verify` reports a valid durable history and equal replay/persistence hashes;
-7. the optional second worker can join without changing the machine model;
-8. no service directly mutates AASM database tables or snapshots;
-9. Python 3.11–3.13, PostgreSQL, Control Center JavaScript, Compose smoke, TLA+, and SPIN gates are green.
+| **v0.27.0 — One-Command Local Full Stack** | PostgreSQL, runtime, Control Center, worker, and reference machines | Completed |
+| **v0.28.0 — Distribution and Operator Readiness** | Immutable releases, clean-wheel verification, compatibility policy, and executable runbooks | **Current — implemented** |
+| **v0.29.0 — Thin LangGraph Adapter** | Incremental adoption under an existing graph | Next |
 
 ---
 
@@ -113,62 +38,83 @@ v0.27.0 is complete when:
 
 ## Objective
 
-Make AASM dependably installable and operable under common failure conditions.
+Make AASM dependably installable from immutable artifacts and operable under common failure conditions.
 
-## Distribution work
+## Delivered distribution path
 
-- annotated release tags for the maintained release line;
-- GitHub releases with immutable source and wheel artifacts;
-- PyPI publication as `aasm-runtime`;
-- primary user path: `pip install aasm-runtime`;
-- editable contributor path clearly separated;
-- CI build, install, and smoke test against the wheel rather than only the checkout;
-- compatibility and deprecation policy linked from the README;
-- release checksums and reproducible artifact inventory.
+- ✅ package metadata and public project URLs for `aasm-runtime`;
+- ✅ wheel and source-distribution build through `python -m build`;
+- ✅ `twine check` metadata validation;
+- ✅ structural inspection of wheel and source-distribution contents;
+- ✅ clean virtual-environment installation of the built wheel;
+- ✅ installed-package smoke tests for `aasm adoption-contract` and operator runbooks;
+- ✅ generated `SHA256SUMS.txt` and `release-manifest.json`;
+- ✅ annotated release-tag map for v0.25.1 through v0.27.0;
+- ✅ automatic current annotated tag and GitHub Release creation;
+- ✅ immutable wheel, source distribution, checksum, and manifest assets;
+- ✅ credential-free PyPI Trusted Publisher job, externally gated until the PyPI project binding is activated;
+- ✅ release status visible as `aasm/release` on the exact commit.
 
-## Operator runbooks
+## Delivered operator runbooks
 
-Short imperative runbooks, each backed by an executable scenario test:
+Each procedure is both a one-page imperative document and an executable CI scenario:
 
-- recover after lease loss;
-- inject a requirement without destroying the plan;
-- inspect and act on a learned no-good;
-- operate a human approval gate with policy as data;
-- safely replay and fork a machine;
-- reconcile an `UNKNOWN` external effect without guessing;
-- diagnose a failed durable-history verification.
+- ✅ recover after lease loss;
+- ✅ inject a requirement without destroying the plan;
+- ✅ inspect and act on a learned no-good;
+- ✅ operate a human approval gate with policy as data;
+- ✅ safely replay and fork a machine;
+- ✅ reconcile an `UNKNOWN` external effect without guessing;
+- ✅ diagnose a failed durable-history verification.
 
 ## Exit gate
 
-A clean environment can install AASM without vendoring the repository, and every documented recovery procedure is exercised in CI.
+v0.28.0 is complete at the repository level when:
+
+1. Python 3.11–3.13 tests pass;
+2. PostgreSQL and Docker Compose integration pass;
+3. the built wheel installs and runs in a clean environment;
+4. wheel and source-distribution contents match the declared release;
+5. every runbook passes as an executable drill;
+6. the exact commit passes TLA+/TLC and Promela/SPIN;
+7. the annotated tag and GitHub Release contain immutable distributions, checksums, and a manifest;
+8. the README exposes the current version, install path, runbooks, compatibility boundary, and next release;
+9. no release path mutates AASM machine state outside the existing runtime.
+
+PyPI publication has one external prerequisite: the `aasm-runtime` PyPI project must trust `.github/workflows/release.yml` in the `pypi` environment. The repository-side publisher is complete and disabled unless `AASM_PUBLISH_PYPI=true` or a manual release explicitly requests publishing.
 
 ---
 
-# v0.29.0 — Incremental Framework Adoption
+# v0.29.0 — Thin LangGraph Adapter
 
 ## Objective
 
-Let an existing team keep its current orchestration framework while placing AASM underneath it as durable authority and recovery infrastructure.
+Let an existing LangGraph application retain its graph while placing AASM underneath it as the durable state, authority, conflict, and recovery substrate.
 
-## First adapter: LangGraph
+## Required adapter boundary
 
 The adapter must remain thin:
 
 1. map one LangGraph thread/run to one AASM machine;
 2. record selected decisions and results as AASM state and evidence;
 3. require AASM authorization before declared external effects;
-4. return AASM recovery outcomes to the existing graph.
-
-It must not translate every private framework object into a new ontology, create a second scheduler, or bypass the canonical adoption contract.
+4. return AASM recovery outcomes to the existing graph;
+5. use the `aasm.adoption.v1` public surface;
+6. avoid translating every framework-internal object into a new ontology;
+7. avoid creating a second scheduler or persistence layer.
 
 ## Required comparison
 
-The same task runs:
+The same controlled task runs:
 
 - once as an ordinary LangGraph workflow;
 - once with AASM underneath it.
 
-The comparison shows what was retained, invalidated, learned, replayed, and made inspectable after the same injected contradiction.
+The comparison must show what was preserved, invalidated, learned, replayed, and made inspectable after the same injected contradiction.
+
+## Exit gate
+
+An existing LangGraph application can adopt AASM incrementally without rewriting its graph or bypassing the canonical authority boundary.
 
 ---
 
@@ -178,130 +124,72 @@ The comparison shows what was retained, invalidated, learned, replayed, and made
 
 - ✅ machine-readable `aasm.adoption.v1` contract;
 - ✅ supported imports, engine methods, CLI commands, inspection surfaces, and HTTP endpoints;
-- ✅ separate package/runtime and remote-protocol identities;
-- ✅ explicit `SUPPORTED`, `EXPERIMENTAL`, and `INTERNAL` meanings;
-- ✅ rule prohibiting parallel authority, reducer, and persistence paths.
+- ✅ implementation rule prohibiting parallel authority and persistence paths.
 
 ## v0.26.0 — Research Synthesis Hero Stack
 
-- ✅ `aasm.research-synthesis@1.0.0` finished profile;
-- ✅ fixed offline synthetic corpus with SHA-256 manifest;
-- ✅ known contradiction and known corrected model;
-- ✅ Decision, Obligation, and Evidence trajectory;
-- ✅ soft learning, independent certification, and hard promotion;
-- ✅ non-chronological backjump and repeated-failure blocking;
-- ✅ unrelated work preservation;
-- ✅ mid-run requirement injection and conditional lock restoration;
-- ✅ claim-level provenance artifact;
-- ✅ exact full-history replay;
-- ✅ human-readable Control Center reasoning views;
-- ✅ empirical `WHY_AASM.md` baseline comparison.
+- ✅ finished `aasm.research-synthesis` profile;
+- ✅ verified offline corpus;
+- ✅ contradiction, learned no-good, independent certificate, hard promotion, and causal backjump;
+- ✅ unrelated-work preservation and selective steering;
+- ✅ final claim-level provenance and exact replay;
+- ✅ Decision, Obligation, Evidence, conflict, fairness, and artifact views.
+
+## v0.27.0 — One-Command Local Full Stack
+
+- ✅ `docker compose up --build`;
+- ✅ PostgreSQL-backed multi-process runtime;
+- ✅ existing Control Center and worker/lease path;
+- ✅ live and completed reference machines;
+- ✅ non-destructive fresh-machine operation;
+- ✅ Docker Compose end-to-end smoke verification.
 
 ---
 
 # Adoption scorecard
 
-The program is substantially complete when:
-
-| Measure | Gate |
-|---|---:|
-| Clone to healthy dashboard | under 5 minutes |
-| Clone to understandable completed demonstration | under 10 minutes |
-| Required external API keys | 0 |
-| Commands before first useful result | no more than 3 |
-| Reference replay | exact final snapshot/hash match |
-| Injected contradiction | visible in UI and history |
-| Learned no-good | visible and reused |
-| Backjump | causal target shown |
-| Unrelated work | demonstrably preserved |
-| Mandatory unresolved obligations at completion | 0 |
-| Fresh reset | one command and non-destructive by default |
-| Published-wheel smoke test | required in v0.28 CI |
-| Runbook scenario tests | required in v0.28 CI |
-| Incremental framework path | required in v0.29 |
-
----
-
-# Delivered technical foundation
-
-## Deterministic control plane
-
-- explicit machine state and legal transitions;
-- declarative machine definitions and structural model checking;
-- event-sourced durability, checkpoints, replay, and historical forks;
-- SQLite and PostgreSQL coordination;
-- external-effect authorization, idempotency, ownership, `UNKNOWN` outcomes, and reconciliation;
-- mission `QUIESCE`, `SUSPEND`, and `RESUME`.
-
-## Planning, evidence, and distributed execution
-
-- plan graphs, checkpoint backtracking, and DP memory;
-- claims, observations, assumptions, contradictions, invalidation, and lineage;
-- capability scheduling and resource-flow evidence;
-- workers, heartbeats, leases, expiry, reclaim, and stale-result rejection;
-- model routing, adaptive outcomes, economics, and governance budgets;
-- optional Planner / Builder / Verifier protocol;
-- selective information-change checkpoints and additive steering;
-- fleet admission, provisioning adapters, telemetry, artifacts, CLI/API, and Control Center.
-
-## Formal calculus and assurance
-
-- durable Decision, Obligation, and Evidence calculus;
-- conditional obligations and model-relative locks;
-- first-class conflicts and causal explanations;
-- guarded hard/soft learned no-goods;
-- graph-directed non-chronological backjumping;
-- knowledge-preserving restart;
-- bounded cross-model fairness;
-- profile packages, fingerprints, conformance, and migrations;
-- replaceable decision backends with budgets and atomic activation;
-- exact projection certificates and independent verification;
-- reducer-based durable-history verification;
-- conflict-core minimization;
-- bounded TLA+ and Promela/SPIN assurance models;
-- closed generic observability and causal graphs.
+| Measure | Gate | Current state |
+|---|---:|---|
+| Clone to healthy dashboard | under 5 minutes | Implemented and Compose-tested |
+| Understandable completed demonstration | under 10 minutes | Implemented |
+| Required external model/API keys | 0 | Achieved |
+| Commands before first useful result | no more than 3 | Achieved |
+| Reference replay | exact snapshot/hash match | Enforced |
+| Injected contradiction | visible in UI and history | Implemented |
+| Learned no-good | visible, certified, and reused | Implemented |
+| Causal backjump | target shown | Implemented |
+| Unrelated work | demonstrably preserved | Implemented |
+| Mandatory unresolved obligations at completion | 0 | Enforced |
+| Fresh reset | one command | Implemented |
+| Built-wheel smoke test | required in CI | Implemented |
+| GitHub release assets and checksums | automatic | Implemented |
+| Operator runbook scenario tests | required in CI | Implemented |
+| PyPI installation | Trusted Publisher binding required | Repository side ready; external binding pending |
+| Existing-framework adoption | one thin adapter | v0.29.0 |
 
 ---
 
 # Post-adoption architecture backlog
 
-The following work remains valuable, but it follows the adoption program rather than displacing it.
+These remain valuable but do not displace the adoption sequence:
 
-## Trust distribution
+- signed package/backend manifests and reproducible provenance;
+- hierarchical strategy/architecture/implementation reasoning;
+- trace conformance between Python execution and formal abstraction;
+- expanded formal coverage for effects, leases, and distributed ownership;
+- generated property-based execution/replay sequences;
+- externally verifiable signed snapshot and history reports.
 
-- signed package and backend manifests;
-- package-registry protocol separating discovery from installation and activation;
-- trust policies for profile, backend, validator, and certifier identities;
-- reproducible package build provenance;
-- migration dry-run reports.
-
-## Hierarchical reasoning
-
-- explicit strategy, architecture, implementation, and execution layers;
-- cross-layer conflict projection and backjump targets;
-- scoped learned-knowledge promotion;
-- hierarchical fairness and obligation inheritance;
-- portfolio search across abstraction layers.
-
-## Deeper production conformance
-
-- trace-conformance harness between the Python reducer and formal abstraction;
-- expanded formal coverage for effects, profile migration, leases, and distributed ownership;
-- signed history-check reports and externally verifiable snapshots;
-- generated/property-based command sequences across live execution and replay.
-
----
-
-# Non-goals for the core
+## Core non-goals
 
 AASM should not become:
 
-- a bundled LLM provider;
+- a bundled model provider;
 - a domain-specific application;
-- a package installer that downloads executable code during discovery;
 - a mandatory Planner/Builder system;
 - a mandatory SAT/SMT system;
+- a package installer that executes unknown code during discovery;
 - a monolith that forces one evidence ontology, UI, or agent topology;
 - a self-modifying package system without explicit versioning and migration.
 
-The core remains a role-agnostic, domain-neutral deterministic control plane with explicit extension contracts.
+The core remains a role-agnostic, domain-neutral deterministic control plane.

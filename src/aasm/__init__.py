@@ -1,6 +1,6 @@
 from copy import deepcopy as _deepcopy
 
-__version__ = "0.27.0"
+__version__ = "0.28.0"
 REMOTE_PROTOCOL_NAME = "aasm.remote.v1"
 REMOTE_PROTOCOL_VERSION = "0.19.0"
 
@@ -99,6 +99,12 @@ from .demo_stack import (
     bootstrap_stack, complete_stack, fresh_stack, read_stack_state,
     run_worker_cycle, select_stack_machine, stack_status, verify_stack,
 )
+from .operator_runbooks import (
+    RUNBOOK_DEFINITIONS, OperatorRunbookResult, execute_operator_runbook,
+    list_operator_runbooks, run_history_diagnosis, run_human_approval,
+    run_learned_no_good, run_lease_loss_recovery, run_replay_fork,
+    run_requirement_change, run_unknown_effect,
+)
 from .graph import PlanNode, PlanEdge, PlanGraph
 from .evidence import EvidenceRecord, EvidenceLedger
 from .resources import ResourceRecord, TaskDemand, Assignment, ScheduleResult
@@ -131,6 +137,9 @@ SUPPORTED_PUBLIC_IMPORTS = [
     "complete_stack",
     "stack_status",
     "verify_stack",
+    "OperatorRunbookResult",
+    "list_operator_runbooks",
+    "execute_operator_runbook",
 ]
 
 SUPPORTED_ENGINE_METHODS = [
@@ -161,6 +170,7 @@ SUPPORTED_CLI_COMMANDS = [
     "adoption-contract",
     "demo",
     "stack",
+    "runbook",
     "serve",
     "inspect",
     "history-check",
@@ -188,7 +198,7 @@ SUPPORTED_INSPECTION_SURFACES = [
 PUBLIC_API_CONTRACT = {
     "contract_id": "aasm.adoption.v1",
     "schema_version": 1,
-    "contract_version": "0.3.0",
+    "contract_version": "0.4.0",
     "runtime_version": __version__,
     "project_status": "EXPERIMENTAL",
     "remote_protocol": {
@@ -242,6 +252,17 @@ PUBLIC_API_CONTRACT = {
         "maintenance_entry_point": "docker compose run --rm stackctl",
         "reset_semantics": "create a fresh canonical machine and retain prior history",
     },
+    "distribution": {
+        "package": "aasm-runtime",
+        "version": __version__,
+        "release_workflow": ".github/workflows/release.yml",
+        "release_history": "release-history.json",
+        "checksums": "SHA256SUMS.txt",
+        "github_release_assets": ["wheel", "source distribution", "checksums", "manifest"],
+        "pypi_trusted_publishing": True,
+        "pypi_status": "EXTERNAL_TRUSTED_PUBLISHER_BINDING_REQUIRED",
+    },
+    "operator_runbooks": sorted(RUNBOOK_DEFINITIONS),
     "golden_path": [
         "create machine",
         "register decisions and obligations",
@@ -251,12 +272,14 @@ PUBLIC_API_CONTRACT = {
         "activate complete candidates atomically",
         "inject selective steering through the existing change-impact path",
         "operate workers through registration, heartbeat, claim, lease, telemetry, and completion",
+        "execute tested operator recovery drills",
         "inspect, replay, backjump, restart, or fork",
     ],
     "implementation_rule": (
-        "Reference applications, adapters, Control Center work, and local-stack "
-        "services must use the existing event/reducer runtime and public surface "
-        "rather than create a parallel authority or persistence path."
+        "Reference applications, adapters, Control Center work, local-stack "
+        "services, distribution tooling, and operator runbooks must use the "
+        "existing event/reducer runtime and public surface rather than create a "
+        "parallel authority or persistence path."
     ),
 }
 
@@ -268,7 +291,7 @@ def public_api_contract() -> dict:
 
 
 def validate_public_api_contract() -> dict:
-    """Verify that every supported import and engine method still exists."""
+    """Verify that every supported import, engine method, and runbook still exists."""
 
     errors: list[str] = []
     missing_imports = [name for name in SUPPORTED_PUBLIC_IMPORTS if name not in globals()]
@@ -286,6 +309,10 @@ def validate_public_api_contract() -> dict:
         "version": REMOTE_PROTOCOL_VERSION,
     }:
         errors.append("public API contract remote protocol does not match package constants")
+    if sorted(PUBLIC_API_CONTRACT.get("operator_runbooks") or []) != sorted(
+        RUNBOOK_DEFINITIONS
+    ):
+        errors.append("public API contract operator runbooks do not match the registry")
     corpus = verify_research_corpus()
     if not corpus["valid"]:
         errors.append("packaged research reference corpus failed verification")

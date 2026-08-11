@@ -3,7 +3,7 @@ from __future__ import annotations
 import threading
 from http.server import ThreadingHTTPServer
 
-from aasm import AASMEngine, DecisionRecord, ProblemSpec, SQLiteStore
+from aasm import AASMEngine, DecisionRecord, ProblemSpec, SQLiteStore, __version__
 from aasm.remote import AASMRemoteClient
 from aasm.server import make_handler
 
@@ -22,7 +22,7 @@ def test_remote_v25_observability_and_backend_views(tmp_path):
         client = AASMRemoteClient(f"http://127.0.0.1:{server.server_port}", "secret")
         health = client.health()
         assert health["version"] == "0.19.0"
-        assert health["runtime_version"] == "0.27.0"
+        assert health["runtime_version"] == __version__ == "0.28.0"
         contract = client._request("GET", "/adoption-contract")
         assert contract["valid"] is True
         assert contract["contract"]["contract_id"] == "aasm.adoption.v1"
@@ -30,6 +30,7 @@ def test_remote_v25_observability_and_backend_views(tmp_path):
         assert contract["contract"]["local_stack"]["entry_point"] == (
             "docker compose up --build"
         )
+        assert "unknown-effect" in contract["contract"]["operator_runbooks"]
         report = client._request("GET", f"/v1/machines/{machine_id}/inspect/summary")
         assert report["machine_id"] == machine_id
         assert report["decision_graph"]["nodes"][0]["id"] == "D1"

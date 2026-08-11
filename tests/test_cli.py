@@ -1,3 +1,4 @@
+from aasm import __version__
 from aasm.cli import build_parser
 
 
@@ -7,6 +8,8 @@ def test_cli_exposes_durable_commands():
         (["adoption-contract"], "adoption-contract"),
         (["demo"], "demo"),
         (["stack", "status", "--store", "x.db"], "stack"),
+        (["runbook", "list"], "runbook"),
+        (["runbook", "lease-loss", "--store", "x.db"], "runbook"),
         (["runs", "--db", "x.db"], "runs"),
         (["runs", "--store", "postgresql://example/aasm"], "runs"),
         (["replay", "machine_x", "--db", "x.db"], "replay"),
@@ -73,11 +76,12 @@ def test_cli_adoption_contract_is_machine_readable(capsys):
     payload = json.loads(capsys.readouterr().out)
     assert payload["valid"] is True
     assert payload["contract"]["contract_id"] == "aasm.adoption.v1"
-    assert payload["contract"]["runtime_version"] == "0.27.0"
+    assert payload["contract"]["runtime_version"] == __version__
     assert payload["contract"]["reference_application"]["id"] == "research-synthesis"
     assert payload["contract"]["local_stack"]["entry_point"] == (
         "docker compose up --build"
     )
+    assert "runbook" in payload["contract"]["supported_cli_commands"]
     assert "inspect_machine" in payload["contract"]["supported_engine_methods"]
 
 

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "releases": [
+    {
+      "tag": "v0.25.1",
+      "commit": "a5bacf9f4760d90cc3b02fef54c0eb2410872ea8",
+      "title": "AASM v0.25.1 — Stabilization"
+    },
+    {
+      "tag": "v0.25.2",
+      "commit": "72d60e16427c05d9cf9af58620160b2e4a79af77",
+      "title": "AASM v0.25.2 — Canonical Adoption Contract"
+    },
+    {
+      "tag": "v0.26.0",
+      "commit": "232b2b19ef929e6d72a992b300dbab7bc3f59074",
+      "title": "AASM v0.26.0 — Research Synthesis Hero Stack"
+    },
+    {
+      "tag": "v0.27.0",
+      "commit": "af9c63e2622c685e1e06613a919d27a27a3d39b7",
+      "title": "AASM v0.27.0 — One-Command Local Full Stack"
+    }
+  ]
+}

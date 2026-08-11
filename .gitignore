@@ -6,6 +6,9 @@ __pycache__/
 htmlcov/
 .venv/
 venv/
+build/
+dist/
+*.whl
 *.db
 *.db-shm
 *.db-wal

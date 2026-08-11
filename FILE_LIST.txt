@@ -7,9 +7,11 @@
 ./.github/dependabot.yml
 ./.github/workflows/ci.yml
 ./.github/workflows/formal.yml
+./.github/workflows/release.yml
 ./.gitignore
 ./CHANGELOG.md
 ./CHANGELOG_0.18_AND_EARLIER.md
+./CHANGELOG_0.27_AND_EARLIER.md
 ./CODE_OF_CONDUCT.md
 ./CONTRIBUTING.md
 ./Dockerfile
@@ -27,6 +29,7 @@
 ./docs/ADAPTIVE_MODEL_ROUTING.md
 ./docs/ARCHITECTURE.md
 ./docs/AUTOMATIC_CHECKPOINTS_FLEET_CONTROL.md
+./docs/COMPATIBILITY.md
 ./docs/CONTROL_CENTER.md
 ./docs/DECISION_BACKENDS.md
 ./docs/DECLARATIVE_MACHINES.md
@@ -60,11 +63,21 @@
 ./docs/RELEASE_0.25.md
 ./docs/RELEASE_0.26.md
 ./docs/RELEASE_0.27.md
+./docs/RELEASE_0.28.md
+./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
 ./docs/RESEARCH_SYNTHESIS_DEMO.md
 ./docs/RESOURCE_SCHEDULER.md
 ./docs/USE_CASES.md
+./docs/runbooks/README.md
+./docs/runbooks/history-diagnosis.md
+./docs/runbooks/human-approval.md
+./docs/runbooks/learned-no-good.md
+./docs/runbooks/lease-loss.md
+./docs/runbooks/replay-fork.md
+./docs/runbooks/requirement-change.md
+./docs/runbooks/unknown-effect.md
 ./examples/adaptive_routing.py
 ./examples/automatic_checkpoint_fleet.py
 ./examples/certificate_assurance.py
@@ -118,6 +131,7 @@
 ./profiles/research/profile.json
 ./profiles/single_agent.yaml
 ./pyproject.toml
+./release-history.json
 ./schemas/agent-message.schema.json
 ./schemas/assurance-state.schema.json
 ./schemas/calculus-state.schema.json
@@ -168,6 +182,8 @@
 ./schemas/worker-control.schema.json
 ./schemas/worker.schema.json
 ./scripts/check_formal_models.py
+./scripts/check_release_contracts.py
+./scripts/release_artifacts.py
 ./scripts/release_manifest.py
 ./src/aasm/__init__.py
 ./src/aasm/adaptive_routing.py
@@ -186,6 +202,7 @@
 ./src/aasm/cli_v22.py
 ./src/aasm/cli_v25.py
 ./src/aasm/cli_v27.py
+./src/aasm/cli_v28.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -219,6 +236,7 @@
 ./src/aasm/model_routing.py
 ./src/aasm/observability.py
 ./src/aasm/openai_executor.py
+./src/aasm/operator_runbooks.py
 ./src/aasm/pagination.py
 ./src/aasm/pbv_orchestrator.py
 ./src/aasm/persistence/__init__.py
@@ -247,6 +265,14 @@
 ./src/aasm/research_profile.py
 ./src/aasm/resources.py
 ./src/aasm/router.py
+./src/aasm/runbook_approval.py
+./src/aasm/runbook_common.py
+./src/aasm/runbook_effect.py
+./src/aasm/runbook_history.py
+./src/aasm/runbook_learning.py
+./src/aasm/runbook_lease.py
+./src/aasm/runbook_replay.py
+./src/aasm/runbook_requirement.py
 ./src/aasm/runtime.py
 ./src/aasm/runtime_v08.py
 ./src/aasm/runtime_v09.py
@@ -315,4 +341,6 @@
 ./tests/test_v25_remote_observability.py
 ./tests/test_v26_research_synthesis.py
 ./tests/test_v27_local_stack.py
+./tests/test_v28_distribution.py
+./tests/test_v28_operator_runbooks.py
 ./tests/test_workers_leases.py

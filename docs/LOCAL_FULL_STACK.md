@@ -1,6 +1,6 @@
 # AASM One-Command Local Full Stack
 
-AASM v0.27.0 packages the existing runtime, PostgreSQL store, worker/lease path, Research Synthesis Hero Stack, and Control Center into one local Compose application.
+The v0.27 stack remains the canonical local application in AASM v0.28.0. It packages the existing runtime, PostgreSQL store, worker/lease path, Research Synthesis Hero Stack, and Control Center into one Compose application.
 
 ## Start
 
@@ -53,7 +53,7 @@ docker compose run --rm stackctl status
 docker compose run --rm stackctl fresh
 ```
 
-This is the normal reset operation. It creates a new canonical machine and preserves all previous histories for inspection.
+This creates a new canonical machine and preserves previous histories.
 
 ### Create and select a new completed trajectory
 
@@ -68,17 +68,15 @@ docker compose run --rm stackctl select --selection active
 docker compose run --rm stackctl select --selection completed
 ```
 
-Refresh the browser after selection. The Control Center also has **Load live setup** and **Load completed run** buttons.
-
 ### Verify exact replay
 
 ```bash
 docker compose run --rm stackctl verify --selection completed
 ```
 
-The command runs the durable-history verifier, replays the event stream, and compares the reconstructed and persisted snapshot hashes.
+The command runs the durable-history verifier, replays the event stream, and compares reconstructed and persisted snapshot hashes.
 
-### Run the complete stack readiness check
+### Run the complete readiness check
 
 ```bash
 docker compose run --rm stackctl check
@@ -86,19 +84,13 @@ docker compose run --rm stackctl check
 
 The check requires:
 
-- runtime `0.27.0` health;
+- runtime `0.28.0` health;
 - live machine state `SELECT`;
 - completed machine state `COMPLETE`;
 - default worker registration;
 - a valid durable-history report for the completed run.
 
 ### Start the optional second worker
-
-```bash
-docker compose --profile two-workers up --build
-```
-
-Or add it to an already running stack:
 
 ```bash
 docker compose --profile two-workers up -d worker-2
@@ -117,23 +109,21 @@ docker compose down --volumes --remove-orphans
 docker compose up --build
 ```
 
-This removes PostgreSQL and stack-discovery volumes. Use `stackctl fresh` for the normal non-destructive reset.
+Use `stackctl fresh` for the normal non-destructive reset.
 
 ## Local security boundary
 
-The runtime still refuses non-loopback binding without a token. Compose supplies a local token named `aasm-local-demo` by default and the root redirect passes it once to the Control Center, which moves it into session storage and removes it from the visible URL.
+The runtime refuses non-loopback binding without a token. Compose supplies a local token named `aasm-local-demo` by default. The root redirect passes it once to the Control Center, which moves it into session storage and removes it from the visible URL.
 
-Override the token and host port with:
+Override the token and host port:
 
 ```bash
 AASM_DEMO_TOKEN='replace-this' AASM_PORT=8788 docker compose up --build
 ```
 
-The Compose stack is for local evaluation. Do not expose it publicly without normal reverse-proxy, TLS, secret-management, network, and authentication controls.
+The Compose stack is for local evaluation. Do not expose it publicly without a reverse proxy, TLS, secret management, network restrictions, and normal authentication controls.
 
 ## Working-path guarantee
-
-The stack does not create a demo-only execution engine.
 
 ```text
 Compose process topology
@@ -149,7 +139,9 @@ PostgreSQL store
 existing calculus, assurance, replay, workers, leases, and observability
 ```
 
-The default worker registers, heartbeats, claims a scheduled task, reports telemetry, and completes its lease through `AASMRemoteClient` and `RemoteWorkerLoop`. No container mutates machine snapshots or AASM tables directly.
+The default worker registers, heartbeats, claims a scheduled task, reports telemetry, and completes its lease through `AASMRemoteClient` and `RemoteWorkerLoop`.
+
+**No container mutates machine snapshots or AASM tables directly.**
 
 ## Troubleshooting
 
@@ -158,8 +150,6 @@ The default worker registers, heartbeats, claims a scheduled task, reports telem
 ```bash
 AASM_PORT=8788 docker compose up --build
 ```
-
-Then open `http://localhost:8788/`.
 
 ### See all service logs
 

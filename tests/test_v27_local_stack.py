@@ -36,7 +36,7 @@ def seeded_stack(tmp_path_factory):
 
 def test_stack_bootstrap_seeds_live_and_completed_canonical_machines(seeded_stack):
     _root, database, state_path, state = seeded_stack
-    assert state["runtime_version"] == __version__ == "0.27.0"
+    assert state["runtime_version"] == __version__ == "0.28.0"
     assert state["active_machine_id"] != state["completed_machine_id"]
     assert state["current_machine_id"] == state["active_machine_id"]
     assert Path(state_path).is_file()
@@ -69,7 +69,7 @@ def test_demo_worker_uses_existing_remote_registration_claim_and_lease_path(
         base_url = f"http://127.0.0.1:{server.server_port}"
         client = AASMRemoteClient(base_url, "secret")
         health = client.health()
-        assert health["runtime_version"] == "0.27.0"
+        assert health["runtime_version"] == __version__ == "0.28.0"
         stack = client._request("GET", "/demo-stack")
         assert stack["ready"] is True
         assert stack["active_machine_id"] == state["active_machine_id"]

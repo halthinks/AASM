@@ -1,8 +1,8 @@
-# AASM source manifest policy
+# AASM source and release manifest policy
 
-`main` is identified by its Git commit SHA. `FILE_LIST.txt` is the tracked inventory of source-controlled files and is checked in CI.
+`main` is identified by its Git commit SHA. `FILE_LIST.txt` is the tracked source inventory and is checked in CI.
 
-A tracked SHA-256 file is intentionally **not** maintained on `main`: any source change immediately makes such a file stale, and a checksum file cannot reliably attest to a moving branch. Instead, generate checksums from the exact checkout, tag, or release archive being distributed.
+A moving branch cannot carry a permanently current checksum file. Checksums are generated only for an exact build/tag/release.
 
 ## Verify the tracked inventory
 
@@ -10,20 +10,45 @@ A tracked SHA-256 file is intentionally **not** maintained on `main`: any source
 python scripts/release_manifest.py --check-file-list
 ```
 
-If files were intentionally added or removed:
+When files are intentionally added or removed:
 
 ```bash
 python scripts/release_manifest.py --write-file-list
 ```
 
-## Generate SHA-256 checksums for an exact checkout
+## Verify release artifacts
 
 ```bash
-python scripts/release_manifest.py --sha256 SHA256SUMS.generated.txt
+python -m build
+python scripts/release_artifacts.py verify-wheel dist/*.whl
+python scripts/release_artifacts.py verify-sdist dist/*.tar.gz
 ```
 
-The output file is excluded from its own hash list. Publish that generated file alongside the corresponding immutable release/tag/archive, not as evidence for a moving branch.
+## Generate immutable release manifests
 
-## Integrity model
+```bash
+python scripts/release_artifacts.py manifest dist \
+  --checksums dist/SHA256SUMS.txt \
+  --json dist/release-manifest.json \
+  --commit-sha "$(git rev-parse HEAD)"
+```
 
-For development, record the Git commit SHA. For a release, record both the immutable Git tag/commit and the generated SHA-256 manifest. This keeps provenance reproducible without presenting stale checksums as current.
+The generated files belong beside the wheel and source distribution on the immutable GitHub Release.
+
+## Release identity
+
+A release is identified by all of:
+
+```text
+annotated vVERSION tag
+exact Git commit SHA
+wheel SHA-256
+source-distribution SHA-256
+release-manifest.json
+```
+
+An existing tag must never be moved to a different commit. Existing PyPI files cannot be replaced. Corrections require a new package version.
+
+## Historical release map
+
+`release-history.json` records exact commits for maintained releases created before automated release publishing. The release workflow may create a missing annotated tag only when the recorded commit exists and refuses any tag/commit mismatch.

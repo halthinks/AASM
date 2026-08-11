@@ -28,8 +28,10 @@ jobs:
         run: python scripts/release_manifest.py --check-file-list
       - name: Compile source and tests
         run: python -m compileall -q src tests examples scripts
-      - name: Validate formal model source contracts
-        run: python scripts/check_formal_models.py
+      - name: Validate formal model and release source contracts
+        run: |
+          python scripts/check_formal_models.py
+          python scripts/check_release_contracts.py
       - name: Validate every embedded Control Center script
         run: |
           python - <<'PY' > /tmp/aasm-control-center.js
@@ -44,6 +46,41 @@ jobs:
           node --check /tmp/aasm-control-center.js
       - name: Test
         run: pytest -q
+
+  wheel_smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          python -m twine check dist/*
+      - name: Verify release contents and metadata
+        run: |
+          python scripts/release_artifacts.py verify-history release-history.json
+          python scripts/release_artifacts.py verify-wheel "$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
+          python scripts/release_artifacts.py verify-sdist "$(find dist -maxdepth 1 -name '*.tar.gz' -print -quit)"
+      - name: Install the wheel in a clean environment
+        run: |
+          python -m venv /tmp/aasm-wheel
+          /tmp/aasm-wheel/bin/python -m pip install --upgrade pip
+          /tmp/aasm-wheel/bin/python -m pip install dist/*.whl
+          /tmp/aasm-wheel/bin/python - <<'PY'
+          import aasm
+          assert aasm.__version__ == "0.28.0"
+          assert aasm.validate_public_api_contract()["valid"] is True
+          PY
+          /tmp/aasm-wheel/bin/aasm adoption-contract > /tmp/aasm-contract.json
+          /tmp/aasm-wheel/bin/aasm runbook history-diagnosis > /tmp/aasm-runbook.json
+          python - <<'PY'
+          import json
+          assert json.load(open('/tmp/aasm-contract.json'))['valid'] is True
+          assert json.load(open('/tmp/aasm-runbook.json'))['valid'] is True
+          PY
 
   postgres_integration:
     runs-on: ubuntu-latest
@@ -98,22 +135,23 @@ jobs:
 
   ci_summary:
     if: always()
-    needs: [test, postgres_integration, compose_smoke]
+    needs: [test, wheel_smoke, postgres_integration, compose_smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Publish direct-push-visible commit status
         env:
           GH_TOKEN: ${{ github.token }}
           TEST_RESULT: ${{ needs.test.result }}
+          WHEEL_RESULT: ${{ needs.wheel_smoke.result }}
           POSTGRES_RESULT: ${{ needs.postgres_integration.result }}
           COMPOSE_RESULT: ${{ needs.compose_smoke.result }}
         run: |
-          if [ "$TEST_RESULT" = "success" ] && [ "$POSTGRES_RESULT" = "success" ] && [ "$COMPOSE_RESULT" = "success" ]; then
+          if [ "$TEST_RESULT" = "success" ] && [ "$WHEEL_RESULT" = "success" ] && [ "$POSTGRES_RESULT" = "success" ] && [ "$COMPOSE_RESULT" = "success" ]; then
             state=success
-            description="unit matrix, Control Center JS, PostgreSQL, and Compose full-stack smoke passed"
+            description="unit matrix, clean wheel, PostgreSQL, and Compose full-stack smoke passed"
           else
             state=failure
-            description="unit=$TEST_RESULT postgres=$POSTGRES_RESULT compose=$COMPOSE_RESULT"
+            description="unit=$TEST_RESULT wheel=$WHEEL_RESULT postgres=$POSTGRES_RESULT compose=$COMPOSE_RESULT"
           fi
           export state description
           python - <<'PY' > /tmp/status.json
