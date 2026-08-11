@@ -1,0 +1,5 @@
+{
+  "max_reviews": 12,
+  "max_total_cost": 25.0,
+  "require_human_above_risk": "high"
+}
