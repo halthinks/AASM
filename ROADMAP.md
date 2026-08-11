@@ -49,8 +49,9 @@ Make AASM dependably installable from immutable artifacts and operable under com
 - ✅ clean virtual-environment installation of the built wheel;
 - ✅ installed-package smoke tests for `aasm adoption-contract` and operator runbooks;
 - ✅ generated `SHA256SUMS.txt` and `release-manifest.json`;
-- ✅ annotated release-tag map for v0.25.1 through v0.27.0;
-- ✅ automatic current annotated tag and GitHub Release creation;
+- ✅ exact historical release map for v0.25.1 through v0.27.0;
+- ✅ automatic immutable release-tag and GitHub Release creation through the GitHub Release API;
+- ✅ tag-target verification against the exact tested commit;
 - ✅ immutable wheel, source distribution, checksum, and manifest assets;
 - ✅ credential-free PyPI Trusted Publisher job, externally gated until the PyPI project binding is activated;
 - ✅ release status visible as `aasm/release` on the exact commit.
@@ -77,9 +78,10 @@ v0.28.0 is complete at the repository level when:
 4. wheel and source-distribution contents match the declared release;
 5. every runbook passes as an executable drill;
 6. the exact commit passes TLA+/TLC and Promela/SPIN;
-7. the annotated tag and GitHub Release contain immutable distributions, checksums, and a manifest;
-8. the README exposes the current version, install path, runbooks, compatibility boundary, and next release;
-9. no release path mutates AASM machine state outside the existing runtime.
+7. the immutable release tag and GitHub Release contain distributions, checksums, and a manifest;
+8. the tag ref resolves to the exact tested commit;
+9. the README exposes the current version, install path, runbooks, compatibility boundary, and next release;
+10. no release path mutates AASM machine state outside the existing runtime.
 
 PyPI publication has one external prerequisite: the `aasm-runtime` PyPI project must trust `.github/workflows/release.yml` in the `pypi` environment. The repository-side publisher is complete and disabled unless `AASM_PUBLISH_PYPI=true` or a manual release explicitly requests publishing.
 
@@ -162,7 +164,8 @@ An existing LangGraph application can adopt AASM incrementally without rewriting
 | Mandatory unresolved obligations at completion | 0 | Enforced |
 | Fresh reset | one command | Implemented |
 | Built-wheel smoke test | required in CI | Implemented |
-| GitHub release assets and checksums | automatic | Implemented |
+| GitHub release assets and checksums | automatic after gates | Implemented |
+| Release tag target | exact tested commit | Enforced |
 | Operator runbook scenario tests | required in CI | Implemented |
 | PyPI installation | Trusted Publisher binding required | Repository side ready; external binding pending |
 | Existing-framework adoption | one thin adapter | v0.29.0 |
