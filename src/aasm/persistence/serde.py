@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
 
+from ..assurance import normalize_assurance_state
 from ..calculus import default_calculus_state, normalize_calculus_state
 from ..model import Event, MachineSnapshot, ProblemSpec
 
@@ -37,18 +38,7 @@ def snapshot_from_dict(data: dict[str, Any]) -> MachineSnapshot:
             "backend_history": [],
         },
     )
-    payload.setdefault(
-        "assurance_state",
-        {
-            "schema_version": 1,
-            "policy": {"require_certificate_for_hard_constraint": True},
-            "certificates": {},
-            "verifications": {},
-            "history_checks": [],
-            "minimizations": {},
-            "generalizations": {},
-        },
-    )
+    payload["assurance_state"] = normalize_assurance_state(payload.get("assurance_state"))
     return MachineSnapshot(**payload)
 
 
