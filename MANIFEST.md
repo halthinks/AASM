@@ -40,15 +40,17 @@ The generated files belong beside the wheel and source distribution on the immut
 A release is identified by all of:
 
 ```text
-annotated vVERSION tag
+immutable vVERSION release tag
 exact Git commit SHA
 wheel SHA-256
 source-distribution SHA-256
 release-manifest.json
 ```
 
+The GitHub Release API creates the missing release tag at the exact tested commit. The workflow immediately reads the tag ref back and verifies the target.
+
 An existing tag must never be moved to a different commit. Existing PyPI files cannot be replaced. Corrections require a new package version.
 
 ## Historical release map
 
-`release-history.json` records exact commits for maintained releases created before automated release publishing. The release workflow may create a missing annotated tag only when the recorded commit exists and refuses any tag/commit mismatch.
+`release-history.json` records exact commits for maintained releases created before automated release publishing. The release workflow may create a missing source-only GitHub Release at the recorded commit and refuses any tag/commit mismatch.
