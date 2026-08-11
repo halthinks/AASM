@@ -30,14 +30,16 @@ jobs:
         run: python -m compileall -q src tests examples scripts
       - name: Validate formal model source contracts
         run: python scripts/check_formal_models.py
-      - name: Validate embedded Control Center JavaScript
+      - name: Validate every embedded Control Center script
         run: |
           python - <<'PY' > /tmp/aasm-control-center.js
+          import re
           from aasm.control_center import html_document
-          page = html_document()
-          start = page.index("<script>") + len("<script>")
-          end = page.index("</script>", start)
-          print(page[start:end])
+
+          scripts = re.findall(r"<script>(.*?)</script>", html_document(), flags=re.S)
+          if not scripts:
+              raise SystemExit("Control Center contains no script blocks")
+          print("\n;\n".join(scripts))
           PY
           node --check /tmp/aasm-control-center.js
       - name: Test
@@ -71,9 +73,32 @@ jobs:
       - name: PostgreSQL coordination test
         run: pytest -q tests/test_postgres_integration.py
 
+  compose_smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AASM_DEMO_TOKEN: ci-demo-token
+      AASM_PORT: 18787
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate Compose model
+        run: docker compose config --quiet
+      - name: Start the complete local stack
+        run: docker compose up --build -d
+      - name: Verify PostgreSQL runtime worker reference machines and replay
+        run: docker compose run --rm stackctl check --timeout 180
+      - name: Show final stack state
+        if: always()
+        run: |
+          docker compose ps || true
+          docker compose logs --tail=200 || true
+      - name: Remove local stack volumes
+        if: always()
+        run: docker compose down --volumes --remove-orphans || true
+
   ci_summary:
     if: always()
-    needs: [test, postgres_integration]
+    needs: [test, postgres_integration, compose_smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Publish direct-push-visible commit status
@@ -81,13 +106,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TEST_RESULT: ${{ needs.test.result }}
           POSTGRES_RESULT: ${{ needs.postgres_integration.result }}
+          COMPOSE_RESULT: ${{ needs.compose_smoke.result }}
         run: |
-          if [ "$TEST_RESULT" = "success" ] && [ "$POSTGRES_RESULT" = "success" ]; then
+          if [ "$TEST_RESULT" = "success" ] && [ "$POSTGRES_RESULT" = "success" ] && [ "$COMPOSE_RESULT" = "success" ]; then
             state=success
-            description="unit matrix, formal source, Control Center JS, and PostgreSQL integration passed"
+            description="unit matrix, Control Center JS, PostgreSQL, and Compose full-stack smoke passed"
           else
             state=failure
-            description="unit=$TEST_RESULT postgres=$POSTGRES_RESULT"
+            description="unit=$TEST_RESULT postgres=$POSTGRES_RESULT compose=$COMPOSE_RESULT"
           fi
           export state description
           python - <<'PY' > /tmp/status.json
