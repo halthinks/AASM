@@ -254,6 +254,8 @@
 ./tests/test_checkpoint_fleet_control.py
 ./tests/test_cli.py
 ./tests/test_collaboration_planner.py
+./tests/test_conflict_minimization_stabilization.py
+./tests/test_decision_backend_budgets.py
 ./tests/test_definitions_modelcheck.py
 ./tests/test_durable_planning_memory_evidence.py
 ./tests/test_economics_control_center.py
