@@ -14,8 +14,8 @@ from .profile_packages import (
     AASMProfile,
     ProfileEvolutionProposal,
     ProfileMigration,
-    ProfileRegistry,
 )
+from .research_profile import ResearchProfileRegistry
 from .runtime_v22 import AASMEngine
 from .semantic_result import SemanticResultEnvelope
 
@@ -39,8 +39,8 @@ def _load(path: str):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def _registry(discover: bool = False) -> ProfileRegistry:
-    registry = ProfileRegistry(include_builtins=True)
+def _registry(discover: bool = False) -> ResearchProfileRegistry:
+    registry = ResearchProfileRegistry(include_builtins=True)
     if discover:
         registry.discover()
     return registry
