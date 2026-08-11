@@ -15,11 +15,11 @@ wheel and source distribution
   ↓
 metadata and package-content inspection
   ↓
-clean-environment install and CLI smoke
+clean virtual environment install and CLI smoke
   ↓
 SHA256SUMS.txt + release-manifest.json
   ↓
-annotated Git tag
+immutable release tag created by the GitHub Release API
   ↓
 GitHub Release assets
   ↓
@@ -61,11 +61,11 @@ python scripts/release_artifacts.py manifest dist \
   --commit-sha "$(git rev-parse HEAD)"
 ```
 
-## Historical tags
+## Historical release map
 
 `release-history.json` records the exact commits for maintained historical releases that predate release automation.
 
-The release workflow creates missing annotated tags and source-only GitHub Releases for those commits. It refuses to move a tag that already points somewhere else.
+The release workflow uses the GitHub Release API to create a missing immutable source release at the recorded commit. It reads the resulting tag ref back and refuses a tag/commit mismatch. It never uses the Actions bot to push a tag ref over workflow-bearing history.
 
 ## Current release
 
@@ -76,12 +76,13 @@ After CI succeeds on `main`, the release workflow:
 3. builds and verifies the distributions;
 4. installs the wheel in a clean virtual environment;
 5. executes the installed adoption contract and a runbook;
-6. creates the annotated `vVERSION` tag;
-7. creates the GitHub Release;
+6. asks the GitHub Release API to create `vVERSION` at the exact commit;
+7. reads the release tag back and verifies its target;
 8. attaches wheel, source distribution, checksums, and manifest;
-9. publishes `aasm/release=success` on the commit.
+9. publishes `aasm/release=success` on the commit;
+10. creates any missing historical source-only releases from `release-history.json`.
 
-If the version tag already exists at a different commit, the workflow fails. The version must be bumped.
+If the version tag already exists at a different commit, the workflow fails. The tag is never moved; the package version must be bumped.
 
 ## PyPI Trusted Publisher
 
