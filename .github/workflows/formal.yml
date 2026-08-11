@@ -74,7 +74,12 @@ jobs:
           cd formal
           /tmp/spin-src/Src/spin -a aasm_calculus.pml
           gcc -O2 -o /tmp/aasm-pan pan.c
-          /tmp/aasm-pan -m100000
+          /tmp/aasm-pan -m100000 | tee /tmp/aasm-spin.log
+          grep -Eq 'errors:[[:space:]]*0' /tmp/aasm-spin.log
+          if grep -Eq 'errors:[[:space:]]*[1-9][0-9]*' /tmp/aasm-spin.log; then
+            echo "SPIN reported verification errors"
+            exit 1
+          fi
 
       - name: Publish formal assurance status
         if: always()
