@@ -1,9 +1,14 @@
 from __future__ import annotations
 
-from aasm import AASMEngine, DecisionRecord, ObligationRecord, ProblemSpec
+from aasm import AASMEngine, DecisionRecord, MemoryStore, ObligationRecord, ProblemSpec
 
 
-def test_observability_report_exposes_generic_decision_and_obligation_graphs():
+def _assert_graph_is_closed(graph):
+    node_ids = {node["id"] for node in graph["nodes"]}
+    assert all(edge["src"] in node_ids and edge["dst"] in node_ids for edge in graph["edges"])
+
+
+def test_observability_report_exposes_closed_generic_graphs():
     engine = AASMEngine(ProblemSpec("observe"))
     engine.register_decision(DecisionRecord("D1", "method", "A"))
     engine.activate_decision("D1")
@@ -24,8 +29,44 @@ def test_observability_report_exposes_generic_decision_and_obligation_graphs():
         edge["src"] == "D1" and edge["dst"] == "O1" and edge["relation"] == "AUTHORIZED_BY"
         for edge in report["obligation_graph"]["edges"]
     )
+    for key in ("decision_graph", "obligation_graph", "evidence_graph", "causal_graph"):
+        _assert_graph_is_closed(report[key])
+    causal_relations = {edge["relation"] for edge in report["causal_graph"]["edges"]}
+    assert "AUTHORIZES" in causal_relations
     assert "candidate_summary" in report
     assert "assurance_summary" in report
+
+
+def test_fairness_debt_explains_thresholds_locks_and_next_action():
+    engine = AASMEngine(ProblemSpec("fairness visibility"))
+    engine.register_obligation(ObligationRecord("O1", "must eventually be reviewed"))
+    engine.audit_calculus_fairness()
+    rows = engine.fairness_debt()
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["obligation_id"] == "O1"
+    assert set(row["thresholds"]) == {
+        "max_hidden_epochs",
+        "max_lock_age_epochs",
+        "max_lock_count",
+    }
+    assert set(row["over_by"]) == {
+        "hidden_epochs",
+        "lock_age_epochs",
+        "lock_count",
+    }
+    assert "active_lock_reasons" in row
+    assert row["next_action"] in {"NONE", "REVIEW", "EXPOSE_OR_DISPOSITION"}
+
+
+def test_individual_views_refresh_from_canonical_store_state():
+    store = MemoryStore()
+    writer = AASMEngine(ProblemSpec("shared state"), store=store)
+    reader = AASMEngine.resume(writer.snapshot.machine_id, store)
+    writer.register_decision(DecisionRecord("D-new", "method", "new"))
+
+    graph = reader.decision_graph_view()
+    assert "D-new" in {node["id"] for node in graph["nodes"]}
 
 
 def test_inspection_surfaces_are_domain_neutral_and_stable():
@@ -35,6 +76,7 @@ def test_inspection_surfaces_are_domain_neutral_and_stable():
         "decisions",
         "obligations",
         "evidence",
+        "causal",
         "conflicts",
         "fairness",
         "packages",
