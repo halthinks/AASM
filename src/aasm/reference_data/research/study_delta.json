@@ -1,0 +1,32 @@
+{
+  "causal_interpretation": "prior knowledge modifies the retrieval-practice effect",
+  "comparator": "exposure-matched rereading",
+  "design": "preregistered subgroup reanalysis",
+  "intervention": "exposure-matched retrieval practice",
+  "license": "CC0-1.0",
+  "limitations": [
+    "subgroup analysis depends on prespecified proficiency threshold"
+  ],
+  "outcome": "delayed retention at 21 days",
+  "population": {
+    "n": 300,
+    "prior_knowledge": "stratified"
+  },
+  "result": {
+    "experienced_confidence_interval": [
+      -2.4,
+      4.2
+    ],
+    "experienced_effect_points": 0.9,
+    "interaction_p": 0.004,
+    "novice_confidence_interval": [
+      5.2,
+      13.6
+    ],
+    "novice_effect_points": 9.4
+  },
+  "study_id": "delta-2022",
+  "synthetic": true,
+  "title": "Prior-knowledge subgroup reanalysis",
+  "year": 2022
+}
