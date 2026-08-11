@@ -107,7 +107,13 @@ def _candidate_state() -> dict[str, Any]:
 def _assurance_state() -> dict[str, Any]:
     return {
         "schema_version": 1,
-        "policy": {"require_certificate_for_hard_constraint": True},
+        "policy": {
+            "require_certificate_for_hard_constraint": True,
+            "accepted_verification_levels": ["PROVEN", "VALIDATED"],
+            "accepted_certificate_kinds": ["PROJECTION"],
+            "accepted_verifier_ids": ["aasm.projection"],
+            "required_subject_type": "LEARNED_CONSTRAINT",
+        },
         "certificates": {},
         "verifications": {},
         "history_checks": [],
