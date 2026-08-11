@@ -1,0 +1,5 @@
+{
+  "artifact_generation": "deterministic_fixture",
+  "contradiction_resolution": "strongest_available",
+  "extraction": "deterministic_fixture"
+}
