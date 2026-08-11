@@ -1,0 +1,15 @@
+{
+  "corpus_id": "aasm-research-corpus-v1",
+  "initial_hypothesis": "retrieval_only",
+  "known_resolution": "effect_modified_by_prior_knowledge",
+  "license": "CC0-1.0",
+  "question": "Does spaced retrieval improve delayed retention primarily through retrieval practice rather than additional exposure time?",
+  "question_id": "retrieval-causal-question",
+  "required_final_claims": [
+    "evaluate whether exposure time confounds the aggregate effect",
+    "resolve the matched-exposure contradiction",
+    "report population limits",
+    "preserve claim-level provenance"
+  ],
+  "synthetic": true
+}
