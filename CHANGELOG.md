@@ -2,6 +2,43 @@
 
 All notable user-visible changes to AASM are documented here. Detailed history through v0.18 is preserved in [`CHANGELOG_0.18_AND_EARLIER.md`](CHANGELOG_0.18_AND_EARLIER.md).
 
+## [0.25.1] - 2026-08-10
+
+AASM v0.25.1 stabilizes the v0.23–v0.25 architecture and closes the assurance, atomicity, replay, formal-model, and readability defects found during source-level review.
+
+### Fixed
+
+- moved certificate enforcement to the calculus commit boundary so inherited and indirect paths cannot create active uncertified hard constraints;
+- changed strict hard learning to create a soft constraint first, followed by certificate registration, independent verification, and explicit hard promotion;
+- made complete candidate activation all-or-nothing through one staged calculus update and one durable snapshot commit;
+- replaced the shallow history linter with reducer-based replay verification and exact reconstructed-versus-persisted snapshot comparison;
+- added contiguous event, state continuity, legal transition, terminal absorption, lock, profile fingerprint, completion, and hard-certificate checks;
+- corrected conflict-core minimization for non-conflicting inputs, duplicate literals, empty root conflicts, and exact budget boundaries;
+- made adopted minimized explanations immutable successor objects with durable lineage;
+- enforced finite-domain, callback, and portfolio candidate, combination, cost, and latency budgets;
+- retained every contributing backend when portfolio candidates deduplicate to the same assignment;
+- refreshed every observability surface from canonical storage and closed all graph edges over represented nodes;
+- added a heterogeneous causal graph joining decisions, obligations, evidence, locks, conflicts, explanations, constraints, certificates, verifications, and candidates;
+- made fairness debt actionable with thresholds, overage, lock reasons, and required next action;
+- aligned assurance defaults across new snapshots, deserialization, runtime policy, CLI, schemas, and HTTP health reporting.
+
+### Formal assurance
+
+- separated `LearnSoft`, `RegisterCertificate`, `VerifyCertificate`, and `PromoteHard` in the TLA+ model;
+- modeled candidate staging and atomic activation explicitly;
+- added bounded fairness as a checked temporal property;
+- aligned Promela terminal guards with staged-candidate invariants;
+- expanded formal-workflow path triggers to every transition-critical runtime source;
+- tied static model contracts to concrete Python safeguards;
+- retained pinned, hash-verified TLA+ and SPIN toolchains.
+
+### Documentation
+
+- rewrote the README for human readers around a concrete failure-and-recovery example;
+- moved theorem-prover terminology behind plain-English explanations;
+- added a five-minute start, capability map, correctness boundary, documentation guide, and explicit runtime/protocol version explanation;
+- updated Decision Backend, Formal Assurance, Observability, and Roadmap documentation.
+
 ## [0.25.0] - 2026-08-10
 
 AASM v0.25 adds domain-neutral observability over the formal calculus, decision backend ecosystem, assurance state, and profile package lifecycle.
