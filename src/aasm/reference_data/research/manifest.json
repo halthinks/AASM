@@ -1,0 +1,44 @@
+{
+  "corpus_id": "aasm-research-corpus-v1",
+  "description": "A fixed, synthetic, offline corpus designed to exercise evidence extraction, contradiction handling, selective steering, causal backjumping, learned no-goods, and replay.",
+  "files": [
+    {
+      "path": "question.json",
+      "sha256": "74db0e9ee354146de19426cdbf4b0dd9cf0064623da0a3f5f7b2e0a52745bc62"
+    },
+    {
+      "path": "study_alpha.json",
+      "sha256": "71d108c59b655d3713c59c9a72263c86b88f9743adef8cb853737a954a7c3500"
+    },
+    {
+      "path": "study_beta.json",
+      "sha256": "94fdb0a5af1d9afaa811cd452ad006ad892d75e9429bbf06a8dbb40556611b7c"
+    },
+    {
+      "path": "study_gamma.json",
+      "sha256": "e06859c25da88fcb29537da641bb9a663907307579c3fd0150dcac3a69a58b4c"
+    },
+    {
+      "path": "study_delta.json",
+      "sha256": "4d7e73bffcb7df5473b3235a1a3c07b21c62d9d9722f643a785112b0fb6747a8"
+    },
+    {
+      "path": "expected_synthesis.json",
+      "sha256": "88b39d3093c70e487fc4f91e0a90c159a18f7331a3d33f89dabd6cf1ecca6615"
+    }
+  ],
+  "known_contradiction": {
+    "contradicting_file": "study_gamma.json",
+    "corrected_model": "effect_modified_by_prior_knowledge",
+    "initial_model": "retrieval_only",
+    "resolution_file": "study_delta.json",
+    "supporting_file": "study_alpha.json"
+  },
+  "license": "CC0-1.0",
+  "model_key_required": false,
+  "network_required": false,
+  "redistributable": true,
+  "synthetic": true,
+  "title": "AASM synthetic causal research corpus",
+  "version": "1.0.0"
+}
