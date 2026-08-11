@@ -12,27 +12,27 @@ AASM keeps the official state of a job outside the language model. Models may su
 [![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.25.2%20experimental-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.26.0%20experimental-orange)](ROADMAP.md)
 
-[Get started](#five-minute-start) · [Adoption contract](#canonical-adoption-surface) · [Roadmap](ROADMAP.md) · [Download ZIP](https://github.com/halthinks/AASM/archive/refs/heads/main.zip) · [Examples](examples/)
+[Run the hero demo](#run-the-research-synthesis-hero-demo) · [Get started](#five-minute-start) · [Why AASM?](WHY_AASM.md) · [Roadmap](ROADMAP.md) · [Download ZIP](https://github.com/halthinks/AASM/archive/refs/heads/main.zip)
 
 </div>
 
 ---
 
-## Current release and adoption program
+## Current release
 
 | Item | Current state |
 |---|---|
-| **Package/runtime** | **v0.25.2** |
+| **Package/runtime** | **v0.26.0** |
 | **Project status** | Experimental |
-| **Completed adoption step** | Canonical supported API and implementation contract |
-| **Next release** | **v0.26.0 — Research Synthesis Hero Stack** |
+| **Current adoption milestone** | Research Synthesis Hero Stack |
+| **Next release** | **v0.27.0 — One-Command Local Full Stack** |
 | **Remote compatibility protocol** | `aasm.remote.v1 / 0.19.0` |
 
-The immediate roadmap is no longer “add another architecture layer.” It is to make the existing runtime visible, runnable, distributable, and operable: reference application → one-command local stack → clean distribution and runbooks → thin framework adapter.
+The package/runtime version and remote protocol version are intentionally separate. The current Python package and server runtime are **0.26.0**; existing remote clients continue to negotiate `aasm.remote.v1 / 0.19.0`.
 
-See the [formal release-by-release implementation plan](ROADMAP.md).
+AASM’s immediate program is adoption and operability: reference application → one-command local stack → clean distribution and runbooks → thin framework adapter. See the [formal implementation roadmap](ROADMAP.md).
 
 ---
 
@@ -48,15 +48,77 @@ Imagine an agent is building a service:
 2. Tasks that only matter for SQLite are temporarily hidden, but not deleted.
 3. An integration test proves that the selected schema is incompatible.
 4. AASM records the evidence and the exact decisions responsible for the conflict.
-5. It returns to the schema decision instead of randomly editing the most recent files.
+5. It returns to the schema decision instead of randomly editing the latest files.
 6. Unrelated work, such as a valid cache implementation, stays intact.
 7. The failed combination becomes reusable knowledge, so the same plan is not selected again.
 
-That is the core idea:
-
 > **Models propose. AASM decides what may become durable state.**
 
-AASM is not a language model and it does not replace one. It is the deterministic runtime around models, tools, workers, and people.
+AASM is not a language model. It is the deterministic runtime around models, tools, workers, and people.
+
+---
+
+## Run the Research Synthesis Hero Demo
+
+v0.26.0 includes a complete, offline reference application that demonstrates the core difference directly.
+
+```bash
+git clone https://github.com/halthinks/AASM.git
+cd AASM
+python -m venv .venv
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
+# macOS or Linux
+source .venv/bin/activate
+
+pip install -e .
+
+aasm demo \
+  --scenario research-synthesis \
+  --mode complete \
+  --db research-demo.db \
+  --output-dir research-output
+```
+
+The fixed synthetic corpus requires **no network access, paid API, or model key**. The run shows:
+
+```text
+fixed causal question
+→ initial interpretation
+→ explicit obligations and evidence
+→ validated contradiction
+→ certified learned no-good
+→ non-chronological backjump
+→ preservation of unrelated work
+→ mid-run requirement injection
+→ conditional lock restoration
+→ corrected synthesis
+→ claim-level provenance
+→ exact full-history replay
+```
+
+The output directory contains:
+
+- `final_synthesis.json`
+- `run_summary.json`
+- `history_check.json`
+- `machine_export.json`
+- `machine_id.txt`
+- `replay_commands.txt`
+
+Use setup mode to inspect the machine before the known contradiction:
+
+```bash
+aasm demo \
+  --scenario research-synthesis \
+  --mode setup \
+  --db research-setup.db \
+  --output-dir research-setup
+```
+
+Read [Why AASM?](WHY_AASM.md) for the reproducible comparison and [Research Synthesis Hero Stack](docs/RESEARCH_SYNTHESIS_DEMO.md) for the exact trajectory and acceptance properties.
 
 ---
 
@@ -64,30 +126,30 @@ AASM is not a language model and it does not replace one. It is the deterministi
 
 ### Decisions
 
-A decision is a named choice or assumption, such as:
+A decision is a named choice or assumption:
 
 ```text
 database = postgres
 schema = v2
-inspection_method = thermal_camera
+synthesis.causal_model = retrieval_only
 ```
 
 AASM records which decisions are active, what they depend on, why they changed, and which work they authorize.
 
 ### Obligations
 
-An obligation is work that must eventually be handled. It cannot quietly disappear because the current plan makes it inconvenient.
+An obligation is work that must eventually be handled. It cannot silently disappear because the current plan makes it inconvenient.
 
-Examples include:
+Examples:
 
 ```text
 run the compatibility test
 collect the missing measurement
-review the safety evidence
+resolve contradictory evidence
 publish the required artifact
 ```
 
-An obligation must be completed, rejected with a reason, superseded, or proven impossible.
+A mandatory obligation must be completed, rejected with a reason, superseded, or proven impossible before the machine can complete.
 
 ### Evidence
 
@@ -117,7 +179,7 @@ Success is committed, or a conflict is explained
 Repair, causal backjump, or restart
 ```
 
-The important boundary is that proposal and authority are separate. A model, heuristic, human, or solver may propose a candidate. Only the AASM kernel can activate it or change durable state.
+A model, heuristic, human, or solver may propose a candidate. Only the AASM kernel can activate it or change durable state.
 
 ---
 
@@ -125,7 +187,7 @@ The important boundary is that proposal and authority are separate. A model, heu
 
 AASM requires Python 3.11 or newer.
 
-> **Distribution status:** PyPI publication is an adoption-roadmap deliverable. The current supported install path is the repository checkout below; editable installation remains the contributor path.
+> **Distribution status:** PyPI publication is scheduled for the operator/distribution milestone. The current supported install path is the repository checkout below; editable installation remains the contributor path.
 
 ```bash
 git clone https://github.com/halthinks/AASM.git
@@ -133,7 +195,7 @@ cd AASM
 python -m venv .venv
 ```
 
-Activate the environment:
+Activate the environment and install:
 
 ```bash
 # Windows PowerShell
@@ -141,31 +203,18 @@ Activate the environment:
 
 # macOS or Linux
 source .venv/bin/activate
-```
 
-Install the package:
-
-```bash
 pip install -e .
 ```
 
 Create a small machine:
 
 ```python
-from aasm import (
-    AASMEngine,
-    DecisionRecord,
-    ObligationRecord,
-    ProblemSpec,
-)
+from aasm import AASMEngine, DecisionRecord, ObligationRecord, ProblemSpec
 
 engine = AASMEngine(ProblemSpec("Prepare a field test"))
-
-engine.register_decision(
-    DecisionRecord("D-site-a", "test_site", "site-a")
-)
+engine.register_decision(DecisionRecord("D-site-a", "test_site", "site-a"))
 engine.activate_decision("D-site-a")
-
 engine.register_obligation(
     ObligationRecord(
         "O-weather",
@@ -183,10 +232,7 @@ For durable local storage:
 from aasm import AASMEngine, ProblemSpec, SQLiteStore
 
 store = SQLiteStore("aasm-runs.db")
-engine = AASMEngine(
-    ProblemSpec("Run a durable investigation"),
-    store=store,
-)
+engine = AASMEngine(ProblemSpec("Run a durable investigation"), store=store)
 print(engine.snapshot.machine_id)
 ```
 
@@ -198,11 +244,46 @@ aasm --help
 
 ---
 
+## What happens when a plan is wrong?
+
+AASM does not reduce every failure to `FAILED`.
+
+| Situation | AASM response |
+|---|---|
+| Temporary tool error | Retry or repair under policy |
+| Missing information | Create or expose an obligation |
+| Contradicted assumption | Record a conflict and explanation |
+| Bad earlier decision | Backjump to the causal decision |
+| Unproductive search | Restart speculative search while retaining knowledge |
+| Combination must not recur | Learn a blocking constraint |
+
+### Conditional locks: hidden is not deleted
+
+Work may be irrelevant under the current decision model. AASM can lock it temporarily while retaining the condition that justified the lock. When that condition changes, the lock breaks and the work becomes available again.
+
+### Backjumping: repair the cause, not the latest symptom
+
+When a failure is caused by an earlier choice, AASM can invalidate that choice and its dependent region while preserving later work that does not depend on it.
+
+### Restart: start a new search without forgetting
+
+A restart discards speculative assignments and temporary ordering. It retains evidence, verified artifacts, failed assumptions, learned constraints, and provenance.
+
+### Fairness debt: unfinished work cannot stay hidden forever
+
+AASM tracks how long persistent obligations remain unavailable or locked. Policy can force review, exposure, deferral, or terminal disposition.
+
+### Certificate-gated hard knowledge
+
+Under strict assurance, a learned constraint begins soft. It becomes hard only after an independent verifier confirms that a durable certificate covers the exact current constraint projection.
+
+---
+
 ## Canonical adoption surface
 
-AASM has many capabilities, but adopters should not have to guess which path is supported. v0.25.2 defines one machine-readable golden path over the existing runtime—without adding a wrapper runtime, second reducer, duplicate store, or alternate authority mechanism.
+AASM has many capabilities, but adopters should not have to guess which path is supported. The machine-readable `aasm.adoption.v1` contract identifies the golden path used by the hero application, Control Center, future runbooks, and framework adapters.
 
-Inspect it from Python:
+Python:
 
 ```python
 from aasm import public_api_contract, validate_public_api_contract
@@ -212,78 +293,21 @@ report = validate_public_api_contract()
 assert report["valid"]
 ```
 
-Inspect it from the CLI:
+CLI:
 
 ```bash
 aasm adoption-contract
 ```
 
-Or from the HTTP runtime:
+HTTP:
 
 ```text
 GET /adoption-contract
 ```
 
-The contract identifies:
+The contract identifies supported imports, engine methods, CLI commands, inspection surfaces, HTTP endpoints, version identities, and compatibility meanings.
 
-- supported top-level imports;
-- supported `AASMEngine` methods;
-- supported CLI commands;
-- supported inspection surfaces;
-- supported HTTP endpoints;
-- package/runtime and remote-protocol identity;
-- what `SUPPORTED`, `EXPERIMENTAL`, and `INTERNAL` mean before 1.0.
-
-Reference applications, Control Center additions, runbooks, and framework adapters must use this path. A feature that works only by mutating snapshots privately, writing the database directly, or running a parallel orchestration loop is not an accepted AASM adoption path.
-
-See [Architecture: Canonical adoption surface](docs/ARCHITECTURE.md#8-canonical-adoption-surface).
-
----
-
-## What happens when a plan is wrong?
-
-AASM does not reduce every failure to `FAILED`.
-
-It can distinguish among:
-
-| Situation | AASM response |
-|---|---|
-| A temporary tool error | Retry or repair under policy |
-| Missing information | Create or expose an obligation |
-| A contradicted assumption | Record a conflict and explanation |
-| A bad earlier decision | Backjump to the causal decision |
-| Search has become unproductive | Restart speculative search while keeping learned knowledge |
-| A combination must never recur | Learn a blocking constraint |
-
-A conflict is connected to evidence and to the decisions that caused it. AASM can therefore return to the relevant earlier choice instead of undoing everything that happened afterward.
-
----
-
-## Advanced ideas, in plain English
-
-### Conditional locks: hidden is not deleted
-
-Work can be irrelevant under the current decision model. AASM may lock it temporarily, but the lock records the assumption that made it irrelevant.
-
-When that assumption changes, the lock breaks and the work becomes visible again.
-
-### Backjumping: repair the cause, not the latest symptom
-
-Suppose a test fails after six later tasks have been completed, but the real cause is the second design decision. AASM can return directly to that decision and preserve later work that does not depend on it.
-
-### Restart: start a new search without forgetting
-
-A restart discards speculative assignments and temporary ordering. It retains evidence, verified artifacts, failed assumptions, learned constraints, and provenance.
-
-### Fairness debt: unfinished work cannot stay hidden forever
-
-AASM tracks how long persistent obligations remain unavailable or locked. Policy can force review, exposure, deferral, or a terminal disposition.
-
-### Certificate-gated hard knowledge
-
-A learned constraint starts soft when strict assurance is enabled. It becomes hard only after a durable certificate is independently verified against the exact current constraint projection.
-
-Changing the constraint body, guard, provenance, scope, or intended strength breaks that coverage.
+Reference applications must use the existing event/reducer runtime and public authority boundary. A feature that works only by privately mutating snapshots or writing the database directly is not an accepted AASM path.
 
 ---
 
@@ -291,54 +315,34 @@ Changing the constraint body, guard, provenance, scope, or intended strength bre
 
 | Capability | What it gives you |
 |---|---|
-| Durable state and replay | Reconstruct a run from its event history instead of trusting a transcript |
+| Durable state and replay | Reconstruct a run from events instead of trusting a transcript |
 | Legal transitions | Explicit rules for what the machine may do next |
-| Plans and checkpoints | Graph-based work, selective revalidation, replay, and historical forks |
-| Authority and effects | Proposal, approval, idempotency, execution ownership, and reconciliation for external actions |
-| Conflict learning | Evidence-backed explanations, blocking constraints, backjumping, and restart |
+| Plans and checkpoints | Graph-based work, selective revalidation, replay, and forks |
+| Authority and effects | Proposal, approval, idempotency, ownership, and reconciliation |
+| Conflict learning | Evidence-backed explanations, no-goods, backjumping, and restart |
 | Decision backends | Finite-domain, human, callback/model, and portfolio proposal sources |
 | Profile packages | Versioned domain meaning outside the kernel |
-| Formal assurance | Certificate policy, replay verification, conflict-core minimization, bounded TLA+, and SPIN checks |
-| Observability | Closed Decision, Obligation, Evidence, and causal graphs plus timelines and fairness debt |
+| Formal assurance | Certificate policy, replay verification, TLA+, and SPIN checks |
+| Observability | Decision, Obligation, Evidence, causal graphs, timelines, and fairness debt |
 | Distributed work | Workers, leases, heartbeats, quotas, telemetry, and mission controls |
-
----
-
-## Decision backends
-
-A decision backend proposes complete candidate assignments. Built-in reference backends include:
-
-- `FiniteDomainDecisionBackend` for deterministic, paginated finite search;
-- `HumanDecisionBackend` for structured human input;
-- `CallbackDecisionBackend` for models, heuristics, or external systems;
-- `PortfolioDecisionBackend` for combining several sources while preserving provenance.
-
-Budgets can limit candidates, combinations, declared cost, and latency. Candidate activation is all-or-nothing: AASM stages the entire model, checks it, and commits it once.
-
-A callback timeout limits how long the caller waits. It is **not** a security sandbox. Run untrusted callback code in a separate process or isolation boundary.
-
-See [Decision Backends](docs/DECISION_BACKENDS.md).
 
 ---
 
 ## Profiles and packages
 
-AASM keeps use-case meaning outside the core runtime.
+Profiles define domain vocabulary, obligations, evidence requirements, fairness, adapters, and migration policy without moving authority out of the kernel.
 
-A profile can define:
+Built-in profiles now include:
 
-- the decisions meaningful to a domain;
-- persistent obligations;
-- evidence requirements;
-- fairness policy;
-- adapters and validation contracts;
-- migration rules between profile versions.
+- `aasm.bare`
+- `aasm.evolve`
+- `aasm.research-synthesis`
 
-This lets the same kernel govern software work, investigations, laboratory procedures, operations, field studies, robotics workflows, or other structured activity without hard-coding one ontology.
+The finished research profile lives in [`profiles/research/`](profiles/research/) and is also available programmatically through `research_profile()` and `research_package()`.
 
-Profiles do not silently rewrite themselves. A contract change requires a new version, a new fingerprint, conformance checks, an explicit migration, and authorized activation.
+Profiles do not silently rewrite themselves. Contract changes require a new version, fingerprint, conformance check, migration, and authorized activation.
 
-See [Profile Packages](docs/PROFILE_PACKAGES.md) and the [Extension Contract](docs/EXTENSION_CONTRACT.md).
+See [Profile Packages](docs/PROFILE_PACKAGES.md) and [Extension Contract](docs/EXTENSION_CONTRACT.md).
 
 ---
 
@@ -348,16 +352,16 @@ See [Profile Packages](docs/PROFILE_PACKAGES.md) and the [Extension Contract](do
 
 The verifier checks, among other things:
 
-- contiguous event sequence and unique event identities;
+- contiguous sequence and unique event identities;
 - machine and state continuity;
-- legal transitions and terminal-state behavior;
+- legal transitions and terminal behavior;
 - exact replay-versus-persistence equality;
 - calculus invariants and active locks;
 - profile fingerprints;
 - unresolved mandatory obligations at completion;
 - certificate coverage for active hard constraints.
 
-The repository also runs bounded TLA+ and Promela/SPIN models. Those models check selected control properties such as staged certification, atomic candidate activation, restart preservation, safe completion, and bounded fairness. They are useful formal evidence, but they are not a proof that every adapter, external service, measurement, or domain model is correct.
+The repository also runs bounded TLA+ and Promela/SPIN models. These models verify selected control properties; they do not prove every adapter, external service, measurement, or domain claim correct.
 
 See [Formal Assurance](docs/FORMAL_ASSURANCE.md) and [`formal/`](formal/).
 
@@ -378,28 +382,9 @@ engine.inspect_machine("candidates")
 engine.inspect_machine("assurance")
 ```
 
-The causal graph connects decisions, obligations, evidence, locks, conflicts, explanations, constraints, certificates, verifications, and candidate models. Every edge endpoint is represented in the graph, so consumers do not receive dangling references.
+The causal graph connects decisions, obligations, evidence, locks, conflicts, explanations, constraints, certificates, verifications, and candidate models. The Control Center now renders these structures in human-readable panels.
 
-See [Observability](docs/OBSERVABILITY.md).
-
----
-
-## Where AASM fits
-
-AASM is useful when the work matters enough that “the model probably remembers” is not an acceptable control strategy.
-
-Common fits include:
-
-- long-running coding or infrastructure agents;
-- multi-agent planning and execution;
-- experiments and research procedures;
-- operations and incident response;
-- controlled external effects;
-- human-in-the-loop workflows;
-- replayable investigations;
-- domain systems that need explicit obligations, evidence, and recovery.
-
-AASM does not require one model provider, one agent role layout, SAT/SMT, Planner/Builder/Verifier, source-code repositories, or a particular user interface.
+See [Observability](docs/OBSERVABILITY.md) and [Control Center](docs/CONTROL_CENTER.md).
 
 ---
 
@@ -407,7 +392,7 @@ AASM does not require one model provider, one agent role layout, SAT/SMT, Planne
 
 AASM strengthens control, replay, provenance, and machine-level assurance. It does not manufacture truth.
 
-A verified certificate may prove that a particular artifact or constraint matches what was checked. It does not automatically prove that:
+A verified certificate may prove that an artifact or constraint matches what was checked. It does not automatically prove that:
 
 - a scientific model is physically accurate;
 - a sensor was calibrated;
@@ -416,23 +401,7 @@ A verified certificate may prove that a particular artifact or constraint matche
 - an external service returned the truth;
 - an adapter is safe to execute.
 
-AASM is experimental software. Use independent domain validation and appropriate safety controls for consequential systems.
-
----
-
-## Runtime and protocol versions
-
-The Python package and current runtime are **v0.25.2**.
-
-The remote server still reports the stable compatibility protocol as:
-
-```text
-aasm.remote.v1 / 0.19.0
-```
-
-That protocol number is intentionally separate from the package/runtime release number.
-
-The next planned runtime release is **v0.26.0 — Research Synthesis Hero Stack**. See the [Roadmap](ROADMAP.md) for its exact work packages and exit gate.
+The v0.26 research corpus is explicitly synthetic. Use independent domain validation and appropriate safety controls for consequential systems.
 
 ---
 
@@ -440,17 +409,17 @@ The next planned runtime release is **v0.26.0 — Research Synthesis Hero Stack*
 
 | Start here when you are… | Read |
 |---|---|
-| New to AASM | This README, [Use Cases](docs/USE_CASES.md), and the examples |
+| New to AASM | This README and [Why AASM?](WHY_AASM.md) |
+| Running the hero application | [Research Synthesis Demo](docs/RESEARCH_SYNTHESIS_DEMO.md) |
 | Evaluating adoption | [Roadmap](ROADMAP.md) and [Architecture](docs/ARCHITECTURE.md) |
 | Designing an agent system | [Formal Calculus](docs/FORMAL_CALCULUS.md), [Decision Backends](docs/DECISION_BACKENDS.md), [Durable Runtime](docs/DURABLE_RUNTIME.md) |
 | Building a domain package | [Profile Packages](docs/PROFILE_PACKAGES.md), [Extension Contract](docs/EXTENSION_CONTRACT.md) |
 | Reviewing correctness | [Formal Assurance](docs/FORMAL_ASSURANCE.md), [`formal/`](formal/), [Replay and Forks](docs/REPLAY_FORK.md) |
 | Operating workers or services | [Distributed Workers](docs/DISTRIBUTED_WORKERS.md), [Mission Controls](docs/MISSION_CONTROLS_OBSERVABILITY.md), [Remote Execution](docs/REMOTE_EXECUTION.md) |
-| Integrating external actions | [Effect System](docs/EFFECT_SYSTEM.md), [Provider Adapters](docs/PROVIDER_ADAPTERS_ARTIFACTS_CONTROLS.md) |
 
-Additional project documents:
+Additional documents:
 
-[Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Support](SUPPORT.md)
+[Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [v0.26 Release](docs/RELEASE_0.26.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Support](SUPPORT.md)
 
 ---
 
