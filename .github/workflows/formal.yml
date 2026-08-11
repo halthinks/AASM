@@ -6,11 +6,17 @@ on:
     paths:
       - "formal/**"
       - "pyproject.toml"
+      - "README.md"
+      - "ROADMAP.md"
+      - "CHANGELOG.md"
+      - "docs/ARCHITECTURE.md"
       - "schemas/assurance-state.schema.json"
       - "schemas/history-check-report.schema.json"
       - "scripts/check_formal_models.py"
+      - "src/aasm/__init__.py"
       - "src/aasm/assurance.py"
       - "src/aasm/calculus.py"
+      - "src/aasm/cli_v25.py"
       - "src/aasm/conflict_minimization.py"
       - "src/aasm/core/reducer.py"
       - "src/aasm/decision_backends.py"
@@ -23,12 +29,15 @@ on:
       - "src/aasm/runtime_v23.py"
       - "src/aasm/runtime_v24.py"
       - "src/aasm/runtime_v25.py"
+      - "src/aasm/server_v25.py"
+      - "tests/test_cli.py"
       - "tests/test_conflict_minimization_stabilization.py"
       - "tests/test_decision_backend_budgets.py"
       - "tests/test_v21_calculus.py"
       - "tests/test_v23_decision_backends.py"
       - "tests/test_v24_assurance.py"
       - "tests/test_v25_observability.py"
+      - "tests/test_v25_remote_observability.py"
       - ".github/workflows/formal.yml"
   workflow_dispatch:
 
@@ -47,7 +56,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Validate model and runtime source contracts
+      - name: Validate model, runtime, release, and adoption source contracts
         run: python scripts/check_formal_models.py
 
       - name: Read pinned toolchain
@@ -117,7 +126,7 @@ jobs:
           print(json.dumps({
               "state": os.environ["state"],
               "context": "aasm/formal-assurance",
-              "description": f"TLC and SPIN bounded assurance {os.environ['RESULT']}",
+              "description": f"TLC, SPIN, and adoption contracts {os.environ['RESULT']}",
               "target_url": f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
           }))
           PY
