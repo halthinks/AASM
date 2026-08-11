@@ -44,7 +44,7 @@ Results become evidence or generic semantic-result envelopes. Observations are c
 
 ## 8. Canonical adoption surface
 
-AASM v0.25.2 defines one supported golden path over the existing implementation. It does not add a second runtime, alternate reducer, duplicate persistence layer, or replacement authority mechanism.
+AASM v0.25.2 defines one supported golden path over the existing event/reducer runtime. It does not add a second runtime, alternate reducer, duplicate persistence layer, or replacement authority mechanism.
 
 The machine-readable source of truth is:
 
