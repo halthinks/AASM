@@ -1,6 +1,6 @@
 from copy import deepcopy as _deepcopy
 
-__version__ = "0.26.0"
+__version__ = "0.27.0"
 REMOTE_PROTOCOL_NAME = "aasm.remote.v1"
 REMOTE_PROTOCOL_VERSION = "0.19.0"
 
@@ -94,6 +94,11 @@ from .research_demo import (
     CORPUS_ID, REFERENCE_RESULT_ID, ResearchDemoResult,
     load_research_corpus, run_research_synthesis_demo, verify_research_corpus,
 )
+from .demo_stack import (
+    DEFAULT_STATE_PATH, DEFAULT_WORKER_RESOURCE_ID,
+    bootstrap_stack, complete_stack, fresh_stack, read_stack_state,
+    run_worker_cycle, select_stack_machine, stack_status, verify_stack,
+)
 from .graph import PlanNode, PlanEdge, PlanGraph
 from .evidence import EvidenceRecord, EvidenceLedger
 from .resources import ResourceRecord, TaskDemand, Assignment, ScheduleResult
@@ -121,6 +126,11 @@ SUPPORTED_PUBLIC_IMPORTS = [
     "research_package",
     "verify_research_corpus",
     "run_research_synthesis_demo",
+    "bootstrap_stack",
+    "fresh_stack",
+    "complete_stack",
+    "stack_status",
+    "verify_stack",
 ]
 
 SUPPORTED_ENGINE_METHODS = [
@@ -150,6 +160,8 @@ SUPPORTED_ENGINE_METHODS = [
 SUPPORTED_CLI_COMMANDS = [
     "adoption-contract",
     "demo",
+    "stack",
+    "serve",
     "inspect",
     "history-check",
     "candidate-generate",
@@ -176,7 +188,7 @@ SUPPORTED_INSPECTION_SURFACES = [
 PUBLIC_API_CONTRACT = {
     "contract_id": "aasm.adoption.v1",
     "schema_version": 1,
-    "contract_version": "0.2.0",
+    "contract_version": "0.3.0",
     "runtime_version": __version__,
     "project_status": "EXPERIMENTAL",
     "remote_protocol": {
@@ -198,10 +210,16 @@ PUBLIC_API_CONTRACT = {
     "supported_cli_commands": SUPPORTED_CLI_COMMANDS,
     "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
     "supported_http_endpoints": [
+        "/",
+        "/ui",
         "/health",
         "/adoption-contract",
+        "/demo-stack",
         "/v1/machines/{machine_id}/inspect/{surface}",
         "/v1/machines/{machine_id}/history-check",
+        "/v1/machines/{machine_id}/workers/register",
+        "/v1/machines/{machine_id}/claim-next",
+        "/v1/machines/{machine_id}/leases/{lease_id}/complete",
     ],
     "reference_application": {
         "id": "research-synthesis",
@@ -213,6 +231,17 @@ PUBLIC_API_CONTRACT = {
             "run_research_synthesis_demo()",
         ],
     },
+    "local_stack": {
+        "id": "aasm-local",
+        "entry_point": "docker compose up --build",
+        "control_center": "http://localhost:8787/",
+        "store": "PostgreSQL 17",
+        "default_workers": 1,
+        "optional_workers": 1,
+        "external_credentials_required": False,
+        "maintenance_entry_point": "docker compose run --rm stackctl",
+        "reset_semantics": "create a fresh canonical machine and retain prior history",
+    },
     "golden_path": [
         "create machine",
         "register decisions and obligations",
@@ -221,12 +250,13 @@ PUBLIC_API_CONTRACT = {
         "learn soft constraints and certify hard knowledge",
         "activate complete candidates atomically",
         "inject selective steering through the existing change-impact path",
+        "operate workers through registration, heartbeat, claim, lease, telemetry, and completion",
         "inspect, replay, backjump, restart, or fork",
     ],
     "implementation_rule": (
-        "Reference applications, adapters, and Control Center work must use the "
-        "existing event/reducer runtime and this public surface rather than create "
-        "a parallel authority or persistence path."
+        "Reference applications, adapters, Control Center work, and local-stack "
+        "services must use the existing event/reducer runtime and public surface "
+        "rather than create a parallel authority or persistence path."
     ),
 }
 
