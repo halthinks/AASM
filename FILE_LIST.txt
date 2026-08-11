@@ -20,6 +20,7 @@
 ./SECURITY.md
 ./SKILL.md
 ./SUPPORT.md
+./WHY_AASM.md
 ./docs/ADAPTIVE_MODEL_ROUTING.md
 ./docs/ARCHITECTURE.md
 ./docs/AUTOMATIC_CHECKPOINTS_FLEET_CONTROL.md
@@ -53,8 +54,10 @@
 ./docs/RELEASE_0.23.md
 ./docs/RELEASE_0.24.md
 ./docs/RELEASE_0.25.md
+./docs/RELEASE_0.26.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
+./docs/RESEARCH_SYNTHESIS_DEMO.md
 ./docs/RESOURCE_SCHEDULER.md
 ./docs/USE_CASES.md
 ./examples/adaptive_routing.py
@@ -79,6 +82,7 @@
 ./examples/provider_artifacts_controls.py
 ./examples/provisioning_telemetry.py
 ./examples/remote_worker.py
+./examples/research_synthesis_demo.py
 ./examples/runtime-config.local.json
 ./examples/scheduler_demo.py
 ./formal/AASMCalculus.cfg
@@ -95,6 +99,13 @@
 ./profiles/evolve/machine.json
 ./profiles/evolve/package.json
 ./profiles/evolve/profile.json
+./profiles/research/README.md
+./profiles/research/evidence-policy.json
+./profiles/research/fairness-policy.json
+./profiles/research/governance-budget.json
+./profiles/research/model-routing.json
+./profiles/research/package.json
+./profiles/research/profile.json
 ./profiles/expert_swarm.yaml
 ./profiles/hierarchical_team.yaml
 ./profiles/human_in_loop.yaml
@@ -176,6 +187,7 @@
 ./src/aasm/conflict_minimization.py
 ./src/aasm/control_center.py
 ./src/aasm/control_center_v19.py
+./src/aasm/control_center_v26.py
 ./src/aasm/core/__init__.py
 ./src/aasm/core/reducer.py
 ./src/aasm/decision_backends.py
@@ -214,8 +226,17 @@
 ./src/aasm/protocols.py
 ./src/aasm/provider_adapters.py
 ./src/aasm/provisioning.py
+./src/aasm/reference_data/research/expected_synthesis.json
+./src/aasm/reference_data/research/manifest.json
+./src/aasm/reference_data/research/question.json
+./src/aasm/reference_data/research/study_alpha.json
+./src/aasm/reference_data/research/study_beta.json
+./src/aasm/reference_data/research/study_delta.json
+./src/aasm/reference_data/research/study_gamma.json
 ./src/aasm/remote.py
 ./src/aasm/remote_v19.py
+./src/aasm/research_demo.py
+./src/aasm/research_profile.py
 ./src/aasm/resources.py
 ./src/aasm/router.py
 ./src/aasm/runtime.py
@@ -283,4 +304,5 @@
 ./tests/test_v24_assurance.py
 ./tests/test_v25_observability.py
 ./tests/test_v25_remote_observability.py
+./tests/test_v26_research_synthesis.py
 ./tests/test_workers_leases.py
