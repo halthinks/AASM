@@ -1,0 +1,26 @@
+{
+  "causal_interpretation": "does not support a general retrieval-only effect in experienced learners",
+  "comparator": "rereading with identical total exposure and feedback",
+  "design": "exposure-matched factorial replication",
+  "intervention": "retrieval practice",
+  "license": "CC0-1.0",
+  "limitations": [
+    "experienced-only population"
+  ],
+  "outcome": "delayed retention at 21 days",
+  "population": {
+    "n": 180,
+    "prior_knowledge": "experienced"
+  },
+  "result": {
+    "confidence_interval": [
+      -2.0,
+      4.2
+    ],
+    "effect_points": 1.1
+  },
+  "study_id": "gamma-2021",
+  "synthetic": true,
+  "title": "Exposure-matched factorial replication in experienced learners",
+  "year": 2021
+}
