@@ -276,8 +276,16 @@ class AASMEngine(V23Engine):
                 )
                 successor["method"] = "DELTA_DEBUGGING"
                 successor["created_sequence"] = self._sequence() + 1
-                successor["supersedes_explanation_id"] = explanation_id
-                successor["version"] = int(explanation.get("version", 1)) + 1
+                successor_certificate = deepcopy(successor.get("certificate") or {})
+                source_lineage = deepcopy(
+                    (explanation.get("certificate") or {}).get("aasm_lineage") or {}
+                )
+                successor_certificate["aasm_lineage"] = {
+                    "supersedes_explanation_id": explanation_id,
+                    "version": int(source_lineage.get("version", 1)) + 1,
+                    "created_sequence": self._sequence() + 1,
+                }
+                successor["certificate"] = successor_certificate
                 validate_explanation(calculus, successor)
                 calculus["explanations"][successor_id] = successor
                 conflict["explanation_ids"] = sorted(
