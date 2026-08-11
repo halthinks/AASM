@@ -1,0 +1,39 @@
+{
+  "aasm_contract": "0.22",
+  "adapter_entry_points": {},
+  "authors": [
+    "AASM contributors"
+  ],
+  "description": "Canonical offline research-synthesis hero profile and reference application for AASM.",
+  "distribution_name": "aasm-runtime",
+  "evolution_policy": {
+    "allow_runtime_proposals": true,
+    "allowed_activation_actors": [
+      "research-owner"
+    ],
+    "metadata": {
+      "hero_profile": true
+    },
+    "minimum_evidence_count": 2,
+    "mode": "PROPOSAL_ONLY",
+    "require_conformance": true,
+    "require_explicit_activation": true,
+    "require_migration_for_breaking": true
+  },
+  "homepage": "https://github.com/halthinks/AASM",
+  "license": "MIT",
+  "metadata": {
+    "built_in": true,
+    "corpus_id": "aasm-research-corpus-v1",
+    "hero_profile": true,
+    "profile_fingerprint": "08cf7084a065629429defce22a5383bab08f78677e866412eea3238b86969378",
+    "reference_application": "research-synthesis"
+  },
+  "migrations": [],
+  "package_id": "aasm.research-synthesis.package",
+  "package_version": "1.0.0",
+  "profiles": [
+    "aasm.research-synthesis"
+  ],
+  "schema_version": 1
+}
