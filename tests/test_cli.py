@@ -6,6 +6,7 @@ def test_cli_exposes_durable_commands():
     cases = [
         (["adoption-contract"], "adoption-contract"),
         (["demo"], "demo"),
+        (["stack", "status", "--store", "x.db"], "stack"),
         (["runs", "--db", "x.db"], "runs"),
         (["runs", "--store", "postgresql://example/aasm"], "runs"),
         (["replay", "machine_x", "--db", "x.db"], "replay"),
@@ -57,6 +58,7 @@ def test_cli_exposes_durable_commands():
         (["verifier-report", "machine_x", "--store", "x.db", "--record", "verifier.json"], "verifier-report"),
         (["planner-decision", "machine_x", "--store", "x.db", "--record", "decision.json"], "planner-decision"),
         (["serve", "--store", "x.db", "--runtime-config", "runtime.json"], "serve"),
+        (["serve", "--store", "x.db", "--demo-state", "stack.json"], "serve"),
     ]
     for argv, command in cases:
         assert parser.parse_args(argv).command == command
@@ -71,8 +73,11 @@ def test_cli_adoption_contract_is_machine_readable(capsys):
     payload = json.loads(capsys.readouterr().out)
     assert payload["valid"] is True
     assert payload["contract"]["contract_id"] == "aasm.adoption.v1"
-    assert payload["contract"]["runtime_version"] == "0.26.0"
+    assert payload["contract"]["runtime_version"] == "0.27.0"
     assert payload["contract"]["reference_application"]["id"] == "research-synthesis"
+    assert payload["contract"]["local_stack"]["entry_point"] == (
+        "docker compose up --build"
+    )
     assert "inspect_machine" in payload["contract"]["supported_engine_methods"]
 
 
