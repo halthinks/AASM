@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aasm-runtime"
-version = "0.25.2"
+version = "0.26.0"
 description = "Algorithmic Agent State Machine: durable deterministic control for agents, tools, humans, models, and real work."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,6 +21,9 @@ aasm = "aasm.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+aasm = ["reference_data/research/*.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
