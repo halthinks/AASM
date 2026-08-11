@@ -9,21 +9,32 @@ on:
       - "README.md"
       - "ROADMAP.md"
       - "CHANGELOG.md"
+      - "WHY_AASM.md"
       - "docs/ARCHITECTURE.md"
+      - "docs/RESEARCH_SYNTHESIS_DEMO.md"
+      - "docs/RELEASE_0.26.md"
+      - "profiles/research/**"
       - "schemas/assurance-state.schema.json"
       - "schemas/history-check-report.schema.json"
       - "scripts/check_formal_models.py"
       - "src/aasm/__init__.py"
       - "src/aasm/assurance.py"
       - "src/aasm/calculus.py"
+      - "src/aasm/cli_v22.py"
       - "src/aasm/cli_v25.py"
       - "src/aasm/conflict_minimization.py"
+      - "src/aasm/control_center.py"
+      - "src/aasm/control_center_v26.py"
       - "src/aasm/core/reducer.py"
       - "src/aasm/decision_backends.py"
       - "src/aasm/domain_adapters.py"
       - "src/aasm/model.py"
       - "src/aasm/observability.py"
       - "src/aasm/persistence/serde.py"
+      - "src/aasm/profile_packages.py"
+      - "src/aasm/research_demo.py"
+      - "src/aasm/research_profile.py"
+      - "src/aasm/reference_data/research/**"
       - "src/aasm/runtime_v21.py"
       - "src/aasm/runtime_v22.py"
       - "src/aasm/runtime_v23.py"
@@ -38,6 +49,7 @@ on:
       - "tests/test_v24_assurance.py"
       - "tests/test_v25_observability.py"
       - "tests/test_v25_remote_observability.py"
+      - "tests/test_v26_research_synthesis.py"
       - ".github/workflows/formal.yml"
   workflow_dispatch:
 
@@ -56,7 +68,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Validate model, runtime, release, and adoption source contracts
+      - name: Validate model, runtime, release, adoption, and hero-stack contracts
         run: python scripts/check_formal_models.py
 
       - name: Read pinned toolchain
