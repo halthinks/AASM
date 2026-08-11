@@ -130,11 +130,11 @@ active proctype AASM()
          fairness_debt = 0;
          CHECK_INVARIANTS()
 
-    :: (!TERMINAL && !unresolved_mandatory) ->
+    :: (!TERMINAL && candidate_mask == 0 && !unresolved_mandatory) ->
          phase = COMPLETE;
          CHECK_INVARIANTS()
 
-    :: (!TERMINAL) ->
+    :: (!TERMINAL && candidate_mask == 0) ->
          phase = FAIL;
          CHECK_INVARIANTS()
 
