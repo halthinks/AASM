@@ -13,11 +13,12 @@ from .observability import (
     observability_report,
     package_history,
 )
-from .runtime_v24 import AASMEngine as V24Engine, default_profile_registry
+from .research_profile import ResearchProfileRegistry
+from .runtime_v24 import AASMEngine as V24Engine
 
 
 class AASMEngine(V24Engine):
-    """v0.25 runtime: domain-neutral machine observability and inspection."""
+    """v0.25+ runtime: domain-neutral machine observability and inspection."""
 
     def _refresh_observability_state(self) -> None:
         refresh = getattr(self, "_refresh_canonical_snapshot", None)
@@ -77,3 +78,12 @@ class AASMEngine(V24Engine):
             raise ValueError(
                 f"unknown inspection surface: {surface}; choose from {sorted(surfaces)}"
             ) from exc
+
+
+def default_profile_registry(*, discover: bool = False) -> ResearchProfileRegistry:
+    """Return the canonical registry including the adoption-grade hero profile."""
+
+    registry = ResearchProfileRegistry(include_builtins=True)
+    if discover:
+        registry.discover()
+    return registry
