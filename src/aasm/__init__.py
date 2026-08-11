@@ -1,6 +1,6 @@
 from copy import deepcopy as _deepcopy
 
-__version__ = "0.25.2"
+__version__ = "0.26.0"
 REMOTE_PROTOCOL_NAME = "aasm.remote.v1"
 REMOTE_PROTOCOL_VERSION = "0.19.0"
 
@@ -50,6 +50,9 @@ from .profile_packages import (
     ProfileBinding, ProfileEvolutionProposal, ProfileRegistry, bare_profile,
     evolve_profile,
 )
+from .research_profile import (
+    ResearchProfileRegistry, research_package, research_profile,
+)
 from .domain_adapters import (
     DecisionRequest, CandidateModel, CandidateValidationReport, DomainContext,
     ValidationContext, ExplanationContext, ExplanationCandidate,
@@ -87,6 +90,10 @@ from .observability import (
     causal_graph, conflict_timeline, fairness_debt, event_timeline,
     package_history, observability_report,
 )
+from .research_demo import (
+    CORPUS_ID, REFERENCE_RESULT_ID, ResearchDemoResult,
+    load_research_corpus, run_research_synthesis_demo, verify_research_corpus,
+)
 from .graph import PlanNode, PlanEdge, PlanGraph
 from .evidence import EvidenceRecord, EvidenceLedger
 from .resources import ResourceRecord, TaskDemand, Assignment, ScheduleResult
@@ -110,6 +117,10 @@ SUPPORTED_PUBLIC_IMPORTS = [
     "MemoryStore",
     "SQLiteStore",
     "PostgresStore",
+    "research_profile",
+    "research_package",
+    "verify_research_corpus",
+    "run_research_synthesis_demo",
 ]
 
 SUPPORTED_ENGINE_METHODS = [
@@ -165,7 +176,7 @@ SUPPORTED_INSPECTION_SURFACES = [
 PUBLIC_API_CONTRACT = {
     "contract_id": "aasm.adoption.v1",
     "schema_version": 1,
-    "contract_version": "0.1.0",
+    "contract_version": "0.2.0",
     "runtime_version": __version__,
     "project_status": "EXPERIMENTAL",
     "remote_protocol": {
@@ -192,6 +203,16 @@ PUBLIC_API_CONTRACT = {
         "/v1/machines/{machine_id}/inspect/{surface}",
         "/v1/machines/{machine_id}/history-check",
     ],
+    "reference_application": {
+        "id": "research-synthesis",
+        "profile_id": "aasm.research-synthesis",
+        "corpus_id": CORPUS_ID,
+        "offline": True,
+        "entry_points": [
+            "aasm demo --scenario research-synthesis",
+            "run_research_synthesis_demo()",
+        ],
+    },
     "golden_path": [
         "create machine",
         "register decisions and obligations",
@@ -199,6 +220,7 @@ PUBLIC_API_CONTRACT = {
         "raise and explain conflicts",
         "learn soft constraints and certify hard knowledge",
         "activate complete candidates atomically",
+        "inject selective steering through the existing change-impact path",
         "inspect, replay, backjump, restart, or fork",
     ],
     "implementation_rule": (
@@ -234,6 +256,9 @@ def validate_public_api_contract() -> dict:
         "version": REMOTE_PROTOCOL_VERSION,
     }:
         errors.append("public API contract remote protocol does not match package constants")
+    corpus = verify_research_corpus()
+    if not corpus["valid"]:
+        errors.append("packaged research reference corpus failed verification")
     return {
         "valid": not errors,
         "errors": errors,
