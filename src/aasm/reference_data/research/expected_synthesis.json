@@ -1,0 +1,17 @@
+{
+  "active_causal_model": "effect_modified_by_prior_knowledge",
+  "artifact_id": "aasm-research-synthesis-v1",
+  "conclusion": "The fixed corpus does not support a universal retrieval-only mechanism. The best-supported model is effect modification by prior knowledge: novice learners benefit from retrieval practice under matched exposure, while the effect is small and uncertain in experienced learners; unequal exposure also inflates some aggregate estimates.",
+  "question_id": "retrieval-causal-question",
+  "rejected_model": "retrieval_only",
+  "required_constraint_id": "LC-retrieval-only",
+  "required_evidence_ids": [
+    "E-alpha-result",
+    "E-beta-method",
+    "E-gamma-result",
+    "E-delta-result",
+    "E-resolution",
+    "E-final-provenance"
+  ],
+  "synthetic": true
+}
