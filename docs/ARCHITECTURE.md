@@ -42,6 +42,45 @@ Capability and authority are separate. A worker or adapter may be capable of pro
 
 Results become evidence or generic semantic-result envelopes. Observations are checked against evidence contracts and invariants before authoritative commitment. Material changes retain provenance and survive replay, restart, and fork.
 
+## 8. Canonical adoption surface
+
+AASM v0.25.2 defines one supported golden path over the existing implementation. It does not add a second runtime, alternate reducer, duplicate persistence layer, or replacement authority mechanism.
+
+The machine-readable source of truth is:
+
+```python
+from aasm import public_api_contract, validate_public_api_contract
+
+contract = public_api_contract()
+report = validate_public_api_contract()
+```
+
+The same contract is available through:
+
+```bash
+aasm adoption-contract
+```
+
+and:
+
+```text
+GET /adoption-contract
+```
+
+The contract identifies:
+
+- supported top-level imports;
+- supported `AASMEngine` methods;
+- supported CLI commands;
+- supported inspection surfaces;
+- supported HTTP entry points;
+- the runtime version and separate remote-protocol version;
+- the compatibility expectations for supported, experimental, and internal surfaces.
+
+“Supported” inside the pre-1.0 project means that a breaking change must be explicit in the changelog and accompanied by migration or deprecation guidance when practical. It does not declare the entire project API frozen.
+
+Reference applications, Control Center work, operator runbooks, and external framework adapters must exercise this existing path. An adoption deliverable is incomplete if it works only through private snapshot mutation, direct database writes, or a parallel orchestration loop.
+
 ## Design boundary
 
 AASM remains usable underneath different agent frameworks and domains. Provider-specific invocation, application UX, domain logic, package adapters, and tool implementations belong outside the core or behind explicit contracts.
