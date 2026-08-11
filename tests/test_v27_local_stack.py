@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 import threading
 from http.server import ThreadingHTTPServer
@@ -74,6 +73,12 @@ def test_demo_worker_uses_existing_remote_registration_claim_and_lease_path(
         stack = client._request("GET", "/demo-stack")
         assert stack["ready"] is True
         assert stack["active_machine_id"] == state["active_machine_id"]
+        history = client._request(
+            "GET",
+            f"/v1/machines/{state['completed_machine_id']}/history-check",
+        )
+        assert history["valid"] is True
+        assert history["reconstructed_snapshot_hash"] == history["persisted_snapshot_hash"]
 
         first = run_worker_cycle(
             state_path=state_path,
