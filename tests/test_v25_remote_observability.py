@@ -22,10 +22,12 @@ def test_remote_v25_observability_and_backend_views(tmp_path):
         client = AASMRemoteClient(f"http://127.0.0.1:{server.server_port}", "secret")
         health = client.health()
         assert health["version"] == "0.19.0"
-        assert health["runtime_version"] == "0.25.0"
+        assert health["runtime_version"] == "0.25.1"
         report = client._request("GET", f"/v1/machines/{machine_id}/inspect/summary")
         assert report["machine_id"] == machine_id
         assert report["decision_graph"]["nodes"][0]["id"] == "D1"
+        causal = client._request("GET", f"/v1/machines/{machine_id}/inspect/causal")
+        assert causal["kind"] == "CAUSAL"
         backends = client._request("GET", f"/v1/machines/{machine_id}/backends")
         assert any(row["backend_id"] == "aasm.finite-domain" for row in backends["registered_backends"])
         assurance = client._request("GET", f"/v1/machines/{machine_id}/assurance")
