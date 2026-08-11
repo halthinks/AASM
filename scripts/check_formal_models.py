@@ -123,7 +123,11 @@ def main() -> int:
             "PUBLIC_API_CONTRACT",
             '"contract_id": "aasm.adoption.v1"',
             '"reference_application"',
+            '"local_stack"',
+            '"docker compose up --build"',
             "run_research_synthesis_demo",
+            "bootstrap_stack",
+            "verify_stack",
             "def public_api_contract",
             "def validate_public_api_contract",
             "existing event/reducer runtime",
@@ -140,12 +144,31 @@ def main() -> int:
         ],
     )
     require(
+        root / "src" / "aasm" / "cli_v27.py",
+        [
+            "execute_stack_action",
+            'commands.add_parser(\n        "stack"',
+            'serve_command.add_argument(\n        "--demo-state"',
+            "server_v27",
+        ],
+    )
+    require(
         root / "src" / "aasm" / "server_v25.py",
         [
             'server_version = f"AASM/{__version__}"',
             'if self.path == "/adoption-contract"',
             '"runtime_version": __version__',
             "REMOTE_PROTOCOL_VERSION",
+        ],
+    )
+    require(
+        root / "src" / "aasm" / "server_v27.py",
+        [
+            "_v19.html_document = html_document",
+            'if parsed.path == "/"',
+            'if parsed.path == "/demo-stack"',
+            "demo_state_path",
+            "AASM refuses non-loopback binding without --token",
         ],
     )
     require(
@@ -172,6 +195,26 @@ def main() -> int:
         ],
     )
     require(
+        root / "src" / "aasm" / "demo_stack.py",
+        [
+            "def bootstrap_stack",
+            "def fresh_stack",
+            "def complete_stack",
+            "def verify_stack",
+            "def run_worker_cycle",
+            "RemoteWorkerLoop",
+            "AASMRemoteClient",
+            "run_research_synthesis_demo",
+            "engine.register_resource",
+            "engine.schedule",
+            "existing remote registration/claim/lease/completion API",
+        ],
+    )
+    forbid(
+        root / "src" / "aasm" / "demo_stack.py",
+        ["DELETE FROM", "TRUNCATE", "UPDATE aasm_runs", "INSERT INTO aasm_runs"],
+    )
+    require(
         root / "src" / "aasm" / "control_center_v26.py",
         [
             "v19_html_document",
@@ -180,6 +223,17 @@ def main() -> int:
             "Evidence Graph",
             "learned no-good",
             "/inspect/conflicts",
+        ],
+    )
+    require(
+        root / "src" / "aasm" / "control_center_v27.py",
+        [
+            "v26_html_document",
+            "v0.27 One-Command Local Full Stack",
+            "Live setup machine",
+            "Completed reference run",
+            "/demo-stack",
+            "aasmStackAutoload",
         ],
     )
     require(
@@ -200,23 +254,48 @@ def main() -> int:
         ],
     )
     require(
+        root / "Dockerfile",
+        [
+            "FROM python:3.13-slim",
+            "python -m pip install '.[postgres]'",
+            "EXPOSE 8787",
+        ],
+    )
+    require(
+        root / "compose.yaml",
+        [
+            "postgres:17-alpine",
+            "bootstrap:",
+            "runtime:",
+            "worker-1:",
+            "worker-2:",
+            "stackctl:",
+            "service_completed_successfully",
+            "aasm.demo_stack",
+            "two-workers",
+        ],
+    )
+    forbid(root / "compose.yaml", ["DELETE FROM", "TRUNCATE"])
+    require(
         root / "README.md",
         [
             f"v{version}",
             "Models propose. AASM decides",
             "Canonical adoption surface",
             "aasm adoption-contract",
-            "Run the Research Synthesis Hero Demo",
-            "v0.27.0 — One-Command Local Full Stack",
+            "One-command start",
+            "docker compose up --build",
+            "v0.28.0 — Distribution and Operator Readiness",
         ],
     )
     require(
         root / "CHANGELOG.md",
         [
             f"## [{version}] -",
+            "One-command local stack",
             "Research Synthesis Hero Stack",
             "aasm.adoption.v1",
-            "parallel runtimes",
+            "parallel runtime",
         ],
     )
     require(
@@ -224,8 +303,9 @@ def main() -> int:
         [
             f"v{version} / experimental",
             "Program rule: extend the working path",
-            "Current — implemented",
             "v0.27.0 — One-Command Local Full Stack",
+            "Current — implemented",
+            "v0.28.0 — Distribution and Operator Readiness",
             "Adoption scorecard",
         ],
     )
@@ -247,6 +327,25 @@ def main() -> int:
         ],
     )
     require(
+        root / "docs" / "LOCAL_FULL_STACK.md",
+        [
+            "docker compose up --build",
+            "stackctl fresh",
+            "stackctl verify",
+            "PostgreSQL 17",
+            "No container mutates machine snapshots or AASM tables directly",
+        ],
+    )
+    require(
+        root / "docs" / "RELEASE_0.27.md",
+        [
+            "AASM v0.27.0",
+            "One-Command Local Full Stack",
+            "existing event/reducer authority path",
+            "Docker Compose end-to-end smoke test",
+        ],
+    )
+    require(
         root / "WHY_AASM.md",
         [
             "Stateless retry baseline",
@@ -261,8 +360,19 @@ def main() -> int:
             "test_control_center_extends_existing_dashboard_with_reasoning_surfaces",
         ],
     )
+    require(
+        root / "tests" / "test_v27_local_stack.py",
+        [
+            "test_stack_bootstrap_seeds_live_and_completed_canonical_machines",
+            "test_demo_worker_uses_existing_remote_registration_claim_and_lease_path",
+            "test_fresh_is_a_non_destructive_canonical_reset",
+            "test_compose_and_control_center_expose_the_documented_stack_contract",
+        ],
+    )
 
-    print("formal, runtime, release, adoption, and hero-stack source contracts: PASS")
+    print(
+        "formal, runtime, release, adoption, hero-stack, and local-full-stack source contracts: PASS"
+    )
     return 0
 
 
