@@ -5,9 +5,12 @@ on:
     branches: [main]
     paths:
       - "formal/**"
+      - "pyproject.toml"
+      - "src/aasm/model.py"
       - "src/aasm/assurance.py"
       - "src/aasm/conflict_minimization.py"
       - "src/aasm/runtime_v24.py"
+      - "src/aasm/runtime_v25.py"
       - ".github/workflows/formal.yml"
   workflow_dispatch:
 
