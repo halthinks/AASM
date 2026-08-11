@@ -1,0 +1,121 @@
+{
+  "aasm_contract": "0.22",
+  "adapters": {},
+  "artifact_kinds": [
+    "evidence_matrix",
+    "replay_report",
+    "synthesis_report"
+  ],
+  "capabilities": [
+    "causal-backjump",
+    "claim-level-provenance",
+    "conflict-learning",
+    "fixed-corpus-replay",
+    "offline-reference-run",
+    "selective-steering"
+  ],
+  "decision_namespaces": [
+    "report",
+    "research",
+    "synthesis"
+  ],
+  "description": "Offline-first research and evidence-synthesis profile for causal questions, explicit evidence contracts, contradiction handling, provenance, and replayable final artifacts.",
+  "evidence_kinds": [
+    "contradiction",
+    "provenance_check",
+    "resolution",
+    "study_claim",
+    "study_method",
+    "study_result"
+  ],
+  "evolution_policy": {
+    "allow_runtime_proposals": true,
+    "allowed_activation_actors": [
+      "research-owner"
+    ],
+    "metadata": {
+      "hero_profile": true
+    },
+    "minimum_evidence_count": 2,
+    "mode": "PROPOSAL_ONLY",
+    "require_conformance": true,
+    "require_explicit_activation": true,
+    "require_migration_for_breaking": true
+  },
+  "machine_definition": "aasm.default",
+  "metadata": {
+    "corpus_id": "aasm-research-corpus-v1",
+    "hero_profile": true,
+    "offline": true,
+    "reference_application": "research-synthesis"
+  },
+  "migrations": [],
+  "obligation_kinds": [
+    "artifact",
+    "causal_assessment",
+    "contradiction_resolution",
+    "evidence_extraction",
+    "provenance_audit",
+    "source_review",
+    "steering_requirement"
+  ],
+  "policies": {
+    "default_fairness": {
+      "enforcement": "BLOCK_PLANNING",
+      "max_deferral_epochs": 5,
+      "max_hidden_epochs": 20,
+      "max_lock_age_epochs": 20,
+      "max_lock_count": 10,
+      "review_batch_size": 1
+    },
+    "default_governance_budget": {
+      "max_reviews": 12,
+      "max_total_cost": 25.0,
+      "require_human_above_risk": "high"
+    },
+    "default_model_routing": {
+      "artifact_generation": "deterministic_fixture",
+      "contradiction_resolution": "strongest_available",
+      "extraction": "deterministic_fixture"
+    },
+    "evidence_contracts": {
+      "artifact": [
+        "resolution",
+        "provenance_check"
+      ],
+      "causal_assessment": [
+        "study_result",
+        "resolution"
+      ],
+      "contradiction_resolution": [
+        "contradiction",
+        "resolution"
+      ],
+      "evidence_extraction": [
+        "study_result"
+      ],
+      "provenance_audit": [
+        "provenance_check"
+      ],
+      "source_review": [
+        "provenance_check"
+      ]
+    },
+    "hard_constraint_certification": [
+      "PROVEN",
+      "VALIDATED"
+    ],
+    "validation_classifications": [
+      "PASS",
+      "LOCAL_DEFECT",
+      "INFORMATION_GAP",
+      "ASSUMPTION_CONFLICT",
+      "EVIDENCE_CONFLICT",
+      "POLICY_CONFLICT",
+      "FATAL"
+    ]
+  },
+  "profile_id": "aasm.research-synthesis",
+  "profile_version": "1.0.0",
+  "schema_version": 1
+}
