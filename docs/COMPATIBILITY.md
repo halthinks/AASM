@@ -8,8 +8,8 @@ AASM has three separate identities:
 
 | Identity | Current value | Meaning |
 |---|---|---|
-| Package/runtime | `0.28.2` | Python distribution and current server implementation |
-| Adoption contract | `aasm.adoption.v1 / 0.4.1` | Supported imports, methods, commands, endpoints, and runbooks |
+| Package/runtime | `0.29.0` | Python distribution and current server implementation |
+| Adoption contract | `aasm.adoption.v1 / 0.5.0` | Supported imports, methods, commands, endpoints, and runbooks |
 | Remote protocol | `aasm.remote.v1 / 0.19.0` | Compatibility identity used by existing remote clients |
 
 A package release does not automatically require a wire-protocol version change.
@@ -40,6 +40,20 @@ aasm adoption-contract
 from aasm import public_api_contract
 contract = public_api_contract()
 ```
+
+## Framework adapter compatibility
+
+The first optional adapter is `aasm.langgraph.v1 / 0.1.0`. It is EXPERIMENTAL and supports LangGraph `>=1.2,<2`. The core `aasm-runtime` install has no mandatory LangGraph dependency.
+
+The supported boundary is explicit:
+
+- LangGraph owns graph topology, node execution, dynamic routing, interrupts, and checkpoints;
+- AASM owns durable machine truth, decisions, obligations, evidence, effects, conflicts, replay, and recovery;
+- thread/run binding derives from `configurable.thread_id` and optional run identity;
+- checkpoint state must not become competing AASM authority;
+- adapter code must not mutate AASM tables or snapshots directly.
+
+A future adapter version can change independently of the remote wire protocol and package version.
 
 ## Snapshot, event, and profile compatibility
 

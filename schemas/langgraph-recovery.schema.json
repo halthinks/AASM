@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/langgraph-recovery.schema.json",
+  "title": "AASM LangGraph Recovery Directive",
+  "type": "object",
+  "required": ["action", "machine_id", "reason", "update", "aasm_result"],
+  "properties": {
+    "action": {"enum": ["CONTINUE", "REPAIR", "BACKJUMP", "PAUSE", "RESTART", "FORK"]},
+    "machine_id": {"type": "string", "minLength": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "conflict_id": {"type": ["string", "null"]},
+    "target": {"type": ["string", "null"]},
+    "update": {"type": "object"},
+    "fork_machine_id": {"type": ["string", "null"]},
+    "aasm_result": {"type": "object"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"action": {"const": "BACKJUMP"}}},
+      "then": {"properties": {"conflict_id": {"type": "string", "minLength": 1}}}
+    }
+  ],
+  "additionalProperties": false
+}

@@ -4,6 +4,41 @@ All notable user-visible changes to AASM are documented here.
 
 Detailed history through v0.27.0 is preserved in [`CHANGELOG_0.27_AND_EARLIER.md`](CHANGELOG_0.27_AND_EARLIER.md). History through v0.18 is also available separately in [`CHANGELOG_0.18_AND_EARLIER.md`](CHANGELOG_0.18_AND_EARLIER.md).
 
+## [0.29.0] - 2026-08-11
+
+AASM v0.29.0 adds the first thin framework adapter without changing the canonical event/reducer authority path. Existing LangGraph applications keep graph topology, routing, interrupts, checkpoint data, and domain state; AASM supplies durable decisions, obligations, evidence, effects, conflict learning, replay, and recovery underneath them.
+
+### Thin LangGraph adapter
+
+- added deterministic `configurable.thread_id` and optional run identity to AASM machine binding;
+- added idempotent bind/resume and collision rejection for unrelated machines;
+- added dependency-neutral sync and async node wrappers that preserve original state updates and `Command` objects;
+- added selected decision, obligation, evidence, and effect mapping helpers;
+- added `CONTINUE`, `REPAIR`, `BACKJUMP`, `PAUSE`, `RESTART`, and `FORK` recovery directives;
+- kept LangGraph checkpoint state explicitly separate from AASM machine authority;
+- added certified learned-no-good creation and causal backjump through existing calculus and assurance APIs;
+- added a controlled ordinary-versus-AASM comparison graph demonstrating failed-assumption identification, unrelated-work preservation, learned-constraint reuse, exact replay, and provenance.
+
+### Adoption and inspection
+
+- added `aasm.langgraph.v1 / 0.1.0`;
+- advanced `aasm.adoption.v1` to `0.5.0`;
+- retained `aasm.remote.v1 / 0.19.0`;
+- added `langgraph-binding` CLI support;
+- added `langgraph` and `integrations` inspection surfaces;
+- added the adapted-run Control Center panel and existing authenticated inspection endpoint support;
+- added binding and recovery JSON schemas, migration documentation, release notes, and a runnable example;
+- added an optional `langgraph>=1.2,<2` dependency extra and real-framework CI job;
+- kept core installation and imports independent of LangGraph.
+
+### Correctness boundary
+
+- no framework-private AASM truth or competing machine authority was introduced;
+- no duplicate graph runtime, checkpoint store, scheduler, lease system, effect ledger, event store, or persistence path was added;
+- wrappers call the original node and return its exact output;
+- `PAUSE` records durable AASM authority but leaves interrupt/checkpoint control with LangGraph;
+- adapter events are append-only provenance and replay through the existing reducer without mutating framework state.
+
 ## [0.28.2] - 2026-08-11
 
 AASM v0.28.2 makes the source distribution self-contained and self-testing. It changes packaging and validation only; the deterministic runtime, `aasm.adoption.v1` authority boundary, and `aasm.remote.v1 / 0.19.0` protocol remain unchanged.
@@ -45,7 +80,7 @@ AASM v0.28.1 hardens release publication after exercising the real v0.28.0 workf
 
 - expanded the execution roadmap through v0.34.0;
 - made v0.29.0 the Thin LangGraph Adapter;
-- planned adapter conformance, hierarchical decision scopes, runtime/formal trace conformance, signed provenance,and distributed recovery certification with explicit exit gates.
+- planned adapter conformance, hierarchical decision scopes, runtime/formal trace conformance, signed provenance, and distributed recovery certification with explicit exit gates.
 
 ## [0.28.0] - 2026-08-11
 
@@ -83,7 +118,7 @@ AASM v0.28.0 adds clean distribution, immutable release evidence, a compatibilit
 - added a clean-wheel build/install job to ordinary CI;
 - required release-history, wheel, source-distribution, installed-contract, and installed-runbook checks;
 - extended formal workflow triggers and static contracts to release and runbook surfaces;
-- retained Python 3.11->3.13, PostgreSQL, Docker Compose, Control Center JavaScript, TLA+, it and SPIN gates.
+- retained Python 3.11->3.13, PostgreSQL, Docker Compose, Control Center JavaScript, TLA+, TLC, and SPIN gates.
 
 ### Compatibility
 

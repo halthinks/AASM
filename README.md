@@ -12,7 +12,7 @@ AASM keeps the official state of a job outside the language model. Models can pr
 [![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.28.2%20experimental-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.29.0%20experimental-orange)](ROADMAP.md)
 
 [Run the full stack](#one-command-start) · [Install](#install-aasm) · [Operator runbooks](#operator-runbooks) · [Why AASM?](WHY_AASM.md) · [Roadmap](ROADMAP.md)
 
@@ -22,35 +22,46 @@ AASM keeps the official state of a job outside the language model. Models can pr
 
 ## Current release
 
-**v0.28.2 — Self-Contained Source Distribution**
+**v0.29.0 — Thin LangGraph Adapter**
 
 | Item | Current state |
 |---|---|
-| **Package/runtime** | **v0.28.2** |
+| **Package/runtime** | **v0.29.0** |
 | **Project status** | Experimental / pre-1.0 |
-| **Current milestone** | **Self-Contained Source Distribution** |
-| **Prior release** | **v0.28.1 — Distribution Release Hardening** |
+| **Current milestone** | **Thin LangGraph Adapter** |
+| **Prior release** | **v0.28.2 — Self-Contained Source Distribution** |
 | **One-command application** | PostgreSQL + runtime + Control Center + worker + Research Synthesis Hero Stack |
-| **Next release** | **v0.29.0 — Thin LangGraph Adapter** |
+| **Framework adoption** | Existing LangGraph graphs keep their topology and checkpoints while AASM supplies durable authority underneath |
+| **Next release** | **v0.30.0 — Adapter Conformance Kit** |
 | **Remote compatibility protocol** | `aasm.remote.v1 / 0.19.0` |
 
-v0.28.2 does not add a second runtime. It closes the last packaging gap around the working v0.28.1 implementation:
+v0.29.0 is the first framework-adoption release:
 
-- the source distribution now contains the repository-level contracts its bundled tests inspect;
-- an extracted source distribution runs a standalone smoke test without a Git checkout;
-- profiles, schemas, formal models, workflows, runbooks, examples, and release scripts are included;
-- wheel behavior, runtime authority, remote protocol, and operator semantics remain unchanged.
+- `configurable.thread_id` and optional run identity map deterministically to one AASM machine;
+- binding and resume are idempotent and reject identity collisions;
+- sync and async node wrappers return the original state update or `Command` unchanged;
+- selected decisions, obligations, evidence, and effects enter the existing AASM public path;
+- contradictions produce evidence, explanations, certified learned no-goods, and causal backjumps;
+- `CONTINUE | REPAIR | BACKJUMP | PAUSE | RESTART | FORK` map to existing recovery semantics;
+- LangGraph remains responsible for graph execution, routing, interrupts, and checkpoints;
+- AASM remains responsible for durable machine truth, replay, evidence, effects, and recovery.
 
-v0.28.1 already hardened reproducible publication:
+The core package has no mandatory LangGraph dependency. Install the optional adapter dependencies only when running a real graph:
 
-- build dependencies are exact and declared;
-- two clean builds must produce byte-identical wheel and source-distribution files;
-- a release is attempted only for an explicit dispatch or a package-version change;
-- an existing release is never overwritten or repaired in place;
-- the remote tag, asset set, byte sizes, and SHA-256 digests are read back and verified;
-- historical tags are inspected and reported without making old-tag permissions release-critical.
+```bash
+pip install 'aasm-runtime[langgraph]'
+```
 
-The package version and wire-protocol version are intentionally separate. AASM v0.28.2 can evolve while compatible remote clients continue to use `aasm.remote.v1 / 0.19.0`.
+v0.29.0 extends the same deterministic event/reducer implementation shipped and independently packaged in v0.28.2. It adds no second runtime, alternate store, duplicate scheduler, duplicate effect ledger, or framework-private machine truth.
+
+The package version, adapter version, and remote wire protocol are intentionally separate:
+
+```text
+package/runtime:    aasm-runtime 0.29.0
+adoption contract:  aasm.adoption.v1 / 0.5.0
+LangGraph adapter:  aasm.langgraph.v1 / 0.1.0
+remote protocol:    aasm.remote.v1 / 0.19.0
+```
 
 > **Models propose. AASM decides what may become durable state.**
 
@@ -103,11 +114,11 @@ See [One-Command Local Full Stack](docs/LOCAL_FULL_STACK.md).
 
 Every maintained release builds twice, inspects its contents, clean-installs the wheel, records SHA-256 values, publishes once, and verifies the exact remote assets.
 
-For v0.28.2:
+For v0.29.0:
 
 ```bash
 pip install \
-  https://github.com/halthinks/AASM/releases/download/v0.28.2/aasm_runtime-0.28.2-py3-none-any.whl
+  https://github.com/halthinks/AASM/releases/download/v0.29.0/aasm_runtime-0.29.0-py3-none-any.whl
 ```
 
 Verify the installed package:
@@ -120,8 +131,8 @@ aasm runbook history-diagnosis
 The release contains:
 
 ```text
-aasm_runtime-0.28.2-py3-none-any.whl
-aasm_runtime-0.28.2.tar.gz
+aasm_runtime-0.29.0-py3-none-any.whl
+aasm_runtime-0.29.0.tar.gz
 historical-release-report.json
 SHA256SUMS.txt
 release-manifest.json
@@ -157,6 +168,45 @@ source .venv/bin/activate
 pip install -e '.[dev]'
 pytest -q
 ```
+
+---
+
+# Adopt an existing LangGraph application
+
+Keep the graph topology and checkpointing you already have:
+
+```python
+from aasm import LangGraphAdapter
+
+adapter = LangGraphAdapter(namespace="my-application")
+
+def retrieve(state, config=None):
+    return {"documents": ["result"]}
+
+graph.add_node("retrieve", adapter.wrap_node("retrieve", retrieve))
+```
+
+The wrapper binds the LangGraph thread to a canonical AASM machine, records a node obligation, captures output evidence, and returns the original node result unchanged.
+
+Inspect the binding:
+
+```bash
+aasm langgraph-binding thread-482 \
+  --namespace my-application \
+  --store runs.db
+
+aasm inspect MACHINE_ID \
+  --store runs.db \
+  --surface langgraph
+```
+
+Run the ordinary-versus-governed comparison:
+
+```bash
+python examples/langgraph_adoption.py
+```
+
+See [Thin LangGraph Adapter](docs/LANGGRAPH_ADAPTER.md).
 
 ---
 
@@ -251,7 +301,7 @@ This keeps the architecture faithful to its AVATAR/labelled-splitting inspiratio
 
 # Operator runbooks
 
-v0.28.0 introduced executable operational drills; v0.28.1 hardened their immutable release; v0.28.2 makes the source distribution self-contained and self-testing.
+v0.28.0 introduced executable operational drills; v0.28.1 hardened their immutable release; v0.28.2 made the source distribution self-contained; v0.29.0 carries every runbook through the same authority path while adding thin LangGraph adoption.
 
 List them:
 
@@ -382,7 +432,7 @@ See [Compatibility Policy](docs/COMPATIBILITY.md), [Formal Assurance](docs/FORMA
 
 # Next phases
 
-The execution plan is maintained in [ROADMAP.md](ROADMAP.md). The next release is **v0.29.0 — Thin LangGraph Adapter**, followed by adapter conformance, hierarchical decision scopes, runtime/formal trace conformance, signed provenance, and distributed recovery certification. Each phase has an explicit user outcome, implementation boundary, and exit gate.
+The execution plan is maintained in [ROADMAP.md](ROADMAP.md). The next release is **v0.30.0 — Adapter Conformance Kit**, followed by hierarchical decision scopes, runtime/formal trace conformance, signed provenance, and distributed recovery certification. Each phase has an explicit user outcome, implementation boundary, and exit gate.
 
 ---
 

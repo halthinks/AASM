@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aasm-runtime"
-version = "0.28.2"
+version = "0.29.0"
 description = "Algorithmic Agent State Machine: durable deterministic control for agents, tools, humans, models, and real work."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,6 +25,7 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "build==1.5.0"]
 postgres = ["psycopg[binary]>=3.2"]
+langgraph = ["langgraph>=1.2,<2"]
 
 [project.urls]
 Homepage = "https://github.com/halthinks/AASM"

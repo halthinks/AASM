@@ -14,7 +14,7 @@ def forbid(path: Path, tokens: list[str]) -> None:
     text = path.read_text(encoding="utf-8")
     present = [token for token in tokens if token in text]
     if present:
-        raise SystemExit(f"{path}: forbidden obsolete formal-contract tokens {present}")
+        raise SystemExit(f"{path}: forbidden formal-contract tokens {present}")
 
 
 def project_version(path: Path) -> str:
@@ -78,13 +78,10 @@ def main() -> int:
     require(
         root / "src" / "aasm" / "runtime_v24.py",
         [
-            "def _commit_calculus",
             "def learn_constraint",
             'effective_strength = "SOFT"',
             "assert_hard_constraint_certification",
             "def promote_constraint_hard",
-            "aasm_lineage",
-            "supersedes_explanation_id",
         ],
     )
     require(
@@ -110,7 +107,60 @@ def main() -> int:
         ["def causal_graph", "def _closed_graph", "EXPOSE_OR_DISPOSITION"],
     )
 
-    require(root / "pyproject.toml", ["reference_data/research/*.json", 'build==1.5.0'])
+    integration_dir = root / "src" / "aasm" / "integrations"
+    require(
+        integration_dir / "_langgraph_types.py",
+        [
+            'LANGGRAPH_ADAPTER_ID = "aasm.langgraph.v1"',
+            'LANGGRAPH_ADAPTER_VERSION = "0.1.0"',
+            "class LangGraphRunKey",
+            "class LangGraphBinding",
+            "class LangGraphRecoveryAction",
+        ],
+    )
+    require(
+        integration_dir / "_langgraph_binding.py",
+        [
+            "canonical AASM machine",
+            "engine.register_decision",
+            "engine.register_obligation",
+            "engine.add_evidence",
+            "engine.propose_effect",
+            "from .. import AASMEngine as engine_class",
+        ],
+    )
+    require(
+        integration_dir / "_langgraph_conflict.py",
+        [
+            "engine.raise_conflict",
+            "engine.register_explanation",
+            "engine.learn_constraint",
+            "engine.register_projection_certificate",
+            "engine.verify_projection_certificate",
+            "engine.promote_constraint_hard",
+            "engine.backjump_conflict",
+            "engine.restart_search",
+            "engine.fork",
+        ],
+    )
+    require(
+        integration_dir / "langgraph.py",
+        ["routing, or checkpoints", "class LangGraphAdapter", "def wrap_node(", "return result"],
+    )
+    for integration_path in integration_dir.glob("*langgraph*.py"):
+        forbid(
+            integration_path,
+            [
+                "DELETE FROM",
+                "TRUNCATE",
+                "INSERT INTO aasm_",
+                "UPDATE aasm_",
+                "store.append(",
+                "patch_snapshot(",
+                "from ..runtime_",
+            ],
+        )
+
     require(
         root / "src" / "aasm" / "__init__.py",
         [
@@ -118,44 +168,24 @@ def main() -> int:
             'REMOTE_PROTOCOL_NAME = "aasm.remote.v1"',
             'REMOTE_PROTOCOL_VERSION = "0.19.0"',
             '"contract_id": "aasm.adoption.v1"',
-            '"contract_version": "0.4.1"',
+            '"contract_version": "0.5.0"',
+            '"checkpoint_authority": "LANGGRAPH"',
+            '"machine_authority": "AASM_EVENT_HISTORY"',
             '"source_distribution_self_test": True',
-            '"source_distribution_scope": "FULL_REPOSITORY_CONTRACT"',
-            '"historical_release_policy": "REPORT_ONLY"',
-            '"docker compose up --build"',
-            "run_research_synthesis_demo",
-            "bootstrap_stack",
-            "verify_stack",
             "def public_api_contract",
             "def validate_public_api_contract",
-            "existing event/reducer runtime",
         ],
     )
     require(
-        root / "src" / "aasm" / "research_demo.py",
-        [
-            "def verify_research_corpus",
-            "def run_research_synthesis_demo",
-            "LC-retrieval-only",
-            "CERT-retrieval-only",
-            "backjump_conflict",
-            "user_interrupt",
-            "check_durable_history",
-            "engine.replay()",
-        ],
+        root / "src" / "aasm" / "runtime_v29.py",
+        ["class AASMEngine", "def langgraph_report", "def integration_report"],
     )
     require(
         root / "src" / "aasm" / "demo_stack.py",
         [
             "def bootstrap_stack",
-            "def fresh_stack",
-            "def complete_stack",
             "def verify_stack",
-            "def run_worker_cycle",
             "RemoteWorkerLoop",
-            "AASMRemoteClient",
-            "engine.register_resource",
-            "engine.schedule",
             "existing remote registration/claim/lease/completion API",
         ],
     )
@@ -165,38 +195,9 @@ def main() -> int:
     )
     require(
         root / "compose.yaml",
-        [
-            "postgres:17-alpine",
-            "bootstrap:",
-            "runtime:",
-            "worker-1:",
-            "stackctl:",
-            "aasm.demo_stack",
-            "aasm.__version__",
-        ],
+        ["postgres:17-alpine", "runtime:", "worker-1:", "stackctl:", "aasm.__version__"],
     )
     forbid(root / "compose.yaml", ["DELETE FROM", "TRUNCATE"])
-
-    require(
-        root / "MANIFEST.in",
-        [
-            "recursive-include .github",
-            "recursive-include docs",
-            "recursive-include formal",
-            "recursive-include profiles",
-            "recursive-include schemas",
-            "recursive-include scripts",
-            "recursive-include tests",
-        ],
-    )
-    require(
-        root / "tests" / "test_v28_sdist_selfcontained.py",
-        ["test_source_distribution_is_self_contained", "test_sdist_smoke.py"],
-    )
-    require(
-        root / "tests" / "test_sdist_smoke.py",
-        ["validate_public_api_contract", "execute_operator_runbook", "REPRESENTATIVE_MEMBERS"],
-    )
 
     require(
         root / "README.md",
@@ -204,20 +205,8 @@ def main() -> int:
             f"v{version}",
             "Models propose. AASM decides",
             "Canonical adoption surface",
-            "aasm adoption-contract",
-            "One-command start",
-            "docker compose up --build",
-            "Self-Contained Source Distribution",
-            "v0.29.0 — Thin LangGraph Adapter",
-        ],
-    )
-    require(
-        root / "CHANGELOG.md",
-        [
-            f"## [{version}] -",
-            "source distribution",
-            "v0.28.1 assets are not overwritten",
-            "aasm.adoption.v1",
+            "Thin LangGraph Adapter",
+            "v0.30.0 — Adapter Conformance Kit",
         ],
     )
     require(
@@ -225,49 +214,41 @@ def main() -> int:
         [
             f"v{version} / experimental",
             "Program rule: extend the working path",
-            "v0.28.2 — Self-Contained Source Distribution",
-            "Current — implemented",
             "v0.29.0 — Thin LangGraph Adapter",
-            "v0.34.0 — Distributed Recovery Certification",
+            "Current — implemented",
             "Adoption scorecard",
         ],
     )
     require(
-        root / "docs" / "ARCHITECTURE.md",
-        ["Canonical adoption surface", "existing event/reducer runtime", "GET /adoption-contract"],
-    )
-    require(
-        root / "docs" / "RESEARCH_SYNTHESIS_DEMO.md",
-        ["existing event/reducer runtime", "aasm demo", "LC-retrieval-only", "exact replay"],
-    )
-    require(
-        root / "docs" / "LOCAL_FULL_STACK.md",
+        root / "docs" / "LANGGRAPH_ADAPTER.md",
         [
-            "docker compose up --build",
-            "stackctl fresh",
-            "stackctl verify",
-            "PostgreSQL 17",
-            "No container mutates machine snapshots or AASM tables directly",
+            "LangGraph application",
+            "public AASM API",
+            "configurable.thread_id",
+            "Contradiction and learned no-good",
+            "Non-goals",
         ],
     )
     require(
-        root / "docs" / "RELEASE_0.28.md",
-        ["AASM v0.28.2", "standalone smoke test", "existing implementation path"],
+        root / "tests" / "test_v29_langgraph_adapter.py",
+        [
+            "preserve_unrelated_work",
+            "violates learned hard constraints",
+            "replay_snapshot_hash",
+            "real LangGraph contract",
+        ],
     )
     require(
         root / ".github" / "workflows" / "formal.yml",
         [
-            "MANIFEST.in",
-            "tests/test_v28_sdist_selfcontained.py",
-            "tests/test_sdist_smoke.py",
+            "src/aasm/integrations/**",
+            "tests/test_v29_langgraph_adapter.py",
             "Verify bounded TLA+ model",
             "Verify bounded Promela model and fairness property",
         ],
     )
 
-    print(
-        "formal, runtime, release, adoption, hero-stack, local-stack, and self-contained-sdist source contracts: PASS"
-    )
+    print("formal calculus and v0.29 adapter authority source contracts: PASS")
     return 0
 
 

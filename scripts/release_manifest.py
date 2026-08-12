@@ -18,7 +18,7 @@ EXCLUDED_DIRS = {
     "dist",
 }
 EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
-EXCLUDED_NAMES = {".DS_Store"}
+EXCLUDED_NAMES = {".DS_Store", "PKG-INFO", "setup.cfg"}
 
 
 def iter_files(*, exclude_output: Path | None = None):

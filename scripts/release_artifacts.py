@@ -24,8 +24,12 @@ MANIFEST_FILENAME = "release-manifest.json"
 HISTORICAL_REPORT_FILENAME = "historical-release-report.json"
 REQUIRED_WHEEL_MEMBERS = {
     "aasm/__init__.py",
+    "aasm/cli_v29.py",
+    "aasm/integrations/__init__.py",
+    "aasm/integrations/langgraph.py",
     "aasm/operator_runbooks.py",
     "aasm/reference_data/research/manifest.json",
+    "aasm/runtime_v29.py",
 }
 
 
@@ -212,10 +216,22 @@ def verify_sdist(
     if root != expected_root:
         errors.append(f"source root {root!r} does not match {expected_root!r}")
     required_suffixes = {
+        ".dockerignore",
+        ".gitignore",
+        ".github/workflows/ci.yml",
+        "docs/LANGGRAPH_ADAPTER.md",
+        "docs/RELEASE_0.29.md",
+        "examples/langgraph_adoption.py",
         "pyproject.toml",
         "README.md",
+        "schemas/langgraph-binding.schema.json",
+        "schemas/langgraph-recovery.schema.json",
+        "src/aasm/integrations/langgraph.py",
         "src/aasm/operator_runbooks.py",
         "src/aasm/reference_data/research/manifest.json",
+        "src/aasm/runtime_v29.py",
+        "tests/test_sdist_smoke.py",
+        "tests/test_v29_langgraph_adapter.py",
     }
     missing = [
         suffix
@@ -411,7 +427,7 @@ def verify_release_asset_snapshot(
     errors: list[str] = []
     local = {path.name: path for path in release_assets(dist_dir)}
     remote_rows = list(release.get("assets") or [])
-    remote = {str(row.get("name") or ""): row for row in remote_rows}
+    remote = {str(row.get("name") or ""): row for name in remote_rows}
     if str(release.get("tag_name") or "") != expected_tag:
         errors.append(
             f"release tag {release.get('tag_name')!r} does not match {expected_tag!r}"

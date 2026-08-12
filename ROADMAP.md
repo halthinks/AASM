@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.28.2 / experimental**.
+AASM is currently **v0.29.0 / experimental**.
 
 The current program is **Adoption, Interoperability, and Verifiable Operation**: make the deterministic kernel, formal calculus, assurance system, observability, distributed runtime, and framework adapters understandable, runnable, distributable, and independently checkable by people who did not build them.
 
@@ -8,7 +8,7 @@ This roadmap is an execution contract. Every release has an observable user outc
 
 ## Program rule: extend the working path
 
-All new work must use the implementation proven through v0.28.2:
+All new work must use the implementation proven through v0.29.0:
 
 ```text
 public AASM API
@@ -42,8 +42,8 @@ fairness prevents mandatory work from remaining hidden forever
 | **v0.27.0 — One-Command Local Full Stack** | PostgreSQL, runtime, Control Center, worker, and reference machines | Completed |
 | **v0.28.0 — Distribution and Operator Readiness** | Immutable releases, compatibility policy, and executable runbooks | Completed |
 | **v0.28.1 — Distribution Release Hardening** | Reproducible builds, no-overwrite publication, and exact remote verification | Completed |
-| **v0.28.2 — Self-Contained Source Distribution** | Standalone source package with repository contracts and executable smoke validation | **Current — implemented** |
-| **v0.29.0 — Thin LangGraph Adapter** | Incremental AASM adoption beneath an existing graph | Next |
+| **v0.28.2 — Self-Contained Source Distribution** | Standalone source package with repository contracts and executable smoke validation | Completed |
+| **v0.29.0 — Thin LangGraph Adapter** | Incremental AASM adoption beneath an existing graph | **Current — implemented** |
 | **v0.30.0 — Adapter Conformance Kit** | Framework-neutral proof that an adapter preserves the AASM boundary | Planned |
 | **v0.31.0 — Hierarchical Decision Scopes** | Strategy, architecture, and implementation reasoning without duplicated authority | Planned |
 | **v0.32.0 — Runtime/Formal Trace Conformance** | Machine-checkable correspondence between production events and the formal abstraction | Planned |
@@ -103,18 +103,19 @@ An existing LangGraph application retains its graph, nodes, routing, checkpoint 
 9. use `aasm.adoption.v1`, not versioned runtime internals;
 10. add no second scheduler, lease system, effect ledger, or event store.
 
-## Planned implementation
+## Delivered implementation
 
-- optional `langgraph` dependency extra;
-- `aasm.integrations.langgraph` adapter module;
-- typed thread/run binding and node context;
-- node-entry and node-exit hooks;
-- decision, obligation, evidence, and effect mapping helpers;
-- recovery directive mapping;
-- contradiction-injection reference graph;
-- ordinary-versus-AASM comparison harness;
-- adapted-run replay and observability views;
-- runnable migration guide and optional-dependency tests.
+- ✅ optional `langgraph>=1.2,<2` dependency extra;
+- ✅ `aasm.integrations.langgraph` adapter module with no mandatory core import;
+- ✅ deterministic thread/run binding and collision rejection;
+- ✅ sync and async node-entry/node-exit wrappers that preserve original results;
+- ✅ explicit decision, obligation, evidence, and effect mapping helpers;
+- ✅ `CONTINUE | REPAIR | BACKJUMP | PAUSE | RESTART | FORK` directives;
+- ✅ certified learned no-good and causal-backjump reference path;
+- ✅ ordinary-versus-AASM comparison graph;
+- ✅ `langgraph` and `integrations` inspection surfaces;
+- ✅ adapted-run Control Center panel, CLI command, HTTP projection, schemas, and migration guide;
+- ✅ dependency-neutral tests plus a real LangGraph optional-dependency CI job.
 
 ## Required comparison
 
@@ -268,7 +269,7 @@ Every declared failure either recovers without duplicated authority or duplicate
 | GitHub release assets | exact remote read-back | Implemented |
 | Operator runbook drills | required in CI | Implemented |
 | PyPI installation | Trusted Publisher binding required | Repository side ready; external binding pending |
-| Existing-framework adoption | thin LangGraph adapter | v0.29.0 |
+| Existing-framework adoption | thin LangGraph adapter | **v0.29.0** |
 | Adapter boundary proof | conformance report | v0.30.0 |
 | Hierarchical reasoning | one authority across scopes | v0.31.0 |
 | Runtime/formal correspondence | trace refinement | v0.32.0 |

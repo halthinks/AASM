@@ -23,83 +23,268 @@ def main() -> int:
     with (root / "pyproject.toml").open("rb") as handle:
         project = tomllib.load(handle)
     version = str(project["project"]["version"])
+    if version != "0.29.0":
+        raise SystemExit(f"unexpected release version: {version}")
 
-    require(root / "pyproject.toml", [
-        'setuptools==83.0.0', 'wheel==0.47.0', 'build==1.5.0',
-        'license = "MIT"', 'license-files = ["LICENSE"]',
-    ])
-    require(root / "src" / "aasm" / "__init__.py", [
-        f'__version__ = "{version}"', '"contract_version": "0.4.1"',
-        '"reproducible_builds": True', '"source_distribution_self_test": True',
-        '"source_distribution_scope": "FULL_REPOSITORY_CONTRACT"',
-        '"historical_release_policy": "REPORT_ONLY"', '"operator_runbooks"',
-    ])
-    require(root / "scripts" / "release_artifacts.py", [
-        "def verify_wheel", "def verify_sdist", "def compare_builds",
-        "def build_historical_release_report",
-        "def verify_release_asset_snapshot", "def verify_github_release",
-        "historical-release-report.json", "PENDING_OWNER_PUBLICATION",
-    ])
-    require(root / ".github" / "workflows" / "ci.yml", [
-        "wheel_smoke:", "Build two byte-identical distributions",
-        'build==1.5.0', 'twine==6.2.0', "SOURCE_DATE_EPOCH",
-        "compare-builds", "verify-wheel", "verify-sdist",
-        "aasm runbook history-diagnosis",
-    ])
+    require(
+        root / "pyproject.toml",
+        [
+            'setuptools==83.0.0',
+            'wheel==0.47.0',
+            'build==1.5.0',
+            'license = "MIT"',
+            'license-files = ["LICENSE"]',
+            'langgraph = ["langgraph>=1.2,<2"]',
+        ],
+    )
+    require(
+        root / "src" / "aasm" / "__init__.py",
+        [
+            f'__version__ = "{version}"',
+            '"contract_version": "0.5.0"',
+            '"adapter_id": LANGGRAPH_ADAPTER_ID',
+            '"adapter_version": LANGGRAPH_ADAPTER_VERSION',
+            '"checkpoint_authority": "LANGGRAPH"',
+            '"machine_authority": "AASM_EVENT_HISTORY"',
+            '"reproducible_builds": True',
+            '"source_distribution_self_test": True',
+            '"source_distribution_scope": "FULL_REPOSITORY_CONTRACT"',
+            '"historical_release_policy": "REPORT_ONLY"',
+        ],
+    )
+
+    integration_dir = root / "src" / "aasm" / "integrations"
+    require(
+        integration_dir / "_langgraph_types.py",
+        [
+            'LANGGRAPH_ADAPTER_ID = "aasm.langgraph.v1"',
+            'LANGGRAPH_ADAPTER_VERSION = "0.1.0"',
+            "class LangGraphRunKey",
+            "class LangGraphBinding",
+            "class LangGraphRecoveryAction",
+            "configurable.thread_id",
+            "LangGraph interrupt()",
+        ],
+    )
+    require(
+        integration_dir / "_langgraph_binding.py",
+        [
+            "class LangGraphBindingMixin",
+            "def bind(",
+            "def record_decision(",
+            "def record_obligation(",
+            "def record_evidence(",
+            "def authorize_effect(",
+            "AASM_EVENT_HISTORY",
+            "from .. import AASMEngine as engine_class",
+        ],
+    )
+    require(
+        integration_dir / "_langgraph_conflict.py",
+        ["class LangGraphConflictMixin", "def record_conflict(", "def recover("],
+    )
+    require(
+        integration_dir / "langgraph.py",
+        ["class LangGraphAdapter", "def wrap_node("],
+    )
+    for integration_path in integration_dir.glob("*langgraph*.py"):
+        forbid(
+            integration_path,
+            [
+                "DELETE FROM",
+                "TRUNCATE",
+                "INSERT INTO aasm_",
+                "UPDATE aasm_",
+                "store.append(",
+                "patch_snapshot(",
+                "from ..runtime_",
+            ],
+        )
+    require(
+        root / "src" / "aasm" / "runtime_v29.py",
+        ["def langgraph_report", "def integration_report", 'surface == "langgraph"'],
+    )
+    require(
+        root / "src" / "aasm" / "cli_v29.py",
+        ["langgraph-binding", "LangGraphAdapter", '"integrations", "langgraph"'],
+    )
+    require(
+        root / "src" / "aasm" / "control_center_v29.py",
+        ["v0.29 Thin LangGraph Adapter", "/inspect/langgraph", "Adapted run"],
+    )
+    require(
+        root / "src" / "aasm" / "server_v29.py",
+        ["AASMEngine", "html_document", "make_handler = _v27.make_handler"],
+    )
+    require(
+        root / "examples" / "langgraph_adoption.py",
+        [
+            "StateGraph",
+            "ordinary_output",
+            "governed_output",
+            "unrelated_cache_preserved",
+            "failed_combination_blocked_on_reuse",
+            "exact_replay",
+        ],
+    )
+    require(
+        root / "tests" / "test_v29_langgraph_adapter.py",
+        [
+            "test_thread_binding_is_deterministic_idempotent_and_authoritative",
+            "test_real_langgraph_stategraph_adopts_aasm_without_graph_rewrite",
+            "test_decision_mapping_conflict_learning_backjump_and_reuse_preserve_unrelated_work",
+            "test_runtime_cli_server_and_control_center_expose_langgraph_boundary",
+        ],
+    )
+    require(
+        root / "schemas" / "langgraph-binding.schema.json",
+        ['"const": "aasm.langgraph.v1"', '"binding_scope"', '"THREAD"', '"RUN"'],
+    )
+    require(
+        root / "schemas" / "langgraph-recovery.schema.json",
+        ['"BACKJUMP"', '"PAUSE"', '"RESTART"', '"FORK"'],
+    )
+
+    require(
+        root / "scripts" / "release_artifacts.py",
+        [
+            "def verify_wheel",
+            "def verify_sdist",
+            "def compare_builds",
+            "def build_historical_release_report",
+            "def verify_release_asset_snapshot",
+            "def verify_github_release",
+            "historical-release-report.json",
+            "PENDING_OWNER_PUBLICATION",
+        ],
+    )
+    require(
+        root / ".github" / "workflows" / "ci.yml",
+        [
+            "wheel_smoke:",
+            "langgraph_integration:",
+            "Install LangGraph integration extra",
+            "examples/langgraph_adoption.py",
+            "Build two byte-identical distributions",
+            'build==1.5.0',
+            'twine==6.2.0',
+            "SOURCE_DATE_EPOCH",
+            "compare-builds",
+            "verify-wheel",
+            "verify-sdist",
+        ],
+    )
     release_workflow = root / ".github" / "workflows" / "release.yml"
-    require(release_workflow, [
-        'workflows: ["CI"]', "should_release", "aasm/ci-summary",
-        "aasm/formal-assurance", "Build and verify two byte-identical distributions",
-        "historical-report", "verify-github-release", "gh release create",
-        '--target "$COMMIT_SHA"', "SHA256SUMS.txt", "release-manifest.json",
-        "pypa/gh-action-pypi-publish@release/v1", "AASM_PUBLISH_PYPI",
-        "docs/RELEASE_0.28.md",
-    ])
-    forbid(release_workflow, [
-        "--clobber", "git push origin \"refs/tags/", "git tag -a",
-        "Backfill maintained historical source releases",
-    ])
-    require(root / ".github" / "workflows" / "formal.yml", [
-        "MANIFEST.in", "docs/RELEASE_0.28.md",
-        "tests/test_v28_sdist_selfcontained.py", "tests/test_sdist_smoke.py",
-    ])
-    require(root / "MANIFEST.in", [
-        "recursive-include .github", "recursive-include docs",
-        "recursive-include examples", "recursive-include formal",
-        "recursive-include profiles", "recursive-include schemas",
-        "recursive-include scripts", "recursive-include tests",
-    ])
-    require(root / "tests" / "test_v28_sdist_selfcontained.py", [
-        "test_source_distribution_is_self_contained", "test_sdist_smoke.py",
-        "unsafe source-distribution member",
-    ])
-    require(root / "tests" / "test_sdist_smoke.py", [
-        "validate_public_api_contract", "execute_operator_runbook",
-        "REPRESENTATIVE_MEMBERS",
-    ])
-    require(root / "README.md", [
-        f"v{version}", "Self-Contained Source Distribution",
-        "pip install aasm-runtime", "Operator runbooks",
-        "v0.29.0 — Thin LangGraph Adapter", "aasm.remote.v1 / 0.19.0",
-    ])
-    require(root / "ROADMAP.md", [
-        f"v{version} / experimental", "v0.28.2 — Self-Contained Source Distribution",
-        "Current — implemented", "v0.29.0 — Thin LangGraph Adapter",
-        "v0.30.0 — Adapter Conformance Kit",
-        "v0.31.0 — Hierarchical Decision Scopes",
-        "v0.32.0 — Runtime/Formal Trace Conformance",
-        "v0.33.0 — Signed Provenance and Verifiable Exports",
-        "v0.34.0 — Distributed Recovery Certification",
-    ])
-    require(root / "CHANGELOG.md", [f"## [{version}] -", "source distribution", "v0.28.1 assets are not overwritten"])
-    require(root / "docs" / "COMPATIBILITY.md", ["pre-1.0", "aasm.adoption.v1 / 0.4.1", "Source-distribution contract"])
-    require(root / "docs" / "RELEASE_PROCESS.md", ["Standalone source-distribution gate", "PyPI Trusted Publisher", "never repairs an existing version"])
-    require(root / "docs" / "RELEASE_0.28.md", ["AASM v0.28.2", "standalone smoke test", "existing implementation path", "v0.29.0 — Thin LangGraph Adapter"])
-    require(root / "tests" / "test_v28_distribution.py", [
-        "source_distribution_self_test", "source_distribution_scope",
-        "test_release_workflow_builds_verifies_releases_and_gates_pypi",
-    ])
-    print("self-contained source distribution and release contracts: PASS")
+    require(
+        release_workflow,
+        [
+            'workflows: ["CI"]',
+            "should_release",
+            "aasm/ci-summary",
+            "aasm/formal-assurance",
+            "Build and verify two byte-identical distributions",
+            "historical-report",
+            "verify-github-release",
+            "gh release create",
+            '--target "$COMMIT_SHA"',
+            "SHA256SUMS.txt",
+            "release-manifest.json",
+            "pypa/gh-action-pypi-publish@release/v1",
+            "AASM_PUBLISH_PYPI",
+            "Thin LangGraph Adapter",
+            "docs/RELEASE_0.29.md",
+        ],
+    )
+    forbid(
+        release_workflow,
+        [
+            "--clobber",
+            'git push origin "refs/tags/',
+            "git tag -a",
+            "Backfill maintained historical source releases",
+        ],
+    )
+    require(
+        root / ".github" / "workflows" / "formal.yml",
+        [
+            "docs/LANGGRAPH_ADAPTER.md",
+            "docs/RELEASE_0.29.md",
+            "src/aasm/integrations/**",
+            "tests/test_v29_langgraph_adapter.py",
+            "tests/test_v28_sdist_selfcontained.py",
+            "tests/test_sdist_smoke.py",
+        ],
+    )
+    require(
+        root / "MANIFEST.in",
+        [
+            "include .gitignore .dockerignore",
+            "recursive-include .github",
+            "recursive-include docs",
+            "recursive-include examples",
+            "recursive-include formal",
+            "recursive-include profiles",
+            "recursive-include schemas",
+            "recursive-include scripts",
+            "recursive-include tests",
+        ],
+    )
+    require(
+        root / "tests" / "test_sdist_smoke.py",
+        [
+            "test_extracted_sdist_file_inventory_is_self_consistent",
+            "scripts/release_manifest.py",
+            "src/aasm/integrations/langgraph.py",
+        ],
+    )
+    require(
+        root / "README.md",
+        [
+            f"v{version}",
+            "Thin LangGraph Adapter",
+            "pip install 'aasm-runtime[langgraph]'",
+            "aasm langgraph-binding",
+            "v0.30.0 — Adapter Conformance Kit",
+            "aasm.remote.v1 / 0.19.0",
+        ],
+    )
+    require(
+        root / "ROADMAP.md",
+        [
+            f"v{version} / experimental",
+            "v0.29.0 — Thin LangGraph Adapter",
+            "Current — implemented",
+            "v0.30.0 — Adapter Conformance Kit",
+            "v0.34.0 — Distributed Recovery Certification",
+        ],
+    )
+    require(
+        root / "CHANGELOG.md",
+        [f"## [{version}] -", "aasm.langgraph.v1 / 0.1.0", "framework-private AASM truth"],
+    )
+    require(
+        root / "docs" / "COMPATIBILITY.md",
+        ["pre-1.0", "aasm.adoption.v1 / 0.5.0", "aasm.langgraph.v1 / 0.1.0"],
+    )
+    require(
+        root / "docs" / "RELEASE_PROCESS.md",
+        [
+            "Standalone source-distribution gate",
+            "Optional framework-adapter gate",
+            "PyPI Trusted Publisher",
+            "never repairs an existing version",
+        ],
+    )
+    require(
+        root / "docs" / "RELEASE_0.29.md",
+        [
+            "AASM v0.29.0",
+            "Thin LangGraph Adapter",
+            "existing event/reducer authority path",
+            "v0.30.0 — Adapter Conformance Kit",
+        ],
+    )
+    print("v0.29 thin LangGraph adapter, self-contained distribution, and release contracts: PASS")
     return 0
 
 

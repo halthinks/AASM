@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/langgraph-binding.schema.json",
+  "title": "AASM LangGraph Binding",
+  "type": "object",
+  "required": [
+    "adapter_id",
+    "adapter_version",
+    "machine_id",
+    "created",
+    "run_key",
+    "binding_fingerprint",
+    "langgraph_checkpoint_is_authority",
+    "aasm_event_history_is_authority"
+  ],
+  "properties": {
+    "adapter_id": {"const": "aasm.langgraph.v1"},
+    "adapter_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "machine_id": {"type": "string", "pattern": "^lg_[a-f0-9]{28}$"},
+    "created": {"type": "boolean"},
+    "source": {"const": "configurable.thread_id"},
+    "run_key": {
+      "type": "object",
+      "required": ["namespace", "thread_id", "run_id", "binding_scope"],
+      "properties": {
+        "namespace": {"type": "string", "minLength": 1},
+        "thread_id": {"type": "string", "minLength": 1},
+        "run_id": {"type": ["string", "null"]},
+        "binding_scope": {"enum": ["THREAD", "RUN"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"binding_scope": {"const": "RUN"}}},
+          "then": {"properties": {"run_id": {"type": "string", "minLength": 1}}}
+        }
+      ],
+      "additionalProperties": false
+    },
+    "binding_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "langgraph_checkpoint_is_authority": {"const": false},
+    "aasm_event_history_is_authority": {"const": true}
+  },
+  "additionalProperties": true
+}

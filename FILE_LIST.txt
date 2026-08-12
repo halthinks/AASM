@@ -48,6 +48,7 @@
 ./docs/FORMAL_CALCULUS.md
 ./docs/GOVERNANCE_ECONOMICS.md
 ./docs/INFORMATION_CHANGE_CHECKPOINTS.md
+./docs/LANGGRAPH_ADAPTER.md
 ./docs/LOCAL_FULL_STACK.md
 ./docs/MASSIVE_COLLABORATION.md
 ./docs/MISSION_CONTROLS_OBSERVABILITY.md
@@ -65,6 +66,7 @@
 ./docs/RELEASE_0.26.md
 ./docs/RELEASE_0.27.md
 ./docs/RELEASE_0.28.md
+./docs/RELEASE_0.29.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
@@ -90,6 +92,7 @@
 ./examples/effect_demo.py
 ./examples/fork_demo.py
 ./examples/governance_economics.py
+./examples/langgraph_adoption.py
 ./examples/machine.json
 ./examples/massive_collaboration.py
 ./examples/mission_controls_supervisors.py
@@ -156,6 +159,8 @@
 ./schemas/governance-context.schema.json
 ./schemas/governance-decision.schema.json
 ./schemas/history-check-report.schema.json
+./schemas/langgraph-binding.schema.json
+./schemas/langgraph-recovery.schema.json
 ./schemas/lease.schema.json
 ./schemas/machine-definition.schema.json
 ./schemas/memory-entry.schema.json
@@ -204,6 +209,7 @@
 ./src/aasm/cli_v25.py
 ./src/aasm/cli_v27.py
 ./src/aasm/cli_v28.py
+./src/aasm/cli_v29.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -213,6 +219,7 @@
 ./src/aasm/control_center_v19.py
 ./src/aasm/control_center_v26.py
 ./src/aasm/control_center_v27.py
+./src/aasm/control_center_v29.py
 ./src/aasm/core/__init__.py
 ./src/aasm/core/reducer.py
 ./src/aasm/decision_backends.py
@@ -230,6 +237,11 @@
 ./src/aasm/flow.py
 ./src/aasm/governance.py
 ./src/aasm/graph.py
+./src/aasm/integrations/__init__.py
+./src/aasm/integrations/_langgraph_binding.py
+./src/aasm/integrations/_langgraph_conflict.py
+./src/aasm/integrations/_langgraph_types.py
+./src/aasm/integrations/langgraph.py
 ./src/aasm/memory.py
 ./src/aasm/mission_control.py
 ./src/aasm/model.py
@@ -291,6 +303,7 @@
 ./src/aasm/runtime_v23.py
 ./src/aasm/runtime_v24.py
 ./src/aasm/runtime_v25.py
+./src/aasm/runtime_v29.py
 ./src/aasm/scheduler.py
 ./src/aasm/semantic_result.py
 ./src/aasm/server.py
@@ -299,6 +312,7 @@
 ./src/aasm/server_v22.py
 ./src/aasm/server_v25.py
 ./src/aasm/server_v27.py
+./src/aasm/server_v29.py
 ./src/aasm/supervisor_adapters.py
 ./src/aasm/team_protocol.py
 ./src/aasm/worker_loop.py
@@ -346,4 +360,5 @@
 ./tests/test_v28_distribution.py
 ./tests/test_v28_operator_runbooks.py
 ./tests/test_v28_sdist_selfcontained.py
+./tests/test_v29_langgraph_adapter.py
 ./tests/test_workers_leases.py

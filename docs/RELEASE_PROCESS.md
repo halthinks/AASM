@@ -7,7 +7,7 @@ AASM releases are built from an exact `main` commit after ordinary CI and formal
 ```text
 main commit
   ↓
-Python 3.11->3.13 + PostgreSQL + Compose + reproducible clean-wheel CI
+Python 3.11->3.13 + optional LangGraph + PostgreSQL + Compose + reproducible clean-wheel CI
   ↓
 TLA+TLC + Promela/SPIN
   ↓
@@ -37,11 +37,11 @@ build      1.5.0
 twine      6.2.0
 ```
 
-`SOURCE_DATE_EPOCH` est the release commit timestamp and `PYTHONHASH seed=0`. CI and release publication build twice and require identical hashes.
+`SOURCE_DATE_EPOCH` is the release commit timestamp and `PYTHONHASHSEED=0`. CI and release publication build twice and require identical hashes.
 
 ## Version preparation
 
-Update `pyproject.toml`, `src/aasm/__init__.py`, `compose.yaml`, `README.md`, `ROADMAP.md`, `CHANGELOG.md`, release documentation, inventory, and version-sensitive tests.
+Update `pyproject.toml`, `src/aasm/__init__.py`, `compose.yaml` when needed, `README.md`, `ROADMAP.md`, `CHANGELOG.md`, compatibility and release documentation, inventory, workflows, and version-sensitive tests.
 
 ## Local verification
 
@@ -90,3 +90,7 @@ The checksum file and JSON manifest cover the wheel, source distribution, and hi
 
 Every release source archive must include the repository contracts exercised by its bundled tests. CI builds the sdist, extracts it outside the Git checkout, and runs `tests/test_sdist_smoke.py` with `PYTHONPATH=src`. Missing profiles, schemas, formal models, runbooks, workflows, examples, scripts, or tests fail the release before publication.
 
+
+## Optional framework-adapter gate
+
+Framework releases must run the core adapter tests without the external framework installed and a separate optional-dependency job against the declared supported framework range. The real-framework job must demonstrate that the original graph topology and node return values are preserved, while the AASM binding, evidence, obligations, replay, and inspection surfaces remain valid.

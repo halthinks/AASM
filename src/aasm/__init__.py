@@ -1,10 +1,10 @@
 from copy import deepcopy as _deepcopy
 
-__version__ = "0.28.2"
+__version__ = "0.29.0"
 REMOTE_PROTOCOL_NAME = "aasm.remote.v1"
 REMOTE_PROTOCOL_VERSION = "0.19.0"
 
-from .runtime_v25 import AASMEngine, default_profile_registry
+from .runtime_v29 import AASMEngine, default_profile_registry
 from .model import MachineState, ProblemSpec, TaskEnvelope, Proposal, Result, CapabilitySet
 from .agents import AASMAgent, FunctionAgent
 from .authority import SingleControllerAuthority, AutonomousAuthority, QuorumAuthority, HierarchicalAuthority
@@ -94,6 +94,9 @@ from .research_demo import (
     CORPUS_ID, REFERENCE_RESULT_ID, ResearchDemoResult,
     load_research_corpus, run_research_synthesis_demo, verify_research_corpus,
 )
+from . import demo_stack as _demo_stack
+_demo_stack.AASMEngine = AASMEngine
+_demo_stack._runtime_version = lambda: __version__
 from .demo_stack import (
     DEFAULT_STATE_PATH, DEFAULT_WORKER_RESOURCE_ID,
     bootstrap_stack, complete_stack, fresh_stack, read_stack_state,
@@ -109,6 +112,11 @@ from .graph import PlanNode, PlanEdge, PlanGraph
 from .evidence import EvidenceRecord, EvidenceLedger
 from .resources import ResourceRecord, TaskDemand, Assignment, ScheduleResult
 from .scheduler import CapabilityScheduler
+from .integrations.langgraph import (
+    LANGGRAPH_ADAPTER_ID, LANGGRAPH_ADAPTER_VERSION, LangGraphAdapter,
+    LangGraphBinding, LangGraphNodePolicy, LangGraphRecoveryAction,
+    LangGraphRecoveryResult, LangGraphRunKey,
+)
 
 SUPPORTED_PUBLIC_IMPORTS = [
     "__version__",
@@ -140,6 +148,14 @@ SUPPORTED_PUBLIC_IMPORTS = [
     "OperatorRunbookResult",
     "list_operator_runbooks",
     "execute_operator_runbook",
+    "LANGGRAPH_ADAPTER_ID",
+    "LANGGRAPH_ADAPTER_VERSION",
+    "LangGraphAdapter",
+    "LangGraphBinding",
+    "LangGraphNodePolicy",
+    "LangGraphRecoveryAction",
+    "LangGraphRecoveryResult",
+    "LangGraphRunKey",
 ]
 
 SUPPORTED_ENGINE_METHODS = [
@@ -164,6 +180,8 @@ SUPPORTED_ENGINE_METHODS = [
     "restart_search",
     "replay",
     "fork",
+    "integration_report",
+    "langgraph_report",
 ]
 
 SUPPORTED_CLI_COMMANDS = [
@@ -178,6 +196,7 @@ SUPPORTED_CLI_COMMANDS = [
     "candidate-select",
     "candidate-activate",
     "assurance",
+    "langgraph-binding",
 ]
 
 SUPPORTED_INSPECTION_SURFACES = [
@@ -193,12 +212,14 @@ SUPPORTED_INSPECTION_SURFACES = [
     "assurance",
     "calculus",
     "profile",
+    "integrations",
+    "langgraph",
 ]
 
 PUBLIC_API_CONTRACT = {
     "contract_id": "aasm.adoption.v1",
     "schema_version": 1,
-    "contract_version": "0.4.1",
+    "contract_version": "0.5.0",
     "runtime_version": __version__,
     "project_status": "EXPERIMENTAL",
     "remote_protocol": {
@@ -240,6 +261,28 @@ PUBLIC_API_CONTRACT = {
             "aasm demo --scenario research-synthesis",
             "run_research_synthesis_demo()",
         ],
+    },
+    "integrations": {
+        "langgraph": {
+            "adapter_id": LANGGRAPH_ADAPTER_ID,
+            "adapter_version": LANGGRAPH_ADAPTER_VERSION,
+            "support": "EXPERIMENTAL",
+            "optional_dependency": "langgraph>=1.2,<2",
+            "binding": "configurable.thread_id with optional run_id",
+            "checkpoint_authority": "LANGGRAPH",
+            "machine_authority": "AASM_EVENT_HISTORY",
+            "entry_points": [
+                "LangGraphAdapter.wrap_node(...)",
+                "aasm langgraph-binding THREAD_ID",
+                "GET /v1/machines/{machine_id}/inspect/langgraph",
+            ],
+            "non_goals": [
+                "replace LangGraph graph execution",
+                "replace LangGraph checkpointing",
+                "store AASM truth in framework-private state",
+                "duplicate AASM effects, workers, leases, or persistence",
+            ],
+        }
     },
     "local_stack": {
         "id": "aasm-local",
@@ -284,6 +327,7 @@ PUBLIC_API_CONTRACT = {
         "inject selective steering through the existing change-impact path",
         "operate workers through registration, heartbeat, claim, lease, telemetry, and completion",
         "execute tested operator recovery drills",
+        "bind existing LangGraph threads to canonical AASM machines without graph rewrite",
         "inspect, replay, backjump, restart, or fork",
     ],
     "implementation_rule": (
