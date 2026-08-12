@@ -190,6 +190,9 @@
 ./scripts/check_formal_models.py
 ./scripts/check_release_contracts.py
 ./scripts/release_artifacts.py
+./scripts/release_artifacts_cli.py
+./scripts/release_artifacts_core.py
+./scripts/release_artifacts_github.py
 ./scripts/release_manifest.py
 ./src/aasm/__init__.py
 ./src/aasm/adaptive_routing.py

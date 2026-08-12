@@ -38,7 +38,7 @@ on:
       - "schemas/history-check-report.schema.json"
       - "scripts/check_formal_models.py"
       - "scripts/check_release_contracts.py"
-      - "scripts/release_artifacts.py"
+      - "scripts/release_artifacts*.py"
       - "src/aasm/__init__.py"
       - "src/aasm/integrations/**"
       - "src/aasm/assurance.py"

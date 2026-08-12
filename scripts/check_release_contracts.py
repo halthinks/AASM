@@ -32,6 +32,7 @@ def main() -> int:
             'setuptools==83.0.0',
             'wheel==0.47.0',
             'build==1.5.0',
+            'jsonschema>=4.23',
             'license = "MIT"',
             'license-files = ["LICENSE"]',
             'langgraph = ["langgraph>=1.2,<2"]',
@@ -147,16 +148,22 @@ def main() -> int:
 
     require(
         root / "scripts" / "release_artifacts.py",
+        ["release_artifacts_core", "release_artifacts_github", "release_artifacts_cli"],
+    )
+    require(
+        root / "scripts" / "release_artifacts_core.py",
         [
             "def verify_wheel",
             "def verify_sdist",
             "def compare_builds",
             "def build_historical_release_report",
-            "def verify_release_asset_snapshot",
-            "def verify_github_release",
             "historical-release-report.json",
             "PENDING_OWNER_PUBLICATION",
         ],
+    )
+    require(
+        root / "scripts" / "release_artifacts_github.py",
+        ["def verify_release_asset_snapshot", "def verify_github_release"],
     )
     require(
         root / ".github" / "workflows" / "ci.yml",
@@ -213,6 +220,7 @@ def main() -> int:
             "tests/test_v29_langgraph_adapter.py",
             "tests/test_v28_sdist_selfcontained.py",
             "tests/test_sdist_smoke.py",
+            "scripts/release_artifacts*.py",
         ],
     )
     require(
@@ -234,6 +242,9 @@ def main() -> int:
         [
             "test_extracted_sdist_file_inventory_is_self_consistent",
             "scripts/release_manifest.py",
+            "scripts/release_artifacts_core.py",
+            "scripts/release_artifacts_github.py",
+            "scripts/release_artifacts_cli.py",
             "src/aasm/integrations/langgraph.py",
         ],
     )
