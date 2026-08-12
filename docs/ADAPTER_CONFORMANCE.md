@@ -169,7 +169,7 @@ class MyDriver:
     def capability_declaration(self) -> AdapterCapabilityDeclaration:
         ...
 
-    def run_scenarim¼ 
+    def run_scenario(
         self,
         scenario_id: str,
         context: AdapterConformanceContext,
@@ -179,7 +179,7 @@ class MyDriver:
 
 The context supplies:
 
- - the current public `AASMEngine` implementation;
+- the current public `AASMEngine` implementation;
 - an audited Store proxy;
 - deterministic scenario and namespace identity;
 - an explicit external-effect-executor operation for simulating durable effect ownership without misclassifying it as an adapter database bypass.
@@ -188,7 +188,7 @@ The outcome supplies observations. The kit does not trust those observations by 
 
 ## Persistence audit
 
-`AuditedStore` records mutating Store calls and classifies whether they originated through the established AASMEngine/runtime path or an explicitly authorized external-executor operation.
+`AuditedStore` records mutating Store calls and classifies whether they originated through the established AASM engine/runtime path or an explicitly authorized external-executor operation.
 
 A direct call such as:
 
@@ -217,7 +217,7 @@ overall PASS | FAIL | INCONCLUSIVE
 per-scenario checks and findings
 machine IDs
 replay and persisted snapshot hashes
-time history issue detail
+history issue detail
 evidence and semantic-result counts
 coverage summary
 mutation audit
