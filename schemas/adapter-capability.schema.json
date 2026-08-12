@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/adapter-capability.schema.json",
+  "title": "AASM Adapter Capability Declaration",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "adapter_id",
+    "adapter_version",
+    "driver_id",
+    "driver_version",
+    "scenarios",
+    "authority",
+    "recovery_actions",
+    "notes"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "adapter_id": {"type": "string", "minLength": 1},
+    "adapter_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"},
+    "driver_id": {"type": "string", "minLength": 1},
+    "driver_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"},
+    "scenarios": {
+      "type": "object",
+      "required": [
+        "success",
+        "contradiction",
+        "requirement_change",
+        "lease_loss",
+        "unknown_effect",
+        "restart",
+        "replay",
+        "fork"
+      ],
+      "properties": {
+        "success": {"type": "boolean"},
+        "contradiction": {"type": "boolean"},
+        "requirement_change": {"type": "boolean"},
+        "lease_loss": {"type": "boolean"},
+        "unknown_effect": {"type": "boolean"},
+        "restart": {"type": "boolean"},
+        "replay": {"type": "boolean"},
+        "fork": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "authority": {
+      "type": "object",
+      "required": [
+        "machine_truth_authority",
+        "framework_state_authority",
+        "decision_authority",
+        "effect_authority",
+        "worker_lease_authority",
+        "recovery_authority",
+        "direct_storage_writes",
+        "duplicate_authorities",
+        "uses_public_aasm_api"
+      ],
+      "properties": {
+        "machine_truth_authority": {"type": "string"},
+        "framework_state_authority": {"type": "string"},
+        "decision_authority": {"type": "string"},
+        "effect_authority": {"type": "string"},
+        "worker_lease_authority": {"type": "string"},
+        "recovery_authority": {"type": "string"},
+        "direct_storage_writes": {"type": "boolean"},
+        "duplicate_authorities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "uses_public_aasm_api": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "recovery_actions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "notes": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

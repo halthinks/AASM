@@ -70,6 +70,23 @@ A rerun never repairs an existing version. Any tag, asset-set, size, or digest d
 
 Existing historical tags are verified. Missing tags are `PENDING_OWNER_PUBLICATION` because the repository Actions app cannot create refs for earlier workflow-bearing commits. This is reported honestly and does not block a current release.
 
+
+## Adapter conformance gate
+
+Beginning with v0.30.0, ordinary CI installs the optional LangGraph dependency and runs the framework-neutral adapter conformance suite. The gate requires:
+
+```text
+all eight built-in LangGraph scenarios PASS
+zero audited direct-storage violations
+exact replay for every executed machine
+negative fixtures reject direct writes and duplicate authority
+CLI report generation succeeds
+```
+
+The clean installed wheel also runs a bounded conformance scenario without importing LangGraph into the core package. A release does not proceed when the conformance job fails.
+
+The audit is an in-process diagnostic hook, not a security sandbox; release conformance does not replace process isolation for untrusted adapter code.
+
 ## PyPI Trusted Publisher
 
 PyPI must trust owner `halthinks`, repository `AASM`, workflow `release.yml`, environment `pypi`. Enable `AASM_PUBLISH_PYPI=true` or manually dispatch with `publish_pypi=true`. No long-lived token is stored.

@@ -8,8 +8,8 @@ AASM has three separate identities:
 
 | Identity | Current value | Meaning |
 |---|---|---|
-| Package/runtime | `0.29.0` | Python distribution and current server implementation |
-| Adoption contract | `aasm.adoption.v1 / 0.5.0` | Supported imports, methods, commands, endpoints, and runbooks |
+| Package/runtime | `0.30.0` | Python distribution and current server implementation |
+| Adoption contract | `aasm.adoption.v1 / 0.6.0` | Supported imports, methods, commands, endpoints, and runbooks |
 | Remote protocol | `aasm.remote.v1 / 0.19.0` | Compatibility identity used by existing remote clients |
 
 A package release does not automatically require a wire-protocol version change.
@@ -54,6 +54,15 @@ The supported boundary is explicit:
 - adapter code must not mutate AASM tables or snapshots directly.
 
 A future adapter version can change independently of the remote wire protocol and package version.
+
+
+## Adapter conformance compatibility
+
+AASM v0.30.0 adds `aasm.adapter.conformance.v1 / 0.1.0`. The contract is EXPERIMENTAL and independent of the package, LangGraph adapter, and remote-protocol versions.
+
+A conformance driver must declare supported scenarios and authority ownership. The canonical requirements are AASM event history for machine truth and AASM authority for decisions, effects, workers/leases, and recovery. Missing required coverage produces `INCONCLUSIVE`; direct Store mutation, duplicate authority, invalid history, or replay mismatch produces `FAIL`.
+
+The in-process mutation audit is a diagnostic hook, not a sandbox. Compatibility with the conformance API does not imply that untrusted adapter code is safe to execute in the AASM server process.
 
 ## Snapshot, event, and profile compatibility
 

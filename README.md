@@ -12,7 +12,7 @@ AASM keeps the official state of a job outside the language model. Models can pr
 [![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.29.0%20experimental-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.30.0%20experimental-orange)](ROADMAP.md)
 
 [Run the full stack](#one-command-start) · [Install](#install-aasm) · [Operator runbooks](#operator-runbooks) · [Why AASM?](WHY_AASM.md) · [Roadmap](ROADMAP.md)
 
@@ -22,45 +22,53 @@ AASM keeps the official state of a job outside the language model. Models can pr
 
 ## Current release
 
-**v0.29.0 — Thin LangGraph Adapter**
+**v0.30.0 — Adapter Conformance Kit**
 
 | Item | Current state |
 |---|---|
-| **Package/runtime** | **v0.29.0** |
+| **Package/runtime** | **v0.30.0** |
 | **Project status** | Experimental / pre-1.0 |
-| **Current milestone** | **Thin LangGraph Adapter** |
-| **Prior release** | **v0.28.2 — Self-Contained Source Distribution** |
+| **Current milestone** | **Framework-neutral adapter conformance** |
+| **Prior release** | **v0.29.0 — Thin LangGraph Adapter** |
 | **One-command application** | PostgreSQL + runtime + Control Center + worker + Research Synthesis Hero Stack |
-| **Framework adoption** | Existing LangGraph graphs keep their topology and checkpoints while AASM supplies durable authority underneath |
-| **Next release** | **v0.30.0 — Adapter Conformance Kit** |
+| **Framework adoption** | Existing LangGraph graphs retain topology and checkpoints while AASM supplies durable authority underneath |
+| **Adapter proof** | Eight black-box scenarios with `PASS | FAIL | INCONCLUSIVE`, replay verification, provenance checks, and persistence-bypass detection |
+| **Next release** | **v0.31.0 — Hierarchical Decision Scopes** |
 | **Remote compatibility protocol** | `aasm.remote.v1 / 0.19.0` |
 
-v0.29.0 is the first framework-adoption release:
+v0.30.0 turns the adapter boundary into an executable contract:
 
-- `configurable.thread_id` and optional run identity map deterministically to one AASM machine;
-- binding and resume are idempotent and reject identity collisions;
-- sync and async node wrappers return the original state update or `Command` unchanged;
-- selected decisions, obligations, evidence, and effects enter the existing AASM public path;
-- contradictions produce evidence, explanations, certified learned no-goods, and causal backjumps;
-- `CONTINUE | REPAIR | BACKJUMP | PAUSE | RESTART | FORK` map to existing recovery semantics;
-- LangGraph remains responsible for graph execution, routing, interrupts, and checkpoints;
-- AASM remains responsible for durable machine truth, replay, evidence, effects, and recovery.
+- every driver declares which scenarios and recovery actions it supports;
+- the kit runs success, contradiction, requirement change, lease loss, `UNKNOWN` effect, restart, replay, and fork scenarios;
+- durable histories and reconstructed snapshots are compared independently;
+- committed obligations must carry evidence, and semantic results must retain producer and evidence provenance;
+- direct Store writes and duplicate machine-authority declarations fail even when functional output appears correct;
+- unsupported required scenarios are reported as `INCONCLUSIVE`, never silently accepted;
+- reports include exact checks, findings, event references, coverage, mutation audit, and a SHA-256 report fingerprint;
+- the same evaluator is available through Python, CLI, authenticated HTTP, and the existing Control Center.
 
-The core package has no mandatory LangGraph dependency. Install the optional adapter dependencies only when running a real graph:
+Run the built-in LangGraph driver:
+
+```bash
+aasm adapter-conformance --adapter langgraph
+```
+
+Core AASM still has no mandatory LangGraph dependency. Install the optional dependency only when running real LangGraph graphs:
 
 ```bash
 pip install 'aasm-runtime[langgraph]'
 ```
 
-v0.29.0 extends the same deterministic event/reducer implementation shipped and independently packaged in v0.28.2. It adds no second runtime, alternate store, duplicate scheduler, duplicate effect ledger, or framework-private machine truth.
+v0.30.0 adds no second runtime, alternate store, duplicate scheduler, duplicate effect ledger, or framework-private machine truth. The conformance Store proxy is an **in-process diagnostic hook, not a security sandbox**; untrusted adapter code still requires process or host isolation.
 
-The package version, adapter version, and remote wire protocol are intentionally separate:
+The package, adoption contract, adapter contract, conformance contract, and wire protocol are intentionally separate:
 
 ```text
-package/runtime:    aasm-runtime 0.29.0
-adoption contract:  aasm.adoption.v1 / 0.5.0
-LangGraph adapter:  aasm.langgraph.v1 / 0.1.0
-remote protocol:    aasm.remote.v1 / 0.19.0
+package/runtime:       aasm-runtime 0.30.0
+adoption contract:     aasm.adoption.v1 / 0.6.0
+LangGraph adapter:     aasm.langgraph.v1 / 0.1.0
+adapter conformance:   aasm.adapter.conformance.v1 / 0.1.0
+remote protocol:       aasm.remote.v1 / 0.19.0
 ```
 
 > **Models propose. AASM decides what may become durable state.**
@@ -114,11 +122,11 @@ See [One-Command Local Full Stack](docs/LOCAL_FULL_STACK.md).
 
 Every maintained release builds twice, inspects its contents, clean-installs the wheel, records SHA-256 values, publishes once, and verifies the exact remote assets.
 
-For v0.29.0:
+For v0.30.0:
 
 ```bash
 pip install \
-  https://github.com/halthinks/AASM/releases/download/v0.29.0/aasm_runtime-0.29.0-py3-none-any.whl
+  https://github.com/halthinks/AASM/releases/download/v0.30.0/aasm_runtime-0.30.0-py3-none-any.whl
 ```
 
 Verify the installed package:
@@ -131,8 +139,8 @@ aasm runbook history-diagnosis
 The release contains:
 
 ```text
-aasm_runtime-0.29.0-py3-none-any.whl
-aasm_runtime-0.29.0.tar.gz
+aasm_runtime-0.30.0-py3-none-any.whl
+aasm_runtime-0.30.0.tar.gz
 historical-release-report.json
 SHA256SUMS.txt
 release-manifest.json
@@ -207,6 +215,52 @@ python examples/langgraph_adoption.py
 ```
 
 See [Thin LangGraph Adapter](docs/LANGGRAPH_ADAPTER.md).
+
+---
+
+# Prove an adapter preserves AASM
+
+Run the complete built-in driver:
+
+```bash
+aasm adapter-conformance --adapter langgraph
+```
+
+Run one scenario while developing an adapter:
+
+```bash
+aasm adapter-conformance \
+  --adapter langgraph \
+  --scenario contradiction \
+  --output conformance-report.json
+```
+
+List installed drivers and required scenarios:
+
+```bash
+aasm adapter-conformance-list
+```
+
+Python:
+
+```python
+from aasm import run_adapter_conformance
+
+report = run_adapter_conformance("langgraph")
+assert report.status == "PASS"
+```
+
+Authenticated HTTP:
+
+```text
+GET /adapter-conformance
+GET /v1/conformance/adapters/langgraph
+GET /v1/conformance/adapters/langgraph?scenario=success
+```
+
+A `PASS` means every selected scenario met the supported AASM authority, durability, evidence, recovery, and replay checks. A `FAIL` includes exact finding codes and event-linked evidence. `INCONCLUSIVE` means a required capability was not exercised or declared—not that the adapter passed.
+
+See [Adapter Conformance Kit](docs/ADAPTER_CONFORMANCE.md).
 
 ---
 
@@ -432,7 +486,7 @@ See [Compatibility Policy](docs/COMPATIBILITY.md), [Formal Assurance](docs/FORMA
 
 # Next phases
 
-The execution plan is maintained in [ROADMAP.md](ROADMAP.md). The next release is **v0.30.0 — Adapter Conformance Kit**, followed by hierarchical decision scopes, runtime/formal trace conformance, signed provenance, and distributed recovery certification. Each phase has an explicit user outcome, implementation boundary, and exit gate.
+The execution plan is maintained in [ROADMAP.md](ROADMAP.md). The next release is **v0.31.0 — Hierarchical Decision Scopes**, followed by runtime/formal trace conformance, signed provenance, and distributed recovery certification. Each phase has an explicit user outcome, implementation boundary, and exit gate.
 
 ---
 

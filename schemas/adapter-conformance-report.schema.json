@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/adapter-conformance-report.schema.json",
+  "title": "AASM Adapter Conformance Report",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "contract_id",
+    "contract_version",
+    "adapter",
+    "status",
+    "valid",
+    "scenarios",
+    "coverage",
+    "audit",
+    "report_fingerprint"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "contract_id": {"const": "aasm.adapter.conformance.v1"},
+    "contract_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "adapter": {"$ref": "adapter-capability.schema.json"},
+    "status": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+    "valid": {"type": "boolean"},
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "scenario_id",
+          "status",
+          "machine_id",
+          "checks",
+          "findings",
+          "summary",
+          "replay_snapshot_hash",
+          "persisted_snapshot_hash",
+          "valid"
+        ],
+        "properties": {
+          "scenario_id": {"enum": ["success", "contradiction", "requirement_change", "lease_loss", "unknown_effect", "restart", "replay", "fork"]},
+          "status": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+          "machine_id": {"type": ["string", "null"]},
+          "checks": {"type": "object", "additionalProperties": {"type": ["boolean", "null"]}},
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["code", "severity", "message", "scenario_id", "event_id", "detail"],
+              "properties": {
+                "code": {"type": "string", "minLength": 1},
+                "severity": {"enum": ["ERROR", "WARNING", "INFO"]},
+                "message": {"type": "string", "minLength": 1},
+                "scenario_id": {"type": ["string", "null"]},
+                "event_id": {"type": ["string", "null"]},
+                "detail": {"type": "object"}
+              },
+              "additionalProperties": false
+            }
+          },
+          "summary": {"type": "object"},
+          "replay_snapshot_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "persisted_snapshot_hash": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "valid": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["required_scenarios", "selected_scenarios", "declared_supported", "passed", "failed", "inconclusive"],
+      "properties": {
+        "required_scenarios": {"type": "array", "items": {"type": "string"}},
+        "selected_scenarios": {"type": "array", "items": {"type": "string"}},
+        "declared_supported": {"type": "array", "items": {"type": "string"}},
+        "passed": {"type": "array", "items": {"type": "string"}},
+        "failed": {"type": "array", "items": {"type": "string"}},
+        "inconclusive": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "audit": {
+      "type": "object",
+      "required": ["hook_model", "security_boundary", "total_mutations", "total_violations", "scenarios"],
+      "properties": {
+        "hook_model": {"const": "IN_PROCESS_MUTATION_PROVENANCE"},
+        "security_boundary": {"const": "CONFORMANCE_HOOK_NOT_SANDBOX"},
+        "total_mutations": {"type": "integer", "minimum": 0},
+        "total_violations": {"type": "integer", "minimum": 0},
+        "scenarios": {"type": "array", "items": {"type": "object"}}
+      },
+      "additionalProperties": false
+    },
+    "report_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "additionalProperties": false
+}

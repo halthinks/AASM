@@ -27,6 +27,7 @@
 ./SUPPORT.md
 ./WHY_AASM.md
 ./compose.yaml
+./docs/ADAPTER_CONFORMANCE.md
 ./docs/ADAPTIVE_MODEL_ROUTING.md
 ./docs/ARCHITECTURE.md
 ./docs/AUTOMATIC_CHECKPOINTS_FLEET_CONTROL.md
@@ -67,6 +68,7 @@
 ./docs/RELEASE_0.27.md
 ./docs/RELEASE_0.28.md
 ./docs/RELEASE_0.29.md
+./docs/RELEASE_0.30.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
@@ -136,6 +138,8 @@
 ./profiles/single_agent.yaml
 ./pyproject.toml
 ./release-history.json
+./schemas/adapter-capability.schema.json
+./schemas/adapter-conformance-report.schema.json
 ./schemas/agent-message.schema.json
 ./schemas/assurance-state.schema.json
 ./schemas/calculus-state.schema.json
@@ -213,6 +217,7 @@
 ./src/aasm/cli_v27.py
 ./src/aasm/cli_v28.py
 ./src/aasm/cli_v29.py
+./src/aasm/cli_v30.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -223,6 +228,7 @@
 ./src/aasm/control_center_v26.py
 ./src/aasm/control_center_v27.py
 ./src/aasm/control_center_v29.py
+./src/aasm/control_center_v30.py
 ./src/aasm/core/__init__.py
 ./src/aasm/core/reducer.py
 ./src/aasm/decision_backends.py
@@ -244,7 +250,10 @@
 ./src/aasm/integrations/_langgraph_binding.py
 ./src/aasm/integrations/_langgraph_conflict.py
 ./src/aasm/integrations/_langgraph_types.py
+./src/aasm/integrations/conformance.py
+./src/aasm/integrations/conformance_registry.py
 ./src/aasm/integrations/langgraph.py
+./src/aasm/integrations/langgraph_conformance.py
 ./src/aasm/memory.py
 ./src/aasm/mission_control.py
 ./src/aasm/model.py
@@ -307,6 +316,7 @@
 ./src/aasm/runtime_v24.py
 ./src/aasm/runtime_v25.py
 ./src/aasm/runtime_v29.py
+./src/aasm/runtime_v30.py
 ./src/aasm/scheduler.py
 ./src/aasm/semantic_result.py
 ./src/aasm/server.py
@@ -316,6 +326,7 @@
 ./src/aasm/server_v25.py
 ./src/aasm/server_v27.py
 ./src/aasm/server_v29.py
+./src/aasm/server_v30.py
 ./src/aasm/supervisor_adapters.py
 ./src/aasm/team_protocol.py
 ./src/aasm/worker_loop.py
@@ -364,4 +375,5 @@
 ./tests/test_v28_operator_runbooks.py
 ./tests/test_v28_sdist_selfcontained.py
 ./tests/test_v29_langgraph_adapter.py
+./tests/test_v30_adapter_conformance.py
 ./tests/test_workers_leases.py

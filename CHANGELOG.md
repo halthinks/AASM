@@ -4,6 +4,39 @@ All notable user-visible changes to AASM are documented here.
 
 Detailed history through v0.27.0 is preserved in [`CHANGELOG_0.27_AND_EARLIER.md`](CHANGELOG_0.27_AND_EARLIER.md). History through v0.18 is also available separately in [`CHANGELOG_0.18_AND_EARLIER.md`](CHANGELOG_0.18_AND_EARLIER.md).
 
+## [0.30.0] - 2026-08-11
+
+AASM v0.30.0 adds a framework-neutral Adapter Conformance Kit over the existing public API and event/reducer authority path.
+
+### Adapter conformance
+
+- added `aasm.adapter.conformance.v1 / 0.1.0`;
+- advanced `aasm.adoption.v1` to `0.6.0`;
+- retained `aasm.langgraph.v1 / 0.1.0` and `aasm.remote.v1 / 0.19.0`;
+- added versioned capability and authority declarations;
+- added success, contradiction, requirement-change, lease-loss, `UNKNOWN`-effect, restart, replay, and fork scenarios;
+- added semantic-result and evidence-provenance checks;
+- added durable-history and replay-versus-persisted-snapshot validation;
+- added direct Store mutation auditing and duplicate-authority rejection;
+- added explicit `PASS`, `FAIL`, and `INCONCLUSIVE` reports with finding codes, event references, coverage, audit detail, and SHA-256 fingerprint;
+- added the reference `LangGraphConformanceDriver` and deliberately broken negative fixtures;
+- added capability and report JSON schemas.
+
+### Public operation
+
+- added `aasm adapter-conformance` and `aasm adapter-conformance-list`;
+- added authenticated `/adapter-conformance` and `/v1/conformance/adapters/{adapter_id}` endpoints;
+- added an Adapter Conformance panel to the existing Control Center;
+- added installed-wheel and hosted conformance CI gates;
+- documented that `CONFORMANCE_HOOK_NOT_SANDBOX`: in-process auditing does not replace isolation for untrusted code.
+
+### Correctness boundary
+
+- no parallel runtime, reducer, scheduler, effect ledger, worker/lease system, event store, or persistence path was introduced;
+- unsupported required scenarios are `INCONCLUSIVE`, never silently passed;
+- an adapter can fail conformance even when its functional output appears correct;
+- a pass applies to the exact declared driver versions and exercised bounded scenarios.
+
 ## [0.29.0] - 2026-08-11
 
 AASM v0.29.0 adds the first thin framework adapter without changing the canonical event/reducer authority path. Existing LangGraph applications keep graph topology, routing, interrupts, checkpoint data, and domain state; AASM supplies durable decisions, obligations, evidence, effects, conflict learning, replay, and recovery underneath them.

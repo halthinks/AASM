@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.29.0 / experimental**.
+AASM is currently **v0.30.0 / experimental**.
 
 The current program is **Adoption, Interoperability, and Verifiable Operation**: make the deterministic kernel, formal calculus, assurance system, observability, distributed runtime, and framework adapters understandable, runnable, distributable, and independently checkable by people who did not build them.
 
@@ -8,7 +8,7 @@ This roadmap is an execution contract. Every release has an observable user outc
 
 ## Program rule: extend the working path
 
-All new work must use the implementation proven through v0.29.0:
+All new work must use the implementation proven through v0.30.0:
 
 ```text
 public AASM API
@@ -43,8 +43,8 @@ fairness prevents mandatory work from remaining hidden forever
 | **v0.28.0 — Distribution and Operator Readiness** | Immutable releases, compatibility policy, and executable runbooks | Completed |
 | **v0.28.1 — Distribution Release Hardening** | Reproducible builds, no-overwrite publication, and exact remote verification | Completed |
 | **v0.28.2 — Self-Contained Source Distribution** | Standalone source package with repository contracts and executable smoke validation | Completed |
-| **v0.29.0 — Thin LangGraph Adapter** | Incremental AASM adoption beneath an existing graph | **Current — implemented** |
-| **v0.30.0 — Adapter Conformance Kit** | Framework-neutral proof that an adapter preserves the AASM boundary | Planned |
+| **v0.29.0 — Thin LangGraph Adapter** | Incremental AASM adoption beneath an existing graph | Completed |
+| **v0.30.0 — Adapter Conformance Kit** | Framework-neutral proof that an adapter preserves the AASM boundary | **Current — implemented** |
 | **v0.31.0 — Hierarchical Decision Scopes** | Strategy, architecture, and implementation reasoning without duplicated authority | Planned |
 | **v0.32.0 — Runtime/Formal Trace Conformance** | Machine-checkable correspondence between production events and the formal abstraction | Planned |
 | **v0.33.0 — Signed Provenance and Verifiable Exports** | Portable, independently verifiable run evidence | Planned |
@@ -139,22 +139,41 @@ An existing LangGraph application adopts AASM without rewriting its graph, bypas
 
 ## User outcome
 
-A framework or application adapter can demonstrate—not merely claim—that it preserves AASM authority, replay, effect, and recovery contracts.
+A framework or application adapter can demonstrate—not merely claim—that it preserves AASM authority, replay, effect, evidence, worker/lease, and recovery contracts.
 
-## Planned implementation
+## Delivered implementation
 
-- framework-neutral adapter protocol and capability declaration;
-- black-box fixture machines for success, contradiction, requirement change, lease loss, `UNKNOWN` effect, restart, replay, and fork;
-- semantic-result and evidence-provenance checks;
-- duplicate-authority and direct-storage-write detection hooks;
-- deterministic replay comparison;
-- machine-readable `PASS`, `FAIL`, and `INCONCLUSIVE` report;
-- CLI and remote HTTP runner;
-- one additional thin adapter only after the kit proves the boundary is reusable.
+- ✅ framework-neutral `AdapterConformanceDriver` protocol and versioned capability declaration;
+- ✅ contract identity `aasm.adapter.conformance.v1 / 0.1.0`;
+- ✅ black-box scenarios for success, contradiction, requirement change, lease loss, `UNKNOWN` effect, restart, replay, and fork;
+- ✅ mandatory machine-truth, decision, effect, worker/lease, recovery, and public-API authority declarations;
+- ✅ committed-obligation evidence and semantic-result producer/provenance checks;
+- ✅ independent durable-history verification and replay-versus-persisted snapshot comparison;
+- ✅ audited Store proxy that detects ordinary direct mutation outside the canonical AASM path;
+- ✅ duplicate-authority rejection even when functional output appears correct;
+- ✅ explicit `PASS`, `FAIL`, and `INCONCLUSIVE` results with finding codes, event references, coverage, audit data, and report SHA-256;
+- ✅ reference `LangGraphConformanceDriver` covering every required scenario;
+- ✅ negative fixtures proving direct writes, duplicate authority, unsupported scenarios, and persisted-state tampering are detected;
+- ✅ `aasm adapter-conformance` and `aasm adapter-conformance-list` CLI commands;
+- ✅ authenticated `/adapter-conformance` and `/v1/conformance/adapters/{adapter_id}` HTTP endpoints;
+- ✅ conformance panel in the existing Control Center;
+- ✅ JSON schemas, clean-wheel checks, extracted-sdist coverage, and hosted conformance CI.
+
+## Correctness boundary
+
+The persistence audit is an in-process diagnostic hook, not a sandbox. It detects ordinary adapter bypasses and records explicitly authorized external-executor operations. Untrusted adapters still require process or host isolation. A `PASS` proves the exercised bounded contract; it does not certify arbitrary unexercised adapter code or external systems.
 
 ## Exit gate
 
-A third party runs one command against an adapter and receives a reviewable report proving whether it preserves the supported AASM adoption contract.
+v0.30.0 is complete when a third party can run one command and receive a reviewable report that:
+
+1. covers every required scenario or marks missing coverage `INCONCLUSIVE`;
+2. rejects duplicate machine authority and direct Store mutation;
+3. verifies evidence and semantic-result provenance;
+4. verifies durable history and exact replay;
+5. links failures to exact checks and durable events where available;
+6. runs through Python, CLI, authenticated HTTP, and the existing Control Center;
+7. preserves the existing event/reducer, store, effect, lease, and recovery paths.
 
 ---
 
@@ -270,7 +289,7 @@ Every declared failure either recovers without duplicated authority or duplicate
 | Operator runbook drills | required in CI | Implemented |
 | PyPI installation | Trusted Publisher binding required | Repository side ready; external binding pending |
 | Existing-framework adoption | thin LangGraph adapter | **v0.29.0** |
-| Adapter boundary proof | conformance report | v0.30.0 |
+| Adapter boundary proof | conformance report | **v0.30.0** |
 | Hierarchical reasoning | one authority across scopes | v0.31.0 |
 | Runtime/formal correspondence | trace refinement | v0.32.0 |
 | Portable verification | signed offline package | v0.33.0 |

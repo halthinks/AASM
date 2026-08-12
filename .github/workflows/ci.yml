@@ -168,10 +168,14 @@ jobs:
           PY
           /tmp/aasm-wheel/bin/aasm adoption-contract > /tmp/aasm-contract.json
           /tmp/aasm-wheel/bin/aasm runbook history-diagnosis > /tmp/aasm-runbook.json
+          /tmp/aasm-wheel/bin/aasm adapter-conformance --adapter langgraph --scenario success > /tmp/aasm-conformance.json
           python - <<'PY'
           import json
           assert json.load(open('/tmp/aasm-contract.json'))['valid'] is True
           assert json.load(open('/tmp/aasm-runbook.json'))['valid'] is True
+          conformance = json.load(open('/tmp/aasm-conformance.json'))
+          assert conformance['status'] == 'PASS'
+          assert conformance['audit']['total_violations'] == 0
           PY
 
 
@@ -197,6 +201,35 @@ jobs:
           assert value['failed_combination_blocked_on_reuse'] is True
           assert value['exact_replay'] is True
           assert value['backjump_target'] == 'D-schema-v2'
+          PY
+
+  adapter_conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install adapter conformance dependencies
+        run: python -m pip install -e '.[dev,langgraph]'
+      - name: Run framework-neutral conformance and negative fixtures
+        run: pytest -q tests/test_v30_adapter_conformance.py
+      - name: Run the complete built-in LangGraph conformance driver
+        run: |
+          aasm adapter-conformance --adapter langgraph --output /tmp/aasm-adapter-conformance.json > /tmp/aasm-adapter-conformance.stdout.json
+          python - <<'PY'
+          import json
+          report = json.load(open('/tmp/aasm-adapter-conformance.json'))
+          assert report == json.load(open('/tmp/aasm-adapter-conformance.stdout.json'))
+          assert report['status'] == 'PASS'
+          assert report['coverage']['passed'] == [
+              'success', 'contradiction', 'requirement_change', 'lease_loss',
+              'unknown_effect', 'restart', 'replay', 'fork'
+          ]
+          assert report['coverage']['failed'] == []
+          assert report['coverage']['inconclusive'] == []
+          assert report['audit']['total_violations'] == 0
           PY
 
   postgres_integration:
@@ -252,7 +285,7 @@ jobs:
 
   ci_summary:
     if: always()
-    needs: [test, wheel_smoke, langgraph_integration, postgres_integration, compose_smoke]
+    needs: [test, wheel_smoke, langgraph_integration, adapter_conformance, postgres_integration, compose_smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Publish direct-push-visible commit status
@@ -261,15 +294,16 @@ jobs:
           TEST_RESULT: ${{ needs.test.result }}
           WHEEL_RESULT: ${{ needs.wheel_smoke.result }}
           LANGGRAPH_RESULT: ${{ needs.langgraph_integration.result }}
+          CONFORMANCE_RESULT: ${{ needs.adapter_conformance.result }}
           POSTGRES_RESULT: ${{ needs.postgres_integration.result }}
           COMPOSE_RESULT: ${{ needs.compose_smoke.result }}
         run: |
-          if [ "$TEST_RESULT" = "success" ] && [ "$WHEEL_RESULT" = "success" ] && [ "$LANGGRAPH_RESULT" = "success" ] && [ "$POSTGRES_RESULT" = "success" ] && [ "$COMPOSE_RESULT" = "success" ]; then
+          if [ "$TEST_RESULT" = "success" ] && [ "$WHEEL_RESULT" = "success" ] && [ "$LANGGRAPH_RESULT" = "success" ] && [ "$CONFORMANCE_RESULT" = "success" ] && [ "$POSTGRES_RESULT" = "success" ] && [ "$COMPOSE_RESULT" = "success" ]; then
             state=success
-            description="unit, wheel, LangGraph, PostgreSQL, and Compose gates passed"
+            description="unit, wheel, LangGraph, conformance, PostgreSQL, and Compose passed"
           else
             state=failure
-            description="unit=$TEST_RESULT wheel=$WHEEL_RESULT langgraph=$LANGGRAPH_RESULT postgres=$POSTGRES_RESULT compose=$COMPOSE_RESULT"
+            description="unit=$TEST_RESULT wheel=$WHEEL_RESULT langgraph=$LANGGRAPH_RESULT conformance=$CONFORMANCE_RESULT postgres=$POSTGRES_RESULT compose=$COMPOSE_RESULT"
           fi
           export state description
           python - <<'PY' > /tmp/status.json

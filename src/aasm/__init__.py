@@ -1,10 +1,10 @@
 from copy import deepcopy as _deepcopy
 
-__version__ = "0.29.0"
+__version__ = "0.30.0"
 REMOTE_PROTOCOL_NAME = "aasm.remote.v1"
 REMOTE_PROTOCOL_VERSION = "0.19.0"
 
-from .runtime_v29 import AASMEngine, default_profile_registry
+from .runtime_v30 import AASMEngine, default_profile_registry
 from .model import MachineState, ProblemSpec, TaskEnvelope, Proposal, Result, CapabilitySet
 from .agents import AASMAgent, FunctionAgent
 from .authority import SingleControllerAuthority, AutonomousAuthority, QuorumAuthority, HierarchicalAuthority
@@ -117,6 +117,21 @@ from .integrations.langgraph import (
     LangGraphBinding, LangGraphNodePolicy, LangGraphRecoveryAction,
     LangGraphRecoveryResult, LangGraphRunKey,
 )
+from .integrations.conformance import (
+    ADAPTER_CONFORMANCE_ID, ADAPTER_CONFORMANCE_VERSION, CONFORMANCE_SCENARIOS,
+    ConformanceStatus, AdapterCapabilityDeclaration, AdapterScenarioOutcome,
+    ConformanceFinding, ConformanceScenarioResult, AdapterConformanceReport,
+    AdapterConformanceDriver, AuditedStore, AdapterConformanceContext,
+    AdapterConformanceKit, conformance_contract,
+)
+from .integrations.langgraph_conformance import (
+    LANGGRAPH_CONFORMANCE_DRIVER_ID, LANGGRAPH_CONFORMANCE_DRIVER_VERSION,
+    LangGraphConformanceDriver,
+)
+from .integrations.conformance_registry import (
+    BUILTIN_CONFORMANCE_DRIVERS, list_conformance_drivers,
+    get_conformance_driver, run_adapter_conformance,
+)
 
 SUPPORTED_PUBLIC_IMPORTS = [
     "__version__",
@@ -156,6 +171,26 @@ SUPPORTED_PUBLIC_IMPORTS = [
     "LangGraphRecoveryAction",
     "LangGraphRecoveryResult",
     "LangGraphRunKey",
+    "ADAPTER_CONFORMANCE_ID",
+    "ADAPTER_CONFORMANCE_VERSION",
+    "CONFORMANCE_SCENARIOS",
+    "ConformanceStatus",
+    "AdapterCapabilityDeclaration",
+    "AdapterScenarioOutcome",
+    "ConformanceFinding",
+    "ConformanceScenarioResult",
+    "AdapterConformanceReport",
+    "AdapterConformanceDriver",
+    "AuditedStore",
+    "AdapterConformanceContext",
+    "AdapterConformanceKit",
+    "conformance_contract",
+    "LANGGRAPH_CONFORMANCE_DRIVER_ID",
+    "LANGGRAPH_CONFORMANCE_DRIVER_VERSION",
+    "LangGraphConformanceDriver",
+    "list_conformance_drivers",
+    "get_conformance_driver",
+    "run_adapter_conformance",
 ]
 
 SUPPORTED_ENGINE_METHODS = [
@@ -182,6 +217,7 @@ SUPPORTED_ENGINE_METHODS = [
     "fork",
     "integration_report",
     "langgraph_report",
+    "adapter_conformance_contract",
 ]
 
 SUPPORTED_CLI_COMMANDS = [
@@ -197,6 +233,8 @@ SUPPORTED_CLI_COMMANDS = [
     "candidate-activate",
     "assurance",
     "langgraph-binding",
+    "adapter-conformance",
+    "adapter-conformance-list",
 ]
 
 SUPPORTED_INSPECTION_SURFACES = [
@@ -214,12 +252,13 @@ SUPPORTED_INSPECTION_SURFACES = [
     "profile",
     "integrations",
     "langgraph",
+    "adapter-conformance",
 ]
 
 PUBLIC_API_CONTRACT = {
     "contract_id": "aasm.adoption.v1",
     "schema_version": 1,
-    "contract_version": "0.5.0",
+    "contract_version": "0.6.0",
     "runtime_version": __version__,
     "project_status": "EXPERIMENTAL",
     "remote_protocol": {
@@ -246,6 +285,8 @@ PUBLIC_API_CONTRACT = {
         "/health",
         "/adoption-contract",
         "/demo-stack",
+        "/adapter-conformance",
+        "/v1/conformance/adapters/{adapter_id}",
         "/v1/machines/{machine_id}/inspect/{surface}",
         "/v1/machines/{machine_id}/history-check",
         "/v1/machines/{machine_id}/workers/register",
@@ -272,7 +313,7 @@ PUBLIC_API_CONTRACT = {
             "checkpoint_authority": "LANGGRAPH",
             "machine_authority": "AASM_EVENT_HISTORY",
             "entry_points": [
-                "LangGraphAdapter.wrap_node(...)",
+                "LangGraphAdapter.wrap_node(...) ",
                 "aasm langgraph-binding THREAD_ID",
                 "GET /v1/machines/{machine_id}/inspect/langgraph",
             ],
@@ -282,7 +323,23 @@ PUBLIC_API_CONTRACT = {
                 "store AASM truth in framework-private state",
                 "duplicate AASM effects, workers, leases, or persistence",
             ],
-        }
+        },
+        "conformance": {
+            "contract_id": ADAPTER_CONFORMANCE_ID,
+            "contract_version": ADAPTER_CONFORMANCE_VERSION,
+            "support": "EXPERIMENTAL",
+            "required_scenarios": list(CONFORMANCE_SCENARIOS),
+            "built_in_drivers": [
+                row["adapter_id"] for row in list_conformance_drivers()
+            ],
+            "statuses": [status.value for status in ConformanceStatus],
+            "entry_points": [
+                "AdapterConformanceKit.run(...) ",
+                "aasm adapter-conformance --adapter langgraph",
+                "GET /v1/conformance/adapters/langgraph",
+            ],
+            "audit_boundary": "CONFORMANCE_HOOK_NOT_SANDBOX",
+        },
     },
     "local_stack": {
         "id": "aasm-local",
@@ -328,6 +385,7 @@ PUBLIC_API_CONTRACT = {
         "operate workers through registration, heartbeat, claim, lease, telemetry, and completion",
         "execute tested operator recovery drills",
         "bind existing LangGraph threads to canonical AASM machines without graph rewrite",
+        "run framework-neutral adapter conformance before trusting an integration",
         "inspect, replay, backjump, restart, or fork",
     ],
     "implementation_rule": (
@@ -368,6 +426,13 @@ def validate_public_api_contract() -> dict:
         RUNBOOK_DEFINITIONS
     ):
         errors.append("public API contract operator runbooks do not match the registry")
+    conformance = (PUBLIC_API_CONTRACT.get("integrations") or {}).get("conformance") or {}
+    if conformance.get("contract_id") != ADAPTER_CONFORMANCE_ID:
+        errors.append("public API contract conformance identity does not match package constants")
+    if conformance.get("required_scenarios") != list(CONFORMANCE_SCENARIOS):
+        errors.append("public API contract conformance scenarios do not match the kit")
+    if not list_conformance_drivers():
+        errors.append("no built-in adapter conformance drivers are registered")
     corpus = verify_research_corpus()
     if not corpus["valid"]:
         errors.append("packaged research reference corpus failed verification")

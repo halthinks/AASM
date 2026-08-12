@@ -26,7 +26,7 @@ def _release_module():
 
 
 def test_distribution_metadata_and_adoption_contract_are_aligned():
-    assert __version__ == "0.29.0"
+    assert __version__ == "0.30.0"
     contract = public_api_contract()
     assert contract["runtime_version"] == __version__
     assert contract["distribution"]["package"] == "aasm-runtime"

@@ -32,9 +32,14 @@ REPRESENTATIVE_MEMBERS = [
     "src/aasm/integrations/_langgraph_binding.py",
     "src/aasm/integrations/_langgraph_conflict.py",
     "src/aasm/integrations/langgraph.py",
+    "src/aasm/integrations/conformance.py",
+    "src/aasm/integrations/conformance_registry.py",
+    "src/aasm/integrations/langgraph_conformance.py",
     "src/aasm/runtime_v29.py",
+    "src/aasm/runtime_v30.py",
     "tests/test_v28_operator_runbooks.py",
     "tests/test_v29_langgraph_adapter.py",
+    "tests/test_v30_adapter_conformance.py",
 ]
 
 
