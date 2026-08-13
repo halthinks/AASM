@@ -50,6 +50,7 @@
 ./docs/FORMAL_CALCULUS.md
 ./docs/GOVERNANCE_ECONOMICS.md
 ./docs/HIERARCHICAL_DECISION_SCOPES.md
+./docs/HIERARCHICAL_MEMORY_CONTEXT.md
 ./docs/INFORMATION_CHANGE_CHECKPOINTS.md
 ./docs/LANGGRAPH_ADAPTER.md
 ./docs/LOCAL_FULL_STACK.md
@@ -118,6 +119,8 @@
 ./examples/scheduler_demo.py
 ./formal/AASMCalculus.cfg
 ./formal/AASMCalculus.tla
+./formal/AASMHierarchicalMemory.cfg
+./formal/AASMHierarchicalMemory.tla
 ./formal/AASMScopeHierarchy.cfg
 ./formal/AASMScopeHierarchy.tla
 ./formal/AASMSemanticTruthMaintenance.cfg
@@ -127,6 +130,7 @@
 ./formal/AASMTypedCapabilities.cfg
 ./formal/AASMTypedCapabilities.tla
 ./formal/aasm_calculus.pml
+./formal/aasm_hierarchical_memory.pml
 ./formal/aasm_scope_hierarchy.pml
 ./formal/aasm_semantic_truth_maintenance.pml
 ./formal/aasm_trace_conformance.pml
@@ -171,6 +175,7 @@
 ./schemas/change-signal.schema.json
 ./schemas/checkpoint-trigger-policy.schema.json
 ./schemas/collaboration-policy.schema.json
+./schemas/context-projection-request.schema.json
 ./schemas/cursor-page.schema.json
 ./schemas/decision-scope.schema.json
 ./schemas/effect.schema.json
@@ -187,12 +192,14 @@
 ./schemas/governance-budget.schema.json
 ./schemas/governance-context.schema.json
 ./schemas/governance-decision.schema.json
+./schemas/hierarchical-memory.schema.json
 ./schemas/history-check-report.schema.json
 ./schemas/langgraph-binding.schema.json
 ./schemas/langgraph-recovery.schema.json
 ./schemas/lease.schema.json
 ./schemas/machine-definition.schema.json
 ./schemas/memory-entry.schema.json
+./schemas/memory-index-entry.schema.json
 ./schemas/mission-control.schema.json
 ./schemas/model-outcome.schema.json
 ./schemas/model-profile.schema.json
@@ -242,6 +249,7 @@
 ./src/aasm/_calculus_model.py
 ./src/aasm/_public_v30.py
 ./src/aasm/_public_v31.py
+./src/aasm/_public_v39.py
 ./src/aasm/_runtime_v31_activation.py
 ./src/aasm/_runtime_v31_admin.py
 ./src/aasm/_runtime_v31_inspect.py
@@ -255,6 +263,8 @@
 ./src/aasm/_runtime_v39_formal_request.py
 ./src/aasm/_runtime_v39_formal_result.py
 ./src/aasm/_runtime_v39_typed.py
+./src/aasm/_runtime_v40_memory.py
+./src/aasm/_runtime_v40_privacy.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -283,6 +293,7 @@
 ./src/aasm/cli_v37.py
 ./src/aasm/cli_v38.py
 ./src/aasm/cli_v39.py
+./src/aasm/cli_v40.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -315,6 +326,7 @@
 ./src/aasm/formal_workers.py
 ./src/aasm/governance.py
 ./src/aasm/graph.py
+./src/aasm/hierarchical_memory.py
 ./src/aasm/integrations/__init__.py
 ./src/aasm/integrations/_langgraph_binding.py
 ./src/aasm/integrations/_langgraph_conflict.py
@@ -324,6 +336,8 @@
 ./src/aasm/integrations/langgraph.py
 ./src/aasm/integrations/langgraph_conformance.py
 ./src/aasm/memory.py
+./src/aasm/memory_conformance.py
+./src/aasm/memory_operations.py
 ./src/aasm/mission_control.py
 ./src/aasm/model.py
 ./src/aasm/model_check.py
@@ -390,6 +404,7 @@
 ./src/aasm/runtime_v31.py
 ./src/aasm/runtime_v32.py
 ./src/aasm/runtime_v39.py
+./src/aasm/runtime_v40.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
@@ -405,6 +420,7 @@
 ./src/aasm/server_v31.py
 ./src/aasm/server_v32.py
 ./src/aasm/server_v39.py
+./src/aasm/server_v40.py
 ./src/aasm/supervisor_adapters.py
 ./src/aasm/team_protocol.py
 ./src/aasm/trace_conformance.py
@@ -462,4 +478,5 @@
 ./tests/test_v37_reasoning.py
 ./tests/test_v38_semantic_dependencies.py
 ./tests/test_v39_typed_capabilities.py
+./tests/test_v40_hierarchical_memory.py
 ./tests/test_workers_leases.py
