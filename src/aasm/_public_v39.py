@@ -1,0 +1,213 @@
+from copy import deepcopy as _deepcopy
+
+from . import _public_v31 as _v31
+from ._public_v31 import *  # noqa: F401,F403
+from .runtime_v39 import AASMEngine, default_profile_registry
+from .trace_conformance import (
+    TRACE_CONTRACT_ID, TRACE_CONTRACT_VERSION, SEMANTIC_TRACE_CONTRACT_ID, SEMANTIC_TRACE_CONTRACT_VERSION,
+    PROVENANCE_CONTRACT_ID, PROVENANCE_CONTRACT_VERSION, TraceIssue, trace_contract, project_trace,
+    semantic_trace_check, build_trace_corpus, provenance_contract, export_provenance,
+    verify_provenance_export, create_selective_provenance_export,
+)
+from .operator_runbooks import (
+    RECOVERY_CONTRACT_ID, RECOVERY_CONTRACT_VERSION, RECOVERY_SCENARIOS,
+    distributed_recovery_contract, certify_distributed_recovery,
+)
+from .semantic_result import (
+    DOMAIN_CONTRACT_ID, DOMAIN_CONTRACT_VERSION, PROBLEM_CONTRACT_ID, PROBLEM_CONTRACT_VERSION,
+    SEMANTIC_PROBLEM_CONTRACT_ID, SEMANTIC_PROBLEM_CONTRACT_VERSION, COMPILE_STATUSES,
+    Entity, Predicate, Objective, Operator, Observer, Verifier, DomainPackage, ProblemDefinition,
+    ProblemModel, ProblemInstance, canonical_semantic_json, semantic_fingerprint,
+    semantic_problem_contract, validate_problem_model, build_problem_instance,
+    validate_problem_instance, semantic_problem_document, semantic_problem_from_document,
+)
+from .domain_adapters import (
+    SEMANTIC_SOURCE_CONTRACT_ID, SEMANTIC_SOURCE_CONTRACT_VERSION,
+    SEMANTIC_COMPILER_CONTRACT_ID, SEMANTIC_COMPILER_CONTRACT_VERSION, COMPILER_STAGES,
+    CompilerDeclaration, EnvironmentSnapshot, RawProblemInput, CompilerDiagnostic, CompileResult,
+    DomainCompiler, InstanceCompiler, ReferenceSemanticCompiler, CompilationCache,
+    semantic_compiler_contract, compile_semantic_source, compile_and_admit,
+    reference_semantic_source, run_semantic_compiler_conformance,
+)
+from .reasoning import (
+    REASONING_ARTIFACT_CONTRACT_ID, REASONING_ARTIFACT_CONTRACT_VERSION,
+    EPISTEMIC_ADMISSION_CONTRACT_ID, EPISTEMIC_ADMISSION_CONTRACT_VERSION,
+    REASONING_COMMIT_CONTRACT_ID, REASONING_COMMIT_CONTRACT_VERSION,
+    REASONING_ARTIFACT_KINDS, REASONING_AUTHORITY_CLASSES, REASONING_STATES, REASONING_ACTIONS,
+    ReasoningProducer, VerifierRequirement, ReasoningArtifact, Claim, Hypothesis, Lemma, Invariant,
+    Counterexample, Definition, Assumption, Observation, Derivation, Refutation, ObjectiveResult,
+    ReasoningTransition, ReasoningCommit, reasoning_contract, next_reasoning_state,
+    project_reasoning_evidence, reasoning_artifact_document, reasoning_transition_document,
+    reasoning_commit_document, run_reasoning_conformance,
+)
+from .semantic_dependencies import (
+    SEMANTIC_DEPENDENCY_CONTRACT_ID, SEMANTIC_DEPENDENCY_CONTRACT_VERSION,
+    TRUTH_MAINTENANCE_CONTRACT_ID, TRUTH_MAINTENANCE_CONTRACT_VERSION,
+    REACTIVE_OBLIGATION_CONTRACT_ID, REACTIVE_OBLIGATION_CONTRACT_VERSION,
+    CAUSAL_DECISION_CONTRACT_ID, CAUSAL_DECISION_CONTRACT_VERSION,
+    SEMANTIC_NODE_TYPES, SEMANTIC_DEPENDENCY_RELATIONS,
+    SemanticNodeRef, SemanticDependency, CausalDecisionRecord, ReactiveObligationRule,
+    ReactiveObligationRecord, TruthMaintenancePlan, semantic_dependency_contract,
+    explicit_dependency_edges, reactive_rules_from_evidence, truth_records_from_evidence,
+    build_semantic_dependency_graph, dependency_closure, dependency_impact_report,
+    dependency_lineage_report, dependency_memory_signals, semantic_dependency_document,
+    run_semantic_dependency_conformance,
+)
+from .typed_capabilities import (
+    TYPED_PROTOCOL_CONTRACT_ID, TYPED_PROTOCOL_CONTRACT_VERSION,
+    CAPABILITY_ABI_CONTRACT_ID, CAPABILITY_ABI_CONTRACT_VERSION,
+    FORMAL_STATEMENT_CONTRACT_ID, FORMAL_STATEMENT_CONTRACT_VERSION,
+    FORMAL_VERIFICATION_CONTRACT_ID, FORMAL_VERIFICATION_CONTRACT_VERSION,
+    CAPABILITY_TYPES, FORMAL_LOGICS, FORMAL_QUERY_MODES, FORMAL_RESULT_STATUSES,
+    VERIFICATION_STRENGTHS, DISAGREEMENT_POLICIES,
+    TypedEventSchema, ScopedLegalTransition, PatternMachine, CapabilityContract, CapabilityProvider,
+    FormalStatement, FormalVerificationPolicy, FormalVerificationRequest, SolverIdentity,
+    FormalVerificationResult, ExecutableFormalWorker, ProcessResult,
+    typed_protocol_contract, capability_abi_contract, formal_verification_contract,
+    pattern_document, parse_vampire_status, parse_smt_status, canonicalize_solver_status,
+    default_formal_capability_contracts, default_formal_providers, aggregate_formal_results,
+    run_typed_capability_conformance,
+)
+
+__version__ = "0.39.0"
+REMOTE_PROTOCOL_NAME = "aasm.remote.v1"
+REMOTE_PROTOCOL_VERSION = "0.19.0"
+
+from . import demo_stack as _demo_stack
+_demo_stack.AASMEngine = AASMEngine
+_demo_stack._runtime_version = lambda: __version__
+
+_NEW_IMPORTS = [
+    "TRACE_CONTRACT_ID", "TRACE_CONTRACT_VERSION", "SEMANTIC_TRACE_CONTRACT_ID", "SEMANTIC_TRACE_CONTRACT_VERSION",
+    "PROVENANCE_CONTRACT_ID", "PROVENANCE_CONTRACT_VERSION", "TraceIssue", "trace_contract", "project_trace",
+    "semantic_trace_check", "build_trace_corpus", "provenance_contract", "export_provenance",
+    "verify_provenance_export", "create_selective_provenance_export", "RECOVERY_CONTRACT_ID",
+    "RECOVERY_CONTRACT_VERSION", "RECOVERY_SCENARIOS", "distributed_recovery_contract", "certify_distributed_recovery",
+    "DOMAIN_CONTRACT_ID", "DOMAIN_CONTRACT_VERSION", "PROBLEM_CONTRACT_ID", "PROBLEM_CONTRACT_VERSION",
+    "SEMANTIC_PROBLEM_CONTRACT_ID", "SEMANTIC_PROBLEM_CONTRACT_VERSION", "COMPILE_STATUSES",
+    "Entity", "Predicate", "Objective", "Operator", "Observer", "Verifier", "DomainPackage", "ProblemDefinition",
+    "ProblemModel", "ProblemInstance", "canonical_semantic_json", "semantic_fingerprint", "semantic_problem_contract",
+    "validate_problem_model", "build_problem_instance", "validate_problem_instance", "semantic_problem_document", "semantic_problem_from_document",
+    "SEMANTIC_SOURCE_CONTRACT_ID", "SEMANTIC_SOURCE_CONTRACT_VERSION", "SEMANTIC_COMPILER_CONTRACT_ID",
+    "SEMANTIC_COMPILER_CONTRACT_VERSION", "COMPILER_STAGES", "CompilerDeclaration", "EnvironmentSnapshot",
+    "RawProblemInput", "CompilerDiagnostic", "CompileResult", "DomainCompiler", "InstanceCompiler",
+    "ReferenceSemanticCompiler", "CompilationCache", "semantic_compiler_contract", "compile_semantic_source",
+    "compile_and_admit", "reference_semantic_source", "run_semantic_compiler_conformance",
+    "REASONING_ARTIFACT_CONTRACT_ID", "REASONING_ARTIFACT_CONTRACT_VERSION",
+    "EPISTEMIC_ADMISSION_CONTRACT_ID", "EPISTEMIC_ADMISSION_CONTRACT_VERSION",
+    "REASONING_COMMIT_CONTRACT_ID", "REASONING_COMMIT_CONTRACT_VERSION",
+    "REASONING_ARTIFACT_KINDS", "REASONING_AUTHORITY_CLASSES", "REASONING_STATES", "REASONING_ACTIONS",
+    "ReasoningProducer", "VerifierRequirement", "ReasoningArtifact", "Claim", "Hypothesis", "Lemma", "Invariant",
+    "Counterexample", "Definition", "Assumption", "Observation", "Derivation", "Refutation", "ObjectiveResult",
+    "ReasoningTransition", "ReasoningCommit", "reasoning_contract", "next_reasoning_state",
+    "project_reasoning_evidence", "reasoning_artifact_document", "reasoning_transition_document",
+    "reasoning_commit_document", "run_reasoning_conformance",
+    "SEMANTIC_DEPENDENCY_CONTRACT_ID", "SEMANTIC_DEPENDENCY_CONTRACT_VERSION",
+    "TRUTH_MAINTENANCE_CONTRACT_ID", "TRUTH_MAINTENANCE_CONTRACT_VERSION",
+    "REACTIVE_OBLIGATION_CONTRACT_ID", "REACTIVE_OBLIGATION_CONTRACT_VERSION",
+    "CAUSAL_DECISION_CONTRACT_ID", "CAUSAL_DECISION_CONTRACT_VERSION",
+    "SEMANTIC_NODE_TYPES", "SEMANTIC_DEPENDENCY_RELATIONS", "SemanticNodeRef", "SemanticDependency",
+    "CausalDecisionRecord", "ReactiveObligationRule", "ReactiveObligationRecord", "TruthMaintenancePlan",
+    "semantic_dependency_contract", "explicit_dependency_edges", "reactive_rules_from_evidence",
+    "truth_records_from_evidence", "build_semantic_dependency_graph", "dependency_closure",
+    "dependency_impact_report", "dependency_lineage_report", "dependency_memory_signals",
+    "semantic_dependency_document", "run_semantic_dependency_conformance",
+    "TYPED_PROTOCOL_CONTRACT_ID", "TYPED_PROTOCOL_CONTRACT_VERSION",
+    "CAPABILITY_ABI_CONTRACT_ID", "CAPABILITY_ABI_CONTRACT_VERSION",
+    "FORMAL_STATEMENT_CONTRACT_ID", "FORMAL_STATEMENT_CONTRACT_VERSION",
+    "FORMAL_VERIFICATION_CONTRACT_ID", "FORMAL_VERIFICATION_CONTRACT_VERSION",
+    "CAPABILITY_TYPES", "FORMAL_LOGICS", "FORMAL_QUERY_MODES", "FORMAL_RESULT_STATUSES",
+    "VERIFICATION_STRENGTHS", "DISAGREEMENT_POLICIES", "TypedEventSchema", "ScopedLegalTransition",
+    "PatternMachine", "CapabilityContract", "CapabilityProvider", "FormalStatement", "FormalVerificationPolicy",
+    "FormalVerificationRequest", "SolverIdentity", "FormalVerificationResult", "ExecutableFormalWorker",
+    "ProcessResult", "typed_protocol_contract", "capability_abi_contract", "formal_verification_contract",
+    "pattern_document", "parse_vampire_status", "parse_smt_status", "canonicalize_solver_status",
+    "default_formal_capability_contracts", "default_formal_providers", "aggregate_formal_results",
+    "run_typed_capability_conformance",
+]
+_NEW_METHODS = [
+    "trace_projection", "semantic_trace_report", "provenance_export", "provenance_verify", "provenance_select",
+    "admit_semantic_problem", "semantic_problem_report", "semantic_domain_report", "semantic_compiler_report", "compile_and_admit_semantic",
+    "propose_artifact", "support_artifact", "contest_artifact", "request_verification", "record_verification", "authorize_artifact", "refute_artifact", "mark_stale", "reject_artifact", "reasoning_commit", "reasoning_report", "reasoning_provenance", "reasoning_contract_report",
+    "semantic_dependency_contract_report", "semantic_dependency_graph", "semantic_dependency_impact", "semantic_dependency_lineage", "semantic_memory_projection_signals", "register_semantic_dependency", "register_causal_decision", "register_reactive_obligation_rule", "reactive_obligation_report", "derive_reactive_obligations", "truth_maintenance_report", "apply_truth_change", "resume_truth_maintenance",
+    "typed_protocol_contract_report", "capability_abi_contract_report", "formal_verification_contract_report",
+    "typed_pattern_report", "admit_typed_pattern", "typed_transition_report", "propose_typed_transition", "authorize_typed_transition",
+    "capability_report", "register_capability_contract", "register_capability_provider", "register_formal_resource",
+    "formal_capability_blueprint", "install_default_formal_capability_contracts", "register_formal_provider_runtime",
+    "formal_statement_report", "propose_formal_statement", "formalize_artifact", "formal_verification_report",
+    "request_formal_verification", "commit_formal_verification_result",
+]
+_NEW_COMMANDS = [
+    "trace-project", "trace-check", "provenance-export", "provenance-verify", "provenance-select", "recovery-certify",
+    "semantic-problem-contract", "problem-admit", "problem", "domain", "semantic-compiler-contract", "semantic-compile", "semantic-compiler-conformance", "semantic-compile-admit", "compile", "problem-check",
+    "reasoning-contract", "reasoning", "reasoning-artifact", "reasoning-provenance", "reasoning-commit", "reasoning-conformance",
+    "semantic-dependency-contract", "semantic-dependency-conformance", "dependency-graph", "dependency-impact", "dependency-lineage", "dependency-add", "causal-decision-add", "reactive-rule-add", "reactive-derive", "reactive-obligations", "truth-maintain", "truth-resume", "truth-maintenance-report", "semantic-memory-signals",
+    "typed-protocol-contract", "capability-abi-contract", "formal-verification-contract", "typed-capability-conformance",
+    "typed-patterns", "typed-pattern-add", "typed-transitions", "typed-transition-propose", "typed-transition-authorize",
+    "capabilities", "capability-add", "capability-provider-add", "formal-blueprint", "formal-default-contracts",
+    "formal-provider-runtime", "formal-statements", "formalize", "formal-request", "formal-report", "formal-result",
+]
+_NEW_SURFACES = [
+    "trace", "trace-semantic", "provenance", "problem", "semantic-problem", "domain", "semantic-domain", "compiler", "semantic-compiler", "reasoning", "reasoning-artifacts", "epistemic", "reasoning-contract", "epistemic-contract", "dependencies", "semantic-dependencies", "truth-maintenance", "reactive-obligations", "semantic-memory-signals",
+    "typed-protocol", "typed-patterns", "typed-transitions", "capabilities", "capability-abi", "formal-verification", "formal-results", "formal-statements", "formalization", "formal-blueprint",
+]
+
+SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*_v31.SUPPORTED_PUBLIC_IMPORTS, *_NEW_IMPORTS]))
+SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*_v31.SUPPORTED_ENGINE_METHODS, *_NEW_METHODS]))
+SUPPORTED_CLI_COMMANDS = list(dict.fromkeys([*_v31.SUPPORTED_CLI_COMMANDS, *_NEW_COMMANDS]))
+SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([*_v31.SUPPORTED_INSPECTION_SURFACES, *_NEW_SURFACES]))
+
+PUBLIC_API_CONTRACT = _deepcopy(_v31.PUBLIC_API_CONTRACT)
+PUBLIC_API_CONTRACT.update({"contract_version": "0.15.0", "runtime_version": __version__, "supported_imports": SUPPORTED_PUBLIC_IMPORTS, "supported_engine_methods": SUPPORTED_ENGINE_METHODS, "supported_cli_commands": SUPPORTED_CLI_COMMANDS, "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES})
+PUBLIC_API_CONTRACT["trace_conformance"] = {"contract_id": TRACE_CONTRACT_ID, "contract_version": TRACE_CONTRACT_VERSION, "semantic_contract_id": SEMANTIC_TRACE_CONTRACT_ID, "semantic_contract_version": SEMANTIC_TRACE_CONTRACT_VERSION, "source": "AUTHORITATIVE_DURABLE_EVENT_HISTORY", "unknown_transition_policy": "UNSUPPORTED_EXPLICIT", "snapshot_only_input": "REJECTED"}
+PUBLIC_API_CONTRACT["provenance"] = provenance_contract()
+PUBLIC_API_CONTRACT["distributed_recovery"] = distributed_recovery_contract()
+PUBLIC_API_CONTRACT["semantic_problem"] = semantic_problem_contract()
+PUBLIC_API_CONTRACT["semantic_compiler"] = semantic_compiler_contract()
+PUBLIC_API_CONTRACT["reasoning"] = reasoning_contract()
+PUBLIC_API_CONTRACT["semantic_dependencies"] = semantic_dependency_contract()
+PUBLIC_API_CONTRACT["typed_protocol"] = typed_protocol_contract()
+PUBLIC_API_CONTRACT["capability_abi"] = capability_abi_contract()
+PUBLIC_API_CONTRACT["formal_verification"] = formal_verification_contract()
+PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
+PUBLIC_API_CONTRACT["golden_path"] = list(dict.fromkeys([*PUBLIC_API_CONTRACT.get("golden_path", []), "compile a normalized semantic source deterministically and admit only through the AASM event/reducer boundary", "propose reasoning artifacts, verify them independently, authorize them by policy, and commit only admitted knowledge", "propagate truth changes only through registered descendant dependencies while preserving unrelated siblings", "derive reactive obligations from durable events without executing handlers inside state reduction", "admit typed event/transition patterns by policy, compile guards into obligations, and activate transitions only after evidence-bearing obligations complete", "formalize reasoning with exact source fingerprints, route theorem provers through leased verifier capabilities, and treat solver results as Evidence rather than authority"]))
+
+
+def public_api_contract() -> dict: return _deepcopy(PUBLIC_API_CONTRACT)
+
+
+def validate_public_api_contract() -> dict:
+    errors = []
+    missing_imports = [name for name in _NEW_IMPORTS if name not in globals()]
+    missing_methods = [name for name in _NEW_METHODS if not callable(getattr(AASMEngine, name, None))]
+    if missing_imports: errors.append(f"missing public imports: {missing_imports}")
+    if missing_methods: errors.append(f"missing AASMEngine methods: {missing_methods}")
+    if PUBLIC_API_CONTRACT.get("runtime_version") != __version__: errors.append("runtime version mismatch")
+    compiler = PUBLIC_API_CONTRACT.get("semantic_compiler") or {}
+    if compiler.get("contract_id") != SEMANTIC_COMPILER_CONTRACT_ID: errors.append("semantic compiler contract mismatch")
+    if compiler.get("authority") != "PROPOSAL_ONLY": errors.append("semantic compiler authority boundary mismatch")
+    reasoning = PUBLIC_API_CONTRACT.get("reasoning") or {}
+    if reasoning.get("artifact_contract_id") != REASONING_ARTIFACT_CONTRACT_ID: errors.append("reasoning artifact contract mismatch")
+    if reasoning.get("admission_contract_id") != EPISTEMIC_ADMISSION_CONTRACT_ID: errors.append("epistemic admission contract mismatch")
+    if reasoning.get("durability_boundary") != "AASM_EVIDENCE_EVENT_REDUCER_ONLY": errors.append("reasoning durability boundary mismatch")
+    if reasoning.get("dependency_truth_maintenance") != "RESERVED_FOR_V0.38": errors.append("v0.37 reasoning release boundary was mutated")
+    dependencies = PUBLIC_API_CONTRACT.get("semantic_dependencies") or {}
+    if dependencies.get("contract_id") != SEMANTIC_DEPENDENCY_CONTRACT_ID: errors.append("semantic dependency contract mismatch")
+    if dependencies.get("truth_change_policy") != "AFFECTED_DESCENDANTS_ONLY": errors.append("truth-maintenance locality policy mismatch")
+    if dependencies.get("unrelated_sibling_policy") != "PRESERVE": errors.append("truth-maintenance sibling preservation mismatch")
+    if dependencies.get("reactive_policy") != "DERIVE_OBLIGATION_NEVER_EXECUTE_HANDLER": errors.append("reactive obligation authority boundary mismatch")
+    typed = PUBLIC_API_CONTRACT.get("typed_protocol") or {}
+    if typed.get("contract_id") != TYPED_PROTOCOL_CONTRACT_ID: errors.append("typed protocol contract mismatch")
+    if typed.get("direct_pattern_register") != "REJECTED": errors.append("typed pattern authority boundary mismatch")
+    capability = PUBLIC_API_CONTRACT.get("capability_abi") or {}
+    if capability.get("contract_id") != CAPABILITY_ABI_CONTRACT_ID: errors.append("capability ABI contract mismatch")
+    if capability.get("lease_boundary") != "AASM_TASK_LEASE": errors.append("capability lease boundary mismatch")
+    formal = PUBLIC_API_CONTRACT.get("formal_verification") or {}
+    if formal.get("contract_id") != FORMAL_VERIFICATION_CONTRACT_ID: errors.append("formal verification contract mismatch")
+    if formal.get("solver_authority") != "EVIDENCE_ONLY": errors.append("formal solver authority boundary mismatch")
+    if formal.get("solver_voting") != "NOT_TRUTH": errors.append("formal solver voting boundary mismatch")
+    if formal.get("lean_rejection") != "NOT_A_REFUTATION": errors.append("Lean rejection epistemic semantics mismatch")
+    return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
+
+
+__all__ = list(dict.fromkeys(["__version__", *getattr(_v31, "__all__", []), *_NEW_IMPORTS]))

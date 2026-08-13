@@ -1,4 +1,4 @@
-from .server_v39 import CSP, LOOPBACK_HOSTS, MAX_ARTIFACT_PREVIEW_CHARS, MAX_BODY_BYTES, main, make_handler, serve
+from .server_v40 import CSP, LOOPBACK_HOSTS, MAX_ARTIFACT_PREVIEW_CHARS, MAX_BODY_BYTES, main, make_handler, serve
 
 __all__ = ["CSP", "LOOPBACK_HOSTS", "MAX_ARTIFACT_PREVIEW_CHARS", "MAX_BODY_BYTES", "make_handler", "serve", "main"]
 
