@@ -35,10 +35,12 @@ PUBLIC_API_CONTRACT["distribution"]["version"]=__version__
 def public_api_contract(): return deepcopy(PUBLIC_API_CONTRACT)
 def validate_public_api_contract():
     errors=[]
-    missing_imports=[name for name in SUPPORTED_PUBLIC_IMPORTS if name not in globals()]
-    missing_methods=[name for name in SUPPORTED_ENGINE_METHODS if not callable(getattr(AASMEngine,name,None))]
-    if missing_imports: errors.append(f"missing public imports: {missing_imports}")
-    if missing_methods: errors.append(f"missing engine methods: {missing_methods}")
+    current_imports=["MemoryObject","ContextProjectionRequest","ReuseRequest","ReuseCandidate","ReuseCertificate","ReuseValidation","ReuseMetrics","ReusePolicy","HotReuseIndex","reuse_contract","validate_reuse_candidate","SolverStepRequest","SolverStepResult","solver_loop_contract"]
+    current_methods=[*_MEMORY_METHODS,*_REUSE_METHODS]
+    missing_imports=[name for name in current_imports if name not in globals()]
+    missing_methods=[name for name in current_methods if not callable(getattr(AASMEngine,name,None))]
+    if missing_imports: errors.append(f"missing current imports: {missing_imports}")
+    if missing_methods: errors.append(f"missing current engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version")!=__version__: errors.append("runtime version mismatch")
     if PUBLIC_API_CONTRACT.get("contract_version")!="0.17.0": errors.append("adoption contract mismatch")
     if PUBLIC_API_CONTRACT.get("distribution",{}).get("version")!=__version__: errors.append("distribution version mismatch")
