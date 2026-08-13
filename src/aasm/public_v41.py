@@ -34,12 +34,22 @@ PUBLIC_API_CONTRACT["distribution"]["version"]=__version__
 
 def public_api_contract(): return deepcopy(PUBLIC_API_CONTRACT)
 def validate_public_api_contract():
-    errors=list(_v39.validate_public_api_contract().get("errors",[]))
-    for name in _MEMORY_METHODS+_REUSE_METHODS:
-        if not callable(getattr(AASMEngine,name,None)): errors.append(f"missing engine method: {name}")
-    if PUBLIC_API_CONTRACT["contract_version"]!="0.17.0": errors.append("adoption contract mismatch")
-    if PUBLIC_API_CONTRACT["reuse"].get("authority")!="INDEX_AND_VALIDATE_ONLY": errors.append("reuse authority mismatch")
-    if PUBLIC_API_CONTRACT["reuse"].get("cache_deletion_semantics")!="PERFORMANCE_ONLY": errors.append("reuse cache deletion mismatch")
+    errors=[]
+    missing_imports=[name for name in SUPPORTED_PUBLIC_IMPORTS if name not in globals()]
+    missing_methods=[name for name in SUPPORTED_ENGINE_METHODS if not callable(getattr(AASMEngine,name,None))]
+    if missing_imports: errors.append(f"missing public imports: {missing_imports}")
+    if missing_methods: errors.append(f"missing engine methods: {missing_methods}")
+    if PUBLIC_API_CONTRACT.get("runtime_version")!=__version__: errors.append("runtime version mismatch")
+    if PUBLIC_API_CONTRACT.get("contract_version")!="0.17.0": errors.append("adoption contract mismatch")
+    if PUBLIC_API_CONTRACT.get("distribution",{}).get("version")!=__version__: errors.append("distribution version mismatch")
+    memory=PUBLIC_API_CONTRACT.get("hierarchical_memory") or {}
+    if memory.get("mutation_path")!="DECISION_TO_OBLIGATION_TO_EVIDENCE": errors.append("memory authority path mismatch")
+    reuse=PUBLIC_API_CONTRACT.get("reuse") or {}
+    if reuse.get("authority")!="INDEX_AND_VALIDATE_ONLY": errors.append("reuse authority mismatch")
+    if reuse.get("cache_deletion_semantics")!="PERFORMANCE_ONLY": errors.append("reuse cache deletion mismatch")
+    if reuse.get("subsumption_semantics")!="EXPLICIT_VALIDATOR_REQUIRED": errors.append("reuse subsumption mismatch")
+    solver=PUBLIC_API_CONTRACT.get("solver_loop") or {}
+    if solver.get("authority")!="EXISTING_AASM_PATHS_ONLY": errors.append("solver-loop authority mismatch")
     return {"valid":not errors,"errors":errors,"contract":public_api_contract()}
 
 from . import demo_stack as _demo_stack
