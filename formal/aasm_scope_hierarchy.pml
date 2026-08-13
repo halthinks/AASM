@@ -5,7 +5,7 @@
 #define ARCH_B 4
 #define IMPL_B 5
 
-bool active[6];
+bool scope_active[6];
 bool pinned[6];
 bool hard_knowledge;
 bool parent_knowledge;
@@ -16,12 +16,12 @@ bool restarted;
 
 init {
     atomic {
-        active[ROOT] = true;
-        active[STRATEGY] = true;
-        active[ARCH_A] = true;
-        active[IMPL_A] = true;
-        active[ARCH_B] = true;
-        active[IMPL_B] = true;
+        scope_active[ROOT] = true;
+        scope_active[STRATEGY] = true;
+        scope_active[ARCH_A] = true;
+        scope_active[IMPL_A] = true;
+        scope_active[ARCH_B] = true;
+        scope_active[IMPL_B] = true;
         pinned[ROOT] = true;
         pinned[STRATEGY] = true;
         hard_knowledge = true;
@@ -35,28 +35,28 @@ init {
     :: branch_a_active ->
         atomic {
             branch_a_active = false;
-            active[ARCH_A] = false;
-            active[IMPL_A] = false;
+            scope_active[ARCH_A] = false;
+            scope_active[IMPL_A] = false;
         }
     :: !restarted ->
         atomic {
             restarted = true;
             branch_a_active = false;
-            active[ARCH_A] = false;
-            active[IMPL_A] = false;
+            scope_active[ARCH_A] = false;
+            scope_active[IMPL_A] = false;
         }
     :: else -> break
     od;
 
-    assert(active[ROOT]);
-    assert(active[STRATEGY]);
-    assert(!pinned[ROOT] || active[ROOT]);
-    assert(!pinned[STRATEGY] || active[STRATEGY]);
+    assert(scope_active[ROOT]);
+    assert(scope_active[STRATEGY]);
+    assert(!pinned[ROOT] || scope_active[ROOT]);
+    assert(!pinned[STRATEGY] || scope_active[STRATEGY]);
     assert(hard_knowledge);
     assert(parent_knowledge);
     assert(branch_b_active);
-    assert(active[ARCH_B]);
-    assert(active[IMPL_B]);
-    assert(branch_a_active || (!active[ARCH_A] && !active[IMPL_A]));
-    assert(!restarted || (active[ROOT] && active[STRATEGY] && active[ARCH_B] && active[IMPL_B]));
+    assert(scope_active[ARCH_B]);
+    assert(scope_active[IMPL_B]);
+    assert(branch_a_active || (!scope_active[ARCH_A] && !scope_active[IMPL_A]));
+    assert(!restarted || (scope_active[ROOT] && scope_active[STRATEGY] && scope_active[ARCH_B] && scope_active[IMPL_B]));
 }

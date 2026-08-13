@@ -60,8 +60,8 @@ def main() -> int:
         'ScopedRestartPreservesParentsAndSiblings',
     ])
     require(root / "formal/aasm_scope_hierarchy.pml", [
-        'active[ROOT]', 'hard_knowledge', 'branch_b_active',
-        'active[ARCH_B]', 'active[IMPL_B]', 'branch_a_active', 'restarted',
+        'scope_active[ROOT]', 'hard_knowledge', 'branch_b_active',
+        'scope_active[ARCH_B]', 'scope_active[IMPL_B]', 'branch_a_active', 'restarted',
     ])
 
     require(root / "src/aasm/_calculus_logic.py", [
