@@ -20,7 +20,7 @@ class PrincipalBoundMemoryRuntimeMixin(HierarchicalMemoryRuntimeMixin):
 
     def context_projection(self, request: ContextProjectionRequest | Mapping[str, Any]) -> dict[str, Any]:
         request = request if isinstance(request, ContextProjectionRequest) else ContextProjectionRequest(**deepcopy(dict(request)))
-        calculus = self.calculus_report()
+        calculus = self._begin_calculus()
         signals = self._memory_semantic_signals()
         memory = self.hierarchical_memory_report(as_of=request.as_of)
         if not memory["valid"]:
