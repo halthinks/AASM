@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from aasm import (
     AASMEngine,
-    Event,
     ProblemSpec,
     __version__,
     build_trace_corpus,
@@ -11,6 +10,7 @@ from aasm import (
     trace_contract,
     validate_public_api_contract,
 )
+from aasm.model import Event
 from aasm.cli import build_parser
 
 
@@ -68,22 +68,7 @@ def test_snapshot_only_input_is_rejected() -> None:
 
 
 def test_semantic_counterexample_links_exact_source_event() -> None:
-    source = [
-        event(
-            1,
-            "snapshot_patched",
-            data={
-                "semantic_witness": {
-                    "pre_state": {"hard": ["C1"]},
-                    "post_state": {"hard": []},
-                    "properties": {
-                        "restart_retains_hard_knowledge": False,
-                        "candidate_activation_atomic": True,
-                    },
-                }
-            },
-        )
-    ]
+    source = [event(1, "snapshot_patched", data={"semantic_witness": {"pre_state": {"hard": ["C1"]}, "post_state": {"hard": []}, "properties": {"restart_retains_hard_knowledge": False, "candidate_activation_atomic": True}}})]
     report = semantic_trace_check(source)
     assert report["status"] == "FAIL"
     issue = report["issues"][0]
@@ -101,10 +86,7 @@ def test_missing_semantic_witness_is_inconclusive_not_invented() -> None:
 
 
 def test_trace_corpus_is_deterministic_and_sorted() -> None:
-    histories = {
-        "b": [event(1, "machine_created")],
-        "a": [event(1, "machine_created"), event(2, "transition_committed")],
-    }
+    histories = {"b": [event(1, "machine_created")], "a": [event(1, "machine_created"), event(2, "transition_committed")]}
     first = build_trace_corpus(histories)
     second = build_trace_corpus(histories)
     assert first == second
