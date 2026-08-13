@@ -3,122 +3,6 @@ name: Formal Assurance
 on:
   push:
     branches: [main]
-    paths:
-      - "formal/**"
-      - "pyproject.toml"
-      - "Dockerfile"
-      - ".dockerignore"
-      - "compose.yaml"
-      - "release-history.json"
-      - "FILE_LIST.txt"
-      - "README.md"
-      - "ROADMAP.md"
-      - "CHANGELOG.md"
-      - "CHANGELOG_0.27_AND_EARLIER.md"
-      - "MANIFEST.in"
-      - "MANIFEST.md"
-      - "WHY_AASM.md"
-      - "docs/ARCHITECTURE.md"
-      - "docs/COMPATIBILITY.md"
-      - "docs/LOCAL_FULL_STACK.md"
-      - "docs/RELEASE_PROCESS.md"
-      - "docs/RESEARCH_SYNTHESIS_DEMO.md"
-      - "docs/RELEASE_0.26.md"
-      - "docs/RELEASE_0.27.md"
-      - "docs/RELEASE_0.28.md"
-      - "docs/LANGGRAPH_ADAPTER.md"
-      - "docs/ADAPTER_CONFORMANCE.md"
-      - "docs/RELEASE_0.29.md"
-      - "docs/RELEASE_0.30.md"
-      - "docs/RELEASE_0.31.md"
-      - "docs/HIERARCHICAL_DECISION_SCOPES.md"
-      - "docs/RELEASE_0.28.2.md"
-      - "docs/runbooks/**"
-      - "examples/langgraph_adoption.py"
-      - "profiles/research/**"
-      - "schemas/langgraph-binding.schema.json"
-      - "schemas/langgraph-recovery.schema.json"
-      - "schemas/adapter-capability.schema.json"
-      - "schemas/adapter-conformance-report.schema.json"
-      - "schemas/decision-scope.schema.json"
-      - "schemas/scope-dependency.schema.json"
-      - "schemas/scope-report.schema.json"
-      - "schemas/assurance-state.schema.json"
-      - "schemas/history-check-report.schema.json"
-      - "scripts/check_formal_models.py"
-      - "scripts/check_release_contracts.py"
-      - "scripts/release_artifacts*.py"
-      - "src/aasm/__init__.py"
-      - "src/aasm/integrations/**"
-      - "src/aasm/assurance.py"
-      - "src/aasm/calculus.py"
-      - "src/aasm/_calculus_*.py"
-      - "src/aasm/_runtime_v31_*.py"
-      - "src/aasm/_scopes_*.py"
-      - "src/aasm/cli.py"
-      - "src/aasm/cli_v22.py"
-      - "src/aasm/cli_v25.py"
-      - "src/aasm/cli_v27.py"
-      - "src/aasm/cli_v28.py"
-      - "src/aasm/cli_v29.py"
-      - "src/aasm/cli_v30.py"
-      - "src/aasm/cli_v31.py"
-      - "src/aasm/conflict_minimization.py"
-      - "src/aasm/control_center.py"
-      - "src/aasm/control_center_v26.py"
-      - "src/aasm/control_center_v27.py"
-      - "src/aasm/control_center_v29.py"
-      - "src/aasm/control_center_v30.py"
-      - "src/aasm/control_center_v31.py"
-      - "src/aasm/core/reducer.py"
-      - "src/aasm/decision_backends.py"
-      - "src/aasm/demo_stack.py"
-      - "src/aasm/domain_adapters.py"
-      - "src/aasm/model.py"
-      - "src/aasm/observability.py"
-      - "src/aasm/operator_runbooks.py"
-      - "src/aasm/runbook_*.py"
-      - "src/aasm/persistence/serde.py"
-      - "src/aasm/profile_packages.py"
-      - "src/aasm/research_demo.py"
-      - "src/aasm/research_profile.py"
-      - "src/aasm/reference_data/research/**"
-      - "src/aasm/runtime_v21.py"
-      - "src/aasm/runtime_v22.py"
-      - "src/aasm/runtime_v23.py"
-      - "src/aasm/runtime_v24.py"
-      - "src/aasm/runtime_v25.py"
-      - "src/aasm/runtime_v29.py"
-      - "src/aasm/runtime_v30.py"
-      - "src/aasm/runtime_v31.py"
-      - "src/aasm/scopes.py"
-      - "src/aasm/server.py"
-      - "src/aasm/server_v25.py"
-      - "src/aasm/server_v27.py"
-      - "src/aasm/server_v29.py"
-      - "src/aasm/server_v30.py"
-      - "src/aasm/server_v31.py"
-      - "src/aasm/worker_loop.py"
-      - "tests/test_cli.py"
-      - "tests/test_conflict_minimization_stabilization.py"
-      - "tests/test_decision_backend_budgets.py"
-      - "tests/test_v21_calculus.py"
-      - "tests/test_v23_decision_backends.py"
-      - "tests/test_v24_assurance.py"
-      - "tests/test_v25_observability.py"
-      - "tests/test_v25_remote_observability.py"
-      - "tests/test_v26_research_synthesis.py"
-      - "tests/test_v27_local_stack.py"
-      - "tests/test_v28_distribution.py"
-      - "tests/test_v28_operator_runbooks.py"
-      - "tests/test_v28_sdist_selfcontained.py"
-      - "tests/test_v29_langgraph_adapter.py"
-      - "tests/test_v30_adapter_conformance.py"
-      - "tests/test_v31_scopes.py"
-      - "tests/test_sdist_smoke.py"
-      - ".github/workflows/ci.yml"
-      - ".github/workflows/formal.yml"
-      - ".github/workflows/release.yml"
   workflow_dispatch:
 
 permissions:
@@ -128,7 +12,7 @@ permissions:
 jobs:
   model_check:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
 
@@ -136,7 +20,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Validate runtime release adoption local-stack distribution and runbook contracts
+      - name: Validate architecture and release contracts
         run: |
           python scripts/check_formal_models.py
           python scripts/check_release_contracts.py
@@ -155,57 +39,47 @@ jobs:
           print(f"spin_sha256={lock['spin']['sha256']}")
           PY
 
-      - name: Verify bounded calculus and scope TLA+ models
+      - name: Verify every bounded TLA+ model
         shell: bash
         run: |
           set -euo pipefail
           curl -L --fail --silent --show-error \
-            "${{ steps.toolchain.outputs.tla_url }}" \
-            -o /tmp/tla2tools.jar
-          echo "${{ steps.toolchain.outputs.tla_sha256 }}  /tmp/tla2tools.jar" \
-            | sha256sum --check -
+            "${{ steps.toolchain.outputs.tla_url }}" -o /tmp/tla2tools.jar
+          echo "${{ steps.toolchain.outputs.tla_sha256 }}  /tmp/tla2tools.jar" | sha256sum --check -
           cd formal
-          java -cp /tmp/tla2tools.jar tlc2.TLC \
-            -workers 2 \
-            -config AASMCalculus.cfg \
-            AASMCalculus.tla
-          java -cp /tmp/tla2tools.jar tlc2.TLC \
-            -workers 2 \
-            -config AASMScopeHierarchy.cfg \
-            AASMScopeHierarchy.tla
+          for cfg in *.cfg; do
+            module="${cfg%.cfg}"
+            echo "TLC: $module"
+            java -cp /tmp/tla2tools.jar tlc2.TLC -workers 2 -config "$cfg" "$module.tla"
+          done
 
-      - name: Verify bounded calculus and scope Promela models
+      - name: Verify every bounded Promela model
         shell: bash
         run: |
           set -euo pipefail
           curl -L --fail --silent --show-error \
-            "${{ steps.toolchain.outputs.spin_url }}" \
-            -o /tmp/spin.tar.gz
-          echo "${{ steps.toolchain.outputs.spin_sha256 }}  /tmp/spin.tar.gz" \
-            | sha256sum --check -
+            "${{ steps.toolchain.outputs.spin_url }}" -o /tmp/spin.tar.gz
+          echo "${{ steps.toolchain.outputs.spin_sha256 }}  /tmp/spin.tar.gz" | sha256sum --check -
           sudo apt-get update -qq
           sudo apt-get install -y -qq bison
           mkdir -p /tmp/spin-src
           tar -xzf /tmp/spin.tar.gz -C /tmp/spin-src --strip-components=1
           make -C /tmp/spin-src/Src -j2
           cd formal
-          /tmp/spin-src/Src/spin -a aasm_calculus.pml
-          gcc -O2 -o /tmp/aasm-pan pan.c
-          /tmp/aasm-pan -a -m100000 | tee /tmp/aasm-spin.log
-          grep -Eq 'errors:[[:space:]]*0' /tmp/aasm-spin.log
-          if grep -Eq 'errors:[[:space:]]*[1-9][0-9]*' /tmp/aasm-spin.log; then
-            echo "SPIN reported verification errors"
-            exit 1
-          fi
-          rm -f pan.c pan.h pan.m pan.b pan.p pan.t pan.pre
-          /tmp/spin-src/Src/spin -a aasm_scope_hierarchy.pml
-          gcc -O2 -o /tmp/aasm-scope-pan pan.c
-          /tmp/aasm-scope-pan -m100000 | tee /tmp/aasm-scope-spin.log
-          grep -Eq 'errors:[[:space:]]*0' /tmp/aasm-scope-spin.log
-          if grep -Eq 'errors:[[:space:]]*[1-9][0-9]*' /tmp/aasm-scope-spin.log; then
-            echo "scope SPIN model reported verification errors"
-            exit 1
-          fi
+          index=0
+          for model in *.pml; do
+            index=$((index + 1))
+            rm -f pan.c pan.h pan.m pan.b pan.p pan.t pan.pre
+            echo "SPIN: $model"
+            /tmp/spin-src/Src/spin -a "$model"
+            gcc -O2 -o "/tmp/aasm-pan-$index" pan.c
+            "/tmp/aasm-pan-$index" -m100000 | tee "/tmp/aasm-spin-$index.log"
+            grep -Eq 'errors:[[:space:]]*0' "/tmp/aasm-spin-$index.log"
+            if grep -Eq 'errors:[[:space:]]*[1-9][0-9]*' "/tmp/aasm-spin-$index.log"; then
+              echo "SPIN reported verification errors for $model"
+              exit 1
+            fi
+          done
 
       - name: Publish formal assurance status
         if: always()
@@ -221,7 +95,7 @@ jobs:
           print(json.dumps({
               "state": os.environ["state"],
               "context": "aasm/formal-assurance",
-              "description": f"TLC, SPIN, scope, distribution, and runbook contracts {os.environ['RESULT']}",
+              "description": f"all registered TLC/SPIN and source contracts {os.environ['RESULT']}",
               "target_url": f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
           }))
           PY

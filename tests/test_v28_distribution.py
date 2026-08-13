@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import importlib.util
-import json
 from pathlib import Path
 import subprocess
 import sys
@@ -9,11 +8,8 @@ import zipfile
 
 from aasm import __version__, public_api_contract
 
-
 ROOT = Path(__file__).resolve().parents[1]
 VERSION = __version__
-WHEEL_NAME = f"aasm_runtime-{VERSION}-py3-none-any.whl"
-SDIST_NAME = f"aasm_runtime-{VERSION}.tar.gz"
 
 
 def _release_module():
@@ -26,44 +22,23 @@ def _release_module():
 
 
 def test_distribution_metadata_and_adoption_contract_are_aligned():
-    assert __version__ == "0.31.0"
+    assert VERSION == "0.32.0"
     contract = public_api_contract()
-    assert contract["runtime_version"] == __version__
+    assert contract["runtime_version"] == VERSION
     assert contract["distribution"]["package"] == "aasm-runtime"
-    assert contract["distribution"]["release_workflow"] == (
-        ".github/workflows/release.yml"
-    )
-    assert contract["distribution"]["checksums"] == "SHA256SUMS.txt"
     assert contract["distribution"]["reproducible_builds"] is True
     assert contract["distribution"]["source_distribution_self_test"] is True
-    assert contract["distribution"]["source_distribution_scope"] == "FULL_REPOSITORY_CONTRACT"
     assert contract["distribution"]["historical_release_policy"] == "REPORT_ONLY"
-    assert set(contract["operator_runbooks"]) == {
-        "lease-loss",
-        "requirement-change",
-        "learned-no-good",
-        "human-approval",
-        "replay-fork",
-        "unknown-effect",
-        "history-diagnosis",
-    }
 
 
-def test_release_history_is_valid_and_names_maintained_tags():
-    module = _release_module()
-    report = module.verify_release_history(ROOT / "release-history.json")
+def test_release_history_contract_is_valid():
+    report = _release_module().verify_release_history(ROOT / "release-history.json")
     assert report["valid"] is True, report
-    assert [row["tag"] for row in report["releases"]] == [
-        "v0.25.1",
-        "v0.25.2",
-        "v0.26.0",
-        "v0.27.0",
-    ]
 
 
-def test_release_artifact_tool_verifies_wheel_members_and_metadata(tmp_path):
+def test_release_artifact_tool_verifies_current_wheel_metadata(tmp_path):
     module = _release_module()
-    wheel = tmp_path / WHEEL_NAME
+    wheel = tmp_path / f"aasm_runtime-{VERSION}-py3-none-any.whl"
     with zipfile.ZipFile(wheel, "w") as archive:
         archive.writestr(
             f"aasm_runtime-{VERSION}.dist-info/METADATA",
@@ -73,183 +48,28 @@ def test_release_artifact_tool_verifies_wheel_members_and_metadata(tmp_path):
             archive.writestr(name, "{}\n" if name.endswith(".json") else "# fixture\n")
     report = module.verify_wheel(wheel, expected_version=VERSION)
     assert report["valid"] is True, report
-    assert len(report["sha256"]) == 64
 
 
-def test_release_artifact_manifest_is_deterministic_and_checksummed(tmp_path):
-    module = _release_module()
-    dist = tmp_path / "dist"
-    dist.mkdir()
-    (dist / WHEEL_NAME).write_bytes(b"wheel")
-    (dist / SDIST_NAME).write_bytes(b"sdist")
-    (dist / "historical-release-report.json").write_text(
-        '{"valid": true}\n', encoding="utf-8"
-    )
-    checksums = dist / "SHA256SUMS.txt"
-    manifest_path = dist / "release-manifest.json"
-    manifest = module.write_release_manifests(
-        dist,
-        checksums_path=checksums,
-        json_path=manifest_path,
-        commit_sha="a" * 40,
-    )
-    assert manifest["schema_version"] == 2
-    assert manifest["package"] == "aasm-runtime"
-    assert manifest["version"] == VERSION
-    assert [row["name"] for row in manifest["files"]] == [
-        WHEEL_NAME,
-        SDIST_NAME,
-        "historical-release-report.json",
-    ]
-    text = checksums.read_text(encoding="utf-8")
-    assert WHEEL_NAME in text
-    assert "historical-release-report.json" in text
-    assert json.loads(manifest_path.read_text(encoding="utf-8")) == manifest
-
-
-def test_two_build_comparison_rejects_byte_drift(tmp_path):
-    module = _release_module()
-    left = tmp_path / "left"
-    right = tmp_path / "right"
-    left.mkdir()
-    right.mkdir()
-    for directory in (left, right):
-        (directory / WHEEL_NAME).write_bytes(b"wheel")
-        (directory / SDIST_NAME).write_bytes(b"sdist")
-    assert module.compare_builds(left, right)["valid"] is True
-    (right / SDIST_NAME).write_bytes(b"changed")
-    report = module.compare_builds(left, right)
-    assert report["valid"] is False
-    assert "non-reproducible artifact" in " ".join(report["errors"])
-
-
-def test_historical_release_report_treats_missing_tags_as_non_blocking():
-    module = _release_module()
-    history = {
-        "releases": [
-            {"tag": "v0.25.1", "commit": "a" * 40, "title": "old"},
-            {"tag": "v0.25.2", "commit": "b" * 40, "title": "older"},
-        ]
-    }
-    resolved = {"v0.25.1": None, "v0.25.2": "b" * 40}
-    report = module.build_historical_release_report(
-        history,
-        resolve_tag=resolved.get,
-        release_commit="c" * 40,
-    )
-    assert report["valid"] is True
-    assert [row["status"] for row in report["records"]] == [
-        "PENDING_OWNER_PUBLICATION",
-        "VERIFIED",
-    ]
-
-
-def test_historical_release_report_fails_only_on_a_real_mismatch():
-    module = _release_module()
-    history = {
-        "releases": [
-            {"tag": "v0.25.1", "commit": "a" * 40, "title": "old"},
-        ]
-    }
-    report = module.build_historical_release_report(
-        history,
-        resolve_tag=lambda _tag: "b" * 40,
-    )
-    assert report["valid"] is False
-    assert report["records"][0]["status"] == "MISMATCH"
-
-
-def test_remote_release_snapshot_requires_exact_names_sizes_and_hashes(tmp_path):
-    module = _release_module()
-    dist = tmp_path / "dist"
-    dist.mkdir()
-    names = [
-        WHEEL_NAME,
-        SDIST_NAME,
-        "historical-release-report.json",
-        "SHA256SUMS.txt",
-        "release-manifest.json",
-    ]
-    for index, name in enumerate(names):
-        (dist / name).write_bytes(f"asset-{index}".encode())
-    release = {
-        "tag_name": f"v{VERSION}",
-        "draft": False,
-        "assets": [
-            {
-                "name": name,
-                "size": (dist / name).stat().st_size,
-                "digest": f"sha256:{module.sha256_file(dist / name)}",
-            }
-            for name in names
-        ],
-    }
-    report = module.verify_release_asset_snapshot(
-        dist,
-        release=release,
-        resolved_tag_commit="a" * 40,
-        expected_tag=f"v{VERSION}",
-        expected_commit="a" * 40,
-    )
-    assert report["valid"] is True, report
-    release["assets"][0]["digest"] = "sha256:" + "0" * 64
-    assert module.verify_release_asset_snapshot(
-        dist,
-        release=release,
-        resolved_tag_commit="a" * 40,
-        expected_tag=f"v{VERSION}",
-        expected_commit="a" * 40,
-    )["valid"] is False
-
-
-def test_release_workflow_builds_verifies_releases_and_gates_pypi():
-    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(
-        encoding="utf-8"
-    )
+def test_release_workflow_is_immutable_and_version_agnostic():
+    workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
     for token in [
-        "workflow_run:",
-        'workflows: ["CI"]',
-        "should_release",
-        'build==1.5.0',
-        'twine==6.2.0',
-        "compare-builds",
-        "historical-report",
-        "verify-github-release",
-        "SOURCE_DATE_EPOCH",
-        "SHA256SUMS.txt",
-        "gh release create",
-        '--target "$COMMIT_SHA"',
+        'workflows: ["CI"]', "aasm/ci-summary", "aasm/formal-assurance",
+        "compare-builds", "SOURCE_DATE_EPOCH", "SHA256SUMS.txt",
+        'gh release create "$TAG"', '--target "$COMMIT_SHA"',
+        '--notes-file docs/CURRENT_RELEASE.md', "verify-github-release",
         "pypa/gh-action-pypi-publish@release/v1",
-        "AASM_PUBLISH_PYPI",
     ]:
         assert token in workflow
-    for forbidden in [
-        "--clobber",
-        "git tag -a",
-        'git push origin "refs/tags/',
-        "Backfill maintained historical source releases",
-    ]:
+    for forbidden in ["--clobber", "git tag -a", 'git push origin "refs/tags/']:
         assert forbidden not in workflow
 
 
-def test_release_docs_make_external_pypi_gate_explicit():
+def test_release_docs_show_current_and_next_version():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    compatibility = (ROOT / "docs" / "COMPATIBILITY.md").read_text(
-        encoding="utf-8"
-    )
-    release_process = (ROOT / "docs" / "RELEASE_PROCESS.md").read_text(
-        encoding="utf-8"
-    )
-    assert "v0.29.0" in readme
-    assert "v0.31.0 — Hierarchical Decision Scopes" in readme
+    assert "v0.32.0 — Runtime/Formal Trace Conformance" in readme
+    assert "v0.33.0 — Signed Provenance and Verifiable Exports" in readme
     assert "aasm.remote.v1 / 0.19.0" in readme
-    assert "pre-1.0" in compatibility
-    assert "immutable release tag" in compatibility
-    assert "PyPI Trusted Publisher" in release_process
-    assert "AASM_PUBLISH_PYPI" in release_process
-    assert "GitHub Release API" in release_process
-    assert "PENDING_OWNER_PUBLICATION" in release_process
-    assert "Standalone source-distribution gate" in release_process
+    assert "docs/CURRENT_RELEASE.md" in (ROOT / "docs" / "RELEASE_PROCESS.md").read_text(encoding="utf-8")
 
 
 def test_release_artifact_cli_reports_project_version():

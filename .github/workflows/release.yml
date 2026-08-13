@@ -47,13 +47,9 @@ jobs:
           MANUAL_SHA: ${{ inputs.commit_sha }}
         run: |
           set -euo pipefail
-          if [ -n "${WORKFLOW_RUN_SHA:-}" ]; then
-            ref="$WORKFLOW_RUN_SHA"
-          elif [ -n "${MANUAL_SHA:-}" ]; then
-            ref="$MANUAL_SHA"
-          else
-            ref="main"
-          fi
+          if [ -n "${WORKFLOW_RUN_SHA:-}" ]; then ref="$WORKFLOW_RUN_SHA"
+          elif [ -n "${MANUAL_SHA:-}" ]; then ref="$MANUAL_SHA"
+          else ref="main"; fi
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v7
@@ -65,12 +61,12 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Release explicit, version-changing, or still-unpublished commits
+      - name: Resolve release intent
         id: intent
-        shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
           set -euo pipefail
           commit_sha="$(git rev-parse HEAD)"
@@ -78,16 +74,12 @@ jobs:
           tag="v$version"
           previous_version=""
           if git cat-file -e HEAD^:pyproject.toml 2>/dev/null; then
-            git show HEAD^:pyproject.toml > /tmp/aasm-previous-pyproject.toml
-            previous_version="$(python -c 'import tomllib; print(tomllib.load(open("/tmp/aasm-previous-pyproject.toml", "rb"))["project"]["version"])')"
+            git show HEAD^:pyproject.toml > /tmp/aasm-prev.toml
+            previous_version="$(python -c 'import tomllib; print(tomllib.load(open("/tmp/aasm-prev.toml","rb"))["project"]["version"])')"
           fi
           release_exists=false
-          if gh release view "$tag" >/dev/null 2>&1; then
-            release_exists=true
-          fi
-          if [ "$EVENT_NAME" = "workflow_dispatch" ] || \
-             [ "$version" != "$previous_version" ] || \
-             [ "$release_exists" != "true" ]; then
+          if gh release view "$tag" >/dev/null 2>&1; then release_exists=true; fi
+          if [ "$EVENT_NAME" = workflow_dispatch ] || [ "$version" != "$previous_version" ] || [ "$release_exists" != true ]; then
             should_release=true
           else
             should_release=false
@@ -96,8 +88,6 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "should_release=$should_release" >> "$GITHUB_OUTPUT"
-          printf 'release intent: version=%s previous=%s release_exists=%s should_release=%s\n' \
-            "$version" "${previous_version:-none}" "$release_exists" "$should_release"
 
   no_release:
     needs: release_intent
@@ -106,14 +96,13 @@ jobs:
     permissions:
       statuses: write
     steps:
-      - name: Publish a successful no-release status
+      - name: Publish no-release status
         env:
           GH_TOKEN: ${{ github.token }}
           COMMIT_SHA: ${{ needs.release_intent.outputs.commit_sha }}
         run: |
           gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" \
-            -f state=success \
-            -f context='aasm/release' \
+            -f state=success -f context='aasm/release' \
             -f description='no package version change; release not required' \
             -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
@@ -121,7 +110,7 @@ jobs:
     needs: release_intent
     if: needs.release_intent.outputs.should_release == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     permissions:
       contents: write
       statuses: write
@@ -139,30 +128,23 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Require the exact main commit and both release gates
-        shell: bash
+      - name: Require exact main commit and both release gates
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
           set -euo pipefail
           commit_sha="$(git rev-parse HEAD)"
-          main_sha="$(git rev-parse origin/main)"
-          test "$commit_sha" = "$main_sha"
+          test "$commit_sha" = "$(git rev-parse origin/main)"
           for context in aasm/ci-summary aasm/formal-assurance; do
             state=""
             for _ in $(seq 1 90); do
-              state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" \
-                --jq "[.statuses[] | select(.context == \"$context\")][0].state // \"\"")"
-              if [ "$state" = "success" ]; then
-                break
-              fi
-              if [ "$state" = "failure" ] || [ "$state" = "error" ]; then
-                echo "$context failed for $commit_sha"
-                exit 1
-              fi
+              state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" --jq "[.statuses[] | select(.context == \"$context\")][0].state // \"\"")"
+              [ "$state" = success ] && break
+              if [ "$state" = failure ] || [ "$state" = error ]; then exit 1; fi
               sleep 10
             done
-            test "$state" = "success"
+            test "$state" = success
           done
 
       - name: Build and verify two byte-identical distributions
@@ -173,181 +155,94 @@ jobs:
           normalize_sdist() {
             python - "$1" "$SOURCE_DATE_EPOCH" <<'PY'
           from __future__ import annotations
-          import copy
-          import gzip
-          import io
-          import os
+          import copy, gzip, io, os, sys, tarfile, tempfile
           from pathlib import Path
-          import sys
-          import tarfile
-          import tempfile
-
-          dist_dir = Path(sys.argv[1])
-          epoch = int(sys.argv[2])
-          sdists = sorted(dist_dir.glob("*.tar.gz"))
-          if len(sdists) != 1:
-              raise SystemExit(f"expected one sdist in {dist_dir}, found {sdists}")
-          sdist = sdists[0]
-          with tarfile.open(sdist, "r:gz") as source:
-              members = []
+          dist_dir=Path(sys.argv[1]); epoch=int(sys.argv[2])
+          sdists=sorted(dist_dir.glob("*.tar.gz"))
+          if len(sdists)!=1: raise SystemExit(f"expected one sdist in {dist_dir}: {sdists}")
+          sdist=sdists[0]
+          with tarfile.open(sdist,"r:gz") as source:
+              members=[]
               for original in source.getmembers():
-                  payload = None
+                  payload=None
                   if original.isfile():
-                      extracted = source.extractfile(original)
-                      if extracted is None:
-                          raise SystemExit(f"cannot read {original.name}")
-                      payload = extracted.read()
-                  members.append((original, payload))
-
-          def normalized_mode(member: tarfile.TarInfo) -> int:
-              if member.isdir():
-                  return 0o755
-              if member.issym() or member.islnk():
-                  return 0o777
+                      extracted=source.extractfile(original)
+                      if extracted is None: raise SystemExit(f"cannot read {original.name}")
+                      payload=extracted.read()
+                  members.append((original,payload))
+          def mode(member):
+              if member.isdir(): return 0o755
+              if member.issym() or member.islnk(): return 0o777
               return 0o755 if member.mode & 0o111 else 0o644
-
-          fd, temporary_name = tempfile.mkstemp(
-              prefix=f".{sdist.name}.", suffix=".tmp", dir=sdist.parent
-          )
-          os.close(fd)
-          temporary = Path(temporary_name)
+          fd,tmp=tempfile.mkstemp(prefix=f".{sdist.name}.",suffix=".tmp",dir=sdist.parent); os.close(fd); tmp=Path(tmp)
           try:
-              with temporary.open("wb") as raw:
-                  with gzip.GzipFile(
-                      filename="",
-                      mode="wb",
-                      fileobj=raw,
-                      compresslevel=9,
-                      mtime=epoch,
-                  ) as compressed:
-                      with tarfile.open(
-                          fileobj=compressed,
-                          mode="w",
-                          format=tarfile.PAX_FORMAT,
-                      ) as target:
-                          for original, payload in sorted(
-                              members, key=lambda item: item[0].name
-                          ):
-                              member = copy.copy(original)
-                              member.mtime = epoch
-                              member.uid = 0
-                              member.gid = 0
-                              member.uname = ""
-                              member.gname = ""
-                              member.mode = normalized_mode(member)
-                              member.pax_headers = {}
-                              target.addfile(
-                                  member,
-                                  io.BytesIO(payload) if payload is not None else None,
-                              )
-              temporary.replace(sdist)
+              with tmp.open("wb") as raw:
+                  with gzip.GzipFile(filename="",mode="wb",fileobj=raw,compresslevel=9,mtime=epoch) as compressed:
+                      with tarfile.open(fileobj=compressed,mode="w",format=tarfile.PAX_FORMAT) as target:
+                          for original,payload in sorted(members,key=lambda item:item[0].name):
+                              member=copy.copy(original); member.mtime=epoch; member.uid=0; member.gid=0; member.uname=""; member.gname=""; member.mode=mode(member); member.pax_headers={}
+                              target.addfile(member,io.BytesIO(payload) if payload is not None else None)
+              tmp.replace(sdist)
           finally:
-              if temporary.exists():
-                  temporary.unlink()
+              if tmp.exists(): tmp.unlink()
           PY
           }
           python -m pip install "build==1.5.0" "twine==6.2.0"
           python scripts/release_artifacts.py verify-history release-history.json
-          version="$(python scripts/release_artifacts.py version)"
-          tag="v$version"
-          commit_sha="$(git rev-parse HEAD)"
+          version="$(python scripts/release_artifacts.py version)"; tag="v$version"; commit_sha="$(git rev-parse HEAD)"
           python scripts/release_artifacts.py verify-tag "$tag"
           rm -rf build dist dist-a dist-b *.egg-info src/*.egg-info
-          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
-          export PYTHONHASHSEED=0
-          python -m build --outdir dist-a
-          normalize_sdist dist-a
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)" PYTHONHASHSEED=0
+          python -m build --outdir dist-a; normalize_sdist dist-a
           rm -rf build *.egg-info src/*.egg-info
-          python -m build --outdir dist-b
-          normalize_sdist dist-b
+          python -m build --outdir dist-b; normalize_sdist dist-b
           python scripts/release_artifacts.py compare-builds dist-a dist-b
-          mv dist-a dist
-          rm -rf dist-b
+          mv dist-a dist; rm -rf dist-b
           python -m twine check dist/*
-          wheel="$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
-          sdist="$(find dist -maxdepth 1 -name '*.tar.gz' -print -quit)"
-          python scripts/release_artifacts.py verify-wheel "$wheel" --expected-version "$version"
-          python scripts/release_artifacts.py verify-sdist "$sdist" --expected-version "$version"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
+          python scripts/release_artifacts.py verify-wheel "$(find dist -maxdepth 1 -name '*.whl' -print -quit)" --expected-version "$version"
+          python scripts/release_artifacts.py verify-sdist "$(find dist -maxdepth 1 -name '*.tar.gz' -print -quit)" --expected-version "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"; echo "tag=$tag" >> "$GITHUB_OUTPUT"; echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
 
-      - name: Report historical tag state without privileged backfill
-        shell: bash
+      - name: Build historical release audit and immutable manifests
         env:
           GH_TOKEN: ${{ github.token }}
           COMMIT_SHA: ${{ steps.release.outputs.commit_sha }}
         run: |
-          set -euo pipefail
-          python scripts/release_artifacts.py historical-report release-history.json \
-            --repository "$GITHUB_REPOSITORY" \
-            --output dist/historical-release-report.json \
-            --release-commit "$COMMIT_SHA"
+          python scripts/release_artifacts.py historical-report release-history.json --repository "$GITHUB_REPOSITORY" --output dist/historical-release-report.json --release-commit "$COMMIT_SHA"
+          python scripts/release_artifacts.py manifest dist --checksums dist/SHA256SUMS.txt --json dist/release-manifest.json --commit-sha "$COMMIT_SHA"
 
-      - name: Generate immutable checksums and manifest
-        shell: bash
-        env:
-          COMMIT_SHA: ${{ steps.release.outputs.commit_sha }}
-        run: |
-          set -euo pipefail
-          python scripts/release_artifacts.py manifest dist \
-            --checksums dist/SHA256SUMS.txt \
-            --json dist/release-manifest.json \
-            --commit-sha "$COMMIT_SHA"
-
-      - name: Install and exercise the built wheel in a clean environment
-        shell: bash
+      - name: Clean-install and exercise wheel
         env:
           EXPECTED_VERSION: ${{ steps.release.outputs.version }}
         run: |
-          set -euo pipefail
           python -m venv /tmp/aasm-release-venv
           /tmp/aasm-release-venv/bin/python -m pip install dist/*.whl
           /tmp/aasm-release-venv/bin/python - <<'PY'
-          import os
-          import aasm
-          report = aasm.validate_public_api_contract()
+          import os, aasm
           assert aasm.__version__ == os.environ["EXPECTED_VERSION"]
-          assert report["valid"], report
+          assert aasm.validate_public_api_contract()["valid"]
           PY
-          /tmp/aasm-release-venv/bin/aasm adoption-contract > /tmp/adoption-contract.json
-          /tmp/aasm-release-venv/bin/aasm runbook history-diagnosis > /tmp/runbook.json
-          python - <<'PY'
-          import json
-          assert json.load(open('/tmp/adoption-contract.json'))['valid'] is True
-          assert json.load(open('/tmp/runbook.json'))['valid'] is True
-          PY
+          /tmp/aasm-release-venv/bin/aasm adoption-contract >/tmp/adoption.json
+          /tmp/aasm-release-venv/bin/aasm runbook history-diagnosis >/tmp/runbook.json
 
       - name: Publish once and verify every remote asset byte
-        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}
           COMMIT_SHA: ${{ steps.release.outputs.commit_sha }}
+        shell: bash
         run: |
           set -euo pipefail
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" dist/* \
-              --target "$COMMIT_SHA" \
-              --title "AASM $TAG — Hierarchical Decision Scopes" \
-              --notes-file docs/RELEASE_0.31.md
+            gh release create "$TAG" dist/* --target "$COMMIT_SHA" --title "AASM $TAG" --notes-file docs/CURRENT_RELEASE.md
           fi
           verified=false
           for _ in $(seq 1 12); do
-            if python scripts/release_artifacts.py verify-github-release "$TAG" dist \
-              --repository "$GITHUB_REPOSITORY" \
-              --expected-commit "$COMMIT_SHA"; then
-              verified=true
-              break
-            fi
+            if python scripts/release_artifacts.py verify-github-release "$TAG" dist --repository "$GITHUB_REPOSITORY" --expected-commit "$COMMIT_SHA"; then verified=true; break; fi
             sleep 5
           done
-          test "$verified" = "true"
-          gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" \
-            -f state=success \
-            -f context='aasm/release' \
-            -f description='reproducible build and exact immutable release assets verified' \
-            -f target_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+          test "$verified" = true
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" -f state=success -f context='aasm/release' -f description='reproducible build and exact immutable release assets verified' -f target_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -358,10 +253,7 @@ jobs:
 
   release_failure:
     needs: [release_intent, build_release]
-    if: >-
-      always() &&
-      needs.release_intent.outputs.should_release == 'true' &&
-      needs.build_release.result != 'success'
+    if: always() && needs.release_intent.outputs.should_release == 'true' && needs.build_release.result != 'success'
     runs-on: ubuntu-latest
     permissions:
       statuses: write
@@ -371,18 +263,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           COMMIT_SHA: ${{ needs.release_intent.outputs.commit_sha }}
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" \
-            -f state=failure \
-            -f context='aasm/release' \
-            -f description='release build, verification, or publication failed' \
-            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" -f state=failure -f context='aasm/release' -f description='release build, verification, or publication failed' -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
   publish_pypi:
     needs: [release_intent, build_release]
-    if: >-
-      needs.build_release.result == 'success' &&
-      ((github.event_name == 'workflow_dispatch' && inputs.publish_pypi) ||
-       vars.AASM_PUBLISH_PYPI == 'true')
+    if: needs.build_release.result == 'success' && ((github.event_name == 'workflow_dispatch' && inputs.publish_pypi) || vars.AASM_PUBLISH_PYPI == 'true')
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -394,14 +279,9 @@ jobs:
         with:
           name: aasm-${{ needs.build_release.outputs.version }}-distributions
           path: dist
-      - name: Keep only Python distributions for PyPI
-        run: |
-          find dist -maxdepth 1 -type f \
-            ! -name '*.whl' \
-            ! -name '*.tar.gz' \
-            -delete
-      - name: Publish through the configured PyPI Trusted Publisher
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Keep only Python distributions
+        run: find dist -maxdepth 1 -type f ! -name '*.whl' ! -name '*.tar.gz' -delete
+      - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
           print-hash: true

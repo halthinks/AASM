@@ -1,125 +1,156 @@
 # AASM Roadmap
 
-AASM is currently **v0.31.0 / experimental**.
+AASM is currently **v0.32.0 / experimental**.
 
-The roadmap is an implementation contract. Every release must extend the working path:
+The roadmap is an execution contract: each version must exist as ordinary source on `main`, pass CI and formal assurance, publish an immutable release, and keep README/package metadata aligned before the next version advances.
+
+## Architectural rule
+
+All work extends the same authority path:
 
 ```text
 public AASM API
-    → existing event creation
-    → existing pure reducer
-    → existing canonical snapshot
-    → Memory / SQLite / PostgreSQL
-    → existing assurance, observability, workers, leases, effects, and replay
+  → durable event
+  → production reducer
+  → canonical snapshot
+  → Memory / SQLite / PostgreSQL
+  → assurance / observability / replay
 ```
 
-No release may introduce a parallel runtime, alternate authority store, framework-private AASM truth, or direct database mutation path.
+No roadmap phase may introduce a competing runtime, event store, effect ledger, scheduler, or framework-private source of machine truth.
 
-## Completed adoption and authority program
+## Completed foundation
 
-| Release | Outcome | State |
+| Release | Capability | State |
 |---|---|---|
-| v0.25.2 | Canonical adoption API | Completed |
-| v0.26.0 | Research Synthesis Hero Stack | Completed |
-| v0.27.0 | One-command PostgreSQL/worker/Control Center stack | Completed |
-| v0.28.x | Distribution, immutable releases, runbooks, self-testing sdist | Completed |
-| v0.29.0 | Thin LangGraph adapter | Completed |
-| v0.30.0 | Adapter Conformance Kit | Completed |
-| **v0.31.0** | **Hierarchical Decision Scopes** | **Current — implemented** |
+| v0.29.0 | Thin LangGraph Adapter | Implemented and released |
+| v0.30.0 | Adapter Conformance Kit | Implemented and released |
+| v0.31.0 | Hierarchical Decision Scopes | Implemented and released |
+| **v0.32.0** | **Runtime/Formal Trace Conformance** | **Current — implemented** |
 
-## v0.31.0 — Hierarchical Decision Scopes
+## v0.32.0 — Runtime/Formal Trace Conformance
 
-**Outcome:** strategy, architecture, implementation, and workstream reasoning are separated inside one authoritative machine.
+**Outcome:** production durable event histories can be projected into a versioned formal trace instead of relying only on a bounded model.
 
-Delivered:
+Delivered boundary:
 
-- permanent `root` scope;
-- `aasm.scopes.v1 / 0.1.0`;
-- scope-local Decisions, Obligations, evidence, locks, conflicts, explanations, constraints, and fairness debt;
-- inheritance, isolation, explicit override, and override denial;
-- validated cross-scope dependencies;
-- causal branch backjump preserving unrelated siblings;
-- scoped restart retaining parents, pinned decisions, evidence, and hard knowledge;
-- atomic multi-scope candidates;
-- legacy-flat migration;
-- Python, CLI, HTTP, Control Center, schemas, TLC, and SPIN.
+- lossless event projection;
+- exact event IDs and source sequences;
+- SHA-256 per source event;
+- deterministic source-trace and projection fingerprints;
+- explicit `UNSUPPORTED` representation for unknown transitions;
+- snapshot-only input rejected;
+- semantic pre/post-state witnesses when available;
+- exact event-linked counterexamples;
+- deterministic trace-corpus fingerprints;
+- bounded TLC/SPIN trace model.
 
-## Execution-correctness program
+**Exit gate:** CI, formal assurance, and immutable release verification all succeed on the exact v0.32 commit.
 
-### v0.32.0 — Runtime/Formal Trace Conformance
+---
 
-**Outcome:** demonstrate that a production event history refines the formal abstraction step by step.
+## v0.33.0 — Signed Provenance and Verifiable Exports
 
-Work packages:
+**Outcome:** a completed run can be exported and checked offline without trusting the original server or database.
 
-1. lossless event-to-trace contract;
-2. production durable-history projector;
-3. semantic pre/post-state checker;
-4. generated trace corpus covering scopes, candidates, recovery, effects, and leases;
-5. completion gate with unsupported-transition accounting and exact event-linked counterexamples.
+Planned deliverables:
 
-### v0.33.0 — Signed Provenance and Verifiable Exports
+- canonical export manifest;
+- content-addressed event/artifact inventory;
+- detached signature envelope;
+- verification policy and signer identity;
+- selective-disclosure sub-manifests retaining parent digest lineage;
+- replay and certificate coverage evidence;
+- offline verification CLI;
+- tamper, truncation, substitution, and wrong-key tests.
 
-**Outcome:** export a completed run and verify it offline without trusting the original server or database.
+**Exit gate:** an isolated verifier detects any changed covered byte and can validate an untouched package from the manifest alone.
 
-Deliverables: canonical manifest, content-addressed inventory, detached signatures, verifier policy, selective disclosure, replay evidence, key rotation/revocation, and offline CLI.
+---
 
-### v0.34.0 — Distributed Recovery Certification
+## v0.34.0 — Distributed Recovery Certification
 
-**Outcome:** produce repeatable failure-injection evidence for ownership, leases, effects, and recovery.
+**Outcome:** AASM can produce repeatable evidence that distributed ownership, leases, effects, and recovery remain safe under declared failures.
 
-Scenarios include worker crash, lease expiry, stale completion, duplicate delivery, network partition, database restart, supervisor loss, and ambiguous `UNKNOWN` effects. Each scenario must recover without duplicate authority/effects or stop in explicit reconciliation.
+Planned scenarios:
 
-## Semantic Solver Program
+- worker crash;
+- lease expiry and reclaim;
+- stale completion rejection;
+- duplicate delivery;
+- database restart;
+- supervisor loss;
+- external effect `UNKNOWN` followed by reconciliation.
 
-The semantic program follows the whitepaper and implementation handoff. It begins only after the execution-correctness substrate is complete.
+**Exit gate:** every declared scenario either recovers with one valid authority/effect outcome or stops in an explicit reconciliation state.
+
+---
+
+# Semantic Solver Program
+
+The semantic program begins only after the deterministic execution substrate above. The long-term architecture is:
 
 ```text
 ProblemDefinition
-        ↓ semantic compilation
+      ↓ semantic compilation
 ProblemModel
-        ↓ instantiation
+      ↓ instantiation
 ProblemInstance
-        ↓
+      ↓
 AASM authority runtime
-        ↓
+      ↓
+reasoners / tools / humans / simulators
+      ↓
 verified completion or explicit unresolved state
 ```
 
-### v0.35.0 — Semantic Problem Model Foundations
-Persist/replay versioned `DomainPackage`, `ProblemModel`, and `ProblemInstance` contracts. First fixture: a finite parser/storage constraint problem.
+The semantic plane defines meaning. The cognition plane searches. The AASM authority plane decides what may become durable truth.
 
-### v0.36.0 — Domain and Instance Compiler SDK
-Deterministic compiler protocols, missing-input/capability reports, canonical fingerprints, and `aasm compile` / `aasm problem-check`.
+## v0.35.0 — Semantic Problem Model Foundations
 
-### v0.37.0 — Reasoning Artifacts and Epistemic Admission
-Typed Claims, Hypotheses, Lemmas, Invariants, Counterexamples, Proof Obligations, and Reasoning Commits. Models propose; policy admits.
+**Outcome:** AASM can bind, validate, fingerprint, persist through ordinary events, replay, and inspect a domain-neutral semantic problem.
 
-### v0.38.0 — Semantic Dependency Graph and Truth Maintenance
-Typed dependency relations, deterministic stale propagation, obligation reopening, conditional-lock release, and unrelated-sibling preservation.
+Core artifacts:
 
-### v0.39.0 — Operator / Observer / Verifier ABI
-Generic capabilities that use existing effect authorization and cannot self-promote beyond declared authority.
+- `DomainPackage`;
+- `ProblemDefinition`;
+- `ProblemModel`;
+- `ProblemInstance`;
+- entities and predicates;
+- decision variables;
+- facts and assumptions;
+- obligations and constraints;
+- objectives;
+- operator/observer/verifier definitions;
+- deterministic completion rules.
 
-### v0.40.0 — Reasoning Frontier and Context Projection
-Bounded semantic work packets derived from canonical state so a fresh worker can resume without transcript replay.
+No domain-specific type belongs in the kernel.
 
-### v0.41.0 — Domain-Neutral Solver Loop
-Compile/select/activate/execute/verify/learn/backjump/restart loop with replaceable candidate, objective, activity, restart, and budget policies.
+## v0.36.0 — Semantic Compiler SDK
 
-### v0.42.0 — Domain Package SDK and Reference Domains
-Finite CSP, software repair, research synthesis, and mathematical reasoning on the same kernel.
+**Outcome:** domain/problem authors can compile normalized source into the same deterministic semantic model.
 
-### v0.43.0 — Semantic Conformance and Formal Refinement
-One-command `PASS | FAIL | INCONCLUSIVE` conformance with exact counterexample event IDs.
+Compiler stages:
 
-### v0.44.0 — Cross-Run Certified Knowledge
-Run-local by default; reuse only with applicability predicates, package compatibility, provenance, expiry/revocation, and certification.
+```text
+PARSE → RESOLVE → NORMALIZE → TYPE_CHECK → VALIDATE → FINGERPRINT → INSTANTIATE
+```
 
-### v0.45.0 — Semantic Solver Release Candidate
-Freeze the first coherent semantic contracts after exact replay, formal invariants, four reference domains, failure injection, fresh-worker resume, and complete handoff/runbooks.
+Required features:
 
-## Planned semantic dependency graph
+- deterministic canonical IR;
+- source-mapped diagnostics;
+- missing-input and missing-capability reporting;
+- content-addressed build cache;
+- compiler declarations with proposal-only authority;
+- compile-and-admit through the existing AASM event path;
+- compiler conformance fixtures.
+
+## v0.37.0 — Reasoning Artifacts and Semantic Dependency Graph
+
+Typed artifacts include `Claim`, `Hypothesis`, `Lemma`, `Invariant`, `Counterexample`, `Definition`, `Assumption`, `Observation`, `Derivation`, and `Refutation`.
+
+The **Semantic Dependency Graph** connects:
 
 ```text
 Entity
@@ -135,40 +166,60 @@ Entity
   → Observation
 ```
 
-## Planned semantic calculus
+Artifacts are durable consequences of reasoning, not raw hidden chain-of-thought.
 
-```text
-DEFINE  COMPILE  INSTANTIATE  PROPOSE  SUPPORT  CHALLENGE
-VERIFY  AUTHORIZE  INVALIDATE  REOPEN  LEARN  GENERALIZE
-PROJECT  BACKJUMP  RESTART  COMPLETE
-```
+## v0.38.0 — Semantic Truth Maintenance
 
-Every operation must define preconditions, postconditions, preserved invariants, provenance, and replay semantics.
+Deterministic dependency propagation marks only affected descendants stale, reopens obligations whose support became invalid, releases conditional locks, and preserves unrelated siblings.
 
-## Cross-release gates
+## v0.39.0 — Capability ABI
 
-Every release retains:
+Versioned, domain-neutral `Operator`, `Observer`, and `Verifier` contracts integrate with existing authority and external-effect semantics.
 
-1. Python 3.11–3.13;
-2. reproducible wheel and self-testing sdist;
-3. Memory/SQLite/PostgreSQL replay equivalence;
-4. Docker Compose full-stack verification;
-5. LangGraph and adapter conformance;
-6. TLC/SPIN when modeled semantics change;
-7. visible README version and next milestone;
-8. ordinary source committed directly to `main`;
-9. no branch/PR staging for canonical implementation work;
-10. immutable release assets with exact hash read-back.
+## v0.40.0 — Reasoning Frontier and Context Projection
+
+A fresh worker receives a bounded canonical semantic projection rather than replaying an ever-growing transcript.
+
+## v0.41.0 — Domain-Neutral Solver Loop
+
+Connect compile → select frontier → generate candidates → admit → execute/observe → verify → learn → backjump/restart while keeping candidate/search policy replaceable.
+
+## v0.42.0 — Reference Domains
+
+Prove generality across at least:
+
+1. finite deterministic constraint problem;
+2. software delivery/repair;
+3. research evidence synthesis;
+4. mathematical reasoning.
+
+## v0.43.0 — Semantic Conformance
+
+One command returns `PASS | FAIL | INCONCLUSIVE` for domain packages, compilers, capability adapters, truth-maintenance traces, and authority boundaries.
+
+## v0.44.0 — Cross-Run Certified Knowledge
+
+Reusable knowledge is opt-in, provenance-bearing, applicability-scoped, revocable, version-aware, and certificate-gated where required. Default scope remains run-local.
+
+## v0.45.0 — Semantic Solver Release Candidate
+
+Freeze the first coherent semantic solver contracts after replay, formal, distributed, adversarial, reference-domain, and packaging gates are satisfied.
+
+---
 
 ## Adoption scorecard
 
-| Measure | Gate |
-|---|---:|
-| Clone to healthy dashboard | under 5 minutes |
-| Understandable completed demonstration | under 10 minutes |
-| External model/API keys required | 0 |
-| Exact replay | persisted and reconstructed hashes match |
-| Unresolved mandatory obligations at completion | 0 |
-| Published wheel smoke | required |
-| Extracted-sdist smoke | required |
-| Operator drills | required |
+A release is not done because source exists locally. It is done only when:
+
+```text
+ordinary source reachable from main
+package/runtime version aligned
+README current version aligned
+full tests green
+formal assurance green
+immutable tag targets exact commit
+release assets published once
+remote sizes and SHA-256 verified
+```
+
+This rule applies to every version in this roadmap.

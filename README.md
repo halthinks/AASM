@@ -1,20 +1,15 @@
 <div align="center">
 
 # AASM
-
 ## Algorithmic Agent State Machine
 
-**A durable control system for agents, tools, models, humans, and real work.**
+**Durable, replayable control for agents, tools, models, humans, and long-running work.**
 
-AASM keeps the official state of a job outside the language model. Models can propose what to do; AASM decides what is legal, records what happened, preserves evidence, and recovers from bad assumptions without discarding unrelated work.
+AASM keeps the official state of a job outside the language model. Models can propose; AASM decides what is legal, records what happened, preserves evidence, learns from contradictions, and recovers without throwing away unrelated work.
 
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
-[![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.31.0%20experimental-orange)](ROADMAP.md)
-
-[Run the full stack](#one-command-start) · [Install](#install-aasm) · [Operator runbooks](#operator-runbooks) · [Why AASM?](WHY_AASM.md) · [Roadmap](ROADMAP.md)
 
 </div>
 
@@ -22,49 +17,25 @@ AASM keeps the official state of a job outside the language model. Models can pr
 
 ## Current release
 
-**v0.31.0 — Hierarchical Decision Scopes**
+### **v0.32.0 — Runtime/Formal Trace Conformance**
 
-| Item | Current state |
+| | Current |
 |---|---|
-| **Package/runtime** | **v0.31.0** |
-| **Project status** | Experimental / pre-1.0 |
-| **Current milestone** | **Hierarchical Decision Scopes** |
-| **Prior release** | **v0.30.0 — Adapter Conformance Kit** |
-| **One-command application** | PostgreSQL + runtime + Control Center + worker + Research Synthesis Hero Stack |
-| **Framework adoption** | Existing LangGraph graphs retain topology and checkpoints while AASM supplies durable authority underneath |
-| **Adapter proof** | Eight black-box scenarios with `PASS | FAIL | INCONCLUSIVE`, replay verification, provenance checks, and persistence-bypass detection |
-| **Next release** | **v0.32.0 — Runtime/Formal Trace Conformance** |
-| **Remote compatibility protocol** | `aasm.remote.v1 / 0.19.0` |
+| Package/runtime | **0.32.0** |
+| Adoption contract | `aasm.adoption.v1 / 0.8.0` |
+| Scope contract | `aasm.scopes.v1 / 0.1.0` |
+| Trace contract | `aasm.trace.v1 / 0.1.0` |
+| Semantic trace contract | `aasm.trace.semantic.v1 / 0.1.0` |
+| Remote protocol | `aasm.remote.v1 / 0.19.0` |
+| Next release | **v0.33.0 — Signed Provenance and Verifiable Exports** |
 
-v0.31.0 adds hierarchy without adding another authority layer:
+v0.32 closes an important assurance gap: a bounded formal model passing is not the same thing as proving that a particular production history followed the modeled rules. AASM can now project the **actual durable event history** into a versioned formal trace, preserve every source event and its digest, explicitly mark unsupported transitions, and attach semantic counterexamples to exact event IDs.
 
-- strategy, architecture, implementation, and workstream decisions can live in separate scopes;
-- child scopes inherit parent decisions or remain isolated by policy;
-- local overrides are explicit and never mutate parent state;
-- sibling or upward information flow requires a durable dependency edge;
-- conflict analysis can backjump across scopes and preserve unrelated sibling work;
-- scoped restart suspends speculation while retaining parents, evidence, pinned decisions, and certified hard knowledge;
-- candidates spanning several scopes activate atomically or not at all;
-- historical flat machines remain valid in the canonical `root` scope.
-
-The scope model is visible through Python, CLI, authenticated HTTP, and the existing Control Center. The bounded TLC and SPIN models check scope isolation and recovery properties.
-
-```text
-package/runtime:       aasm-runtime 0.31.0
-adoption contract:     aasm.adoption.v1 / 0.7.0
-scope contract:        aasm.scopes.v1 / 0.1.0
-LangGraph adapter:     aasm.langgraph.v1 / 0.1.0
-adapter conformance:   aasm.adapter.conformance.v1 / 0.1.0
-remote protocol:       aasm.remote.v1 / 0.19.0
-```
-
-> **Models propose. AASM decides what may become durable state.**
+> **No event is silently dropped. No snapshot is treated as invented history. Unsupported semantics remain explicit.**
 
 ---
 
-# One-command start
-
-The easiest way to understand AASM is to run the complete local application:
+## Try AASM in one command
 
 ```bash
 git clone https://github.com/halthinks/AASM.git
@@ -78,180 +49,144 @@ Open:
 http://localhost:8787/
 ```
 
-The stack starts PostgreSQL 17, the existing AASM HTTP runtime, the existing Control Center, a deterministic remote worker, a live setup machine, and a completed reference trajectory. It requires no model key, paid API, external literature service, or host PostgreSQL installation.
+The local stack includes PostgreSQL, the AASM runtime, Control Center, a deterministic worker, and bundled reference machines. No model API key is required for the deterministic demonstrations.
 
 Useful commands:
 
 ```bash
-# Show machines, workers, and leases
 docker compose run --rm stackctl status
-
-# Create a fresh live machine without deleting previous history
-docker compose run --rm stackctl fresh
-
-# Verify the completed machine by full replay
-docker compose run --rm stackctl verify --selection completed
-
-# Run the complete readiness check
 docker compose run --rm stackctl check
-
-# Stop while preserving PostgreSQL data
+docker compose run --rm stackctl verify --selection completed
 docker compose down
 ```
 
-See [One-Command Local Full Stack](docs/LOCAL_FULL_STACK.md).
+See [`docs/LOCAL_FULL_STACK.md`](docs/LOCAL_FULL_STACK.md).
 
 ---
 
-# Install AASM
+## Install
 
-## Immutable GitHub release wheel
-
-Every maintained release builds twice, inspects its contents, clean-installs the wheel, records SHA-256 values, publishes once, and verifies the exact remote assets.
-
-For v0.31.0:
+From the immutable GitHub release:
 
 ```bash
 pip install \
-  https://github.com/halthinks/AASM/releases/download/v0.31.0/aasm_runtime-0.31.0-py3-none-any.whl
+  https://github.com/halthinks/AASM/releases/download/v0.32.0/aasm_runtime-0.32.0-py3-none-any.whl
 ```
 
-Verify the installed package:
+The PyPI package name is:
+
+```bash
+pip install aasm-runtime
+```
+
+PyPI publication is gated by the repository's Trusted Publisher configuration. The GitHub release remains the authoritative immutable distribution source when that external binding is not enabled.
+
+Verify an install:
 
 ```bash
 aasm adoption-contract
 aasm runbook history-diagnosis
 ```
 
-The release contains:
+---
+
+# Why AASM exists
+
+A capable agent can still:
+
+- forget an earlier decision;
+- repeat a failed approach;
+- hide unfinished mandatory work;
+- repair the most recent symptom instead of the causal decision;
+- report success without required evidence;
+- lose useful knowledge during restart;
+- duplicate an external effect whose prior outcome is unknown.
+
+A conversation is not a reliable control plane. AASM gives the work an official machine state.
+
+The core rule is simple:
 
 ```text
-aasm_runtime-0.31.0-py3-none-any.whl
-aasm_runtime-0.31.0.tar.gz
-historical-release-report.json
-SHA256SUMS.txt
-release-manifest.json
+reasoner / model / human / tool
+            ↓ proposes
+        AASM authority
+            ↓ admits
+       durable event
+            ↓
+       pure reducer
+            ↓
+    canonical snapshot
 ```
 
-`historical-release-report.json` records each maintained pre-automation tag as `VERIFIED`, `PENDING_OWNER_PUBLICATION`, or `MISMATCH`. Missing historical tags are visible but do not invalidate a correctly built current release. A real tag/commit mismatch does.
-
-The `.tar.gz` source distribution includes the profiles, schemas, formal models, runbooks, workflows, examples, release scripts, and tests needed to validate the packaged source outside a Git checkout.
-
-## PyPI
-
-The package name is `aasm-runtime`, and the primary PyPI command is:
-
-```bash
-pip install aasm-runtime
-```
-
-The repository contains a credential-free PyPI Trusted Publisher workflow. Actual PyPI publication begins only after the external PyPI project/publisher binding is configured and the repository gate `AASM_PUBLISH_PYPI` is enabled. Until that one-time external binding is active, use the immutable GitHub release wheel above.
-
-## Contributor install
-
-```bash
-git clone https://github.com/halthinks/AASM.git
-cd AASM
-python -m venv .venv
-
-# Windows PowerShell
-.venv\Scripts\Activate.ps1
-
-# macOS or Linux
-source .venv/bin/activate
-
-pip install -e '.[dev]'
-pytest -q
-```
+A framework checkpoint, prompt transcript, adapter cache, or UI state does not become competing machine truth.
 
 ---
 
-# Adopt an existing LangGraph application
+# The three durable structures
 
-Keep the graph topology and checkpointing you already have:
+## Decisions
 
-```python
-from aasm import LangGraphAdapter
+Named choices and assumptions:
 
-adapter = LangGraphAdapter(namespace="my-application")
-
-def retrieve(state, config=None):
-    return {"documents": ["result"]}
-
-graph.add_node("retrieve", adapter.wrap_node("retrieve", retrieve))
+```text
+database = postgres
+schema = v2
+architecture = event_sourced
 ```
 
-The wrapper binds the LangGraph thread to a canonical AASM machine, records a node obligation, captures output evidence, and returns the original node result unchanged.
+AASM records what is active, what it depends on, what evidence supports it, and why it changed.
 
-Inspect the binding:
+## Obligations
 
-```bash
-aasm langgraph-binding thread-482 \
-  --namespace my-application \
-  --store runs.db
+Work that must eventually receive a legal terminal disposition:
 
-aasm inspect MACHINE_ID \
-  --store runs.db \
-  --surface langgraph
+```text
+run compatibility tests
+verify the external effect
+resolve contradictory evidence
+publish the required artifact
 ```
 
-Run the ordinary-versus-governed comparison:
+Mandatory work cannot quietly disappear because a new plan makes it inconvenient.
 
-```bash
-python examples/langgraph_adoption.py
-```
+## Evidence
 
-See [Thin LangGraph Adapter](docs/LANGGRAPH_ADAPTER.md).
+Durable provenance for observations, tests, human judgments, simulations, and verification results. AASM records evidence and its authority boundary; it does not manufacture truth.
 
 ---
 
-# Prove an adapter preserves AASM
+# Conflict learning and causal recovery
 
-Run the complete built-in driver:
-
-```bash
-aasm adapter-conformance --adapter langgraph
-```
-
-Run one scenario while developing an adapter:
-
-```bash
-aasm adapter-conformance \
-  --adapter langgraph \
-  --scenario contradiction \
-  --output conformance-report.json
-```
-
-List installed drivers and required scenarios:
-
-```bash
-aasm adapter-conformance-list
-```
-
-Python:
-
-```python
-from aasm import run_adapter_conformance
-
-report = run_adapter_conformance("langgraph")
-assert report.status == "PASS"
-```
-
-Authenticated HTTP:
+When evidence contradicts an active assumption, AASM does not blindly retry the latest step.
 
 ```text
-GET /adapter-conformance
-GET /v1/conformance/adapters/langgraph
-GET /v1/conformance/adapters/langgraph?scenario=success
+D1 choose database
+D2 choose schema
+D3 implement API
+D4 implement cache
+D5 build UI
+D6 integration test fails
 ```
 
-A `PASS` means every selected scenario met the supported AASM authority, durability, evidence, recovery, and replay checks. A `FAIL` includes exact finding codes and event-linked evidence. `INCONCLUSIVE` means a required capability was not exercised or declared—not that the adapter passed.
+If the durable explanation shows that `D2` caused the conflict, AASM can backjump to `D2`, preserve unrelated work, and turn the failed combination into reusable blocking knowledge.
 
-See [Adapter Conformance Kit](docs/ADAPTER_CONFORMANCE.md).
+Restart means:
+
+```text
+discard speculative assignment
+retain verified evidence
+retain learned constraints
+retain provenance
+retain mandatory obligations
+```
+
+That is restart without amnesia.
 
 ---
 
 # Hierarchical Decision Scopes
+
+v0.31 introduced hierarchical reasoning inside **one** authoritative machine:
 
 ```text
 root
@@ -262,128 +197,91 @@ root
         └── implementation-b
 ```
 
-```python
-from aasm import AASMEngine, DecisionScope, ProblemSpec
-
-engine = AASMEngine(ProblemSpec("scoped delivery"))
-engine.register_scope(DecisionScope("strategy", "Strategy", kind="STRATEGY"))
-engine.register_scope(DecisionScope(
-    "architecture-api", "API architecture",
-    kind="ARCHITECTURE", parent_scope_id="strategy",
-))
-```
+A contradiction in `implementation-a` can invalidate its causal architecture branch while preserving the `architecture-b` subtree. Parent knowledge can be inherited; overrides are explicit; sibling information flow requires a recorded dependency.
 
 ```bash
 aasm scope-report MACHINE_ID --store runs.db
-aasm scope-context MACHINE_ID --store runs.db architecture-api
+aasm scope-context MACHINE_ID --store runs.db architecture-a
 ```
 
-A contradiction in one implementation branch can backjump to its responsible architecture decision while preserving unrelated sibling branches. Read [Hierarchical Decision Scopes](docs/HIERARCHICAL_DECISION_SCOPES.md).
+Read [`docs/HIERARCHICAL_DECISION_SCOPES.md`](docs/HIERARCHICAL_DECISION_SCOPES.md).
 
 ---
 
-# What problem does AASM solve?
+# Runtime/Formal Trace Conformance
 
-A capable agent can still:
+v0.32 makes production histories independently inspectable as formal trace evidence.
 
-- forget an earlier decision;
-- repeat a failed approach;
-- hide an unfinished requirement;
-- edit the latest symptom instead of the causal decision;
-- report success without the required evidence;
-- lose useful knowledge during restart;
-- duplicate an external effect whose prior outcome is unknown.
+```python
+from aasm import project_trace, semantic_trace_check
 
-A conversation is not a reliable control plane. AASM gives the work an official, replayable machine state.
+projection = project_trace(engine.events)
+report = semantic_trace_check(engine.events)
+```
 
-Imagine an agent building a service:
+Or through the engine:
 
-1. It chooses PostgreSQL.
-2. Work relevant only to SQLite becomes conditionally hidden, not deleted.
-3. An integration test contradicts the selected schema.
-4. AASM links the evidence to the responsible decisions.
-5. It backjumps to the causal decision rather than randomly changing the newest files.
-6. Unrelated valid work stays intact.
-7. The failed combination becomes certified blocking knowledge and cannot silently recur.
+```python
+projection = engine.trace_projection()
+semantic = engine.semantic_trace_report()
+```
 
-AASM is not a language model. It is the deterministic runtime around models, tools, workers, and people.
+CLI:
+
+```bash
+aasm trace-project MACHINE_ID --store runs.db
+aasm trace-check MACHINE_ID --store runs.db
+```
+
+The trace projection retains for every event:
+
+```text
+event ID
+source sequence
+event type
+transition class
+support status
+SHA-256 of the exact source event
+complete source event mapping
+```
+
+Unknown future transitions are represented as `UNSUPPORTED`; they are not discarded or guessed into conformance.
+
+Semantic checks use explicit pre/post-state witnesses when available. Missing witnesses produce `INCONCLUSIVE`, not fabricated proof. Violations identify the exact source event and pre/post-state fingerprints.
+
+Read [`docs/TRACE_CONFORMANCE.md`](docs/TRACE_CONFORMANCE.md).
 
 ---
 
-# The three things to remember
+# Existing framework adoption
 
-## Decisions
+AASM can sit underneath an existing LangGraph application without replacing its graph topology or checkpoint mechanism:
 
-A decision is a named choice or assumption:
+```python
+from aasm import LangGraphAdapter
 
-```text
-database = postgres
-schema = v2
-synthesis.causal_model = retrieval_only
+adapter = LangGraphAdapter(namespace="my-app")
+graph.add_node("retrieve", adapter.wrap_node("retrieve", retrieve))
 ```
 
-AASM records which decisions are active, what they depend on, why they changed, and which work they authorize.
+LangGraph still owns graph execution. AASM owns durable decisions, obligations, evidence, conflicts, external-effect authority, replay, and recovery.
 
-## Obligations
+Adapter authors can run:
 
-An obligation is work that must eventually receive a terminal disposition:
-
-```text
-run the compatibility test
-collect the missing measurement
-resolve contradictory evidence
-publish the required artifact
+```bash
+aasm adapter-conformance --adapter langgraph
 ```
 
-Mandatory work cannot quietly disappear because the current plan makes it inconvenient.
-
-## Evidence
-
-Evidence is the durable reason a claim, decision, conflict, or completion is accepted. It can come from tests, tools, humans, simulations, sensors, or external systems.
-
-AASM records provenance. It does not manufacture truth.
-
----
-
-# How a run works
-
-```text
-Goal
-  ↓
-Candidate decisions are proposed
-  ↓
-AASM checks authority, dependencies, constraints, and fairness
-  ↓
-A complete candidate is activated atomically
-  ↓
-Authorized work runs
-  ↓
-Evidence is collected
-  ↓
-Success is committed, or a conflict is explained
-  ↓
-Repair, causal backjump, or knowledge-preserving restart
-```
-
-A model, heuristic, person, or solver may propose a candidate. Only the AASM kernel can make it durable.
-
-This keeps the architecture faithful to its AVATAR/labelled-splitting inspiration: conditional components may be activated or locked reversibly, conflicts become durable blocking information, fairness keeps obligations from remaining hidden forever, and restart discards speculation rather than verified knowledge.
+The framework-neutral conformance kit returns `PASS`, `FAIL`, or `INCONCLUSIVE` and checks replay, provenance, authority ownership, failure recovery, and direct-storage bypasses.
 
 ---
 
 # Operator runbooks
 
-v0.28.0 introduced executable operational drills; v0.28.1 hardened their immutable release; v0.28.2 made the source distribution self-contained; v0.29.0 carries every runbook through the same authority path while adding thin LangGraph adoption.
-
-List them:
+Executable drills convert architectural claims into things an operator can actually do:
 
 ```bash
 aasm runbook list
-```
-
-Run any drill in memory:
-
-```bash
 aasm runbook lease-loss
 aasm runbook requirement-change
 aasm runbook learned-no-good
@@ -393,135 +291,68 @@ aasm runbook unknown-effect
 aasm runbook history-diagnosis
 ```
 
-Persist a drill to SQLite or PostgreSQL:
-
-```bash
-aasm runbook lease-loss --store operator-drills.db
-```
-
-| Runbook | Proves |
-|---|---|
-| `lease-loss` | stale ownership expires and the same task is reclaimed under a new lease |
-| `requirement-change` | only the affected plan region pauses; unrelated completed work remains |
-| `learned-no-good` | a conflict becomes independently verified blocking knowledge |
-| `human-approval` | insufficient approval is denied and quorum authorization is durable |
-| `replay-fork` | source history verifies, replay is exact, and the fork records lineage |
-| `unknown-effect` | unsafe retry is blocked until the external outcome is explicitly reconciled |
-| `history-diagnosis` | a corrupted copy yields concrete issue codes without modifying canonical history |
-
-Start at [Operator Runbooks](docs/runbooks/README.md).
+See [`docs/runbooks/README.md`](docs/runbooks/README.md).
 
 ---
 
-# Research Synthesis Hero Stack
+# Correctness boundary
 
-The bundled offline application demonstrates:
+AASM strengthens:
+
+- transition legality;
+- durable authority;
+- replayability;
+- provenance;
+- conflict learning;
+- recovery;
+- certificate-gated hard knowledge;
+- formal and trace-level assurance.
+
+It does **not** automatically prove that a scientific model is physically correct, a sensor was calibrated, a human report was honest, or an external service told the truth. Domain verification remains explicit.
+
+---
+
+# Release discipline
+
+Every maintained release is built twice under a pinned build toolchain and must produce byte-identical wheel and source distributions. CI clean-installs the wheel, tests the extracted source distribution outside the Git checkout, and verifies the release assets after publication.
+
+A release is not considered complete until the exact commit has:
 
 ```text
-initial interpretation
-→ explicit obligations and evidence
-→ validated contradiction
-→ certified learned no-good
-→ non-chronological backjump
-→ unrelated work preserved
-→ mid-run requirement injection
-→ conditional lock restoration
-→ corrected synthesis
-→ claim-level provenance
-→ exact full-history replay
+aasm/ci-summary          success
+aasm/formal-assurance    success
+aasm/release             success
 ```
 
-Run it without Docker:
-
-```bash
-aasm demo \
-  --scenario research-synthesis \
-  --mode complete \
-  --db research-demo.db \
-  --output-dir research-output
-```
-
-Read [Why AASM?](WHY_AASM.md) and [Research Synthesis Hero Stack](docs/RESEARCH_SYNTHESIS_DEMO.md).
+Existing tags are never moved and release assets are never overwritten. Corrections require a new version.
 
 ---
 
-# Canonical adoption surface
-
-AASM exposes one machine-readable supported path over the existing runtime:
-
-```python
-from aasm import public_api_contract, validate_public_api_contract
-
-contract = public_api_contract()
-assert validate_public_api_contract()["valid"]
-```
-
-CLI:
-
-```bash
-aasm adoption-contract
-```
-
-HTTP:
+# Roadmap
 
 ```text
-GET /adoption-contract
+v0.32  Runtime/Formal Trace Conformance        ← current
+v0.33  Signed Provenance and Verifiable Exports
+v0.34  Distributed Recovery Certification
+v0.35  Semantic Problem Model
+v0.36  Semantic Compiler SDK
+v0.37+ Semantic reasoning, truth maintenance, capabilities, frontier, solver loop
 ```
 
-Reference applications, adapters, local-stack services, release tooling, Control Center additions, and runbooks must use the existing event/reducer runtime. Direct snapshot mutation, private database writes, and parallel authority paths are not accepted adoption mechanisms.
+See [`ROADMAP.md`](ROADMAP.md) for the full program through v0.45.
 
 ---
 
-# Major capabilities
+## Documentation
 
-| Capability | What it gives you |
-|---|---|
-| Durable state and replay | Reconstruct a run from events instead of trusting a transcript |
-| Legal transitions | Explicit rules for what the machine may do next |
-| Decision / Obligation / Evidence calculus | Durable choices, unfinished work, provenance, and truth maintenance |
-| Conditional locks | Hide model-irrelevant work without deleting it |
-| Conflict learning | Evidence-backed explanations and reusable no-goods |
-| Causal backjumping | Revisit the responsible decision while preserving unrelated work |
-| Restart without amnesia | Discard speculation while retaining evidence and learned knowledge |
-| Certificate-gated hard knowledge | Require independent verification before a constraint becomes hard |
-| Atomic candidate activation | Commit an entire candidate model or none of it |
-| Hierarchical decision scopes | Separate reasoning levels while retaining one machine, causal graph, and event history |
-| Distributed workers | Registration, heartbeat, leases, expiry, reclaim, quotas, and stale-result rejection |
-| Controlled effects | Authorization, idempotency, ownership, UNKNOWN outcomes, and reconciliation |
-| Observability | Decision, Obligation, Evidence, causal graphs, timelines, and fairness debt |
-| Release integrity | Byte-identical double build, clean-wheel test, exact hashes, no overwrite, and remote asset verification |
-
----
-
-# Compatibility and correctness boundary
-
-AASM is pre-1.0 experimental software. The supported public imports, engine methods, CLI commands, inspection surfaces, HTTP endpoints, and operator runbooks are declared by `aasm.adoption.v1`.
-
-AASM strengthens legality, durability, replay, provenance, and machine-level assurance. It does not prove that a scientific model is physically correct, a sensor was calibrated, a human report was honest, or an external service told the truth.
-
-See [Compatibility Policy](docs/COMPATIBILITY.md), [Formal Assurance](docs/FORMAL_ASSURANCE.md), and [Release Process](docs/RELEASE_PROCESS.md).
-
----
-
-# Next phases
-
-The execution plan is maintained in [ROADMAP.md](ROADMAP.md). The next release is **v0.32.0 — Runtime/Formal Trace Conformance**, followed by signed provenance, distributed recovery certification, and the contract-first Semantic Solver Program beginning at v0.35.0. Each phase has an explicit user outcome, implementation boundary, and exit gate.
-
----
-
-# Documentation
-
-| Start here when you are… | Read |
-|---|---|
-| Trying AASM | This README and [Local Full Stack](docs/LOCAL_FULL_STACK.md) |
-| Evaluating why it is different | [Why AASM?](WHY_AASM.md) |
-| Operating the system | [Operator Runbooks](docs/runbooks/README.md) |
-| Integrating an application | [Architecture](docs/ARCHITECTURE.md) and `aasm adoption-contract` |
-| Reviewing correctness | [Formal Assurance](docs/FORMAL_ASSURANCE.md) and [`formal/`](formal/) |
-| Publishing a release | [Release Process](docs/RELEASE_PROCESS.md) |
-| Depending on public APIs | [Compatibility Policy](docs/COMPATIBILITY.md) |
-
-[Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Support](SUPPORT.md)
+- [Why AASM?](WHY_AASM.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Compatibility](docs/COMPATIBILITY.md)
+- [Formal Assurance](docs/FORMAL_ASSURANCE.md)
+- [Trace Conformance](docs/TRACE_CONFORMANCE.md)
+- [Release Process](docs/RELEASE_PROCESS.md)
+- [Roadmap](ROADMAP.md)
+- [Changelog](CHANGELOG.md)
 
 ## License
 
