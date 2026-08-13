@@ -6,12 +6,13 @@ CONSTANTS Root, Strategy, ArchitectureA, ImplementationA, ArchitectureB, Impleme
 Scopes == {Root, Strategy, ArchitectureA, ImplementationA, ArchitectureB, ImplementationB}
 BranchA == {ArchitectureA, ImplementationA}
 BranchB == {ArchitectureB, ImplementationB}
-Parents == [Root |-> Root,
-            Strategy |-> Root,
-            ArchitectureA |-> Strategy,
-            ImplementationA |-> ArchitectureA,
-            ArchitectureB |-> Strategy,
-            ImplementationB |-> ArchitectureB]
+Parents == [s \in Scopes |->
+              CASE s = Root -> Root
+                [] s = Strategy -> Root
+                [] s = ArchitectureA -> Strategy
+                [] s = ImplementationA -> ArchitectureA
+                [] s = ArchitectureB -> Strategy
+                [] s = ImplementationB -> ArchitectureB]
 
 VARIABLES activeScopes, pinnedScopes, hardKnowledge, parentKnowledge,
           localOverride, branchAActive, branchBActive, restarted
