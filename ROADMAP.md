@@ -1,8 +1,8 @@
 # AASM Roadmap
 
-AASM is currently **v0.35.0 / experimental**.
+AASM is currently **v0.36.0 / experimental**.
 
-Every release is complete only when its ordinary source is reachable from `main`, package/runtime/README agree, CI and formal assurance pass, and the immutable release assets verify against the exact commit.
+A release is complete only when ordinary source is reachable from `main`, package/runtime/README agree, CI and formal assurance pass, the immutable tag points to the exact commit, and remote release assets verify.
 
 ## Completed foundation
 
@@ -14,18 +14,20 @@ Every release is complete only when its ordinary source is reachable from `main`
 | v0.32.0 | Runtime/Formal Trace Conformance | Released |
 | v0.33.0 | Signed Provenance and Verifiable Exports | Released |
 | v0.34.0 | Distributed Recovery Certification | Released |
-| **v0.35.0** | **Semantic Problem Model Foundations** | **Current — implemented** |
-
-## v0.35.0 — Semantic Problem Model Foundations
-
-`DomainPackage`, `ProblemDefinition`, `ProblemModel`, and `ProblemInstance` are canonical, versioned, fingerprinted value objects. Entities, predicates, objectives, operators, observers, and verifiers are domain-neutral. Referential integrity, duplicates, decision domains, missing model pieces, capability gaps, and direct fact contradictions are checked before admission. Accepted instances are recorded through ordinary AASM evidence events and reconstruct through replay.
+| v0.35.0 | Semantic Problem Model Foundations | Released |
+| **v0.36.0** | **Semantic Compiler SDK** | **Current — implemented** |
 
 ## v0.36.0 — Semantic Compiler SDK
 
-**Next.** Implement deterministic `PARSE → RESOLVE → NORMALIZE → TYPE_CHECK → VALIDATE → FINGERPRINT → INSTANTIATE`; source-mapped diagnostics; deterministic IDs; missing input/capability reports; content-addressed cache; proposal-only compiler authority; compile-and-admit through the event/reducer path; and conformance fixtures.
+The reference compiler implements deterministic `PARSE → RESOLVE → NORMALIZE → TYPE_CHECK → VALIDATE → FINGERPRINT → INSTANTIATE`, exact compiler/source identities, deterministic IDs, source-mapped diagnostics, missing-input and missing-capability reports, environment snapshots, compile audit trails, content-addressed caching, proposal-only compiler authority, compile-and-admit through the AASM event path, and an executable conformance report.
+
+The exit gate is explicit: same normalized source + same domain package + same compiler version + same environment/policy produces the same problem fingerprint.
 
 ## v0.37.0 — Reasoning Artifacts and Semantic Dependency Graph
-Typed durable reasoning artifacts connected through Entity → Predicate → Claim → Evidence → Verifier → Certificate → Constraint → Decision → Operator → Effect → Observation.
+
+**Next.** Add typed durable `Claim`, `Hypothesis`, `Lemma`, `Invariant`, `Counterexample`, `Definition`, `Assumption`, `Observation`, `Derivation`, `Refutation`, and `ObjectiveResult` artifacts plus the semantic dependency graph:
+
+`Entity → Predicate → Claim → Evidence → Verifier → Certificate → Constraint → Decision → Operator → Effect → Observation`.
 
 ## v0.38.0 — Semantic Truth Maintenance
 Dependency propagation marks only affected descendants stale and preserves unrelated siblings.

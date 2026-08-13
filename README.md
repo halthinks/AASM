@@ -5,7 +5,7 @@
 
 **A durable, deterministic control plane for agents, tools, models, humans, and real work.**
 
-Models can propose. AASM owns what becomes durable: decisions, obligations, evidence, conflicts, effects, leases, replay, recovery, and now a domain-neutral semantic problem definition.
+AASM keeps machine truth outside the model. Models and compilers may propose structures; deterministic AASM validation decides what may become durable.
 
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
@@ -13,75 +13,83 @@ Models can propose. AASM owns what becomes durable: decisions, obligations, evid
 
 </div>
 
-## Current release — v0.35.0
+## Current release — v0.36.0
 
-**Semantic Problem Model Foundations**
+**Semantic Compiler SDK**
 
 | Identity | Value |
 |---|---|
-| Package/runtime | `aasm-runtime 0.35.0` |
-| Adoption contract | `aasm.adoption.v1 / 0.11.0` |
+| Package/runtime | `aasm-runtime 0.36.0` |
+| Adoption contract | `aasm.adoption.v1 / 0.12.0` |
 | Semantic problem | `aasm.semantic.problem.v1 / 0.1.0` |
-| Domain package | `aasm.domain.v1 / 0.1.0` |
-| Problem instance | `aasm.problem.v1 / 0.1.0` |
-| Recovery | `aasm.recovery.v1 / 0.1.0` |
+| Semantic source | `aasm.semantic.source.v1 / 0.1.0` |
+| Semantic compiler | `aasm.semantic.compiler.v1 / 0.1.0` |
 | Remote protocol | `aasm.remote.v1 / 0.19.0` |
-| Next release | **v0.36.0 — Semantic Compiler SDK** |
+| Next release | **v0.37.0 — Reasoning Artifacts and Semantic Dependency Graph** |
 
-### What changed
-
-AASM can now carry an explicit semantic problem instead of asking an agent to infer the problem repeatedly from a transcript. The semantic layer is reusable across domains and remains subordinate to the existing AASM authority path.
+v0.36 turns the semantic problem model into a deterministic compiler pipeline:
 
 ```text
-ProblemDefinition
-      ↓
-ProblemModel + DomainPackage
-      ↓
-ProblemInstance
-      ↓
-validation + deterministic fingerprints
-      ↓
-ordinary AASM Evidence event
-      ↓
-production reducer / canonical snapshot / replay
+PARSE → RESOLVE → NORMALIZE → TYPE_CHECK → VALIDATE → FINGERPRINT → INSTANTIATE
 ```
 
-The core objects are `DomainPackage`, `ProblemDefinition`, `ProblemModel`, `ProblemInstance`, `Entity`, `Predicate`, `Objective`, `Operator`, `Observer`, and `Verifier`. They use canonical JSON and deterministic SHA-256 fingerprints. Validation catches duplicate IDs, missing predicate references, invalid decision domains, missing required model pieces, package/model fingerprint mismatches, and hard compile-time contradictions.
+A compiler is **proposal-only**. It cannot write AASM tables, snapshots, or durable truth. `compile-and-admit` first produces and validates a `ProblemInstance`, then calls the ordinary v0.35 semantic admission method, which records the accepted problem as Evidence through the existing event/reducer/store path.
 
-A malformed or contradictory problem is rejected before admission. A structurally valid problem whose capabilities are not yet bound remains visible as `BLOCKED_MISSING_CAPABILITIES` instead of being silently treated as executable.
+### Compiler outputs
+
+`CompileResult` exposes:
+
+- `status`;
+- `problem_instance | None`;
+- `missing_inputs[]`;
+- `missing_capabilities[]`;
+- source-mapped warnings and hard errors;
+- deterministic audit trail;
+- content-addressed cache key;
+- compiler-result fingerprint.
+
+Diagnostics include JSON pointer, source name, line, column, UTF-8 byte offset, stage, severity, and issue code. Missing capabilities and missing inputs remain explicit; they are never guessed away.
+
+### Determinism and cache
+
+The cache key is derived from the compiler declaration, canonical normalized source, environment snapshot, and compilation policy. The reference compiler rejects a collision in which one key would map to a different result. When `instance_id` is omitted it is deterministically derived from normalized inputs, domain/model fingerprints, and compiler identity.
 
 ```bash
-aasm semantic-problem-contract
+aasm semantic-compiler-contract
 
-aasm problem-admit MACHINE_ID --store runs.db --input problem.json
+aasm semantic-compile problem.json --environment environment.json --output compile-result.json
 
-aasm problem MACHINE_ID --store runs.db
-aasm domain MACHINE_ID --store runs.db
+aasm problem-check problem.json --environment environment.json
+
+aasm semantic-compiler-conformance
+
+aasm semantic-compile-admit MACHINE_ID --store runs.db \
+  --source problem.json --environment environment.json
 ```
 
-Because admission is ordinary evidence, Memory, SQLite, PostgreSQL, replay, provenance export, and existing observability continue to use the same authoritative runtime.
+The compatibility aliases `aasm compile` and `aasm problem-check` exercise the same deterministic implementation.
 
 ## Why AASM exists
 
-A conversational agent can forget decisions, retry disproven approaches, hide unfinished requirements, or modify the newest symptom instead of the causal assumption. AASM turns that work into an explicit state machine with durable Decisions, Obligations, Evidence, conflicts, learned no-goods, causal backjumping, fairness, effects, leases, replay, and formal checks.
+A conversational agent can forget decisions, retry disproven approaches, hide unfinished requirements, or modify the newest symptom instead of the causal assumption. AASM turns long-running work into a replayable state machine with durable Decisions, Obligations, Evidence, conflicts, learned constraints, causal backjumping, fairness, effects, leases, replay, provenance, and formal checks.
 
 ## Architecture
 
 ```text
-public AASM API
-      ↓
-durable event
-      ↓
-production reducer
-      ↓
-canonical snapshot
-      ↓
-Memory / SQLite / PostgreSQL
-      ↓
-assurance · replay · provenance · semantic projections
+problem source
+     ↓
+proposal-only compiler
+     ↓
+deterministic validation
+     ↓
+ProblemInstance candidate
+     ↓
+AASM admission
+     ↓
+durable event → production reducer → canonical snapshot → Memory / SQLite / PostgreSQL
 ```
 
-There is still one authoritative event/reducer path. The semantic layer does not own a private database or a second scheduler.
+No compiler-owned database, scheduler, event log, or authority path exists.
 
 ## Release progression
 
@@ -92,7 +100,8 @@ There is still one authoritative event/reducer path. The semantic layer does not
 - **v0.33** Signed Provenance and Verifiable Exports
 - **v0.34** Distributed Recovery Certification
 - **v0.35** Semantic Problem Model Foundations
-- **v0.36 next** Semantic Compiler SDK
+- **v0.36** Semantic Compiler SDK
+- **v0.37 next** Reasoning Artifacts and Semantic Dependency Graph
 
 ## Install
 
@@ -115,7 +124,7 @@ pytest -q
 
 ## Correctness boundary
 
-AASM can validate structural semantics, identities, referential integrity, fingerprints, event-sourced admission, replay, and machine authority. It does not make a domain premise true merely because the premise is well formed.
+The compiler guarantees deterministic structure, diagnostics, fingerprints, cache behavior, and admission routing for the supported source contract. It does not make a scientific premise, external measurement, or model-generated candidate true.
 
 ## License
 

@@ -21,8 +21,16 @@ from .semantic_result import (
     semantic_problem_contract, validate_problem_model, build_problem_instance,
     validate_problem_instance, semantic_problem_document, semantic_problem_from_document,
 )
+from .domain_adapters import (
+    SEMANTIC_SOURCE_CONTRACT_ID, SEMANTIC_SOURCE_CONTRACT_VERSION,
+    SEMANTIC_COMPILER_CONTRACT_ID, SEMANTIC_COMPILER_CONTRACT_VERSION, COMPILER_STAGES,
+    CompilerDeclaration, EnvironmentSnapshot, RawProblemInput, CompilerDiagnostic, CompileResult,
+    DomainCompiler, InstanceCompiler, ReferenceSemanticCompiler, CompilationCache,
+    semantic_compiler_contract, compile_semantic_source, compile_and_admit,
+    reference_semantic_source, run_semantic_compiler_conformance,
+)
 
-__version__ = "0.35.0"
+__version__ = "0.36.0"
 REMOTE_PROTOCOL_NAME = "aasm.remote.v1"
 REMOTE_PROTOCOL_VERSION = "0.19.0"
 
@@ -41,16 +49,26 @@ _NEW_IMPORTS = [
     "Entity", "Predicate", "Objective", "Operator", "Observer", "Verifier", "DomainPackage", "ProblemDefinition",
     "ProblemModel", "ProblemInstance", "canonical_semantic_json", "semantic_fingerprint", "semantic_problem_contract",
     "validate_problem_model", "build_problem_instance", "validate_problem_instance", "semantic_problem_document", "semantic_problem_from_document",
+    "SEMANTIC_SOURCE_CONTRACT_ID", "SEMANTIC_SOURCE_CONTRACT_VERSION", "SEMANTIC_COMPILER_CONTRACT_ID",
+    "SEMANTIC_COMPILER_CONTRACT_VERSION", "COMPILER_STAGES", "CompilerDeclaration", "EnvironmentSnapshot",
+    "RawProblemInput", "CompilerDiagnostic", "CompileResult", "DomainCompiler", "InstanceCompiler",
+    "ReferenceSemanticCompiler", "CompilationCache", "semantic_compiler_contract", "compile_semantic_source",
+    "compile_and_admit", "reference_semantic_source", "run_semantic_compiler_conformance",
 ]
 _NEW_METHODS = [
     "trace_projection", "semantic_trace_report", "provenance_export", "provenance_verify", "provenance_select",
     "admit_semantic_problem", "semantic_problem_report", "semantic_domain_report",
+    "semantic_compiler_report", "compile_and_admit_semantic",
 ]
 _NEW_COMMANDS = [
     "trace-project", "trace-check", "provenance-export", "provenance-verify", "provenance-select", "recovery-certify",
-    "semantic-problem-contract", "problem-admit", "problem", "domain",
+    "semantic-problem-contract", "problem-admit", "problem", "domain", "semantic-compiler-contract",
+    "semantic-compile", "semantic-compiler-conformance", "semantic-compile-admit", "compile", "problem-check",
 ]
-_NEW_SURFACES = ["trace", "trace-semantic", "provenance", "problem", "semantic-problem", "domain", "semantic-domain"]
+_NEW_SURFACES = [
+    "trace", "trace-semantic", "provenance", "problem", "semantic-problem", "domain", "semantic-domain",
+    "compiler", "semantic-compiler",
+]
 
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*_v31.SUPPORTED_PUBLIC_IMPORTS, *_NEW_IMPORTS]))
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*_v31.SUPPORTED_ENGINE_METHODS, *_NEW_METHODS]))
@@ -59,7 +77,7 @@ SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([*_v31.SUPPORTED_INSPECTION_S
 
 PUBLIC_API_CONTRACT = _deepcopy(_v31.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.11.0", "runtime_version": __version__,
+    "contract_version": "0.12.0", "runtime_version": __version__,
     "supported_imports": SUPPORTED_PUBLIC_IMPORTS, "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
     "supported_cli_commands": SUPPORTED_CLI_COMMANDS, "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
 })
@@ -71,10 +89,11 @@ PUBLIC_API_CONTRACT["trace_conformance"] = {
 PUBLIC_API_CONTRACT["provenance"] = provenance_contract()
 PUBLIC_API_CONTRACT["distributed_recovery"] = distributed_recovery_contract()
 PUBLIC_API_CONTRACT["semantic_problem"] = semantic_problem_contract()
+PUBLIC_API_CONTRACT["semantic_compiler"] = semantic_compiler_contract()
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 PUBLIC_API_CONTRACT["golden_path"] = list(dict.fromkeys([
     *PUBLIC_API_CONTRACT.get("golden_path", []),
-    "validate and admit a semantic problem through ordinary AASM evidence events before execution",
+    "compile a normalized semantic source deterministically and admit only through the AASM event/reducer boundary",
 ]))
 
 
@@ -88,7 +107,9 @@ def validate_public_api_contract() -> dict:
     if missing_imports: errors.append(f"missing public imports: {missing_imports}")
     if missing_methods: errors.append(f"missing AASMEngine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__: errors.append("runtime version mismatch")
-    if (PUBLIC_API_CONTRACT.get("semantic_problem") or {}).get("contract_id") != SEMANTIC_PROBLEM_CONTRACT_ID: errors.append("semantic problem contract mismatch")
+    compiler = PUBLIC_API_CONTRACT.get("semantic_compiler") or {}
+    if compiler.get("contract_id") != SEMANTIC_COMPILER_CONTRACT_ID: errors.append("semantic compiler contract mismatch")
+    if compiler.get("authority") != "PROPOSAL_ONLY": errors.append("semantic compiler authority boundary mismatch")
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 
 
