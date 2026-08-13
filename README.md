@@ -5,7 +5,7 @@
 
 **A durable, deterministic control plane for agents, tools, models, humans, and real work.**
 
-AASM keeps machine truth outside the model. Models, compilers, and reasoning workers may propose structures; deterministic AASM validation and policy decide what may become durable.
+AASM keeps machine truth outside the model. Models and compilers propose; evidence, verifiers, policy, and deterministic state transitions decide what becomes durable and what must be reconsidered when upstream truth changes.
 
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
@@ -13,128 +13,166 @@ AASM keeps machine truth outside the model. Models, compilers, and reasoning wor
 
 </div>
 
-## Current release — v0.37.0
+## Current release — v0.38.0
 
-**Reasoning Artifacts and Epistemic Admission**
+**Semantic Dependency Graph, Causal Decisions, and Reactive Truth Maintenance**
 
 | Identity | Value |
 |---|---|
-| Package/runtime | `aasm-runtime 0.37.0` |
-| Adoption contract | `aasm.adoption.v1 / 0.13.0` |
-| Semantic problem | `aasm.semantic.problem.v1 / 0.1.0` |
-| Semantic compiler | `aasm.semantic.compiler.v1 / 0.1.0` |
+| Package/runtime | `aasm-runtime 0.38.0` |
+| Adoption contract | `aasm.adoption.v1 / 0.14.0` |
 | Reasoning artifacts | `aasm.reasoning.artifact.v1 / 0.1.0` |
-| Epistemic admission | `aasm.reasoning.admission.v1 / 0.1.0` |
-| Reasoning commit | `aasm.reasoning.commit.v1 / 0.1.0` |
+| Semantic dependencies | `aasm.semantic.dependencies.v1 / 0.1.0` |
+| Truth maintenance | `aasm.truth.maintenance.v1 / 0.1.0` |
+| Reactive obligations | `aasm.reactive.obligation.v1 / 0.1.0` |
+| Causal decisions | `aasm.causal.decision.v1 / 0.1.0` |
 | Remote protocol | `aasm.remote.v1 / 0.19.0` |
-| Next release | **v0.38.0 — Semantic Dependency Graph and Truth Maintenance** |
+| Next release | **v0.39.0 — Typed Event/Transition Protocol and Capability ABI** |
 
-v0.37 gives AASM a durable epistemic layer without adding a second runtime, database, scheduler, or authority path.
-
-### Typed reasoning artifacts
-
-The public reasoning model includes:
-
-`Claim · Hypothesis · Lemma · Invariant · Counterexample · Definition · Assumption · Observation · Derivation · Refutation · ObjectiveResult`
-
-Each artifact has deterministic identity/fingerprint, producer authority, subject scope, premise references, evidence references, verifier requirements, confidence, and metadata.
-
-### Epistemic lifecycle
+v0.38 connects the knowledge admitted by v0.37 to the decisions and work that depend on it.
 
 ```text
-PROPOSED
-  ├─ SUPPORT ───────────────→ SUPPORTED
-  ├─ CONTEST ───────────────→ CONTESTED
-  └─ REQUEST_VERIFICATION ─→ VERIFICATION_REQUESTED
-                                  │
-                                  ├─ PASS (required verifiers complete) → VERIFIED
-                                  └─ FAIL → CONTESTED
-
-VERIFIED ── POLICY/CONTROLLER AUTHORIZE ─→ AUTHORIZED
-AUTHORIZED/VERIFIED/CONTESTED ── REFUTE ─→ REFUTED
-nonterminal state ── STALE ─→ STALE
-pre-authorization state ── POLICY/CONTROLLER REJECT ─→ REJECTED
+Evidence / Observation
+        ↓
+Reasoning Artifact
+        ↓
+Verifier / Certificate
+        ↓
+Constraint
+        ↓
+Causal Decision
+        ↓
+Obligation / Operator / Effect
+        ↓
+Observation
 ```
 
-Self-verification is rejected. Verification must be evidence-bearing. Authorization requires `POLICY` or `CONTROLLER` authority. A `ReasoningCommit` can contain only `AUTHORIZED` artifacts.
+The graph is a deterministic projection over the same authoritative AASM history. It does **not** introduce a second database, event log, reducer, scheduler, or truth authority.
 
-### One durable authority path
+## Semantic dependency graph
 
-Reasoning proposals, transitions, and commits are ordinary AASM Evidence records. The production event/reducer/store path remains authoritative:
+AASM now exposes typed semantic nodes for entities, predicates, objectives, reasoning artifacts, evidence, events, verifiers, observers, certificates, constraints, decisions, obligations, operators, effects, and reactive rules.
+
+Dependencies have an explicit direction: **upstream premise/cause → dependent object**. That makes two core queries deterministic:
 
 ```text
-raw problem
-   ↓
-semantic compiler (proposal only)
-   ↓
-ProblemInstance
-   ↓
-reasoning artifact proposal
-   ↓
-independent evidence + verification
-   ↓
-policy authorization
-   ↓
-ReasoningCommit
-   ↓
-ordinary AASM Evidence event → production reducer → Memory / SQLite / PostgreSQL
+What breaks if X is false?     → forward impact closure
+Why does Y currently exist?    → backward dependency lineage
 ```
 
-The durable reasoning view is reconstructed deterministically from that event-sourced evidence history. Replay and restart therefore preserve admitted knowledge without a private reasoning store.
+Dependencies that can propagate staleness must form a DAG. Descriptive edges may cycle only when `propagates_stale=false`.
 
-### Python surface
+## Causal decisions
 
-```python
-from aasm import AASMEngine, ProblemSpec, Claim, ReasoningProducer, VerifierRequirement
+`CausalDecisionRecord` extends the existing AASM `DecisionRecord`; it does not replace the decision calculus. It adds:
 
-engine = AASMEngine(ProblemSpec("example"))
+- rejected alternatives;
+- confidence;
+- explicit reasoning;
+- causal event IDs;
+- causal reasoning-artifact IDs.
 
-artifact = Claim(
-    "the component is ready",
-    ReasoningProducer("planner", "PROPOSER"),
-    verifier_requirements=(VerifierRequirement("independent-verifier"),),
-)
+This makes a durable decision explainable as a consequence of admitted knowledge rather than merely a value that happened to become active.
 
-engine.propose_artifact(artifact)
-engine.request_verification(
-    artifact.artifact_id,
-    verifier_ids=["independent-verifier"],
-    requester_id="planner",
-)
+## Reactive obligations without hidden execution
+
+A reactive rule watches durable event types and deterministically **derives an ordinary AASM Obligation**. The rule carries a `handler_name`, but v0.38 never calls that handler from the reducer or derivation path.
+
+```text
+Durable Event
+    ↓
+Reactive rule match
+    ↓
+ordinary ObligationRecord
+    ↓
+existing scheduler / authority path
 ```
 
-The remaining lifecycle methods are `support_artifact`, `contest_artifact`, `record_verification`, `authorize_artifact`, `refute_artifact`, `mark_stale`, `reject_artifact`, and `reasoning_commit`.
+Handler/capability typing belongs to v0.39. Autonomous execution belongs to the v0.41 solver loop.
 
-### CLI surfaces
+## Truth maintenance
+
+Truth maintenance is local, append-only, resumable, and idempotent.
+
+When an upstream node changes:
+
+1. AASM computes the affected descendant closure.
+2. It records a durable `TruthMaintenancePlan` **before** mutation.
+3. Reasoning artifacts in the closure become `STALE` where legal.
+4. Dependent causal decisions become `INVALIDATED`.
+5. Work that already consumed stale truth reopens as `NEEDS_REVALIDATION` through the existing obligation transition table.
+6. Existing locks are reevaluated through the existing lock machinery.
+7. A completion Evidence record closes the plan.
+
+If the process stops between steps 2 and 7, `resume_truth_maintenance(plan_id)` resumes the recorded plan. Reapplying an already completed plan is a no-op with the same identity.
+
+**Unrelated siblings are preserved.** V0.38 does not restart the world because one premise changed.
+
+## Future memory boundary already exposed
+
+V0.38 intentionally does **not** implement the Hierarchical Memory Layer early. Instead it exposes deterministic inputs for v0.40 context selection:
+
+```text
+VALID
+STALE
+REFUTED
+AUTHORIZED
+scope_visibility
+dependency_depth
+causal_relevance
+objective_relevance
+last_verified_at
+verification_strength
+superseded_by
+```
+
+That lets v0.40 remember and retrieve only against the semantic validity system already established by v0.37–v0.38.
+
+## CLI
 
 ```bash
-aasm reasoning-contract
-aasm reasoning-conformance
-aasm reasoning MACHINE_ID --store runs.db
-aasm reasoning-artifact MACHINE_ID ARTIFACT_ID --store runs.db
-aasm reasoning-provenance MACHINE_ID ARTIFACT_ID --store runs.db
-aasm reasoning-commit MACHINE_ID --store runs.db \
-  --artifact-id ARTIFACT_ID \
-  --authority-id policy-1 \
-  --authority-class POLICY
+aasm semantic-dependency-contract
+aasm semantic-dependency-conformance
+
+aasm dependency-graph MACHINE_ID --store runs.db
+aasm dependency-impact MACHINE_ID --store runs.db --node-type ARTIFACT --node-id ARTIFACT_ID
+aasm dependency-lineage MACHINE_ID --store runs.db --node-type OBLIGATION --node-id OBLIGATION_ID
+
+aasm dependency-add MACHINE_ID --store runs.db --input dependency.json \
+  --authority-id policy-1 --authority-class POLICY
+
+aasm causal-decision-add MACHINE_ID --store runs.db --input decision.json --activate
+
+aasm reactive-rule-add MACHINE_ID --store runs.db --input rule.json \
+  --authority-id policy-1 --authority-class POLICY
+aasm reactive-derive MACHINE_ID --store runs.db
+
+aasm truth-maintain MACHINE_ID --store runs.db \
+  --node-type ARTIFACT --node-id ARTIFACT_ID \
+  --reason "upstream evidence invalidated" \
+  --authority-id verifier-1 --authority-class VERIFIER
+
+aasm truth-resume MACHINE_ID PLAN_ID --store runs.db
+aasm semantic-memory-signals MACHINE_ID --store runs.db
 ```
 
-## Why AASM exists
+## Architecture progression
 
-A conversational agent can forget decisions, retry disproven approaches, hide unfinished requirements, treat a model-generated claim as truth, or modify the newest symptom instead of the causal assumption. AASM turns long-running work into a replayable state machine with durable Decisions, Obligations, Evidence, reasoning artifacts, conflicts, learned constraints, causal backjumping, fairness, effects, leases, replay, provenance, and formal checks.
-
-## Release progression
-
-- **v0.29** Thin LangGraph Adapter
-- **v0.30** Adapter Conformance Kit
-- **v0.31** Hierarchical Decision Scopes
-- **v0.32** Runtime/Formal Trace Conformance
-- **v0.33** Signed Provenance and Verifiable Exports
-- **v0.34** Distributed Recovery Certification
 - **v0.35** Semantic Problem Model Foundations
 - **v0.36** Semantic Compiler SDK
 - **v0.37** Reasoning Artifacts and Epistemic Admission
-- **v0.38 next** Semantic Dependency Graph and Truth Maintenance
+- **v0.38** Semantic Dependency Graph, Causal Decisions, and Reactive Truth Maintenance
+- **v0.39 next** Typed Event/Transition Protocol and Capability ABI
+- **v0.40** Hierarchical Memory, Reasoning Frontier, and Context Projection
+- **v0.41** Domain-Neutral Autonomous Solver Loop
+- **v0.42** Reference Domains and Memory/Reasoning Stress Tests
+- **v0.43** Semantic Conformance and Adversarial Certification
+- **v0.44** Cross-Run Certified Knowledge and Governed Long-Term Memory
+- **v0.45** Semantic Solver Release Candidate
+
+## Why AASM exists
+
+Long-running agents fail when conversation history becomes machine state: claims turn into facts without admission, causal dependencies disappear, disproven assumptions return, and context grows without a principled way to decide what is still valid. AASM separates proposal from authority and makes decisions, obligations, evidence, reasoning, dependencies, effects, recovery, and provenance replayable.
 
 ## Install
 
@@ -153,13 +191,11 @@ pytest -q
 
 ## Documentation
 
-[Why AASM?](WHY_AASM.md) · [Roadmap](ROADMAP.md) · [Architecture](docs/ARCHITECTURE.md) · [Formal Assurance](docs/FORMAL_ASSURANCE.md) · [Operator Runbooks](docs/runbooks/README.md) · [Release Process](docs/RELEASE_PROCESS.md)
+[Why AASM?](WHY_AASM.md) · [Roadmap](ROADMAP.md) · [Architecture](docs/ARCHITECTURE.md) · [Semantic Truth Maintenance](docs/SEMANTIC_TRUTH_MAINTENANCE.md) · [Formal Assurance](docs/FORMAL_ASSURANCE.md) · [Release Process](docs/RELEASE_PROCESS.md)
 
 ## Correctness boundary
 
-The compiler guarantees deterministic structure and admission routing. The epistemic layer guarantees explicit artifact lifecycle, verifier separation, evidence references, policy authorization, append-only provenance, deterministic projection, and replay/restart consistency. Neither layer makes an unsupported scientific premise, external measurement, or model-generated statement true.
-
-Semantic dependency propagation and automatic truth maintenance are deliberately reserved for v0.38 rather than being hidden inside v0.37.
+V0.38 proves and tests deterministic dependency topology, descendant-only impact, causal provenance, resumable truth maintenance, obligation revalidation, and reactive derivation. It does not claim that a model-generated statement is true, and it does not let a reactive rule secretly execute a capability.
 
 ## License
 

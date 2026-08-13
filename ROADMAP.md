@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.37.0 / experimental**.
+AASM is currently **v0.38.0 / experimental**.
 
 A release is complete only when ordinary source is reachable from `main`, package/runtime/README agree, CI and formal assurance pass, the immutable tag points to the exact commit, and remote release assets verify.
 
@@ -16,56 +16,100 @@ A release is complete only when ordinary source is reachable from `main`, packag
 | v0.34.0 | Distributed Recovery Certification | Released |
 | v0.35.0 | Semantic Problem Model Foundations | Released |
 | v0.36.0 | Semantic Compiler SDK | Released |
-| **v0.37.0** | **Reasoning Artifacts and Epistemic Admission** | **Current — implemented** |
+| v0.37.0 | Reasoning Artifacts and Epistemic Admission | Released |
+| **v0.38.0** | **Semantic Dependency Graph, Causal Decisions, and Reactive Truth Maintenance** | **Current — implemented** |
 
-## v0.37.0 — Reasoning Artifacts and Epistemic Admission
+## How the expanded modules fit
 
-The epistemic layer adds typed durable `Claim`, `Hypothesis`, `Lemma`, `Invariant`, `Counterexample`, `Definition`, `Assumption`, `Observation`, `Derivation`, `Refutation`, and `ObjectiveResult` artifacts.
+The three expanded designs are now sequenced by the invariant each one depends on rather than shipped as parallel sidecars:
 
-Artifacts move through an explicit lifecycle under append-only evidence:
+| Original module | Roadmap placement | Why |
+|---|---|---|
+| Rich Causal Decisions & Reactive Obligations | **v0.38** | Requires admitted reasoning plus dependency-local invalidation |
+| Refined Typed Legal Transitions | **v0.39** | Becomes the typed event/transition and capability ABI rather than a second transition engine |
+| Hierarchical Memory Layer | **v0.40** | Must retrieve only against validity/staleness already established by v0.37–v0.38 |
 
-`PROPOSED → SUPPORTED / CONTESTED → VERIFICATION_REQUESTED → VERIFIED → AUTHORIZED`
+## v0.38.0 — Semantic Dependency Graph, Causal Decisions, and Reactive Truth Maintenance
 
-with explicit `REFUTED`, `STALE`, and `REJECTED` outcomes.
+V0.38 connects semantic truth to its downstream consequences.
 
-The release enforces independent verification, rejects self-verification, requires evidence-bearing verifier results, requires `POLICY` or `CONTROLLER` authority for authorization, and permits `ReasoningCommit` only over `AUTHORIZED` artifacts.
+Delivered:
 
-There is still one authoritative event/reducer/store path. Reasoning proposals, transitions, and commits are ordinary Evidence records, so exact replay, restart, Memory/SQLite/PostgreSQL durability, and provenance use the same runtime.
+- typed semantic nodes and dependencies;
+- deterministic forward impact and backward lineage indexes;
+- propagating-edge DAG enforcement with non-propagating descriptive cycles allowed;
+- `CausalDecisionRecord` over the existing decision calculus;
+- explicit rejected alternatives, confidence, reasoning, causal event IDs, and causal artifact IDs;
+- policy-admitted reactive rules that derive ordinary obligations from durable events;
+- no handler execution inside derivation or reduction;
+- durable plan-before-apply truth maintenance;
+- descendant-only stale propagation;
+- unrelated sibling preservation;
+- causal-decision invalidation;
+- consumed obligation reopening through the existing `NEEDS_REVALIDATION` transition;
+- lock reevaluation through existing calculus machinery;
+- idempotent/resumable crash recovery for truth-maintenance plans;
+- deterministic memory/context signals for v0.40;
+- TLC/SPIN invariants for locality, ordering, sibling preservation, decision invalidation, obligation reopening, and no hidden reactive execution.
 
-## v0.38.0 — Semantic Dependency Graph and Truth Maintenance
+## v0.39.0 — Typed Event/Transition Protocol and Capability ABI
 
-**Next.** Add the typed semantic dependency graph and deterministic invalidation engine:
+**Next.** Generalize the Typed Legal Transitions design into the ABI shared by domain packages and runtime capabilities.
 
-`Entity → Predicate → Claim → Evidence → Verifier → Certificate → Constraint → Decision → Operator → Effect → Observation`
+Planned contracts include:
 
-with indexed forward/backward adjacency, impact traversal, stale propagation, obligation reopening, lock reactivation, cycle handling, dependency provenance, and explicit queries such as “what breaks if X is false?” and backward proof lineage.
+- versioned `TypedEventSchema`;
+- scope-aware legal transition rules;
+- payload validation;
+- guard-to-obligation compilation;
+- evidence requirements;
+- admitted pattern/version lifecycle rather than direct `register_pattern()` authority;
+- versioned Operator, Observer, Verifier, and handler capability contracts;
+- effect/capability compatibility checks;
+- transition/capability conformance fixtures.
 
-Dependency propagation belongs here, not in v0.37.
+Pattern registration itself must be proposed, validated, authorized, and admitted. A pattern cannot silently redefine machine legality.
 
-## v0.39.0 — Capability ABI
+## v0.40.0 — Hierarchical Memory, Reasoning Frontier, and Context Projection
 
-Versioned domain-neutral Operator, Observer, and Verifier contracts.
+Turn the Hierarchical Memory Layer into a first-class scope-aware memory system built on the validity signals exposed by v0.38.
 
-## v0.40.0 — Reasoning Frontier and Context Projection
+Canonical memory will contain durable references/content, semantic fingerprints, scopes, causal lineage, epistemic state, retention/privacy policy, and source provenance. Embeddings and other retrieval indexes are **derived indexes**, not memory identity.
 
-Fresh workers receive bounded canonical semantic projections rather than growing transcripts.
+Planned memory kinds include sensory, working, episodic, semantic, and procedural memory. Semantic memory references admitted reasoning rather than creating a second truth system.
 
-## v0.41.0 — Domain-Neutral Solver Loop
+Context projection will combine:
 
-Compile → frontier → candidate → admit → execute/observe → verify → learn → backjump/restart.
+- scope visibility;
+- validity/staleness;
+- dependency depth;
+- causal and objective relevance;
+- verification strength/recency;
+- retention and privacy policy;
+- bounded frontier budgets.
 
-## v0.42.0 — Reference Domains
+Forgetting must preserve append-only provenance semantics through tombstoning, visibility revocation, or cryptographic-erasure policy rather than silently deleting history.
 
-Finite constraints, software delivery/repair, research evidence synthesis, and mathematical reasoning.
+## v0.41.0 — Domain-Neutral Autonomous Solver Loop
 
-## v0.43.0 — Semantic Conformance
+Close the loop:
 
-`PASS | FAIL | INCONCLUSIVE` across packages, compilers, capabilities, truth-maintenance traces, and authority boundaries.
+`Compile → frontier/context → candidate → epistemic admission → causal decision → obligation → capability execution/observation → verify → truth maintenance → learn → backjump/restart`.
 
-## v0.44.0 — Cross-Run Certified Knowledge
+Reactive obligations become executable here only through the typed v0.39 capability path.
 
-Opt-in, provenance-bearing, applicability-scoped, revocable, version-aware reusable knowledge.
+## v0.42.0 — Reference Domains and Memory/Reasoning Stress Tests
+
+Finite constraints, software delivery/repair, research evidence synthesis, and mathematical reasoning, with long-horizon memory and truth-maintenance stress fixtures.
+
+## v0.43.0 — Semantic Conformance and Adversarial Certification
+
+`PASS | FAIL | INCONCLUSIVE` across packages, compilers, reasoning admission, dependency traces, memory projections, capabilities, truth-maintenance traces, and authority boundaries.
+
+## v0.44.0 — Cross-Run Certified Knowledge and Governed Long-Term Memory
+
+Opt-in, provenance-bearing, applicability-scoped, revocable, version-aware reusable knowledge and cross-run memory.
 
 ## v0.45.0 — Semantic Solver Release Candidate
 
-Freeze the first coherent solver contracts after replay, formal, distributed, adversarial, reference-domain, and packaging gates pass.
+Freeze the first coherent solver contracts after replay, formal, distributed, adversarial, memory, reference-domain, and packaging gates pass.

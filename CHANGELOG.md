@@ -2,6 +2,25 @@
 
 Detailed history through v0.27.0 is preserved in [`CHANGELOG_0.27_AND_EARLIER.md`](CHANGELOG_0.27_AND_EARLIER.md). Git history and immutable release tags preserve the complete source history for later releases.
 
+## [0.38.0] - 2026-08-13
+
+### Semantic Dependency Graph, Causal Decisions, and Reactive Truth Maintenance
+
+- added `aasm.semantic.dependencies.v1 / 0.1.0`, `aasm.truth.maintenance.v1 / 0.1.0`, `aasm.reactive.obligation.v1 / 0.1.0`, and `aasm.causal.decision.v1 / 0.1.0`;
+- added typed semantic node references and dependency edges spanning admitted reasoning, Evidence, events, constraints, decisions, obligations, operators, effects, objectives, verifiers, observers, and certificates;
+- added deterministic forward impact and backward lineage projections;
+- required a DAG for stale-propagating edges while permitting cycles only for explicitly non-propagating descriptive edges;
+- added `CausalDecisionRecord` on the existing calculus with rejected alternatives, confidence, reasoning, causal event IDs, and causal reasoning-artifact IDs;
+- added policy/controller admission for explicit semantic dependencies and reactive-obligation rules;
+- added deterministic event-to-obligation derivation while explicitly forbidding handler execution inside the derivation/reducer path;
+- added durable plan-before-apply truth maintenance with affected-descendant-only invalidation and unrelated-sibling preservation;
+- added causal-decision invalidation, active-model cleanup, legal obligation reopening as `NEEDS_REVALIDATION`, and existing lock reevaluation;
+- made truth-maintenance application idempotent and resumable after restart through pending plan Evidence;
+- exposed deterministic semantic validity/relevance signals for the v0.40 Hierarchical Memory and Reasoning Frontier layer without introducing a second truth system;
+- added CLI/inspection surfaces, JSON schemas, executable conformance, and bounded TLC/SPIN invariants;
+- refined the roadmap: v0.39 Typed Event/Transition Protocol and Capability ABI, v0.40 Hierarchical Memory/Reasoning Frontier/Context Projection, and v0.41 Domain-Neutral Autonomous Solver Loop;
+- advanced `aasm.adoption.v1` to `0.14.0`.
+
 ## [0.37.0] - 2026-08-13
 
 ### Reasoning Artifacts and Epistemic Admission

@@ -78,6 +78,7 @@
 ./docs/REPLAY_FORK.md
 ./docs/RESEARCH_SYNTHESIS_DEMO.md
 ./docs/RESOURCE_SCHEDULER.md
+./docs/SEMANTIC_TRUTH_MAINTENANCE.md
 ./docs/TRACE_CONFORMANCE.md
 ./docs/USE_CASES.md
 ./docs/runbooks/README.md
@@ -118,10 +119,13 @@
 ./formal/AASMCalculus.tla
 ./formal/AASMScopeHierarchy.cfg
 ./formal/AASMScopeHierarchy.tla
+./formal/AASMSemanticTruthMaintenance.cfg
+./formal/AASMSemanticTruthMaintenance.tla
 ./formal/AASMTraceConformance.cfg
 ./formal/AASMTraceConformance.tla
 ./formal/aasm_calculus.pml
 ./formal/aasm_scope_hierarchy.pml
+./formal/aasm_semantic_truth_maintenance.pml
 ./formal/aasm_trace_conformance.pml
 ./formal/toolchain.lock.json
 ./profiles/bare/README.md
@@ -157,6 +161,7 @@
 ./schemas/candidate-batch.schema.json
 ./schemas/candidate-model.schema.json
 ./schemas/candidate-state.schema.json
+./schemas/causal-decision.schema.json
 ./schemas/certificate.schema.json
 ./schemas/change-signal.schema.json
 ./schemas/checkpoint-trigger-policy.schema.json
@@ -195,6 +200,7 @@
 ./schemas/profile.schema.json
 ./schemas/provisioning-request.schema.json
 ./schemas/quota.schema.json
+./schemas/reactive-obligation-rule.schema.json
 ./schemas/reasoning-artifact.schema.json
 ./schemas/reasoning-commit.schema.json
 ./schemas/reasoning-transition.schema.json
@@ -202,6 +208,7 @@
 ./schemas/runtime-config.schema.json
 ./schemas/scope-dependency.schema.json
 ./schemas/scope-report.schema.json
+./schemas/semantic-dependency.schema.json
 ./schemas/semantic-result.schema.json
 ./schemas/semantic-trace-report.schema.json
 ./schemas/state.schema.json
@@ -210,6 +217,7 @@
 ./schemas/trace-corpus.schema.json
 ./schemas/trace-projection.schema.json
 ./schemas/transition.schema.json
+./schemas/truth-maintenance-plan.schema.json
 ./schemas/worker-control.schema.json
 ./schemas/worker.schema.json
 ./scripts/check_formal_models.py
@@ -231,6 +239,7 @@
 ./src/aasm/_runtime_v31_recovery.py
 ./src/aasm/_runtime_v31_search.py
 ./src/aasm/_runtime_v37_reasoning.py
+./src/aasm/_runtime_v38_dependencies.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -257,6 +266,7 @@
 ./src/aasm/cli_v31.py
 ./src/aasm/cli_v32.py
 ./src/aasm/cli_v37.py
+./src/aasm/cli_v38.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -362,6 +372,7 @@
 ./src/aasm/runtime_v32.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
+./src/aasm/semantic_dependencies.py
 ./src/aasm/semantic_result.py
 ./src/aasm/server.py
 ./src/aasm/server_v19.py
@@ -426,4 +437,5 @@
 ./tests/test_v31_scopes.py
 ./tests/test_v32_trace_conformance.py
 ./tests/test_v37_reasoning.py
+./tests/test_v38_semantic_dependencies.py
 ./tests/test_workers_leases.py

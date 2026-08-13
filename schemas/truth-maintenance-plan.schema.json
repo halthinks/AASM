@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/truth-maintenance-plan.schema.json",
+  "title": "AASM Truth Maintenance Plan v1",
+  "type": "object",
+  "required": ["plan_id", "root", "affected_nodes", "reason", "authority_id", "authority_class", "graph_fingerprint", "evidence_ids", "fingerprint"],
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["node_type", "node_id"],
+      "properties": {
+        "node_type": {"type": "string"},
+        "node_id": {"type": "string", "minLength": 1},
+        "key": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "plan_id": {"type": "string", "minLength": 1},
+    "root": {"$ref": "#/$defs/node"},
+    "affected_nodes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/node"}},
+    "reason": {"type": "string", "minLength": 1},
+    "authority_id": {"type": "string", "minLength": 1},
+    "authority_class": {"type": "string", "enum": ["VERIFIER", "POLICY", "CONTROLLER"]},
+    "graph_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

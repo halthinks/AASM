@@ -40,8 +40,21 @@ from .reasoning import (
     project_reasoning_evidence, reasoning_artifact_document, reasoning_transition_document,
     reasoning_commit_document, run_reasoning_conformance,
 )
+from .semantic_dependencies import (
+    SEMANTIC_DEPENDENCY_CONTRACT_ID, SEMANTIC_DEPENDENCY_CONTRACT_VERSION,
+    TRUTH_MAINTENANCE_CONTRACT_ID, TRUTH_MAINTENANCE_CONTRACT_VERSION,
+    REACTIVE_OBLIGATION_CONTRACT_ID, REACTIVE_OBLIGATION_CONTRACT_VERSION,
+    CAUSAL_DECISION_CONTRACT_ID, CAUSAL_DECISION_CONTRACT_VERSION,
+    SEMANTIC_NODE_TYPES, SEMANTIC_DEPENDENCY_RELATIONS,
+    SemanticNodeRef, SemanticDependency, CausalDecisionRecord, ReactiveObligationRule,
+    ReactiveObligationRecord, TruthMaintenancePlan, semantic_dependency_contract,
+    explicit_dependency_edges, reactive_rules_from_evidence, truth_records_from_evidence,
+    build_semantic_dependency_graph, dependency_closure, dependency_impact_report,
+    dependency_lineage_report, dependency_memory_signals, semantic_dependency_document,
+    run_semantic_dependency_conformance,
+)
 
-__version__ = "0.37.0"
+__version__ = "0.38.0"
 REMOTE_PROTOCOL_NAME = "aasm.remote.v1"
 REMOTE_PROTOCOL_VERSION = "0.19.0"
 
@@ -74,26 +87,31 @@ _NEW_IMPORTS = [
     "ReasoningTransition", "ReasoningCommit", "reasoning_contract", "next_reasoning_state",
     "project_reasoning_evidence", "reasoning_artifact_document", "reasoning_transition_document",
     "reasoning_commit_document", "run_reasoning_conformance",
+    "SEMANTIC_DEPENDENCY_CONTRACT_ID", "SEMANTIC_DEPENDENCY_CONTRACT_VERSION",
+    "TRUTH_MAINTENANCE_CONTRACT_ID", "TRUTH_MAINTENANCE_CONTRACT_VERSION",
+    "REACTIVE_OBLIGATION_CONTRACT_ID", "REACTIVE_OBLIGATION_CONTRACT_VERSION",
+    "CAUSAL_DECISION_CONTRACT_ID", "CAUSAL_DECISION_CONTRACT_VERSION",
+    "SEMANTIC_NODE_TYPES", "SEMANTIC_DEPENDENCY_RELATIONS", "SemanticNodeRef", "SemanticDependency",
+    "CausalDecisionRecord", "ReactiveObligationRule", "ReactiveObligationRecord", "TruthMaintenancePlan",
+    "semantic_dependency_contract", "explicit_dependency_edges", "reactive_rules_from_evidence",
+    "truth_records_from_evidence", "build_semantic_dependency_graph", "dependency_closure",
+    "dependency_impact_report", "dependency_lineage_report", "dependency_memory_signals",
+    "semantic_dependency_document", "run_semantic_dependency_conformance",
 ]
 _NEW_METHODS = [
     "trace_projection", "semantic_trace_report", "provenance_export", "provenance_verify", "provenance_select",
-    "admit_semantic_problem", "semantic_problem_report", "semantic_domain_report",
-    "semantic_compiler_report", "compile_and_admit_semantic",
-    "propose_artifact", "support_artifact", "contest_artifact", "request_verification",
-    "record_verification", "authorize_artifact", "refute_artifact", "mark_stale", "reject_artifact",
-    "reasoning_commit", "reasoning_report", "reasoning_provenance", "reasoning_contract_report",
+    "admit_semantic_problem", "semantic_problem_report", "semantic_domain_report", "semantic_compiler_report", "compile_and_admit_semantic",
+    "propose_artifact", "support_artifact", "contest_artifact", "request_verification", "record_verification", "authorize_artifact", "refute_artifact", "mark_stale", "reject_artifact", "reasoning_commit", "reasoning_report", "reasoning_provenance", "reasoning_contract_report",
+    "semantic_dependency_contract_report", "semantic_dependency_graph", "semantic_dependency_impact", "semantic_dependency_lineage", "semantic_memory_projection_signals", "register_semantic_dependency", "register_causal_decision", "register_reactive_obligation_rule", "reactive_obligation_report", "derive_reactive_obligations", "truth_maintenance_report", "apply_truth_change", "resume_truth_maintenance",
 ]
 _NEW_COMMANDS = [
     "trace-project", "trace-check", "provenance-export", "provenance-verify", "provenance-select", "recovery-certify",
-    "semantic-problem-contract", "problem-admit", "problem", "domain", "semantic-compiler-contract",
-    "semantic-compile", "semantic-compiler-conformance", "semantic-compile-admit", "compile", "problem-check",
-    "reasoning-contract", "reasoning", "reasoning-artifact", "reasoning-provenance", "reasoning-commit",
-    "reasoning-conformance",
+    "semantic-problem-contract", "problem-admit", "problem", "domain", "semantic-compiler-contract", "semantic-compile", "semantic-compiler-conformance", "semantic-compile-admit", "compile", "problem-check",
+    "reasoning-contract", "reasoning", "reasoning-artifact", "reasoning-provenance", "reasoning-commit", "reasoning-conformance",
+    "semantic-dependency-contract", "semantic-dependency-conformance", "dependency-graph", "dependency-impact", "dependency-lineage", "dependency-add", "causal-decision-add", "reactive-rule-add", "reactive-derive", "reactive-obligations", "truth-maintain", "truth-resume", "truth-maintenance-report", "semantic-memory-signals",
 ]
 _NEW_SURFACES = [
-    "trace", "trace-semantic", "provenance", "problem", "semantic-problem", "domain", "semantic-domain",
-    "compiler", "semantic-compiler", "reasoning", "reasoning-artifacts", "epistemic",
-    "reasoning-contract", "epistemic-contract",
+    "trace", "trace-semantic", "provenance", "problem", "semantic-problem", "domain", "semantic-domain", "compiler", "semantic-compiler", "reasoning", "reasoning-artifacts", "epistemic", "reasoning-contract", "epistemic-contract", "dependencies", "semantic-dependencies", "truth-maintenance", "reactive-obligations", "semantic-memory-signals",
 ]
 
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*_v31.SUPPORTED_PUBLIC_IMPORTS, *_NEW_IMPORTS]))
@@ -102,27 +120,16 @@ SUPPORTED_CLI_COMMANDS = list(dict.fromkeys([*_v31.SUPPORTED_CLI_COMMANDS, *_NEW
 SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([*_v31.SUPPORTED_INSPECTION_SURFACES, *_NEW_SURFACES]))
 
 PUBLIC_API_CONTRACT = _deepcopy(_v31.PUBLIC_API_CONTRACT)
-PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.13.0", "runtime_version": __version__,
-    "supported_imports": SUPPORTED_PUBLIC_IMPORTS, "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
-    "supported_cli_commands": SUPPORTED_CLI_COMMANDS, "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
-})
-PUBLIC_API_CONTRACT["trace_conformance"] = {
-    "contract_id": TRACE_CONTRACT_ID, "contract_version": TRACE_CONTRACT_VERSION,
-    "semantic_contract_id": SEMANTIC_TRACE_CONTRACT_ID, "semantic_contract_version": SEMANTIC_TRACE_CONTRACT_VERSION,
-    "source": "AUTHORITATIVE_DURABLE_EVENT_HISTORY", "unknown_transition_policy": "UNSUPPORTED_EXPLICIT", "snapshot_only_input": "REJECTED",
-}
+PUBLIC_API_CONTRACT.update({"contract_version": "0.14.0", "runtime_version": __version__, "supported_imports": SUPPORTED_PUBLIC_IMPORTS, "supported_engine_methods": SUPPORTED_ENGINE_METHODS, "supported_cli_commands": SUPPORTED_CLI_COMMANDS, "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES})
+PUBLIC_API_CONTRACT["trace_conformance"] = {"contract_id": TRACE_CONTRACT_ID, "contract_version": TRACE_CONTRACT_VERSION, "semantic_contract_id": SEMANTIC_TRACE_CONTRACT_ID, "semantic_contract_version": SEMANTIC_TRACE_CONTRACT_VERSION, "source": "AUTHORITATIVE_DURABLE_EVENT_HISTORY", "unknown_transition_policy": "UNSUPPORTED_EXPLICIT", "snapshot_only_input": "REJECTED"}
 PUBLIC_API_CONTRACT["provenance"] = provenance_contract()
 PUBLIC_API_CONTRACT["distributed_recovery"] = distributed_recovery_contract()
 PUBLIC_API_CONTRACT["semantic_problem"] = semantic_problem_contract()
 PUBLIC_API_CONTRACT["semantic_compiler"] = semantic_compiler_contract()
 PUBLIC_API_CONTRACT["reasoning"] = reasoning_contract()
+PUBLIC_API_CONTRACT["semantic_dependencies"] = semantic_dependency_contract()
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
-PUBLIC_API_CONTRACT["golden_path"] = list(dict.fromkeys([
-    *PUBLIC_API_CONTRACT.get("golden_path", []),
-    "compile a normalized semantic source deterministically and admit only through the AASM event/reducer boundary",
-    "propose reasoning artifacts, verify them independently, authorize them by policy, and commit only admitted knowledge",
-]))
+PUBLIC_API_CONTRACT["golden_path"] = list(dict.fromkeys([*PUBLIC_API_CONTRACT.get("golden_path", []), "compile a normalized semantic source deterministically and admit only through the AASM event/reducer boundary", "propose reasoning artifacts, verify them independently, authorize them by policy, and commit only admitted knowledge", "propagate truth changes only through registered descendant dependencies while preserving unrelated siblings", "derive reactive obligations from durable events without executing handlers inside state reduction"]))
 
 
 def public_api_contract() -> dict: return _deepcopy(PUBLIC_API_CONTRACT)
@@ -142,7 +149,12 @@ def validate_public_api_contract() -> dict:
     if reasoning.get("artifact_contract_id") != REASONING_ARTIFACT_CONTRACT_ID: errors.append("reasoning artifact contract mismatch")
     if reasoning.get("admission_contract_id") != EPISTEMIC_ADMISSION_CONTRACT_ID: errors.append("epistemic admission contract mismatch")
     if reasoning.get("durability_boundary") != "AASM_EVIDENCE_EVENT_REDUCER_ONLY": errors.append("reasoning durability boundary mismatch")
-    if reasoning.get("dependency_truth_maintenance") != "RESERVED_FOR_V0.38": errors.append("reasoning release boundary mismatch")
+    if reasoning.get("dependency_truth_maintenance") != "RESERVED_FOR_V0.38": errors.append("v0.37 reasoning release boundary was mutated")
+    dependencies = PUBLIC_API_CONTRACT.get("semantic_dependencies") or {}
+    if dependencies.get("contract_id") != SEMANTIC_DEPENDENCY_CONTRACT_ID: errors.append("semantic dependency contract mismatch")
+    if dependencies.get("truth_change_policy") != "AFFECTED_DESCENDANTS_ONLY": errors.append("truth-maintenance locality policy mismatch")
+    if dependencies.get("unrelated_sibling_policy") != "PRESERVE": errors.append("truth-maintenance sibling preservation mismatch")
+    if dependencies.get("reactive_policy") != "DERIVE_OBLIGATION_NEVER_EXECUTE_HANDLER": errors.append("reactive obligation authority boundary mismatch")
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 
 

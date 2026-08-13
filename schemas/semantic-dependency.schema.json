@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/semantic-dependency.schema.json",
+  "title": "AASM Semantic Dependency v1",
+  "type": "object",
+  "required": ["dependency_id", "source", "target", "relation", "propagates_stale", "scope_id", "metadata", "fingerprint"],
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": ["node_type", "node_id"],
+      "properties": {
+        "node_type": {"type": "string", "enum": ["ENTITY", "PREDICATE", "OBJECTIVE", "ARTIFACT", "EVIDENCE", "EVENT", "VERIFIER", "OBSERVER", "CERTIFICATE", "CONSTRAINT", "DECISION", "OBLIGATION", "OPERATOR", "EFFECT", "RULE"]},
+        "node_id": {"type": "string", "minLength": 1},
+        "key": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "dependency_id": {"type": "string", "minLength": 1},
+    "source": {"$ref": "#/$defs/node"},
+    "target": {"$ref": "#/$defs/node"},
+    "relation": {"type": "string", "enum": ["DEPENDS_ON", "DERIVES", "GROUNDS", "SUPPORTS", "REFUTES", "VERIFIES", "CERTIFIES", "CONSTRAINS", "SELECTS", "REQUIRES", "EXECUTES", "CAUSES", "OBSERVES", "SUPERSEDES"]},
+    "propagates_stale": {"type": "boolean"},
+    "scope_id": {"type": "string", "minLength": 1},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

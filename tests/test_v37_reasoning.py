@@ -60,7 +60,7 @@ def authorize_fixture(engine: AASMEngine):
 
 def test_v37_reasoning_contract_and_public_surface():
     contract = reasoning_contract()
-    assert __version__ == "0.37.0"
+    assert __version__ == "0.38.0"
     assert contract["artifact_contract_id"] == "aasm.reasoning.artifact.v1"
     assert contract["admission_contract_id"] == "aasm.reasoning.admission.v1"
     assert contract["commit_contract_id"] == "aasm.reasoning.commit.v1"
@@ -68,7 +68,7 @@ def test_v37_reasoning_contract_and_public_surface():
     assert contract["dependency_truth_maintenance"] == "RESERVED_FOR_V0.38"
     report = validate_public_api_contract()
     assert report["valid"] is True, report
-    assert report["contract"]["contract_version"] == "0.13.0"
+    assert report["contract"]["contract_version"] == "0.14.0"
 
 
 def test_typed_reasoning_artifacts_have_deterministic_ids_and_fingerprints():
