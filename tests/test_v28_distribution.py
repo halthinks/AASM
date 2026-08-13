@@ -22,7 +22,6 @@ def _release_module():
 
 
 def test_distribution_metadata_and_adoption_contract_are_aligned():
-    assert VERSION == "0.32.0"
     contract = public_api_contract()
     assert contract["runtime_version"] == VERSION
     assert contract["distribution"]["package"] == "aasm-runtime"
@@ -66,8 +65,9 @@ def test_release_workflow_is_immutable_and_version_agnostic():
 
 def test_release_docs_show_current_and_next_version():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "v0.32.0 — Runtime/Formal Trace Conformance" in readme
-    assert "v0.33.0 — Signed Provenance and Verifiable Exports" in readme
+    assert f"v{VERSION}" in readme
+    assert "Signed Provenance and Verifiable Exports" in readme
+    assert "v0.34.0 — Distributed Recovery Certification" in readme
     assert "aasm.remote.v1 / 0.19.0" in readme
     assert "docs/CURRENT_RELEASE.md" in (ROOT / "docs" / "RELEASE_PROCESS.md").read_text(encoding="utf-8")
 
