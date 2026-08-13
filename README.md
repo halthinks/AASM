@@ -6,6 +6,8 @@
 
 **Hierarchical Memory, Reasoning Frontier, and Context Projection**
 
+**Next release:** v0.41.0 — Domain-Neutral Autonomous Solver Loop
+
 AASM v0.40 adds governed long-horizon memory without creating a second truth system. Canonical memory remains on the existing AASM Decision → Obligation → Evidence path; semantic memory can reference only admitted reasoning artifacts; V38 truth changes can make memory stale; scope and principal privacy are enforced before retrieval; vector/lexical/graph indexes are derived and never become memory identity.
 
 ### Release contracts
