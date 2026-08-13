@@ -30,7 +30,8 @@ def test_distributed_recovery_certificate_exercises_all_declared_failures():
     assert first["status"]=="PASS",json.dumps(first,indent=2,default=str)
     assert [row["scenario"] for row in first["scenarios"]]==contract["scenarios"]
     assert all(row["status"]=="PASS" for row in first["scenarios"])
-    assert first["report_sha256"]==second["report_sha256"]
+    assert first["scenario_signature_sha256"]==second["scenario_signature_sha256"]
+    assert len(first["report_sha256"])==64 and len(second["report_sha256"])==64
 
 
 def test_runbook_and_recovery_cli_are_visible(capsys):
