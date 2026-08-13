@@ -1,30 +1,23 @@
-# AASM v0.33.0 — Signed Provenance and Verifiable Exports
+# AASM v0.34.0 — Distributed Recovery Certification
 
-v0.33.0 makes completed AASM runs portable and independently checkable without trusting the original server or database.
+v0.34.0 adds `aasm.recovery.v1 / 0.1.0`, an executable deterministic failure-injection certificate over the existing worker, lease, persistence, and effect paths.
 
-## Delivered
+Scenarios:
 
-- `aasm.provenance.v1 / 0.1.0`;
-- canonical UTF-8 JSON export files;
-- content-addressed manifest with exact byte counts and SHA-256 digests;
-- detached HMAC-SHA256 signature envelope and signer identity;
-- offline verification from the export directory plus verification key;
-- selective-disclosure sub-manifests retaining parent-manifest SHA-256 lineage;
-- runtime and CLI export/verify/select surfaces;
-- tamper, wrong-key, and lineage regression tests.
+- worker crash;
+- lease expiry and reclaim;
+- stale completion rejection;
+- duplicate delivery rejection;
+- database restart persistence;
+- supervisor loss and reclaim;
+- external effect `UNKNOWN` followed by explicit reconciliation.
 
-The authoritative runtime path is unchanged. Export is read-only over durable machine history and snapshots.
-
-## Compatibility
+A report passes only when every scenario reaches one valid authority/effect outcome or an explicit reconciliation boundary. No second scheduler, lease system, effect ledger, or recovery database is introduced.
 
 ```text
-package/runtime: 0.33.0
-adoption:         aasm.adoption.v1 / 0.9.0
-trace:            aasm.trace.v1 / 0.1.0
-provenance:       aasm.provenance.v1 / 0.1.0
+package/runtime: 0.34.0
+adoption:         aasm.adoption.v1 / 0.10.0
+recovery:         aasm.recovery.v1 / 0.1.0
 remote:           aasm.remote.v1 / 0.19.0
+next:             v0.35.0 Semantic Problem Model Foundations
 ```
-
-## Next
-
-**v0.34.0 — Distributed Recovery Certification**.

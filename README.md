@@ -13,47 +13,40 @@ AASM keeps the official state of a long-running job outside the language model. 
 
 </div>
 
-## Current release — v0.33.0
+## Current release — v0.34.0
 
-**Signed Provenance and Verifiable Exports**
+**Distributed Recovery Certification**
 
 | Identity | Value |
 |---|---|
-| Package/runtime | `aasm-runtime 0.33.0` |
-| Adoption contract | `aasm.adoption.v1 / 0.9.0` |
+| Package/runtime | `aasm-runtime 0.34.0` |
+| Adoption contract | `aasm.adoption.v1 / 0.10.0` |
 | Trace contract | `aasm.trace.v1 / 0.1.0` |
 | Provenance contract | `aasm.provenance.v1 / 0.1.0` |
+| Recovery contract | `aasm.recovery.v1 / 0.1.0` |
 | Remote protocol | `aasm.remote.v1 / 0.19.0` |
-| Next release | **v0.34.0 — Distributed Recovery Certification** |
+| Next release | **v0.35.0 — Semantic Problem Model Foundations** |
 
-v0.33 lets a completed AASM run leave the server as a portable package that can be checked offline. The package contains canonical event, snapshot, trace, and semantic-trace files; a content-addressed manifest; and a detached HMAC-SHA256 signature envelope. A verifier checks the signer identity, manifest signature, byte sizes, and SHA-256 of every covered file. Selective-disclosure exports carry the parent-manifest digest so lineage remains explicit.
+v0.34 turns distributed recovery from a collection of capabilities into an executable certification report. `aasm recovery-certify` deterministically injects worker loss, lease expiry and reclaim, stale completion, duplicate delivery, database restart, supervisor loss, and an external `UNKNOWN` effect followed by explicit reconciliation. A scenario passes only when there is one valid authority/effect outcome or an explicit reconciliation boundary.
 
 ```bash
-# Start the complete local stack
 git clone https://github.com/halthinks/AASM.git
 cd AASM
 docker compose up --build
 
-# Inspect the supported API
 aasm adoption-contract
-
-# Export one persisted machine
-aasm provenance-export MACHINE_ID --store runs.db \
-  --output verified-run --key-file signer.key --signer-id operator-1
-
-# Verify without the original AASM database
-aasm provenance-verify verified-run --key-file signer.key --signer-id operator-1
-
-# Produce a signed disclosure containing only selected covered files
-aasm provenance-select verified-run --output disclosure \
-  --include trace.json --include semantic-trace.json --key-file signer.key
+aasm recovery-certify
 ```
 
-## Why AASM exists
+### What AASM protects
 
-A conversational agent can forget decisions, retry disproven approaches, hide unfinished requirements, or modify the newest symptom instead of the causal assumption. AASM turns that work into an explicit state machine with durable Decisions, Obligations, Evidence, conflicts, learned no-goods, causal backjumping, fairness, effects, leases, replay, and formal checks.
-
-A failed branch is not merely `FAILED`. AASM can retain exactly which assumptions authorized it, what evidence contradicted it, what unrelated work remains valid, and where execution should reconsider.
+- **Decisions** — named assumptions and choices with causal provenance.
+- **Obligations** — work that cannot silently disappear.
+- **Evidence** — durable support for decisions, conflicts, and completion.
+- **Recovery** — causal backjumping and restart without amnesia.
+- **Effects and leases** — explicit authority, idempotency, expiry, stale-result rejection, and reconciliation.
+- **Replay and formal trace** — reconstruct and check what actually happened.
+- **Portable provenance** — signed content-addressed exports verifiable away from the original database.
 
 ## Architecture
 
@@ -68,30 +61,21 @@ canonical snapshot
       ↓
 Memory / SQLite / PostgreSQL
       ↓
-assurance · observability · replay · exports
+assurance · observability · replay · provenance · recovery certification
 ```
 
-There is one authoritative event/reducer path. Framework adapters, reference applications, formal projection, provenance exports, and future semantic solving extend that path rather than creating competing machine truth.
+There is one authoritative event/reducer path. Framework adapters and the coming semantic solver extend it instead of creating competing machine truth.
 
-## Major milestones
+## Release progression
 
-- **v0.29** — thin LangGraph adoption without replacing LangGraph.
-- **v0.30** — framework-neutral adapter conformance.
-- **v0.31** — hierarchical decision scopes with causal cross-scope recovery.
-- **v0.32** — lossless runtime/formal trace conformance.
-- **v0.33** — signed, content-addressed, offline-verifiable run exports.
-- **v0.34 next** — distributed recovery certification.
-- **v0.35+** — domain-neutral semantic solver program.
-
-## Documentation
-
-- [Why AASM?](WHY_AASM.md)
-- [Roadmap](ROADMAP.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Formal Assurance](docs/FORMAL_ASSURANCE.md)
-- [Compatibility](docs/COMPATIBILITY.md)
-- [Release Process](docs/RELEASE_PROCESS.md)
-- [Operator Runbooks](docs/runbooks/README.md)
+- **v0.29** Thin LangGraph Adapter
+- **v0.30** Adapter Conformance Kit
+- **v0.31** Hierarchical Decision Scopes
+- **v0.32** Runtime/Formal Trace Conformance
+- **v0.33** Signed Provenance and Verifiable Exports
+- **v0.34** Distributed Recovery Certification
+- **v0.35 next** Semantic Problem Model Foundations
+- **v0.36** Semantic Compiler SDK
 
 ## Install
 
@@ -99,7 +83,7 @@ There is one authoritative event/reducer path. Framework adapters, reference app
 pip install aasm-runtime
 ```
 
-For contributors:
+Contributor setup:
 
 ```bash
 python -m venv .venv
@@ -108,9 +92,13 @@ pip install -e '.[dev]'
 pytest -q
 ```
 
+## Documentation
+
+[Why AASM?](WHY_AASM.md) · [Roadmap](ROADMAP.md) · [Architecture](docs/ARCHITECTURE.md) · [Formal Assurance](docs/FORMAL_ASSURANCE.md) · [Operator Runbooks](docs/runbooks/README.md) · [Release Process](docs/RELEASE_PROCESS.md)
+
 ## Correctness boundary
 
-AASM can prove that a covered artifact matches a digest, that an event history replays under the production reducer, or that a declared bounded formal property holds. It does not manufacture domain truth: external measurements, simulations, human reports, and scientific assumptions still require appropriate domain verification.
+AASM can establish machine authority, replayability, digest equality, bounded formal properties, and deterministic failure-recovery outcomes. It does not manufacture domain truth: external measurements, simulations, human reports, and scientific assumptions still require appropriate domain verification.
 
 ## License
 
