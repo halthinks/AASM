@@ -5,7 +5,7 @@
 
 **A durable, deterministic control plane for agents, tools, models, humans, and real work.**
 
-AASM keeps the official state of a long-running job outside the language model. Models propose; AASM decides what may become durable, records why, preserves evidence, and recovers from bad assumptions without throwing away unrelated work.
+Models can propose. AASM owns what becomes durable: decisions, obligations, evidence, conflicts, effects, leases, replay, recovery, and now a domain-neutral semantic problem definition.
 
 [![CI](https://github.com/halthinks/AASM/actions/workflows/ci.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/ci.yml)
 [![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
@@ -13,40 +13,57 @@ AASM keeps the official state of a long-running job outside the language model. 
 
 </div>
 
-## Current release — v0.34.0
+## Current release — v0.35.0
 
-**Distributed Recovery Certification**
+**Semantic Problem Model Foundations**
 
 | Identity | Value |
 |---|---|
-| Package/runtime | `aasm-runtime 0.34.0` |
-| Adoption contract | `aasm.adoption.v1 / 0.10.0` |
-| Trace contract | `aasm.trace.v1 / 0.1.0` |
-| Provenance contract | `aasm.provenance.v1 / 0.1.0` |
-| Recovery contract | `aasm.recovery.v1 / 0.1.0` |
+| Package/runtime | `aasm-runtime 0.35.0` |
+| Adoption contract | `aasm.adoption.v1 / 0.11.0` |
+| Semantic problem | `aasm.semantic.problem.v1 / 0.1.0` |
+| Domain package | `aasm.domain.v1 / 0.1.0` |
+| Problem instance | `aasm.problem.v1 / 0.1.0` |
+| Recovery | `aasm.recovery.v1 / 0.1.0` |
 | Remote protocol | `aasm.remote.v1 / 0.19.0` |
-| Next release | **v0.35.0 — Semantic Problem Model Foundations** |
+| Next release | **v0.36.0 — Semantic Compiler SDK** |
 
-v0.34 turns distributed recovery from a collection of capabilities into an executable certification report. `aasm recovery-certify` deterministically injects worker loss, lease expiry and reclaim, stale completion, duplicate delivery, database restart, supervisor loss, and an external `UNKNOWN` effect followed by explicit reconciliation. A scenario passes only when there is one valid authority/effect outcome or an explicit reconciliation boundary.
+### What changed
 
-```bash
-git clone https://github.com/halthinks/AASM.git
-cd AASM
-docker compose up --build
+AASM can now carry an explicit semantic problem instead of asking an agent to infer the problem repeatedly from a transcript. The semantic layer is reusable across domains and remains subordinate to the existing AASM authority path.
 
-aasm adoption-contract
-aasm recovery-certify
+```text
+ProblemDefinition
+      ↓
+ProblemModel + DomainPackage
+      ↓
+ProblemInstance
+      ↓
+validation + deterministic fingerprints
+      ↓
+ordinary AASM Evidence event
+      ↓
+production reducer / canonical snapshot / replay
 ```
 
-### What AASM protects
+The core objects are `DomainPackage`, `ProblemDefinition`, `ProblemModel`, `ProblemInstance`, `Entity`, `Predicate`, `Objective`, `Operator`, `Observer`, and `Verifier`. They use canonical JSON and deterministic SHA-256 fingerprints. Validation catches duplicate IDs, missing predicate references, invalid decision domains, missing required model pieces, package/model fingerprint mismatches, and hard compile-time contradictions.
 
-- **Decisions** — named assumptions and choices with causal provenance.
-- **Obligations** — work that cannot silently disappear.
-- **Evidence** — durable support for decisions, conflicts, and completion.
-- **Recovery** — causal backjumping and restart without amnesia.
-- **Effects and leases** — explicit authority, idempotency, expiry, stale-result rejection, and reconciliation.
-- **Replay and formal trace** — reconstruct and check what actually happened.
-- **Portable provenance** — signed content-addressed exports verifiable away from the original database.
+A malformed or contradictory problem is rejected before admission. A structurally valid problem whose capabilities are not yet bound remains visible as `BLOCKED_MISSING_CAPABILITIES` instead of being silently treated as executable.
+
+```bash
+aasm semantic-problem-contract
+
+aasm problem-admit MACHINE_ID --store runs.db --input problem.json
+
+aasm problem MACHINE_ID --store runs.db
+aasm domain MACHINE_ID --store runs.db
+```
+
+Because admission is ordinary evidence, Memory, SQLite, PostgreSQL, replay, provenance export, and existing observability continue to use the same authoritative runtime.
+
+## Why AASM exists
+
+A conversational agent can forget decisions, retry disproven approaches, hide unfinished requirements, or modify the newest symptom instead of the causal assumption. AASM turns that work into an explicit state machine with durable Decisions, Obligations, Evidence, conflicts, learned no-goods, causal backjumping, fairness, effects, leases, replay, and formal checks.
 
 ## Architecture
 
@@ -61,10 +78,10 @@ canonical snapshot
       ↓
 Memory / SQLite / PostgreSQL
       ↓
-assurance · observability · replay · provenance · recovery certification
+assurance · replay · provenance · semantic projections
 ```
 
-There is one authoritative event/reducer path. Framework adapters and the coming semantic solver extend it instead of creating competing machine truth.
+There is still one authoritative event/reducer path. The semantic layer does not own a private database or a second scheduler.
 
 ## Release progression
 
@@ -74,8 +91,8 @@ There is one authoritative event/reducer path. Framework adapters and the coming
 - **v0.32** Runtime/Formal Trace Conformance
 - **v0.33** Signed Provenance and Verifiable Exports
 - **v0.34** Distributed Recovery Certification
-- **v0.35 next** Semantic Problem Model Foundations
-- **v0.36** Semantic Compiler SDK
+- **v0.35** Semantic Problem Model Foundations
+- **v0.36 next** Semantic Compiler SDK
 
 ## Install
 
@@ -98,7 +115,7 @@ pytest -q
 
 ## Correctness boundary
 
-AASM can establish machine authority, replayability, digest equality, bounded formal properties, and deterministic failure-recovery outcomes. It does not manufacture domain truth: external measurements, simulations, human reports, and scientific assumptions still require appropriate domain verification.
+AASM can validate structural semantics, identities, referential integrity, fingerprints, event-sourced admission, replay, and machine authority. It does not make a domain premise true merely because the premise is well formed.
 
 ## License
 

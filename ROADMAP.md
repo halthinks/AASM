@@ -1,12 +1,8 @@
 # AASM Roadmap
 
-AASM is currently **v0.34.0 / experimental**.
+AASM is currently **v0.35.0 / experimental**.
 
-Every release must be ordinary source reachable from `main`, have aligned package/runtime/README metadata, pass CI and formal assurance, publish an immutable release, and verify every remote asset.
-
-## Architectural rule
-
-`public API → durable event → production reducer → canonical snapshot → Memory/SQLite/PostgreSQL → assurance/observability/replay`
+Every release is complete only when its ordinary source is reachable from `main`, package/runtime/README agree, CI and formal assurance pass, and the immutable release assets verify against the exact commit.
 
 ## Completed foundation
 
@@ -17,21 +13,16 @@ Every release must be ordinary source reachable from `main`, have aligned packag
 | v0.31.0 | Hierarchical Decision Scopes | Released |
 | v0.32.0 | Runtime/Formal Trace Conformance | Released |
 | v0.33.0 | Signed Provenance and Verifiable Exports | Released |
-| **v0.34.0** | **Distributed Recovery Certification** | **Current — implemented** |
-
-## v0.34.0 — Distributed Recovery Certification
-
-Deterministic failure injection certifies worker crash, lease expiry/reclaim, stale completion rejection, duplicate delivery rejection, database restart persistence, supervisor loss, and `UNKNOWN` external-effect reconciliation. A scenario must recover to one valid authority/effect outcome or stop at explicit reconciliation.
-
-# Semantic Solver Program
-
-`ProblemDefinition → semantic compilation → ProblemModel → ProblemInstance → AASM authority runtime → verified completion or explicit unresolved state`
+| v0.34.0 | Distributed Recovery Certification | Released |
+| **v0.35.0** | **Semantic Problem Model Foundations** | **Current — implemented** |
 
 ## v0.35.0 — Semantic Problem Model Foundations
-Bind, validate, fingerprint, persist through ordinary events, replay, and inspect a domain-neutral semantic problem: `DomainPackage`, `ProblemDefinition`, `ProblemModel`, `ProblemInstance`, entities, predicates, variables, facts, assumptions, obligations, constraints, objectives, operator/observer/verifier definitions, and deterministic completion rules.
+
+`DomainPackage`, `ProblemDefinition`, `ProblemModel`, and `ProblemInstance` are canonical, versioned, fingerprinted value objects. Entities, predicates, objectives, operators, observers, and verifiers are domain-neutral. Referential integrity, duplicates, decision domains, missing model pieces, capability gaps, and direct fact contradictions are checked before admission. Accepted instances are recorded through ordinary AASM evidence events and reconstruct through replay.
 
 ## v0.36.0 — Semantic Compiler SDK
-`PARSE → RESOLVE → NORMALIZE → TYPE_CHECK → VALIDATE → FINGERPRINT → INSTANTIATE`, with deterministic IR, source-mapped diagnostics, missing-input/capability reporting, content-addressed cache, proposal-only compiler authority, compile-and-admit through the event path, and conformance fixtures.
+
+**Next.** Implement deterministic `PARSE → RESOLVE → NORMALIZE → TYPE_CHECK → VALIDATE → FINGERPRINT → INSTANTIATE`; source-mapped diagnostics; deterministic IDs; missing input/capability reports; content-addressed cache; proposal-only compiler authority; compile-and-admit through the event/reducer path; and conformance fixtures.
 
 ## v0.37.0 — Reasoning Artifacts and Semantic Dependency Graph
 Typed durable reasoning artifacts connected through Entity → Predicate → Claim → Evidence → Verifier → Certificate → Constraint → Decision → Operator → Effect → Observation.

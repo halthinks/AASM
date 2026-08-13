@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from . import cli_v31 as _v31
 from .runtime_v32 import AASMEngine
 from .trace_conformance import verify_provenance_export, create_selective_provenance_export
 from .operator_runbooks import certify_distributed_recovery
+from .semantic_result import semantic_problem_contract, semantic_problem_from_document
 
 _v31.AASMEngine = AASMEngine
 _v31._v30._v29._v28._v27._v25._v22._base.AASMEngine = AASMEngine
@@ -16,6 +18,14 @@ def _provenance_export(args): _v31._with_engine(args, lambda engine: _v31._json(
 def _provenance_verify(args): _v31._json(verify_provenance_export(args.source, key=_key(args.key_file), signer_id=args.signer_id))
 def _provenance_select(args): _v31._json(create_selective_provenance_export(args.source, args.output, args.include, key=_key(args.key_file), signer_id=args.signer_id or "local"))
 def _recovery_certify(args): _v31._json(certify_distributed_recovery())
+def _semantic_contract(args): _v31._json(semantic_problem_contract())
+def _problem(args): _v31._with_engine(args, lambda engine: _v31._json(engine.semantic_problem_report()))
+def _domain(args): _v31._with_engine(args, lambda engine: _v31._json(engine.semantic_domain_report()))
+def _problem_admit(args):
+    document = json.loads(Path(args.input).read_text(encoding="utf-8"))
+    domain, definition, model, instance = semantic_problem_from_document(document)
+    _v31._with_engine(args, lambda engine: _v31._json(engine.admit_semantic_problem(domain, definition, model, instance)))
+
 
 def build_parser():
     parser = _v31.build_parser(); commands = _v31._v30._v29._v28._v27._v25._subparsers(parser)
@@ -27,10 +37,13 @@ def build_parser():
     command.add_argument("source"); command.add_argument("--key-file", required=True); command.add_argument("--signer-id"); command.set_defaults(func=_provenance_verify)
     command = commands.add_parser("provenance-select", help="create a signed selective-disclosure sub-manifest")
     command.add_argument("source"); command.add_argument("--output", required=True); command.add_argument("--include", action="append", required=True); command.add_argument("--key-file", required=True); command.add_argument("--signer-id", default="local"); command.set_defaults(func=_provenance_select)
-    command = commands.add_parser("recovery-certify", help="run deterministic distributed recovery certification")
-    command.set_defaults(func=_recovery_certify)
+    command = commands.add_parser("recovery-certify", help="run deterministic distributed recovery certification"); command.set_defaults(func=_recovery_certify)
+    command = commands.add_parser("semantic-problem-contract", help="show the semantic problem model contract"); command.set_defaults(func=_semantic_contract)
+    command = _v31._stored(commands, "problem-admit", "validate and admit a semantic problem document through ordinary AASM evidence", _problem_admit); command.add_argument("--input", required=True)
+    _v31._stored(commands, "problem", "inspect the bound semantic ProblemInstance", _problem)
+    _v31._stored(commands, "domain", "inspect the bound DomainPackage and ProblemModel", _domain)
     inspect = commands.choices["inspect"]; choices = list(inspect._option_string_actions["--surface"].choices)
-    for surface in ("trace", "trace-semantic", "provenance"):
+    for surface in ("trace", "trace-semantic", "provenance", "problem", "semantic-problem", "domain", "semantic-domain"):
         if surface not in choices: choices.append(surface)
     inspect._option_string_actions["--surface"].choices = choices
     return parser
