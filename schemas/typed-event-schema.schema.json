@@ -1,0 +1,18 @@
+{
+  "$id": "https://aasm.dev/schemas/typed-event-schema.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "fingerprint": {"minLength": 32, "type": "string"},
+    "guards": {"items": {"type": "string"}, "type": "array"},
+    "metadata": {"type": "object"},
+    "name": {"minLength": 1, "type": "string"},
+    "payload_schema": {"type": "object"},
+    "required_evidence_types": {"items": {"type": "string"}, "type": "array"},
+    "schema_id": {"minLength": 1, "type": "string"},
+    "version": {"minLength": 1, "type": "string"}
+  },
+  "required": ["schema_id", "name", "payload_schema", "version", "fingerprint"],
+  "title": "AASM Typed Event Schema",
+  "type": "object"
+}

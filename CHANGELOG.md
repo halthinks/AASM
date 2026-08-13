@@ -2,6 +2,25 @@
 
 Detailed history through v0.27.0 is preserved in [`CHANGELOG_0.27_AND_EARLIER.md`](CHANGELOG_0.27_AND_EARLIER.md). Git history and immutable release tags preserve the complete source history for later releases.
 
+## [0.39.0] - 2026-08-13
+
+### Typed Protocol, Capability ABI, and Formal Verification Workers
+
+- added `aasm.typed.protocol.v1 / 0.1.0`, `aasm.capability.abi.v1 / 0.1.0`, `aasm.formal.statement.v1 / 0.1.0`, and `aasm.formal.verification.v1 / 0.1.0`;
+- added immutable, policy-admitted typed event schemas, scoped legal transitions, and pattern machines without introducing a second transition engine;
+- compiled legal transition proposals into existing causal `DecisionRecord`s plus ordinary guard/evidence `ObligationRecord`s, with policy/controller authorization required before activation;
+- added versioned Operator, Observer, Verifier, and Handler capability contracts plus provider bindings enforced through existing resource capability tokens;
+- added provenance-bearing `FormalStatement` objects binding exact source reasoning-artifact fingerprints to canonical TPTP, SMT-LIB2, Lean 4, or HOL representations;
+- added `FormalVerificationRequest`, `FormalVerificationResult`, solver identity, verification-strength, and deterministic aggregation contracts;
+- added reference Vampire, Z3, cvc5, and Lean 4 verifier providers and injectable process workers while keeping execution outside the AASM reducer/kernel;
+- made SMT validity semantics explicit through `ASSUMPTIONS_AND_NEGATED_CONJECTURE`, and made Lean rejection explicitly not a theorem refutation;
+- required conclusive default solver evidence to identify the solver version and an executable SHA-256 or immutable container digest;
+- prohibited theorem-by-vote: independent solver disagreement produces `INCONCLUSIVE`, while proof/certificate/kernel strength remains explicit;
+- routed formal requests through ordinary `TaskDemand` / `TaskLease` execution and committed solver outputs only as ordinary AASM Evidence;
+- integrated conclusive formal evidence with v0.37 verification without automatic epistemic authorization, allowing v0.38 dependency/truth maintenance to handle downstream consequences;
+- added provider-specific lease binding, exact formalization/result fingerprints, crash/restart preservation, idempotent request/result handling, CLI/inspection surfaces, JSON schemas, executable conformance, and bounded TLC/SPIN invariants;
+- advanced `aasm.adoption.v1` to `0.15.0`.
+
 ## [0.38.0] - 2026-08-13
 
 ### Semantic Dependency Graph, Causal Decisions, and Reactive Truth Maintenance

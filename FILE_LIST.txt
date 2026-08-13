@@ -80,6 +80,7 @@
 ./docs/RESOURCE_SCHEDULER.md
 ./docs/SEMANTIC_TRUTH_MAINTENANCE.md
 ./docs/TRACE_CONFORMANCE.md
+./docs/TYPED_CAPABILITIES_FORMAL_VERIFICATION.md
 ./docs/USE_CASES.md
 ./docs/runbooks/README.md
 ./docs/runbooks/history-diagnosis.md
@@ -123,10 +124,13 @@
 ./formal/AASMSemanticTruthMaintenance.tla
 ./formal/AASMTraceConformance.cfg
 ./formal/AASMTraceConformance.tla
+./formal/AASMTypedCapabilities.cfg
+./formal/AASMTypedCapabilities.tla
 ./formal/aasm_calculus.pml
 ./formal/aasm_scope_hierarchy.pml
 ./formal/aasm_semantic_truth_maintenance.pml
 ./formal/aasm_trace_conformance.pml
+./formal/aasm_typed_capabilities.pml
 ./formal/toolchain.lock.json
 ./profiles/bare/README.md
 ./profiles/bare/package.json
@@ -161,6 +165,7 @@
 ./schemas/candidate-batch.schema.json
 ./schemas/candidate-model.schema.json
 ./schemas/candidate-state.schema.json
+./schemas/capability-contract.schema.json
 ./schemas/causal-decision.schema.json
 ./schemas/certificate.schema.json
 ./schemas/change-signal.schema.json
@@ -176,6 +181,9 @@
 ./schemas/external-artifact.schema.json
 ./schemas/fleet-control-policy.schema.json
 ./schemas/fork-request.schema.json
+./schemas/formal-statement.schema.json
+./schemas/formal-verification-request.schema.json
+./schemas/formal-verification-result.schema.json
 ./schemas/governance-budget.schema.json
 ./schemas/governance-context.schema.json
 ./schemas/governance-decision.schema.json
@@ -191,6 +199,7 @@
 ./schemas/model-route.schema.json
 ./schemas/observability-report.schema.json
 ./schemas/package-manifest.schema.json
+./schemas/pattern-machine.schema.json
 ./schemas/pbv-message.schema.json
 ./schemas/plan-edge.schema.json
 ./schemas/plan-node.schema.json
@@ -218,6 +227,7 @@
 ./schemas/trace-projection.schema.json
 ./schemas/transition.schema.json
 ./schemas/truth-maintenance-plan.schema.json
+./schemas/typed-event-schema.schema.json
 ./schemas/worker-control.schema.json
 ./schemas/worker.schema.json
 ./scripts/check_formal_models.py
@@ -240,6 +250,11 @@
 ./src/aasm/_runtime_v31_search.py
 ./src/aasm/_runtime_v37_reasoning.py
 ./src/aasm/_runtime_v38_dependencies.py
+./src/aasm/_runtime_v39_capabilities.py
+./src/aasm/_runtime_v39_capability_abi.py
+./src/aasm/_runtime_v39_formal_request.py
+./src/aasm/_runtime_v39_formal_result.py
+./src/aasm/_runtime_v39_typed.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -267,6 +282,7 @@
 ./src/aasm/cli_v32.py
 ./src/aasm/cli_v37.py
 ./src/aasm/cli_v38.py
+./src/aasm/cli_v39.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -294,6 +310,9 @@
 ./src/aasm/executor_orchestration.py
 ./src/aasm/fleet_control.py
 ./src/aasm/flow.py
+./src/aasm/formal_conformance.py
+./src/aasm/formal_models.py
+./src/aasm/formal_workers.py
 ./src/aasm/governance.py
 ./src/aasm/graph.py
 ./src/aasm/integrations/__init__.py
@@ -370,6 +389,7 @@
 ./src/aasm/runtime_v30.py
 ./src/aasm/runtime_v31.py
 ./src/aasm/runtime_v32.py
+./src/aasm/runtime_v39.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
@@ -384,9 +404,12 @@
 ./src/aasm/server_v30.py
 ./src/aasm/server_v31.py
 ./src/aasm/server_v32.py
+./src/aasm/server_v39.py
 ./src/aasm/supervisor_adapters.py
 ./src/aasm/team_protocol.py
 ./src/aasm/trace_conformance.py
+./src/aasm/typed_capabilities.py
+./src/aasm/typed_protocol.py
 ./src/aasm/worker_loop.py
 ./src/aasm/workers.py
 ./tests/scenarios/crash_and_resume/README.md
@@ -438,4 +461,5 @@
 ./tests/test_v32_trace_conformance.py
 ./tests/test_v37_reasoning.py
 ./tests/test_v38_semantic_dependencies.py
+./tests/test_v39_typed_capabilities.py
 ./tests/test_workers_leases.py

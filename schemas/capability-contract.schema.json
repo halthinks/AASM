@@ -1,0 +1,22 @@
+{
+  "$id": "https://aasm.dev/schemas/capability-contract.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "capability_id": {"minLength": 1, "type": "string"},
+    "capability_type": {"enum": ["OPERATOR", "OBSERVER", "VERIFIER", "HANDLER"]},
+    "deterministic": {"type": "boolean"},
+    "evidence_types": {"items": {"type": "string"}, "type": "array"},
+    "fingerprint": {"minLength": 32, "type": "string"},
+    "input_schema": {"type": "object"},
+    "metadata": {"type": "object"},
+    "output_schema": {"type": "object"},
+    "query_modes": {"items": {"enum": ["VALIDITY", "SATISFIABILITY", "COUNTERMODEL", "EQUIVALENCE", "INVARIANT"]}, "type": "array"},
+    "supported_logics": {"items": {"enum": ["tptp", "smtlib2", "lean4", "hol"]}, "type": "array"},
+    "token": {"minLength": 1, "type": "string"},
+    "version": {"minLength": 1, "type": "string"}
+  },
+  "required": ["capability_id", "capability_type", "version", "input_schema", "output_schema", "token", "fingerprint"],
+  "title": "AASM Capability Contract",
+  "type": "object"
+}

@@ -1,0 +1,26 @@
+{
+  "$id": "https://aasm.dev/schemas/formal-verification-result.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "canonical_status": {"enum": ["PROVED", "DISPROVED", "SAT", "UNSAT", "COUNTERMODEL", "UNKNOWN", "TIMEOUT", "ERROR"]},
+    "certificate_checked": {"type": "boolean"},
+    "counterexample": {"type": ["object", "null"]},
+    "diagnostics": {"items": {"type": "string"}, "type": "array"},
+    "fingerprint": {"minLength": 32, "type": "string"},
+    "formal_statement_fingerprint": {"minLength": 32, "type": "string"},
+    "metadata": {"type": "object"},
+    "proof_object_sha256": {"type": "string"},
+    "raw_output_sha256": {"type": "string"},
+    "raw_status": {"minLength": 1, "type": "string"},
+    "request_fingerprint": {"minLength": 32, "type": "string"},
+    "request_id": {"minLength": 1, "type": "string"},
+    "result_id": {"minLength": 1, "type": "string"},
+    "solver": {"type": "object"},
+    "time_ms": {"minimum": 0, "type": "integer"},
+    "verification_strength": {"enum": ["SOLVER_VERDICT", "MULTI_SOLVER_AGREEMENT", "CHECKED_CERTIFICATE", "TRUSTED_KERNEL"]}
+  },
+  "required": ["result_id", "request_id", "request_fingerprint", "formal_statement_fingerprint", "canonical_status", "solver", "raw_status", "time_ms", "verification_strength", "fingerprint"],
+  "title": "AASM Formal Verification Result",
+  "type": "object"
+}

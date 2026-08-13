@@ -1,0 +1,23 @@
+{
+  "$id": "https://aasm.dev/schemas/formal-verification-request.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "capability_id": {"minLength": 1, "type": "string"},
+    "capability_token": {"minLength": 1, "type": "string"},
+    "capability_version": {"minLength": 1, "type": "string"},
+    "fingerprint": {"minLength": 32, "type": "string"},
+    "formal_statement": {"type": "object"},
+    "linked_artifact_id": {"type": ["string", "null"]},
+    "metadata": {"type": "object"},
+    "obligation_id": {"minLength": 1, "type": "string"},
+    "policy": {"type": "object"},
+    "request_id": {"minLength": 1, "type": "string"},
+    "required_providers": {"items": {"type": "string"}, "type": "array"},
+    "timeout_ms": {"minimum": 1, "type": "integer"},
+    "verifier_id": {"minLength": 1, "type": "string"}
+  },
+  "required": ["request_id", "formal_statement", "capability_id", "capability_version", "obligation_id", "timeout_ms", "policy", "verifier_id", "capability_token", "fingerprint"],
+  "title": "AASM Formal Verification Request",
+  "type": "object"
+}

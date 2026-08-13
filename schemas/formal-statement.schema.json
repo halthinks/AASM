@@ -1,0 +1,26 @@
+{
+  "$id": "https://aasm.dev/schemas/formal-statement.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "assumptions": {"items": {"type": "string"}, "type": "array"},
+    "canonical_source": {"minLength": 1, "type": "string"},
+    "compiler_id": {"minLength": 1, "type": "string"},
+    "compiler_version": {"minLength": 1, "type": "string"},
+    "conjecture": {"type": "string"},
+    "declarations": {"items": {"type": "string"}, "type": "array"},
+    "environment_fingerprint": {"type": "string"},
+    "fingerprint": {"minLength": 32, "type": "string"},
+    "formal_statement_id": {"minLength": 1, "type": "string"},
+    "logic": {"enum": ["tptp", "smtlib2", "lean4", "hol"]},
+    "metadata": {"type": "object"},
+    "query_encoding": {"minLength": 1, "type": "string"},
+    "query_mode": {"enum": ["VALIDITY", "SATISFIABILITY", "COUNTERMODEL", "EQUIVALENCE", "INVARIANT"]},
+    "source_artifact_fingerprints": {"additionalProperties": {"type": "string"}, "type": "object"},
+    "source_artifact_ids": {"items": {"type": "string"}, "type": "array"},
+    "source_fingerprint": {"minLength": 32, "type": "string"}
+  },
+  "required": ["formal_statement_id", "logic", "query_mode", "canonical_source", "query_encoding", "source_artifact_ids", "source_artifact_fingerprints", "source_fingerprint", "fingerprint"],
+  "title": "AASM Formal Statement",
+  "type": "object"
+}

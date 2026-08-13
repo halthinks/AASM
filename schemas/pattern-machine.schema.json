@@ -1,0 +1,20 @@
+{
+  "$id": "https://aasm.dev/schemas/pattern-machine.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "event_vocabulary": {"items": {"type": "object"}, "type": "array"},
+    "fingerprint": {"minLength": 32, "type": "string"},
+    "initial_state": {"minLength": 1, "type": "string"},
+    "metadata": {"type": "object"},
+    "name": {"minLength": 1, "type": "string"},
+    "pattern_id": {"minLength": 1, "type": "string"},
+    "scope_id": {"minLength": 1, "type": "string"},
+    "states": {"items": {"type": "string"}, "minItems": 1, "type": "array"},
+    "transitions": {"items": {"type": "object"}, "type": "array"},
+    "version": {"minLength": 1, "type": "string"}
+  },
+  "required": ["pattern_id", "name", "version", "scope_id", "states", "initial_state", "transitions", "event_vocabulary", "fingerprint"],
+  "title": "AASM Pattern Machine",
+  "type": "object"
+}
