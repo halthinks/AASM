@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/reasoning-commit.schema.json",
+  "title": "AASM Reasoning Commit v1",
+  "type": "object",
+  "required": ["commit_id", "artifact_fingerprints", "authority_id", "authority_class", "parent_commit_id", "metadata", "fingerprint"],
+  "properties": {
+    "commit_id": {"type": "string", "minLength": 1},
+    "artifact_fingerprints": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+    "authority_id": {"type": "string", "minLength": 1},
+    "authority_class": {"type": "string", "enum": ["POLICY", "CONTROLLER"]},
+    "parent_commit_id": {"type": ["string", "null"]},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

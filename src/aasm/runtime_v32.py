@@ -8,11 +8,11 @@ from .runtime_v31 import AASMEngine as V31Engine, default_profile_registry
 from .trace_conformance import project_trace, semantic_trace_check, build_trace_corpus, export_provenance, verify_provenance_export, create_selective_provenance_export
 from .workers import LeaseStatus
 from .evidence import EvidenceRecord
+from ._runtime_v37_reasoning import ReasoningRuntimeMixin
 from .semantic_result import DomainPackage, ProblemDefinition, ProblemModel, ProblemInstance, SEMANTIC_PROBLEM_CONTRACT_ID, canonical_semantic_json, semantic_problem_contract, semantic_problem_document, semantic_problem_from_document, validate_problem_instance
 
-
-class AASMEngine(V31Engine):
-    """v0.36 runtime: deterministic semantic compiler admission over one event/reducer path."""
+class AASMEngine(ReasoningRuntimeMixin, V31Engine):
+    """v0.37 runtime: semantic compilation plus durable epistemic admission over one event/reducer path."""
 
     def _finish_lease(self, lease_id: str, status: str, *, result=None, error=None, at_time=None, reason="lease finished"):
         from .model import now
@@ -77,6 +77,8 @@ class AASMEngine(V31Engine):
         if surface in {"problem", "semantic-problem"}: return self.semantic_problem_report()
         if surface in {"domain", "semantic-domain"}: return self.semantic_domain_report()
         if surface in {"compiler", "semantic-compiler"}: return self.semantic_compiler_report()
+        if surface in {"reasoning", "reasoning-artifacts", "epistemic"}: return self.reasoning_report()
+        if surface in {"reasoning-contract", "epistemic-contract"}: return self.reasoning_contract_report()
         return super().inspect_machine(surface)
 
 

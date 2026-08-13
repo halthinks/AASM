@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/reasoning-transition.schema.json",
+  "title": "AASM Reasoning Transition v1",
+  "type": "object",
+  "required": ["artifact_id", "action", "actor_id", "authority_class", "evidence_ids", "related_artifact_ids", "verifier_ids", "verdict", "reason", "metadata", "fingerprint"],
+  "properties": {
+    "artifact_id": {"type": "string", "minLength": 1},
+    "action": {"type": "string", "enum": ["SUPPORT", "CONTEST", "REQUEST_VERIFICATION", "VERIFY", "AUTHORIZE", "REFUTE", "STALE", "REJECT"]},
+    "actor_id": {"type": "string", "minLength": 1},
+    "authority_class": {"type": "string", "enum": ["PROPOSER", "OBSERVER", "VERIFIER", "POLICY", "CONTROLLER"]},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "related_artifact_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "verifier_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "verdict": {"type": ["string", "null"], "enum": ["PASS", "FAIL", null]},
+    "reason": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

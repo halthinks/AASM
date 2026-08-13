@@ -2,6 +2,20 @@
 
 Detailed history through v0.27.0 is preserved in [`CHANGELOG_0.27_AND_EARLIER.md`](CHANGELOG_0.27_AND_EARLIER.md). Git history and immutable release tags preserve the complete source history for later releases.
 
+## [0.37.0] - 2026-08-13
+
+### Reasoning Artifacts and Epistemic Admission
+
+- added `aasm.reasoning.artifact.v1 / 0.1.0`, `aasm.reasoning.admission.v1 / 0.1.0`, and `aasm.reasoning.commit.v1 / 0.1.0`;
+- added typed `Claim`, `Hypothesis`, `Lemma`, `Invariant`, `Counterexample`, `Definition`, `Assumption`, `Observation`, `Derivation`, `Refutation`, and `ObjectiveResult` artifacts;
+- added deterministic artifact IDs/fingerprints, producer authority classes, verifier requirements, and append-only lifecycle transitions;
+- added `propose_artifact`, `support_artifact`, `contest_artifact`, `request_verification`, `record_verification`, `authorize_artifact`, `refute_artifact`, `mark_stale`, `reject_artifact`, and `reasoning_commit`;
+- rejected self-verification, nonexistent evidence references, low-authority authorization, invalid lifecycle transitions, and forged/direct reasoning records;
+- kept all reasoning durability on ordinary AASM Evidence events and the existing event/reducer/store path;
+- added deterministic reasoning projection, replay/restart preservation, provenance inspection, JSON schemas, CLI surfaces, and executable conformance;
+- reserved semantic dependency propagation and truth maintenance for v0.38;
+- advanced `aasm.adoption.v1` to `0.13.0`.
+
 ## [0.36.0] - 2026-08-12
 
 ### Semantic Compiler SDK

@@ -195,6 +195,9 @@
 ./schemas/profile.schema.json
 ./schemas/provisioning-request.schema.json
 ./schemas/quota.schema.json
+./schemas/reasoning-artifact.schema.json
+./schemas/reasoning-commit.schema.json
+./schemas/reasoning-transition.schema.json
 ./schemas/resource.schema.json
 ./schemas/runtime-config.schema.json
 ./schemas/scope-dependency.schema.json
@@ -227,6 +230,7 @@
 ./src/aasm/_runtime_v31_records.py
 ./src/aasm/_runtime_v31_recovery.py
 ./src/aasm/_runtime_v31_search.py
+./src/aasm/_runtime_v37_reasoning.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -252,6 +256,7 @@
 ./src/aasm/cli_v30.py
 ./src/aasm/cli_v31.py
 ./src/aasm/cli_v32.py
+./src/aasm/cli_v37.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -312,6 +317,7 @@
 ./src/aasm/protocols.py
 ./src/aasm/provider_adapters.py
 ./src/aasm/provisioning.py
+./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
 ./src/aasm/reference_data/research/manifest.json
 ./src/aasm/reference_data/research/question.json
@@ -419,4 +425,5 @@
 ./tests/test_v30_adapter_conformance.py
 ./tests/test_v31_scopes.py
 ./tests/test_v32_trace_conformance.py
+./tests/test_v37_reasoning.py
 ./tests/test_workers_leases.py
