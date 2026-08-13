@@ -14,7 +14,7 @@ def main()->int:
     require(root/"formal/AASMScopeHierarchy.tla",["RootAuthorityRetained","ScopedRestartPreservesParentsAndSiblings"])
     require(root/"formal/AASMTraceConformance.tla",["NoDroppedPrefix","UnknownExplicit"])
     require(root/"src/aasm/semantic_result.py",['canonical_semantic_json','semantic_fingerprint','SEMANTIC_PROBLEM_CONTRACT_ID'])
-    require(root/"src/aasm/runtime_v32.py",['ordinary AASM Evidence','def admit_semantic_problem'])
+    require(root/"src/aasm/runtime_v32.py",['EvidenceRecord','self.add_evidence','def admit_semantic_problem'])
     require(root/".github/workflows/formal.yml",["Verify every bounded TLA+ model","Verify every bounded Promela model"])
     print("v0.35 inherited formal and semantic admission contracts: PASS"); return 0
 if __name__=="__main__": raise SystemExit(main())
