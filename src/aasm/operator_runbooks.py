@@ -48,6 +48,10 @@ def distributed_recovery_contract() -> dict:
         "scenarios": list(RECOVERY_SCENARIOS),
         "success_rule": "ONE_VALID_AUTHORITY_OR_EXPLICIT_RECONCILIATION",
         "evidence": "DETERMINISTIC_FAILURE_INJECTION",
+        "fingerprints": {
+            "report_sha256": "FULL_EVIDENCE_REPORT",
+            "scenario_signature_sha256": "DETERMINISTIC_SCENARIO_OUTCOMES",
+        },
     }
 
 
@@ -62,6 +66,12 @@ def _setup_cert_engine(store=None, *, prefix="worker"):
     engine.register_worker(WorkerRecord(f"{prefix}-a", resource_id, heartbeat_timeout=2.0, last_heartbeat=100.0))
     engine.register_worker(WorkerRecord(f"{prefix}-b", resource_id, heartbeat_timeout=5.0, last_heartbeat=103.0))
     return engine
+
+
+def _digest(value) -> str:
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), default=str).encode()
+    ).hexdigest()
 
 
 def certify_distributed_recovery() -> dict:
@@ -125,7 +135,17 @@ def certify_distributed_recovery() -> dict:
         "status": "PASS" if all(row["status"] == "PASS" for row in rows) else "FAIL",
         "scenarios": rows,
     }
-    report["report_sha256"] = hashlib.sha256(json.dumps(report, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
+    # Preserve a hash over the exact evidence package, including concrete
+    # machine/lease/effect identities, and a separate deterministic signature
+    # over scenario semantics. Independent executions should have different
+    # evidence identities but identical scenario signatures when behavior agrees.
+    report["scenario_signature_sha256"] = _digest({
+        "contract_id": RECOVERY_CONTRACT_ID,
+        "contract_version": RECOVERY_CONTRACT_VERSION,
+        "status": report["status"],
+        "scenarios": [{"scenario": row["scenario"], "status": row["status"]} for row in rows],
+    })
+    report["report_sha256"] = _digest(report)
     return report
 
 
