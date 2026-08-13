@@ -1,0 +1,2 @@
+bool source_valid = true; bool visible = true; bool env_valid = true; bool deps_valid = true; bool fresh = true; bool reusable = true; bool certified = false; bool skipped = false;
+active proctype Reuse() { atomic { assert(!skipped || certified); assert(!certified || (source_valid && visible && env_valid && deps_valid && fresh && reusable)); certified = true; assert(source_valid && visible && env_valid && deps_valid && fresh && reusable); skipped = true; assert(certified); } }
