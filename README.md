@@ -12,7 +12,7 @@ AASM keeps the official state of a job outside the language model. Models can pr
 [![Formal Assurance](https://github.com/halthinks/AASM/actions/workflows/formal.yml/badge.svg)](https://github.com/halthinks/AASM/actions/workflows/formal.yml)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-v0.30.0%20experimental-orange)](ROADMAP.md)
+[![Status](https://img.shields.io/badge/status-v0.31.0%20experimental-orange)](ROADMAP.md)
 
 [Run the full stack](#one-command-start) · [Install](#install-aasm) · [Operator runbooks](#operator-runbooks) · [Why AASM?](WHY_AASM.md) · [Roadmap](ROADMAP.md)
 
@@ -22,50 +22,37 @@ AASM keeps the official state of a job outside the language model. Models can pr
 
 ## Current release
 
-**v0.30.0 — Adapter Conformance Kit**
+**v0.31.0 — Hierarchical Decision Scopes**
 
 | Item | Current state |
 |---|---|
-| **Package/runtime** | **v0.30.0** |
+| **Package/runtime** | **v0.31.0** |
 | **Project status** | Experimental / pre-1.0 |
-| **Current milestone** | **Framework-neutral adapter conformance** |
-| **Prior release** | **v0.29.0 — Thin LangGraph Adapter** |
+| **Current milestone** | **Hierarchical Decision Scopes** |
+| **Prior release** | **v0.30.0 — Adapter Conformance Kit** |
 | **One-command application** | PostgreSQL + runtime + Control Center + worker + Research Synthesis Hero Stack |
 | **Framework adoption** | Existing LangGraph graphs retain topology and checkpoints while AASM supplies durable authority underneath |
 | **Adapter proof** | Eight black-box scenarios with `PASS | FAIL | INCONCLUSIVE`, replay verification, provenance checks, and persistence-bypass detection |
-| **Next release** | **v0.31.0 — Hierarchical Decision Scopes** |
+| **Next release** | **v0.32.0 — Runtime/Formal Trace Conformance** |
 | **Remote compatibility protocol** | `aasm.remote.v1 / 0.19.0` |
 
-v0.30.0 turns the adapter boundary into an executable contract:
+v0.31.0 adds hierarchy without adding another authority layer:
 
-- every driver declares which scenarios and recovery actions it supports;
-- the kit runs success, contradiction, requirement change, lease loss, `UNKNOWN` effect, restart, replay, and fork scenarios;
-- durable histories and reconstructed snapshots are compared independently;
-- committed obligations must carry evidence, and semantic results must retain producer and evidence provenance;
-- direct Store writes and duplicate machine-authority declarations fail even when functional output appears correct;
-- unsupported required scenarios are reported as `INCONCLUSIVE`, never silently accepted;
-- reports include exact checks, findings, event references, coverage, mutation audit, and a SHA-256 report fingerprint;
-- the same evaluator is available through Python, CLI, authenticated HTTP, and the existing Control Center.
+- strategy, architecture, implementation, and workstream decisions can live in separate scopes;
+- child scopes inherit parent decisions or remain isolated by policy;
+- local overrides are explicit and never mutate parent state;
+- sibling or upward information flow requires a durable dependency edge;
+- conflict analysis can backjump across scopes and preserve unrelated sibling work;
+- scoped restart suspends speculation while retaining parents, evidence, pinned decisions, and certified hard knowledge;
+- candidates spanning several scopes activate atomically or not at all;
+- historical flat machines remain valid in the canonical `root` scope.
 
-Run the built-in LangGraph driver:
-
-```bash
-aasm adapter-conformance --adapter langgraph
-```
-
-Core AASM still has no mandatory LangGraph dependency. Install the optional dependency only when running real LangGraph graphs:
-
-```bash
-pip install 'aasm-runtime[langgraph]'
-```
-
-v0.30.0 adds no second runtime, alternate store, duplicate scheduler, duplicate effect ledger, or framework-private machine truth. The conformance Store proxy is an **in-process diagnostic hook, not a security sandbox**; untrusted adapter code still requires process or host isolation.
-
-The package, adoption contract, adapter contract, conformance contract, and wire protocol are intentionally separate:
+The scope model is visible through Python, CLI, authenticated HTTP, and the existing Control Center. The bounded TLC and SPIN models check scope isolation and recovery properties.
 
 ```text
-package/runtime:       aasm-runtime 0.30.0
-adoption contract:     aasm.adoption.v1 / 0.6.0
+package/runtime:       aasm-runtime 0.31.0
+adoption contract:     aasm.adoption.v1 / 0.7.0
+scope contract:        aasm.scopes.v1 / 0.1.0
 LangGraph adapter:     aasm.langgraph.v1 / 0.1.0
 adapter conformance:   aasm.adapter.conformance.v1 / 0.1.0
 remote protocol:       aasm.remote.v1 / 0.19.0
@@ -122,11 +109,11 @@ See [One-Command Local Full Stack](docs/LOCAL_FULL_STACK.md).
 
 Every maintained release builds twice, inspects its contents, clean-installs the wheel, records SHA-256 values, publishes once, and verifies the exact remote assets.
 
-For v0.30.0:
+For v0.31.0:
 
 ```bash
 pip install \
-  https://github.com/halthinks/AASM/releases/download/v0.30.0/aasm_runtime-0.30.0-py3-none-any.whl
+  https://github.com/halthinks/AASM/releases/download/v0.31.0/aasm_runtime-0.31.0-py3-none-any.whl
 ```
 
 Verify the installed package:
@@ -139,8 +126,8 @@ aasm runbook history-diagnosis
 The release contains:
 
 ```text
-aasm_runtime-0.30.0-py3-none-any.whl
-aasm_runtime-0.30.0.tar.gz
+aasm_runtime-0.31.0-py3-none-any.whl
+aasm_runtime-0.31.0.tar.gz
 historical-release-report.json
 SHA256SUMS.txt
 release-manifest.json
@@ -261,6 +248,37 @@ GET /v1/conformance/adapters/langgraph?scenario=success
 A `PASS` means every selected scenario met the supported AASM authority, durability, evidence, recovery, and replay checks. A `FAIL` includes exact finding codes and event-linked evidence. `INCONCLUSIVE` means a required capability was not exercised or declared—not that the adapter passed.
 
 See [Adapter Conformance Kit](docs/ADAPTER_CONFORMANCE.md).
+
+---
+
+# Hierarchical Decision Scopes
+
+```text
+root
+└── strategy
+    ├── architecture-a
+    │   └── implementation-a
+    └── architecture-b
+        └── implementation-b
+```
+
+```python
+from aasm import AASMEngine, DecisionScope, ProblemSpec
+
+engine = AASMEngine(ProblemSpec("scoped delivery"))
+engine.register_scope(DecisionScope("strategy", "Strategy", kind="STRATEGY"))
+engine.register_scope(DecisionScope(
+    "architecture-api", "API architecture",
+    kind="ARCHITECTURE", parent_scope_id="strategy",
+))
+```
+
+```bash
+aasm scope-report MACHINE_ID --store runs.db
+aasm scope-context MACHINE_ID --store runs.db architecture-api
+```
+
+A contradiction in one implementation branch can backjump to its responsible architecture decision while preserving unrelated sibling branches. Read [Hierarchical Decision Scopes](docs/HIERARCHICAL_DECISION_SCOPES.md).
 
 ---
 
@@ -467,6 +485,7 @@ Reference applications, adapters, local-stack services, release tooling, Control
 | Restart without amnesia | Discard speculation while retaining evidence and learned knowledge |
 | Certificate-gated hard knowledge | Require independent verification before a constraint becomes hard |
 | Atomic candidate activation | Commit an entire candidate model or none of it |
+| Hierarchical decision scopes | Separate reasoning levels while retaining one machine, causal graph, and event history |
 | Distributed workers | Registration, heartbeat, leases, expiry, reclaim, quotas, and stale-result rejection |
 | Controlled effects | Authorization, idempotency, ownership, UNKNOWN outcomes, and reconciliation |
 | Observability | Decision, Obligation, Evidence, causal graphs, timelines, and fairness debt |
@@ -486,7 +505,7 @@ See [Compatibility Policy](docs/COMPATIBILITY.md), [Formal Assurance](docs/FORMA
 
 # Next phases
 
-The execution plan is maintained in [ROADMAP.md](ROADMAP.md). The next release is **v0.31.0 — Hierarchical Decision Scopes**, followed by runtime/formal trace conformance, signed provenance, and distributed recovery certification. Each phase has an explicit user outcome, implementation boundary, and exit gate.
+The execution plan is maintained in [ROADMAP.md](ROADMAP.md). The next release is **v0.32.0 — Runtime/Formal Trace Conformance**, followed by signed provenance, distributed recovery certification, and the contract-first Semantic Solver Program beginning at v0.35.0. Each phase has an explicit user outcome, implementation boundary, and exit gate.
 
 ---
 

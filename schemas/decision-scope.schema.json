@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/decision-scope.schema.json",
+  "title": "AASM Decision Scope",
+  "type": "object",
+  "required": [
+    "scope_id", "name", "kind", "parent_scope_id", "status",
+    "inheritance", "override_policy", "created_sequence",
+    "suspended_reason", "metadata"
+  ],
+  "properties": {
+    "scope_id": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["ROOT", "STRATEGY", "ARCHITECTURE", "IMPLEMENTATION", "WORKSTREAM", "CUSTOM"]},
+    "parent_scope_id": {"type": ["string", "null"], "minLength": 1},
+    "status": {"enum": ["ACTIVE", "SUSPENDED", "NEEDS_REVALIDATION", "INVALIDATED", "RETIRED"]},
+    "inheritance": {"enum": ["INHERIT", "ISOLATED"]},
+    "override_policy": {"enum": ["EXPLICIT", "DENY"]},
+    "created_sequence": {"type": "integer", "minimum": 0},
+    "suspended_reason": {"type": ["string", "null"]},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": false
+}

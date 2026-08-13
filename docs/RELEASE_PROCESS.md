@@ -111,3 +111,7 @@ Every release source archive must include the repository contracts exercised by 
 ## Optional framework-adapter gate
 
 Framework releases must run the core adapter tests without the external framework installed and a separate optional-dependency job against the declared supported framework range. The real-framework job must demonstrate that the original graph topology and node return values are preserved, while the AASM binding, evidence, obligations, replay, and inspection surfaces remain valid.
+
+## Hierarchical scope gate
+
+Beginning with v0.31.0, ordinary CI runs the dedicated scope suite and formal assurance runs both scope models in addition to the calculus models. The gate requires acyclic hierarchy/dependency flow, root and strategy retention, local override isolation, causal branch recovery, scoped restart preservation, atomic multi-scope activation, and legacy root compatibility.

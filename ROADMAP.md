@@ -1,313 +1,174 @@
 # AASM Roadmap
 
-AASM is currently **v0.30.0 / experimental**.
+AASM is currently **v0.31.0 / experimental**.
 
-The current program is **Adoption, Interoperability, and Verifiable Operation**: make the deterministic kernel, formal calculus, assurance system, observability, distributed runtime, and framework adapters understandable, runnable, distributable, and independently checkable by people who did not build them.
-
-This roadmap is an execution contract. Every release has an observable user outcome, an implementation boundary, and an exit gate.
-
-## Program rule: extend the working path
-
-All new work must use the implementation proven through v0.30.0:
+The roadmap is an implementation contract. Every release must extend the working path:
 
 ```text
 public AASM API
-    → existing event/reducer runtime
-    → existing Memory / SQLite / PostgreSQL stores
-    → existing calculus and assurance boundary
-    → existing worker, lease, effect, and mission-control paths
-    → existing observability projections
-    → existing CLI / HTTP / Control Center surfaces
+    → existing event creation
+    → existing pure reducer
+    → existing canonical snapshot
+    → Memory / SQLite / PostgreSQL
+    → existing assurance, observability, workers, leases, effects, and replay
 ```
 
-The program must not create a parallel runtime, alternate authority path, duplicate event model, private database mutation path, replacement Control Center, or reference-only orchestration loop.
+No release may introduce a parallel runtime, alternate authority store, framework-private AASM truth, or direct database mutation path.
 
-The architectural rule inherited from the AVATAR/labelled-splitting work remains:
+## Completed adoption and authority program
+
+| Release | Outcome | State |
+|---|---|---|
+| v0.25.2 | Canonical adoption API | Completed |
+| v0.26.0 | Research Synthesis Hero Stack | Completed |
+| v0.27.0 | One-command PostgreSQL/worker/Control Center stack | Completed |
+| v0.28.x | Distribution, immutable releases, runbooks, self-testing sdist | Completed |
+| v0.29.0 | Thin LangGraph adapter | Completed |
+| v0.30.0 | Adapter Conformance Kit | Completed |
+| **v0.31.0** | **Hierarchical Decision Scopes** | **Current — implemented** |
+
+## v0.31.0 — Hierarchical Decision Scopes
+
+**Outcome:** strategy, architecture, implementation, and workstream reasoning are separated inside one authoritative machine.
+
+Delivered:
+
+- permanent `root` scope;
+- `aasm.scopes.v1 / 0.1.0`;
+- scope-local Decisions, Obligations, evidence, locks, conflicts, explanations, constraints, and fairness debt;
+- inheritance, isolation, explicit override, and override denial;
+- validated cross-scope dependencies;
+- causal branch backjump preserving unrelated siblings;
+- scoped restart retaining parents, pinned decisions, evidence, and hard knowledge;
+- atomic multi-scope candidates;
+- legacy-flat migration;
+- Python, CLI, HTTP, Control Center, schemas, TLC, and SPIN.
+
+## Execution-correctness program
+
+### v0.32.0 — Runtime/Formal Trace Conformance
+
+**Outcome:** demonstrate that a production event history refines the formal abstraction step by step.
+
+Work packages:
+
+1. lossless event-to-trace contract;
+2. production durable-history projector;
+3. semantic pre/post-state checker;
+4. generated trace corpus covering scopes, candidates, recovery, effects, and leases;
+5. completion gate with unsupported-transition accounting and exact event-linked counterexamples.
+
+### v0.33.0 — Signed Provenance and Verifiable Exports
+
+**Outcome:** export a completed run and verify it offline without trusting the original server or database.
+
+Deliverables: canonical manifest, content-addressed inventory, detached signatures, verifier policy, selective disclosure, replay evidence, key rotation/revocation, and offline CLI.
+
+### v0.34.0 — Distributed Recovery Certification
+
+**Outcome:** produce repeatable failure-injection evidence for ownership, leases, effects, and recovery.
+
+Scenarios include worker crash, lease expiry, stale completion, duplicate delivery, network partition, database restart, supervisor loss, and ambiguous `UNKNOWN` effects. Each scenario must recover without duplicate authority/effects or stop in explicit reconciliation.
+
+## Semantic Solver Program
+
+The semantic program follows the whitepaper and implementation handoff. It begins only after the execution-correctness substrate is complete.
 
 ```text
-exploration may be conditional and reversible
-history and provenance are append-only
-contradictions become durable blocking knowledge
-backjumping follows causes rather than recency
-restart discards speculation, not verified knowledge
-fairness prevents mandatory work from remaining hidden forever
+ProblemDefinition
+        ↓ semantic compilation
+ProblemModel
+        ↓ instantiation
+ProblemInstance
+        ↓
+AASM authority runtime
+        ↓
+verified completion or explicit unresolved state
 ```
 
-## Release sequence
-
-| Release | Primary outcome | Status |
-|---|---|---|
-| **v0.25.2** | Canonical adoption API and implementation contract | Completed |
-| **v0.26.0** | Research Synthesis Hero Stack | Completed |
-| **v0.27.0 — One-Command Local Full Stack** | PostgreSQL, runtime, Control Center, worker, and reference machines | Completed |
-| **v0.28.0 — Distribution and Operator Readiness** | Immutable releases, compatibility policy, and executable runbooks | Completed |
-| **v0.28.1 — Distribution Release Hardening** | Reproducible builds, no-overwrite publication, and exact remote verification | Completed |
-| **v0.28.2 — Self-Contained Source Distribution** | Standalone source package with repository contracts and executable smoke validation | Completed |
-| **v0.29.0 — Thin LangGraph Adapter** | Incremental AASM adoption beneath an existing graph | Completed |
-| **v0.30.0 — Adapter Conformance Kit** | Framework-neutral proof that an adapter preserves the AASM boundary | **Current — implemented** |
-| **v0.31.0 — Hierarchical Decision Scopes** | Strategy, architecture, and implementation reasoning without duplicated authority | Planned |
-| **v0.32.0 — Runtime/Formal Trace Conformance** | Machine-checkable correspondence between production events and the formal abstraction | Planned |
-| **v0.33.0 — Signed Provenance and Verifiable Exports** | Portable, independently verifiable run evidence | Planned |
-| **v0.34.0 — Distributed Recovery Certification** | Failure-injection evidence for leases, effects, ownership, and recovery | Planned |
-
----
-
-# v0.28.2 — Self-Contained Source Distribution
-
-## User outcome
-
-A user can download the source distribution, extract it outside a Git checkout, and validate the packaged source plus its repository-level contracts.
-
-## Delivered implementation
-
-- ✅ `MANIFEST.in` includes profiles, schemas, formal models, examples, runbooks, workflows, release scripts, and tests;
-- ✅ the packaged adoption contract declares `source_distribution_self_test = true`;
-- ✅ the packaged contract declares scope `FULL_REPOSITORY_CONTRACT`;
-- ✅ a standalone smoke test validates representative contract-bearing members;
-- ✅ the smoke test validates `aasm.adoption.v1` and executes an operator runbook;
-- ✅ CI builds, safely extracts, and tests the sdist outside the repository checkout;
-- ✅ the existing reproducible double-build, clean-wheel, PostgreSQL, Compose, TLC, SPIN, and immutable-release gates remain active;
-- ✅ v0.28.1 assets are not overwritten; publication uses a new immutable version.
-
-## Exit gate
-
-v0.28.2 is complete when:
-
-1. Python 3.11->3.13 pass;
-2. PostgreSQL and Docker Compose pass;
-3. TLA+/TLC and Promela/SPIN pass;
-4. two clean builds produce byte-identical wheel and source distribution files;
-5. the extracted sdist passes its standalone smoke test with no Git checkout;
-6. the current release is published once and every remote asset byte is verified;
-7. README and version surfaces show v0.28.2 and v0.29.0 next;
-8. no packaging operation changes AASM machine authority or runtime semantics.
-
----
-
-# v0.29.0 — Thin LangGraph Adapter
-
-## User outcome
-
-An existing LangGraph application retains its graph, nodes, routing, checkpoint data, and domain state while AASM supplies durable authority, obligations, evidence, effect authorization, conflict learning, replay, and recovery underneath it.
-
-## Required adapter boundary
-
-1. map one LangGraph thread/run to one AASM machine;
-2. create or resolve that binding idempotently;
-3. map selected graph decisions to named AASM decisions rather than serializing every framework object;
-4. map required work to obligations with explicit terminal disposition;
-5. attach node and tool outputs as evidence with producer and causal provenance;
-6. require AASM authorization before declared external effects;
-7. return `CONTINUE`, `REPAIR`, `BACKJUMP`, `PAUSE`, `RESTART`, or `FORK` to the graph;
-8. preserve LangGraph checkpoints only as framework state, never as competing AASM authority;
-9. use `aasm.adoption.v1`, not versioned runtime internals;
-10. add no second scheduler, lease system, effect ledger, or event store.
-
-## Delivered implementation
-
-- ✅ optional `langgraph>=1.2,<2` dependency extra;
-- ✅ `aasm.integrations.langgraph` adapter module with no mandatory core import;
-- ✅ deterministic thread/run binding and collision rejection;
-- ✅ sync and async node-entry/node-exit wrappers that preserve original results;
-- ✅ explicit decision, obligation, evidence, and effect mapping helpers;
-- ✅ `CONTINUE | REPAIR | BACKJUMP | PAUSE | RESTART | FORK` directives;
-- ✅ certified learned no-good and causal-backjump reference path;
-- ✅ ordinary-versus-AASM comparison graph;
-- ✅ `langgraph` and `integrations` inspection surfaces;
-- ✅ adapted-run Control Center panel, CLI command, HTTP projection, schemas, and migration guide;
-- ✅ dependency-neutral tests plus a real LangGraph optional-dependency CI job.
-
-## Required comparison
-
-The same controlled task runs as an ordinary LangGraph workflow and as the same workflow with AASM underneath it. Both receive the same contradiction. The comparison must show what is invalidated, what unrelated work remains, what learned constraint blocks recurrence, where the causal backjump lands, and how exact replay reconstructs the result.
-
-## Exit gate
-
-An existing LangGraph application adopts AASM without rewriting its graph, bypassing the canonical authority boundary, directly mutating AASM storage, or storing machine truth in framework-private checkpoint state.
-
-## Non-goals
-
-- no replacement LangGraph runtime;
-- no translation of every LangGraph class into an AASM ontology;
-- no mandatory Planner/Builder topology;
-- no provider-specific model bundle;
-- no direct snapshot or table mutation.
-
----
-
-# v0.30.0 — Adapter Conformance Kit
-
-## User outcome
-
-A framework or application adapter can demonstrate—not merely claim—that it preserves AASM authority, replay, effect, evidence, worker/lease, and recovery contracts.
-
-## Delivered implementation
-
-- ✅ framework-neutral `AdapterConformanceDriver` protocol and versioned capability declaration;
-- ✅ contract identity `aasm.adapter.conformance.v1 / 0.1.0`;
-- ✅ black-box scenarios for success, contradiction, requirement change, lease loss, `UNKNOWN` effect, restart, replay, and fork;
-- ✅ mandatory machine-truth, decision, effect, worker/lease, recovery, and public-API authority declarations;
-- ✅ committed-obligation evidence and semantic-result producer/provenance checks;
-- ✅ independent durable-history verification and replay-versus-persisted snapshot comparison;
-- ✅ audited Store proxy that detects ordinary direct mutation outside the canonical AASM path;
-- ✅ duplicate-authority rejection even when functional output appears correct;
-- ✅ explicit `PASS`, `FAIL`, and `INCONCLUSIVE` results with finding codes, event references, coverage, audit data, and report SHA-256;
-- ✅ reference `LangGraphConformanceDriver` covering every required scenario;
-- ✅ negative fixtures proving direct writes, duplicate authority, unsupported scenarios, and persisted-state tampering are detected;
-- ✅ `aasm adapter-conformance` and `aasm adapter-conformance-list` CLI commands;
-- ✅ authenticated `/adapter-conformance` and `/v1/conformance/adapters/{adapter_id}` HTTP endpoints;
-- ✅ conformance panel in the existing Control Center;
-- ✅ JSON schemas, clean-wheel checks, extracted-sdist coverage, and hosted conformance CI.
-
-## Correctness boundary
-
-The persistence audit is an in-process diagnostic hook, not a sandbox. It detects ordinary adapter bypasses and records explicitly authorized external-executor operations. Untrusted adapters still require process or host isolation. A `PASS` proves the exercised bounded contract; it does not certify arbitrary unexercised adapter code or external systems.
-
-## Exit gate
-
-v0.30.0 is complete when a third party can run one command and receive a reviewable report that:
-
-1. covers every required scenario or marks missing coverage `INCONCLUSIVE`;
-2. rejects duplicate machine authority and direct Store mutation;
-3. verifies evidence and semantic-result provenance;
-4. verifies durable history and exact replay;
-5. links failures to exact checks and durable events where available;
-6. runs through Python, CLI, authenticated HTTP, and the existing Control Center;
-7. preserves the existing event/reducer, store, effect, lease, and recovery paths.
-
----
-
-# v0.31.0 — Hierarchical Decision Scopes
-
-## User outcome
-
-Long-running work separates strategy, architecture, and implementation decisions while retaining one authoritative machine and one causal conflict graph.
-
-## Planned implementation
-
-- parent/child decision-scope identities;
-- scope-local decisions, obligations, evidence, locks, constraints, and fairness debt;
-- validated cross-scope dependency directions;
-- causal backjump across scopes only through recorded dependencies;
-- scope-aware restart preserving verified parent knowledge;
-- explicit inheritance and override rules;
-- backward-compatible migration from flat histories;
-- scope lineage in observability and Control Center;
-- bounded formal properties for isolation and cross-scope recovery.
-
-## Exit gate
-
-An implementation contradiction can invalidate the responsible architecture or strategy decision while preserving unrelated sibling scopes and one authority path.
-
----
-
-# v0.32.0 — Runtime/Formal Trace Conformance
-
-## User outcome
-
-A production event history can be projected into the formal vocabulary and checked step by step, closing the gap between “the model passed” and “the runtime followed the modeled rule.”
-
-## Planned implementation
-
-- versioned production-event to formal-variable abstraction map;
-- trace projection with source event ranges and hashes;
-- transition classifiers for calculus, activation, learning, restart, effects, leases, and completion;
-- conformance checker distinguishing unsupported abstraction from violation;
-- counterexamples linked to exact durable event IDs;
-- generated traces from runbooks and scenario tests;
-- property-based bounded event-sequence generation;
-- representative trace corpus as a CI gate.
-
-## Exit gate
-
-Every covered transition either refines a legal formal step or produces an exact counterexample tied to durable history.
-
----
-
-# v0.33.0 — Signed Provenance and Verifiable Exports
-
-## User outcome
-
-A run can be exported as portable evidence and independently verified without trusting the producing server or database.
-
-## Planned implementation
-
-- canonical export manifest for events, snapshots, definitions, profiles, certificates, artifacts, and projections;
-- content-addressed inventory with explicit algorithm/version identity;
-- pluggable detached signer and verifier interfaces;
-- key identity, rotation, revocation, and verification-policy records;
-- selective disclosure retaining hash linkage;
-- offline verification CLI;
-- tamper, truncation, substitution, and wrong-key tests;
-- export provenance visible in the Control Center;
-- compatibility rules for historical verification after upgrades.
-
-## Exit gate
-
-A clean offline environment verifies package identity, completeness, hashes, signatures, certificate coverage, and replay evidence.
-
----
-
-# v0.34.0 — Distributed Recovery Certification
-
-## User outcome
-
-AASM produces repeatable failure-injection evidence that ownership, leases, effects, and recovery remain safe under declared failures.
-
-## Planned implementation
-
-- deterministic fault injection for worker crash, lease expiry, delayed completion, duplicate delivery, partitions, database restart, and supervisor loss;
-- external-effect emulator for `NOT_STARTED`, `STARTED`, `SUCCEEDED`, `FAILED`, and `UNKNOWN`;
-- invariants for single valid ownership, stale-result rejection, idempotency, reconciliation, and mandatory-obligation preservation;
-- multi-process PostgreSQL scenarios and bounded schedule exploration;
-- recovery certificate tied to exact scenario, configuration, trace, and software version;
-- expanded operator drills and Control Center recovery timeline;
-- selected lease/effect formal-model extensions;
-- conformance-kit integration for remote adapters.
-
-## Exit gate
-
-Every declared failure either recovers without duplicated authority or duplicated effects, or stops in an explicit state requiring human or external reconciliation.
-
----
-
-# Adoption scorecard
-
-| Measure | Gate | Current state |
-|---|---:|---|
-| Clone to healthy dashboard | under 5 minutes | Implemented and Compose-tested |
-| Understandable completed demonstration | under 10 minutes | Implemented |
-| Required external model/API keys | 0 | Achieved |
-| Reference replay | exact snapshot/hash match | Enforced |
-| Learned no-good | visible, certified, and reused | Implemented |
-| Causal backjump | target shown | Implemented |
-| Mandatory unresolved obligations at completion | 0 | Enforced |
-| Built-wheel smoke | required in CI | Implemented |
-| Reproducible distribution | two byte-identical builds | Implemented |
-| Extracted-sdist smoke | no Git checkout | **v0.28.2** |
-| GitHub release assets | exact remote read-back | Implemented |
-| Operator runbook drills | required in CI | Implemented |
-| PyPI installation | Trusted Publisher binding required | Repository side ready; external binding pending |
-| Existing-framework adoption | thin LangGraph adapter | **v0.29.0** |
-| Adapter boundary proof | conformance report | **v0.30.0** |
-| Hierarchical reasoning | one authority across scopes | v0.31.0 |
-| Runtime/formal correspondence | trace refinement | v0.32.0 |
-| Portable verification | signed offline package | v0.33.0 |
-| Distributed recovery evidence | failure-injection certificate | v0.34.0 |
-
----
-
-# Cross-release delivery discipline
-
-Every release must retain:
-
-1. Python 3.11–3.13 tests;
-2. reproducible wheel and source-distribution builds;
-3. clean-wheel and extracted-sdist validation;
-4. PostgreSQL integration;
-5. Docker Compose end-to-end verification;
-6. TLA+/TLC and Promela/SPIN when the modeled boundary changes;
-7. exact replay and append-only history;
-8. visible README version and next milestone;
-9. ordinary source committed directly to `main`;
-10. no branch or PR staging for canonical implementation work.
+### v0.35.0 — Semantic Problem Model Foundations
+Persist/replay versioned `DomainPackage`, `ProblemModel`, and `ProblemInstance` contracts. First fixture: a finite parser/storage constraint problem.
+
+### v0.36.0 — Domain and Instance Compiler SDK
+Deterministic compiler protocols, missing-input/capability reports, canonical fingerprints, and `aasm compile` / `aasm problem-check`.
+
+### v0.37.0 — Reasoning Artifacts and Epistemic Admission
+Typed Claims, Hypotheses, Lemmas, Invariants, Counterexamples, Proof Obligations, and Reasoning Commits. Models propose; policy admits.
+
+### v0.38.0 — Semantic Dependency Graph and Truth Maintenance
+Typed dependency relations, deterministic stale propagation, obligation reopening, conditional-lock release, and unrelated-sibling preservation.
+
+### v0.39.0 — Operator / Observer / Verifier ABI
+Generic capabilities that use existing effect authorization and cannot self-promote beyond declared authority.
+
+### v0.40.0 — Reasoning Frontier and Context Projection
+Bounded semantic work packets derived from canonical state so a fresh worker can resume without transcript replay.
+
+### v0.41.0 — Domain-Neutral Solver Loop
+Compile/select/activate/execute/verify/learn/backjump/restart loop with replaceable candidate, objective, activity, restart, and budget policies.
+
+### v0.42.0 — Domain Package SDK and Reference Domains
+Finite CSP, software repair, research synthesis, and mathematical reasoning on the same kernel.
+
+### v0.43.0 — Semantic Conformance and Formal Refinement
+One-command `PASS | FAIL | INCONCLUSIVE` conformance with exact counterexample event IDs.
+
+### v0.44.0 — Cross-Run Certified Knowledge
+Run-local by default; reuse only with applicability predicates, package compatibility, provenance, expiry/revocation, and certification.
+
+### v0.45.0 — Semantic Solver Release Candidate
+Freeze the first coherent semantic contracts after exact replay, formal invariants, four reference domains, failure injection, fresh-worker resume, and complete handoff/runbooks.
+
+## Planned semantic dependency graph
+
+```text
+Entity
+  → Predicate
+  → Claim
+  → Evidence
+  → Verifier
+  → Certificate
+  → Constraint
+  → Decision
+  → Operator
+  → Effect
+  → Observation
+```
+
+## Planned semantic calculus
+
+```text
+DEFINE  COMPILE  INSTANTIATE  PROPOSE  SUPPORT  CHALLENGE
+VERIFY  AUTHORIZE  INVALIDATE  REOPEN  LEARN  GENERALIZE
+PROJECT  BACKJUMP  RESTART  COMPLETE
+```
+
+Every operation must define preconditions, postconditions, preserved invariants, provenance, and replay semantics.
+
+## Cross-release gates
+
+Every release retains:
+
+1. Python 3.11–3.13;
+2. reproducible wheel and self-testing sdist;
+3. Memory/SQLite/PostgreSQL replay equivalence;
+4. Docker Compose full-stack verification;
+5. LangGraph and adapter conformance;
+6. TLC/SPIN when modeled semantics change;
+7. visible README version and next milestone;
+8. ordinary source committed directly to `main`;
+9. no branch/PR staging for canonical implementation work;
+10. immutable release assets with exact hash read-back.
+
+## Adoption scorecard
+
+| Measure | Gate |
+|---|---:|
+| Clone to healthy dashboard | under 5 minutes |
+| Understandable completed demonstration | under 10 minutes |
+| External model/API keys required | 0 |
+| Exact replay | persisted and reconstructed hashes match |
+| Unresolved mandatory obligations at completion | 0 |
+| Published wheel smoke | required |
+| Extracted-sdist smoke | required |
+| Operator drills | required |

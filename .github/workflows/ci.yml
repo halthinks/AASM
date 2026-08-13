@@ -232,6 +232,30 @@ jobs:
           assert report['audit']['total_violations'] == 0
           PY
 
+  hierarchical_scopes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install hierarchical-scope dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Run scope hierarchy, migration, recovery, and atomicity contracts
+        run: pytest -q tests/test_v31_scopes.py
+      - name: Exercise scope CLI and public adoption contract
+        run: |
+          python - <<'PYTEST'
+          import aasm
+          report = aasm.validate_public_api_contract()
+          assert aasm.__version__ == "0.31.0"
+          assert report["valid"] is True, report
+          assert report["contract"]["scopes"]["contract_id"] == "aasm.scopes.v1"
+          assert report["contract"]["scopes"]["contract_version"] == "0.1.0"
+          PYTEST
+          aasm --help | grep -q scope-report
+
   postgres_integration:
     runs-on: ubuntu-latest
     services:
@@ -285,7 +309,7 @@ jobs:
 
   ci_summary:
     if: always()
-    needs: [test, wheel_smoke, langgraph_integration, adapter_conformance, postgres_integration, compose_smoke]
+    needs: [test, wheel_smoke, langgraph_integration, adapter_conformance, hierarchical_scopes, postgres_integration, compose_smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Publish direct-push-visible commit status
@@ -295,15 +319,16 @@ jobs:
           WHEEL_RESULT: ${{ needs.wheel_smoke.result }}
           LANGGRAPH_RESULT: ${{ needs.langgraph_integration.result }}
           CONFORMANCE_RESULT: ${{ needs.adapter_conformance.result }}
+          SCOPES_RESULT: ${{ needs.hierarchical_scopes.result }}
           POSTGRES_RESULT: ${{ needs.postgres_integration.result }}
           COMPOSE_RESULT: ${{ needs.compose_smoke.result }}
         run: |
-          if [ "$TEST_RESULT" = "success" ] && [ "$WHEEL_RESULT" = "success" ] && [ "$LANGGRAPH_RESULT" = "success" ] && [ "$CONFORMANCE_RESULT" = "success" ] && [ "$POSTGRES_RESULT" = "success" ] && [ "$COMPOSE_RESULT" = "success" ]; then
+          if [ "$TEST_RESULT" = "success" ] && [ "$WHEEL_RESULT" = "success" ] && [ "$LANGGRAPH_RESULT" = "success" ] && [ "$CONFORMANCE_RESULT" = "success" ] && [ "$SCOPES_RESULT" = "success" ] && [ "$POSTGRES_RESULT" = "success" ] && [ "$COMPOSE_RESULT" = "success" ]; then
             state=success
-            description="unit, wheel, LangGraph, conformance, PostgreSQL, and Compose passed"
+            description="unit, wheel, LangGraph, conformance, scopes, PostgreSQL, and Compose passed"
           else
             state=failure
-            description="unit=$TEST_RESULT wheel=$WHEEL_RESULT langgraph=$LANGGRAPH_RESULT conformance=$CONFORMANCE_RESULT postgres=$POSTGRES_RESULT compose=$COMPOSE_RESULT"
+            description="unit=$TEST_RESULT wheel=$WHEEL_RESULT langgraph=$LANGGRAPH_RESULT conformance=$CONFORMANCE_RESULT scopes=$SCOPES_RESULT postgres=$POSTGRES_RESULT compose=$COMPOSE_RESULT"
           fi
           export state description
           python - <<'PY' > /tmp/status.json

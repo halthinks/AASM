@@ -4,6 +4,31 @@ All notable user-visible changes to AASM are documented here.
 
 Detailed history through v0.27.0 is preserved in [`CHANGELOG_0.27_AND_EARLIER.md`](CHANGELOG_0.27_AND_EARLIER.md). History through v0.18 is also available separately in [`CHANGELOG_0.18_AND_EARLIER.md`](CHANGELOG_0.18_AND_EARLIER.md).
 
+## [0.31.0] - 2026-08-12
+
+AASM v0.31.0 adds `aasm.scopes.v1 / 0.1.0` hierarchical decision scopes while retaining one authoritative machine and the existing event/reducer/store path.
+
+### Hierarchical scopes
+
+- permanent root scope plus strategy, architecture, implementation, workstream, and custom kinds;
+- scope-local Decisions, Obligations, evidence, locks, conflicts, explanations, constraints, and fairness debt;
+- explicit inheritance, isolation, override, and override-denial policy;
+- validated acyclic cross-scope dependencies;
+- causal cross-scope backjumping preserving unrelated sibling subtrees;
+- scoped restart retaining parents, pinned decisions, evidence, and certified hard knowledge;
+- atomic multi-scope candidate activation with final parent revalidation;
+- explicit legacy-flat migration without rewriting historical events;
+- Python, CLI, authenticated HTTP, Control Center, schemas, TLC, and SPIN surfaces.
+
+### Compatibility
+
+- package/runtime: `0.31.0`;
+- adoption contract: `aasm.adoption.v1 / 0.7.0`;
+- scope contract: `aasm.scopes.v1 / 0.1.0`;
+- remote protocol remains `aasm.remote.v1 / 0.19.0`;
+- next release: v0.32.0 Runtime/Formal Trace Conformance;
+- roadmap now carries the Semantic Solver Program through v0.45.0.
+
 ## [0.30.0] - 2026-08-11
 
 AASM v0.30.0 adds a framework-neutral Adapter Conformance Kit over the existing public API and event/reducer authority path.

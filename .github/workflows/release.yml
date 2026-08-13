@@ -329,8 +329,8 @@ jobs:
           if ! gh release view "$TAG" >/dev/null 2>&1; then
             gh release create "$TAG" dist/* \
               --target "$COMMIT_SHA" \
-              --title "AASM $TAG — Adapter Conformance Kit" \
-              --notes-file docs/RELEASE_0.30.md
+              --title "AASM $TAG — Hierarchical Decision Scopes" \
+              --notes-file docs/RELEASE_0.31.md
           fi
           verified=false
           for _ in $(seq 1 12); do

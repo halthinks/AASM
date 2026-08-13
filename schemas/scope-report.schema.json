@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/scope-report.schema.json",
+  "title": "AASM Scope Report",
+  "type": "object",
+  "required": ["contract_id", "contract_version", "schema_version", "root_scope_id", "scopes", "dependencies", "migration", "scope_count", "dependency_count"],
+  "properties": {
+    "contract_id": {"const": "aasm.scopes.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "schema_version": {"const": 1},
+    "root_scope_id": {"const": "root"},
+    "scope_count": {"type": "integer", "minimum": 1},
+    "dependency_count": {"type": "integer", "minimum": 0},
+    "scopes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["scope_id", "name", "kind", "parent_scope_id", "status", "inheritance", "override_policy", "created_sequence", "suspended_reason", "metadata", "local_active_model", "effective_active_model", "effective_values", "object_counts", "fairness_debt", "ancestor_scope_ids", "descendant_scope_ids"],
+        "properties": {
+          "scope_id": {"type": "string", "minLength": 1},
+          "name": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["ROOT", "STRATEGY", "ARCHITECTURE", "IMPLEMENTATION", "WORKSTREAM", "CUSTOM"]},
+          "parent_scope_id": {"type": ["string", "null"]},
+          "status": {"enum": ["ACTIVE", "SUSPENDED", "NEEDS_REVALIDATION", "INVALIDATED", "RETIRED"]},
+          "inheritance": {"enum": ["INHERIT", "ISOLATED"]},
+          "override_policy": {"enum": ["EXPLICIT", "DENY"]},
+          "created_sequence": {"type": "integer", "minimum": 0},
+          "suspended_reason": {"type": ["string", "null"]},
+          "metadata": {"type": "object"},
+          "local_active_model": {"type": "object", "additionalProperties": {"type": "string"}},
+          "effective_active_model": {"type": "object", "additionalProperties": {"type": "string"}},
+          "effective_values": {"type": "object"},
+          "object_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+          "fairness_debt": {"type": "object", "required": ["due", "overdue"], "properties": {"due": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}, "overdue": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}}, "additionalProperties": false},
+          "ancestor_scope_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "descendant_scope_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+        },
+        "additionalProperties": false
+      }
+    },
+    "dependencies": {"type": "array", "items": {"$ref": "scope-dependency.schema.json"}},
+    "migration": {"type": "object", "required": ["legacy_flat_state_migrated", "migrated_sequence"], "properties": {"legacy_flat_state_migrated": {"type": "boolean"}, "migrated_sequence": {"type": ["integer", "null"], "minimum": 0}}, "additionalProperties": false}
+  },
+  "additionalProperties": false
+}

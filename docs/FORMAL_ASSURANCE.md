@@ -97,6 +97,19 @@ They also model candidate staging and one-step atomic activation, restart preser
 
 Formal CI runs whenever a transition-critical runtime file changes. It downloads pinned tool versions, verifies their SHA-256 hashes, executes TLC, builds SPIN, and runs the generated verifier including the fairness property.
 
+
+### Hierarchical-scope model
+
+v0.31.0 adds:
+
+```text
+formal/AASMScopeHierarchy.tla
+formal/AASMScopeHierarchy.cfg
+formal/aasm_scope_hierarchy.pml
+```
+
+The bounded models check root and strategy authority retention, pinned-parent and certified-hard-knowledge retention, local override isolation, causal invalidation of one branch, sibling preservation, and scoped restart preserving parents and siblings.
+
 These are bounded abstractions of selected control properties. They are not a proof that arbitrary adapters, external tools, domain evidence, or every line of the Python runtime is correct.
 
 ## Correctness boundary

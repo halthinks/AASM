@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/scope-dependency.schema.json",
+  "title": "AASM Scope Dependency",
+  "type": "object",
+  "required": [
+    "dependency_id", "upstream_scope_id", "downstream_scope_id",
+    "relation", "invalidation_policy", "evidence_ids",
+    "created_sequence", "metadata"
+  ],
+  "properties": {
+    "dependency_id": {"type": "string", "minLength": 1},
+    "upstream_scope_id": {"type": "string", "minLength": 1},
+    "downstream_scope_id": {"type": "string", "minLength": 1},
+    "relation": {"enum": ["AUTHORIZES", "CONSTRAINS", "DEPENDS_ON", "REFINES"]},
+    "invalidation_policy": {"enum": ["NONE", "REVALIDATE", "INVALIDATE"]},
+    "evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "created_sequence": {"type": "integer", "minimum": 0},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": false
+}

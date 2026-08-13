@@ -8,8 +8,8 @@ AASM has three separate identities:
 
 | Identity | Current value | Meaning |
 |---|---|---|
-| Package/runtime | `0.30.0` | Python distribution and current server implementation |
-| Adoption contract | `aasm.adoption.v1 / 0.6.0` | Supported imports, methods, commands, endpoints, and runbooks |
+| Package/runtime | `0.31.0` | Python distribution and current server implementation |
+| Adoption contract | `aasm.adoption.v1 / 0.7.0` | Supported imports, methods, commands, endpoints, and runbooks |
 | Remote protocol | `aasm.remote.v1 / 0.19.0` | Compatibility identity used by existing remote clients |
 
 A package release does not automatically require a wire-protocol version change.
@@ -91,3 +91,9 @@ This policy does not make domain evidence true, guarantee external-service behav
 ## Source-distribution contract
 
 Beginning with v0.28.2, the source distribution includes the repository-level profiles, schemas, formal models, runbooks, workflows, examples, scripts, and tests required by its standalone smoke gate. This packaging promise does not make internal modules part of the supported Python API.
+
+## Hierarchical scope compatibility
+
+AASM v0.31.0 adds `aasm.scopes.v1 / 0.1.0`. Every machine has a canonical `root` scope. Historical flat records remain valid and load as root-scoped records without rewriting event history. Explicit migration may add missing root metadata through the normal event/reducer path.
+
+The combined hierarchy/dependency-flow graph must remain acyclic. Child override is explicit unless denied. Upward or sibling flow requires a durable dependency. Applications should use `DecisionScope`, `ScopeDependency`, and supported `AASMEngine` scope methods rather than importing `runtime_v31`, editing `scope_state`, or maintaining competing framework-private scope truth.

@@ -40,6 +40,14 @@ REPRESENTATIVE_MEMBERS = [
     "tests/test_v28_operator_runbooks.py",
     "tests/test_v29_langgraph_adapter.py",
     "tests/test_v30_adapter_conformance.py",
+    "src/aasm/scopes.py",
+    "src/aasm/runtime_v31.py",
+    "schemas/decision-scope.schema.json",
+    "schemas/scope-dependency.schema.json",
+    "schemas/scope-report.schema.json",
+    "formal/AASMScopeHierarchy.tla",
+    "docs/HIERARCHICAL_DECISION_SCOPES.md",
+    "tests/test_v31_scopes.py",
 ]
 
 

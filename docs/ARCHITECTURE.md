@@ -30,19 +30,29 @@ authoritative state changes through the existing event/reducer path
 
 Profiles are immutable by ID, version, and fingerprint. A package revision becomes active only through explicit conformance and migration. Discovery never downloads packages or executes adapters automatically.
 
-## 5. Execution
+## 5. Hierarchical decision scopes
+
+AASM v0.31.0 partitions reasoning into a rooted hierarchy while retaining one authoritative machine:
+
+```text
+root → strategy → architecture → implementation/workstream
+```
+
+Scopes qualify calculus records inside the canonical snapshot. Parent knowledge may flow downward; sibling/upward flow requires a durable dependency. Local override is explicit or denied. Backjump and restart preserve unrelated scopes. The machine-readable contract is `aasm.scopes.v1 / 0.1.0`.
+
+## 6. Execution
 
 Agents, tools, humans, simulators, or services execute authorized work. The runtime is role-agnostic and does not require a fixed team topology.
 
-## 6. Authority
+## 7. Authority
 
 Capability and authority are separate. A worker or adapter may be capable of proposing a model, explanation, or external action without being authorized to activate, commit, learn a hard constraint, migrate a profile, or cross an effect boundary.
 
-## 7. Verification and provenance
+## 8. Verification and provenance
 
 Results become evidence or generic semantic-result envelopes. Observations are checked against evidence contracts and invariants before authoritative commitment. Material changes retain provenance and survive replay, restart, and fork.
 
-## 8. Canonical adoption surface
+## 9. Canonical adoption surface
 
 AASM v0.25.2 defines one supported golden path over the existing event/reducer runtime. It does not add a second runtime, alternate reducer, duplicate persistence layer, or replacement authority mechanism.
 

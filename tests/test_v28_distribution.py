@@ -26,7 +26,7 @@ def _release_module():
 
 
 def test_distribution_metadata_and_adoption_contract_are_aligned():
-    assert __version__ == "0.30.0"
+    assert __version__ == "0.31.0"
     contract = public_api_contract()
     assert contract["runtime_version"] == __version__
     assert contract["distribution"]["package"] == "aasm-runtime"
@@ -241,7 +241,7 @@ def test_release_docs_make_external_pypi_gate_explicit():
         encoding="utf-8"
     )
     assert "v0.29.0" in readme
-    assert "v0.30.0 — Adapter Conformance Kit" in readme
+    assert "v0.31.0 — Hierarchical Decision Scopes" in readme
     assert "aasm.remote.v1 / 0.19.0" in readme
     assert "pre-1.0" in compatibility
     assert "immutable release tag" in compatibility
