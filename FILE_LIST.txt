@@ -33,6 +33,7 @@
 ./docs/AUTOMATIC_CHECKPOINTS_FLEET_CONTROL.md
 ./docs/COMPATIBILITY.md
 ./docs/CONTROL_CENTER.md
+./docs/CURRENT_RELEASE.md
 ./docs/DECISION_BACKENDS.md
 ./docs/DECLARATIVE_MACHINES.md
 ./docs/DISTRIBUTED_WORKERS.md
@@ -71,11 +72,13 @@
 ./docs/RELEASE_0.29.md
 ./docs/RELEASE_0.30.md
 ./docs/RELEASE_0.31.md
+./docs/RELEASE_0.32.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
 ./docs/RESEARCH_SYNTHESIS_DEMO.md
 ./docs/RESOURCE_SCHEDULER.md
+./docs/TRACE_CONFORMANCE.md
 ./docs/USE_CASES.md
 ./docs/runbooks/README.md
 ./docs/runbooks/history-diagnosis.md
@@ -115,8 +118,11 @@
 ./formal/AASMCalculus.tla
 ./formal/AASMScopeHierarchy.cfg
 ./formal/AASMScopeHierarchy.tla
+./formal/AASMTraceConformance.cfg
+./formal/AASMTraceConformance.tla
 ./formal/aasm_calculus.pml
 ./formal/aasm_scope_hierarchy.pml
+./formal/aasm_trace_conformance.pml
 ./formal/toolchain.lock.json
 ./profiles/bare/README.md
 ./profiles/bare/package.json
@@ -194,8 +200,12 @@
 ./schemas/scope-dependency.schema.json
 ./schemas/scope-report.schema.json
 ./schemas/semantic-result.schema.json
+./schemas/semantic-trace-report.schema.json
 ./schemas/state.schema.json
 ./schemas/task-demand.schema.json
+./schemas/trace-contract.schema.json
+./schemas/trace-corpus.schema.json
+./schemas/trace-projection.schema.json
 ./schemas/transition.schema.json
 ./schemas/worker-control.schema.json
 ./schemas/worker.schema.json
@@ -210,6 +220,7 @@
 ./src/aasm/_calculus_logic.py
 ./src/aasm/_calculus_model.py
 ./src/aasm/_public_v30.py
+./src/aasm/_public_v31.py
 ./src/aasm/_runtime_v31_activation.py
 ./src/aasm/_runtime_v31_admin.py
 ./src/aasm/_runtime_v31_inspect.py
@@ -240,6 +251,7 @@
 ./src/aasm/cli_v29.py
 ./src/aasm/cli_v30.py
 ./src/aasm/cli_v31.py
+./src/aasm/cli_v32.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -341,6 +353,7 @@
 ./src/aasm/runtime_v29.py
 ./src/aasm/runtime_v30.py
 ./src/aasm/runtime_v31.py
+./src/aasm/runtime_v32.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_result.py
@@ -353,8 +366,10 @@
 ./src/aasm/server_v29.py
 ./src/aasm/server_v30.py
 ./src/aasm/server_v31.py
+./src/aasm/server_v32.py
 ./src/aasm/supervisor_adapters.py
 ./src/aasm/team_protocol.py
+./src/aasm/trace_conformance.py
 ./src/aasm/worker_loop.py
 ./src/aasm/workers.py
 ./tests/scenarios/crash_and_resume/README.md
@@ -403,4 +418,5 @@
 ./tests/test_v29_langgraph_adapter.py
 ./tests/test_v30_adapter_conformance.py
 ./tests/test_v31_scopes.py
+./tests/test_v32_trace_conformance.py
 ./tests/test_workers_leases.py
