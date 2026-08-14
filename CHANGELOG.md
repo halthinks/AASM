@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.47.1] - 2026-08-14
+
+### Apache-2.0 License Transition
+
+- changed the active AASM project/distribution license from MIT to Apache License 2.0 (`Apache-2.0`);
+- replaced the root `LICENSE` with the standard Apache License 2.0 text;
+- added a distributable `NOTICE` preserving AASM attribution;
+- updated package metadata to `license = "Apache-2.0"` and added the Apache OSI classifier;
+- declared both `LICENSE` and `NOTICE` as package license files and included `NOTICE` in the source-distribution manifest;
+- updated contribution terms to Apache-2.0;
+- added release/source checks so the active distribution cannot silently regress to MIT or omit `NOTICE`;
+- preserved every v0.47.0 governed SII, solver, formal-verification, scheduler, memory, reuse, persistence, replay, certification, and authority contract unchanged;
+- preserved the already-published v0.47.0 release as the historical MIT-licensed artifact rather than rewriting its licensing after publication.
+
 ## [0.47.0] - 2026-08-14
 
 ### Governed Symbiotic Intelligence & Intelligence Economics
