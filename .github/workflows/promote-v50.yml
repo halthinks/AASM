@@ -19,9 +19,9 @@ jobs:
         with:
           python-version: '3.13'
       - name: Apply v0.50 promotion
-        run: python scripts/_promote_v50_once.py
+        run: python scripts/_promote_v50_fix.py
       - name: Remove one-shot promotion helpers
-        run: rm .github/workflows/promote-v50.yml scripts/_promote_v50_once.py
+        run: rm .github/workflows/promote-v50.yml scripts/_promote_v50_once.py scripts/_promote_v50_fix.py
       - name: Validate promotion before commit
         shell: bash
         run: |
