@@ -23,7 +23,7 @@ def main():
         [
             '__version__ = "0.42.0"',
             '"contract_version": "0.18.0"',
-            "aasm.reference-domains.v1",
+            "REFERENCE_DOMAIN_CONTRACT_ID",
             "REFERENCE_HARNESS_ONLY",
             '"kernel_changes"',
         ],
