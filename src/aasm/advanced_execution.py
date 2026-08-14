@@ -21,8 +21,9 @@ def _run_fast_sat(request: AdvancedSolverRequest) -> AdvancedSolverResult:
     """Execute Kissat through its dedicated PySAT class.
 
     PySAT exposes Kissat404 as a concrete solver class but does not register it
-    in the generic SolverNames dispatcher.  Keeping this adapter separate makes
-    that backend-specific fact explicit without changing AASM's canonical SAT IR.
+    in the generic SolverNames dispatcher. Kissat's PySAT binding also does not
+    expose aggregate statistics, so lack of those statistics is represented as
+    telemetry rather than being misclassified as a failed solve.
     """
     from pysat.solvers import Kissat404
 
@@ -47,7 +48,7 @@ def _run_fast_sat(request: AdvancedSolverRequest) -> AdvancedSolverResult:
                 "SAT" if solved else "UNSAT",
                 AdvancedSolverIdentity("kissat", "pysat:kissat404", _package_version("python-sat"), "kissat404"),
                 assignment=assignment,
-                telemetry=dict(solver.accum_stats() or {}),
+                telemetry={"aggregate_statistics_exposed": False, "non_incremental": True},
                 wall_time_ms=int((time.monotonic() - start) * 1000),
             )
             validate_advanced_result(request, result)
