@@ -9,6 +9,7 @@
 ./.github/workflows/cross-run.yml
 ./.github/workflows/formal.yml
 ./.github/workflows/optimization.yml
+./.github/workflows/rc.yml
 ./.github/workflows/release.yml
 ./.gitignore
 ./CHANGELOG.md
@@ -92,6 +93,7 @@
 ./docs/RELEASE_0.47.md
 ./docs/RELEASE_0.48.1.md
 ./docs/RELEASE_0.48.md
+./docs/RELEASE_0.49.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
@@ -99,6 +101,7 @@
 ./docs/RESOURCE_SCHEDULER.md
 ./docs/REUSE_AND_SOLVER_LOOP.md
 ./docs/SEMANTIC_CERTIFICATION.md
+./docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md
 ./docs/SEMANTIC_TRUTH_MAINTENANCE.md
 ./docs/SII_GOVERNED_ECONOMICS.md
 ./docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md
@@ -281,6 +284,9 @@
 ./schemas/scope-report.schema.json
 ./schemas/semantic-dependency.schema.json
 ./schemas/semantic-result.schema.json
+./schemas/semantic-solver-rc-benchmark-report.schema.json
+./schemas/semantic-solver-rc-certification-report.schema.json
+./schemas/semantic-solver-rc-freeze-manifest.schema.json
 ./schemas/semantic-trace-report.schema.json
 ./schemas/sii-governed-resource-lease.schema.json
 ./schemas/sii-outcome.schema.json
@@ -339,6 +345,7 @@
 ./src/aasm/_runtime_v46_advanced.py
 ./src/aasm/_runtime_v47_sii.py
 ./src/aasm/_runtime_v48_knowledge.py
+./src/aasm/_runtime_v49_rc.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -381,6 +388,7 @@
 ./src/aasm/cli_v46.py
 ./src/aasm/cli_v47.py
 ./src/aasm/cli_v48.py
+./src/aasm/cli_v49.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -461,6 +469,7 @@
 ./src/aasm/public_v46.py
 ./src/aasm/public_v47.py
 ./src/aasm/public_v48.py
+./src/aasm/public_v49.py
 ./src/aasm/pulp_adapter.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
@@ -520,10 +529,12 @@
 ./src/aasm/runtime_v46.py
 ./src/aasm/runtime_v47.py
 ./src/aasm/runtime_v48.py
+./src/aasm/runtime_v49.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
 ./src/aasm/semantic_result.py
+./src/aasm/semantic_solver_rc.py
 ./src/aasm/server.py
 ./src/aasm/server_v19.py
 ./src/aasm/server_v21.py
@@ -616,4 +627,6 @@
 ./tests/test_v48_cross_run_knowledge.py
 ./tests/test_v48_cross_run_sii_mapping.py
 ./tests/test_v48_public.py
+./tests/test_v49_rc.py
+./tests/test_v49_rc_real.py
 ./tests/test_workers_leases.py
