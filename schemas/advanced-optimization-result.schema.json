@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/advanced-optimization-result.schema.json",
+  "title": "AASM Advanced Optimization Result",
+  "type": "object",
+  "required": ["result_id", "request_id", "request_fingerprint", "problem_fingerprint", "status", "solver", "assignment", "unsat_core", "telemetry", "wall_time_ms", "diagnostics", "fingerprint"],
+  "properties": {
+    "result_id": {"type": "string", "minLength": 1},
+    "request_id": {"type": "string", "minLength": 1},
+    "request_fingerprint": {"type": "string", "minLength": 1},
+    "problem_fingerprint": {"type": "string", "minLength": 1},
+    "status": {"enum": ["SAT", "UNSAT", "OPTIMAL", "FEASIBLE", "INFEASIBLE", "UNBOUNDED", "UNKNOWN", "TIMEOUT", "ERROR"]},
+    "solver": {"type": "object", "required": ["provider_id", "implementation", "version", "backend"]},
+    "assignment": {"type": "object", "additionalProperties": {"type": "number"}},
+    "objective_value": {"type": ["number", "null"]},
+    "best_bound": {"type": ["number", "null"]},
+    "relative_gap": {"type": ["number", "null"]},
+    "unsat_core": {"type": "array", "items": {"type": "object"}},
+    "telemetry": {"type": "object"},
+    "wall_time_ms": {"type": "integer", "minimum": 0},
+    "diagnostics": {"type": "array", "items": {"type": "string"}},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
