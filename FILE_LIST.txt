@@ -7,6 +7,7 @@
 ./.github/dependabot.yml
 ./.github/workflows/ci.yml
 ./.github/workflows/formal.yml
+./.github/workflows/optimization.yml
 ./.github/workflows/release.yml
 ./.gitignore
 ./CHANGELOG.md
@@ -49,6 +50,7 @@
 ./docs/FORMAL_ASSURANCE.md
 ./docs/FORMAL_CALCULUS.md
 ./docs/GOVERNANCE_ECONOMICS.md
+./docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md
 ./docs/HIERARCHICAL_DECISION_SCOPES.md
 ./docs/HIERARCHICAL_MEMORY_CONTEXT.md
 ./docs/INFORMATION_CHANGE_CHECKPOINTS.md
@@ -77,6 +79,7 @@
 ./docs/RELEASE_0.32.md
 ./docs/RELEASE_0.42.md
 ./docs/RELEASE_0.43.md
+./docs/RELEASE_0.44.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
@@ -116,6 +119,7 @@
 ./examples/model_profiles.json
 ./examples/multi_agent_demo.py
 ./examples/observability_demo.py
+./examples/optimization_portfolio.py
 ./examples/orchestrated_worker.py
 ./examples/pbv_cycle.py
 ./examples/provider_artifacts_controls.py
@@ -130,6 +134,8 @@
 ./formal/AASMCalculus.tla
 ./formal/AASMHierarchicalMemory.cfg
 ./formal/AASMHierarchicalMemory.tla
+./formal/AASMOptimizationPortfolio.cfg
+./formal/AASMOptimizationPortfolio.tla
 ./formal/AASMReusePlane.cfg
 ./formal/AASMReusePlane.tla
 ./formal/AASMScopeHierarchy.cfg
@@ -142,6 +148,7 @@
 ./formal/AASMTypedCapabilities.tla
 ./formal/aasm_calculus.pml
 ./formal/aasm_hierarchical_memory.pml
+./formal/aasm_optimization_portfolio.pml
 ./formal/aasm_reuse_plane.pml
 ./formal/aasm_scope_hierarchy.pml
 ./formal/aasm_semantic_truth_maintenance.pml
@@ -218,6 +225,9 @@
 ./schemas/model-profile.schema.json
 ./schemas/model-route.schema.json
 ./schemas/observability-report.schema.json
+./schemas/optimization-model.schema.json
+./schemas/optimization-request.schema.json
+./schemas/optimization-result.schema.json
 ./schemas/package-manifest.schema.json
 ./schemas/pattern-machine.schema.json
 ./schemas/pbv-message.schema.json
@@ -292,6 +302,7 @@
 ./src/aasm/_runtime_v41_reuse_records.py
 ./src/aasm/_runtime_v41_reuse_refs.py
 ./src/aasm/_runtime_v41_solver.py
+./src/aasm/_runtime_v44_optimization.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -325,6 +336,7 @@
 ./src/aasm/cli_v41.py
 ./src/aasm/cli_v42.py
 ./src/aasm/cli_v43.py
+./src/aasm/cli_v44.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -376,6 +388,8 @@
 ./src/aasm/observability.py
 ./src/aasm/openai_executor.py
 ./src/aasm/operator_runbooks.py
+./src/aasm/optimization.py
+./src/aasm/optimization_conformance.py
 ./src/aasm/pagination.py
 ./src/aasm/pbv_orchestrator.py
 ./src/aasm/persistence/__init__.py
@@ -394,6 +408,7 @@
 ./src/aasm/public_v41.py
 ./src/aasm/public_v42.py
 ./src/aasm/public_v43.py
+./src/aasm/public_v44.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
 ./src/aasm/reference_data/research/manifest.json
@@ -447,6 +462,7 @@
 ./src/aasm/runtime_v39.py
 ./src/aasm/runtime_v40.py
 ./src/aasm/runtime_v41.py
+./src/aasm/runtime_v44.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
@@ -528,4 +544,6 @@
 ./tests/test_v41_reuse_solver.py
 ./tests/test_v42_reference_domains.py
 ./tests/test_v43_certification.py
+./tests/test_v44_optimization.py
+./tests/test_v44_optimization_real.py
 ./tests/test_workers_leases.py
