@@ -14,6 +14,7 @@ AASM is a deterministic, event-sourced agent state machine that separates propos
 
 ```text
 aasm.adoption.v1 / 0.21.0
+aasm.remote.v1 / 0.19.0
 aasm.optimization.v1 / 0.1.0
 aasm.optimization.convex.v1 / 0.1.0
 aasm.adapter.pulp.v1 / 0.1.0
