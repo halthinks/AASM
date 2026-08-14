@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from .advanced_execution import solve_advanced_request
 from .advanced_optimization import (
     ADVANCED_CAPABILITIES,
     ADVANCED_PROVIDERS,
     AdvancedSolverRequest,
     clear_incremental_sat_sessions,
     reference_advanced_problems,
-    solve_advanced_request,
     validate_advanced_result,
 )
 from .semantic_result import semantic_fingerprint
