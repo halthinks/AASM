@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.44.0] - 2026-08-14
+
+### Heterogeneous Optimization Solver Portfolio
+
+- added `aasm.optimization.v1 / 0.1.0` and advanced `aasm.adoption.v1` to `0.20.0`;
+- added a canonical AASM optimization IR for Boolean/integer/continuous variables, clauses, linear constraints, all-different constraints, and linear objectives;
+- added deterministic SAT / CP-SAT / MILP family selection with explicit rejection of unsupported lowerings;
+- added real PySAT/CaDiCaL, OR-Tools CP-SAT, and HiGHS/highspy solver workers behind an optional `optimization` dependency extra;
+- preserved Z3, cvc5, Vampire, and Lean 4 on the existing v0.39 formal-verification pathway;
+- reused the existing v0.39 Capability ABI for optimization provider admission and the existing resource/worker/task-lease scheduler for execution;
+- added `runtime_v44.AASMEngine` as a thin `OptimizationRuntimeMixin + runtime_v41.AASMEngine` composition rather than adding a second scheduler/reducer/truth store;
+- added exact request/model/provider/lease validation and independent rechecking of successful assignments/objectives before durable result admission;
+- made optimization results explicitly `EVIDENCE_ONLY` and added bounded TLA+/Promela checks that solver execution cannot directly authorize knowledge;
+- connected optimization results to the existing v0.41 reuse plane through explicit `ReuseRequest` generation and policy-gated `ReuseCandidate` admission;
+- added certificate-gated solver-loop execution skipping for validated repeated optimization work;
+- added real-backend GitHub Actions coverage that installs and executes CaDiCaL, CP-SAT, and HiGHS through AASM's actual provider/resource/worker/lease/result path;
+- added public/CLI surfaces, schemas, regression tests, release/source gates, formal assurance, and detailed solver-portfolio documentation;
+- moved SII graduation to v0.45 so resource economics can target real SAT/CP-SAT/MILP/formal/reasoning budgets.
+
 ## [0.43.0] - 2026-08-14
 
 ### Semantic Conformance, Adversarial Domains, and Certification
@@ -9,7 +28,7 @@
 - added deterministic certification profiles for reference domains, solver/reuse, truth/memory, and formal-verification boundaries;
 - added adversarial checks for freshness/dependency/effect mismatches, stale reasoning, privacy/revocation, and insufficient formal verification strength;
 - preserved the distinction between deterministic architecture/contract certification and the semantic truth of arbitrary external conclusions;
-- staged `aasm.sii.v1 / 0.2.0` as an experimental v0.44 Symbiotic Intelligence Interface participation plane rather than creating another runtime kernel;
+- staged `aasm.sii.v1 / 0.2.0` as an experimental Symbiotic Intelligence Interface participation plane rather than creating another runtime kernel;
 - added SII structured proposals, stable principal identities, durable outcome attribution, bounded performance vectors, contextual ResourceLease projections, and governed context access;
 - ensured SII savings credit comes only from durable AASM reuse telemetry and that resource utility never promotes truth/state authority;
 - added SII adversarial checks for producer-controlled fingerprints, identity reset, self-measurement, forged reuse metrics, authority escalation, and repeated-outcome farming;
