@@ -1,23 +1,24 @@
 # AASM — Algorithmic Agent State Machine
 
-**Durable deterministic control for agents, tools, models, humans, and long-horizon work.**
+**Durable deterministic control for agents, tools, models, humans, native solvers, and long-horizon work.**
 
-## Current release — v0.43.0
+## Current release — v0.44.0
 
-**Semantic Conformance, Adversarial Domains, and Certification**
+**Heterogeneous Optimization Solver Portfolio**
 
-**Next release:** v0.44.0 — Symbiotic Intelligence Interface & Governed Intelligence Economics
+**Next release:** v0.45.0 — Symbiotic Intelligence Interface & Governed Intelligence Economics
 
-AASM v0.43 adds an explicit certification layer above the existing v0.42 reference-domain stress harness. Certification reports `PASS | FAIL | INCONCLUSIVE`, treats missing evidence as non-success, and distinguishes deterministic AASM contract behavior from claims about arbitrary external truth. The active kernel remains `runtime_v41.AASMEngine`; v0.43 adds no second scheduler, reducer, event log, or truth store.
+AASM v0.44 turns the existing v0.39 Capability ABI and v0.41 solver/reuse loop into a real heterogeneous optimization portfolio. The runtime now owns a canonical SAT/CP-SAT/MILP constraint IR and can route work through **CaDiCaL**, **OR-Tools CP-SAT**, and **HiGHS** using the same `ResourceRecord → WorkerRecord → TaskLease → Evidence` path already used throughout AASM.
 
-The release also stages the **Symbiotic Intelligence Interface (SII)** as an experimental v0.44 participation plane. SII lets models, agents, humans, solvers, and ensembles submit structured proposals and earn bounded compute/search/context resources from independently measured contribution—without ever earning epistemic authority. Its current certification result is deliberately `INCONCLUSIVE` until actor-authority binding and ResourceLease enforcement are completed.
+The existing formal portfolio is preserved rather than replaced: **Z3**, **cvc5**, **Vampire**, and **Lean 4** remain callable through the v0.39 formal-verification pathway. The optimization workers are OPERATOR capabilities; the formal workers remain VERIFIER capabilities. Solver outputs remain Evidence, not authority.
 
 ### Release contracts
 
 ```text
-aasm.adoption.v1 / 0.19.0
+aasm.adoption.v1 / 0.20.0
+aasm.optimization.v1 / 0.1.0
 aasm.certification.v1 / 0.1.0
-aasm.sii.v1 / 0.2.0              # experimental v0.44 target
+aasm.sii.v1 / 0.2.0              # experimental v0.45 target
 aasm.reference-domains.v1 / 0.1.0
 aasm.reuse.v1 / 0.1.0
 aasm.reuse.certificate.v1 / 0.1.0
@@ -33,191 +34,245 @@ aasm.reasoning.admission.v1 / 0.1.0
 aasm.remote.v1 / 0.19.0
 ```
 
-### Certification semantics
+## Native optimization portfolio
 
-v0.43 makes uncertainty explicit:
+```text
+                           AASM
+                            │
+                 Canonical Constraint IR
+                            │
+        ┌──────────┬────────┼─────────┬────────────────────┐
+        │          │        │         │                    │
+       SAT       CP-SAT    MILP     SMT/FOL              PROOF
+        │          │        │         │                    │
+    CaDiCaL    OR-Tools   HiGHS   Z3 / cvc5 / Vampire    Lean 4
+        │          │        │         │                    │
+        └──────────┴────────┴─────────┴────────────────────┘
+                            │
+                   normalized Evidence
+                            │
+                  validated v0.41 reuse
+```
 
-- **PASS** — every required observed check for the selected certification target passed.
-- **FAIL** — one or more required observed checks failed.
-- **INCONCLUSIVE** — no required observed check failed, but required evidence or enforcement is absent.
+### Canonical Constraint IR
 
-`INCONCLUSIVE` is a valid terminal result. Synthetic fixture success is not reinterpreted as proof that arbitrary real-world data, model output, research conclusions, software diagnoses, mathematical statements, or memories are correct.
+AASM owns the semantic identity of optimization work. The v0.44 IR supports:
 
-The default certification run covers:
+- variables: `BOOL`, `INTEGER`, `CONTINUOUS`;
+- constraints: `CLAUSE`, `LINEAR`, `ALL_DIFFERENT`;
+- linear objectives: `MINIMIZE`, `MAXIMIZE`;
+- deterministic family selection: `SAT`, `CP_SAT`, or `MILP`.
 
-- **reference-domains** — all five v0.42 deterministic reference domains;
-- **solver-reuse** — durable reuse, certificate-gated skipping, freshness/dependency/effect rejection, and verification-strength enforcement;
-- **truth-memory** — reasoning staleness, memory privacy, revocation, and durable invalidation;
-- **formal-verification** — exact proof-strength requirements and validated formal-result reuse;
-- **sii-preview** — adversarial tests for identity reset, score forgery, fake reuse credit, self-measurement, outcome farming, and authority escalation.
+`AUTO` never guesses an unsupported lowering. A pure Boolean clause model selects SAT; an integer/Boolean model representable by CP-SAT selects CP-SAT; a linear model representable by MILP selects MILP; anything outside the v0.44 canonical subset is rejected explicitly.
 
-The four core targets are expected to `PASS`. The experimental SII target is intentionally `INCONCLUSIVE` until its v0.44 graduation gates are closed.
+### SAT — CaDiCaL
+
+`solver.sat@0.1.0` is backed by CaDiCaL through PySAT. AASM deterministically lowers Boolean clauses to integer CNF literals and recovers the Boolean assignment from the native solver.
+
+### CP-SAT — OR-Tools CP-SAT
+
+`solver.cp_sat@0.1.0` lowers Boolean/integer variables, clauses, integer linear constraints, all-different constraints, and integer linear objectives to OR-Tools CP-SAT. Reference execution fixes the random seed and uses one search worker.
+
+### MILP — HiGHS
+
+`solver.milp@0.1.0` lowers continuous/integer/Boolean variables and linear constraints/objectives through `highspy`.
+
+### Existing formal providers remain active
+
+The v0.39 formal pathway still calls:
+
+- **Z3** — SMT-LIB2 through `formal.smt`;
+- **cvc5** — SMT-LIB2 through `formal.smt`;
+- **Vampire** — TPTP through `formal.first_order`;
+- **Lean 4** — proof-kernel checking through `formal.proof_kernel`.
+
+Z3/cvc5/Vampire/Lean outputs remain formal Evidence and cross the existing v0.37 epistemic-admission boundary before they can affect admitted knowledge.
+
+## One scheduler and one authority path
+
+v0.44 introduces a real runtime extension (`runtime_v44.AASMEngine`) because native optimization is executable kernel functionality, but it **does not** introduce another scheduler, reducer, event log, provider registry, or truth store.
+
+The path is:
+
+```text
+OptimizationModel
+      ↓
+ordinary AASM Evidence
+      ↓
+OptimizationRequest
+      ↓
+ordinary AASM Obligation
+      ↓
+TaskDemand with capability + provider tokens
+      ↓
+existing ResourceRecord / WorkerRecord scheduler
+      ↓
+existing TaskLease
+      ↓
+native solver
+      ↓
+OptimizationResult
+      ↓
+AASM validates exact request/model/provider/lease/assignment
+      ↓
+ordinary Evidence
+```
+
+A provider must still be admitted by `POLICY` or `CONTROLLER` through the existing Capability ABI.
+
+## Independent result checking
+
+For `SAT`, `FEASIBLE`, and `OPTIMAL` results AASM independently rechecks the returned assignment against the canonical model before durable admission:
+
+- exact request and model fingerprints;
+- exact leased provider;
+- admitted capability compatibility;
+- bounds;
+- Boolean/integer integrality;
+- clauses;
+- linear constraints;
+- all-different constraints;
+- objective value.
+
+`UNSAT` and `INFEASIBLE` remain solver Evidence unless a separate proof/certificate path establishes stronger assurance. A solver result never directly authorizes reasoning or canonical truth.
+
+## Reuse
+
+Optimization uses the existing v0.41 reuse plane instead of adding a solver cache.
+
+```text
+native result Evidence
+      ↓
+POLICY/CONTROLLER reuse admission
+      ↓
+ordinary ReuseCandidate
+      ↓
+scope/privacy/environment/dependency/effect validation
+      ↓
+ReuseCertificate
+      ↓
+solver-loop SKIP_EXECUTION
+```
+
+A completed solver result is not automatically reusable. Cache/index deletion cannot change truth.
+
+## Real-backend verification
+
+The repository has a dedicated `Optimization Backends` GitHub Actions workflow. It installs the optional `optimization` extra and executes the real native backends:
+
+- PySAT/CaDiCaL;
+- OR-Tools CP-SAT;
+- HiGHS/highspy.
+
+It then runs each backend through AASM provider registration, task scheduling, lease claiming, native execution, result validation, Evidence commit, obligation completion, and replay. It also requires:
+
+```bash
+aasm optimization-conformance --real
+```
+
+to report `PASS` for all three native backends.
+
+The regular CI suite separately checks Python 3.11/3.12/3.13, packaging, PostgreSQL, Compose/replay, scopes, adapters, LangGraph, and the dependency-neutral optimization lifecycle.
+
+Formal Assurance includes bounded TLA+ and Promela models asserting that an optimization result requires a lease, produces Evidence, and cannot directly authorize knowledge.
+
+## v0.43 certification remains active
+
+The v0.43 certification layer still reports `PASS | FAIL | INCONCLUSIVE` and refuses to reinterpret missing evidence as success. Reference-domain, solver/reuse, truth/memory, and formal-verification certification remain available.
 
 ```python
 from aasm import run_certification
 
 report = run_certification()
 assert report["core_status"] == "PASS"
-assert report["status"] == "INCONCLUSIVE"  # experimental SII preview not graduated yet
 ```
 
-### Symbiotic Intelligence Interface
+## Symbiotic Intelligence Interface
 
-SII is governed by three laws:
+SII remains staged above the solver plane and is now targeted for v0.45. Its three laws remain:
 
 1. **The reasoner proposes; AASM measures.**
 2. **Utility may buy resources; utility never buys truth.**
 3. **AASM returns compressed governed intelligence, not merely a reputation score.**
 
-A proposer may supply a structured candidate, confidence, rejected alternatives, typed reasoning consequences, evidence references, and cost estimates. It may not supply its own semantic fingerprint, novelty/depth score, verification authority, resource tier, or a required raw chain-of-thought field.
+This ordering is intentional: SII resource leases can now eventually allocate real computational budgets—SAT search/conflict budget, CP-SAT deterministic time, MILP nodes/iterations, formal-verification budget, model calls, context, and portfolio width—rather than only abstract reasoning resources.
 
-AASM projects a bounded performance vector from durable outcomes and validated reuse telemetry: reliability, confidence calibration, verified utility, reuse contribution, compute efficiency, conflict-learning value, artifact durability, repair rate, and measured avoided work.
-
-That performance may yield a `ResourceLease` for more context, more parallel candidates, solver classes, and scheduling priority. It never yields direct truth promotion, direct canonical-state mutation, self-verification, `POLICY`, or `CONTROLLER` authority.
-
-The v0.44 graduation gates are explicit:
-
-- bind measurement identity/authority to a durable governed AASM actor rather than a caller-supplied class;
-- enforce ResourceLease budgets through the existing scheduler/resource path;
-- enforce solver/privilege restrictions through the existing capability/lease boundary;
-- make the SII adversarial certification profile reach `PASS`.
-
-### Five reference domains remain active
-
-The v0.42 harness remains the deterministic stress substrate:
-
-- **Constraint solving:** exact subproblem-result reuse, durable recovery after deleting the process-local hot index, environment invalidation, and certificate-gated execution skipping.
-- **Software repair:** freshness expiry, repository/dependency fingerprint changes, and the rule that non-idempotent effects are never discharged by reuse.
-- **Research synthesis:** an authorized Reasoning Artifact is reusable until an ordinary truth-status change marks it stale; provenance remains durable while reuse is rejected.
-- **Formal reasoning:** a requested verification strength is independently checked against candidate verification strength.
-- **Long-horizon memory:** governed user-private memory obeys principal visibility and becomes ineligible for reuse after tombstone/revocation.
-
-Every scenario also checks exact replay against persisted machine state.
-
-### Reuse boundary
-
-A reusable result must pass all applicable checks before execution can be skipped:
-
-- exact canonical source fingerprint;
-- durable policy/controller candidate admission;
-- hierarchical scope visibility;
-- principal privacy;
-- environment compatibility;
-- dependency-fingerprint compatibility;
-- explicit freshness bounds when required;
-- effect safety;
-- requested verification-strength compatibility when specified;
-- an explicit sound relation: `EXACT`, `IDEMPOTENT`, `SUBSUMES`, or `CERTIFIED_EQUIVALENT`.
-
-Similarity and embeddings may discover candidates but never establish reuse. `SUBSUMES` requires an explicit semantic validator. Non-idempotent effects are never discharged by a cached result.
-
-### Cache deletion cannot change truth
-
-The process-local `HotReuseIndex` is disposable. Clearing it can make a run slower, but cannot change the semantic result because a hit still requires durable candidate admission and the canonical source object. V36 `CompilationCache`, legacy `DPMemory`, V37 reasoning, V39 formal results, V40 Hierarchical Memory, and learned no-goods remain their existing systems; the reuse plane coordinates them instead of copying them into a new store.
-
-### Solver-loop order
-
-```text
-reasoning frontier
-      ↓
-open obligation
-      ↓
-reuse validation ── hit → ReuseCertificate → verification/admission
-      │
-      miss
-      ↓
-capability route → worker/model/tool/solver → Evidence
-      ↓
-verification → epistemic admission → truth maintenance
-      ↓
-memory / learning → deterministic completion
-```
-
-SII sits above this loop as a participation/economic policy surface. It does not bypass it.
+SII still cannot grant direct truth promotion, direct canonical-state mutation, self-verification, `POLICY`, or `CONTROLLER` authority.
 
 ## Quick start
+
+Base runtime:
 
 ```bash
 pip install aasm-runtime
 ```
 
+Native optimization portfolio:
+
+```bash
+pip install 'aasm-runtime[optimization]'
+```
+
+Example canonical model:
+
 ```python
-from aasm import AASMEngine, ProblemSpec, ReuseCandidate, ReuseRequest
-from aasm.evidence import EvidenceRecord
-
-engine = AASMEngine(ProblemSpec("repeatable analysis"))
-prior = engine.add_evidence(EvidenceRecord("observation", "validated result", source="worker"))
-source = engine.canonical_reuse_ref("EVIDENCE", prior.evidence_id)
-
-request = ReuseRequest(
-    "TOOL_OBSERVATION",
-    {"query": "component status"},
-    environment_fingerprint="environment-v1",
+from aasm import AASMEngine, ProblemSpec
+from aasm.optimization import (
+    BooleanLiteral,
+    OptimizationConstraint,
+    OptimizationModel,
+    OptimizationVariable,
+    default_optimization_providers,
 )
-engine.register_reuse_candidate(
-    ReuseCandidate(
-        "TOOL_OBSERVATION",
-        request.fingerprint,
-        source,
-        {"query": "component status"},
-        environment_fingerprint="environment-v1",
-    ),
+
+engine = AASMEngine(ProblemSpec("native SAT"))
+engine.install_default_optimization_capability_contracts(
+    authority_id="policy",
+    authority_class="POLICY",
+)
+provider = next(p for p in default_optimization_providers() if p.provider_id == "cadical")
+engine.register_optimization_provider_runtime(
+    provider,
     authority_id="policy",
     authority_class="POLICY",
 )
 
-hit = engine.lookup_reuse(request)
-if hit["hit"]:
-    engine.commit_reuse_certificate(hit, actor_id="controller")
-```
-
-Experimental SII preview:
-
-```python
-from aasm import AASMEngine, ProblemSpec, StructuredProposal, create_sii
-
-engine = AASMEngine(ProblemSpec("participation preview"))
-sii = create_sii(engine)
-identity = sii.register(principal_id="provider:model:stable", name="reasoner")
-proposal = StructuredProposal(
-    proposer_id=identity["identity"]["proposer_id"],
-    decision_name="choose_strategy",
-    scope_id="root",
-    chosen={"strategy": "reuse-first"},
-    confidence=.8,
+model = OptimizationModel(
+    "example",
+    (OptimizationVariable("x", "BOOL"), OptimizationVariable("y", "BOOL")),
+    (OptimizationConstraint("CLAUSE", literals=(BooleanLiteral("x"), BooleanLiteral("y"))),),
+    family="SAT",
 )
-sii.submit(proposal)
+engine.admit_optimization_model(model)
+request = engine.request_optimization(model.model_id, requester_id="agent", required_provider="cadical")
+lease = engine.claim_next_task("worker-cadical", lease_seconds=60)
+result = engine.execute_optimization_lease(lease["lease_id"])
+assert result["result"]["status"] == "SAT"
 ```
 
 ## CLI
 
 ```bash
-# v0.43 certification surfaces
+# v0.44 optimization surfaces
+aasm optimization-contract
+aasm optimization-blueprint
+aasm optimization-conformance
+aasm optimization-conformance --real
+
+# v0.43 certification remains active
 aasm certification-contract
 aasm certify
 aasm certify --target solver-reuse
 aasm certify --target sii-preview
 aasm sii-contract
 
-# v0.42 reference stress surfaces remain active
+# v0.42 reference stress remains active
 aasm reference-domain-contract
 aasm reference-domain-stress
-aasm reference-domain-stress --domain software-repair
 
-# v0.41 solver/reuse surfaces remain active
+# v0.41 reuse/solver loop remains active
 aasm reuse-contract
-aasm reuse-report MACHINE_ID --store runs.db
-aasm reuse-candidate-add MACHINE_ID --store runs.db --input candidate.json --authority-id policy --authority-class POLICY
-aasm reuse-lookup MACHINE_ID --store runs.db --input request.json --commit --actor-id controller
-aasm reuse-metrics-record MACHINE_ID --store runs.db --input metrics.json --actor-id controller
 aasm solver-loop-contract
-aasm solver-step MACHINE_ID --store runs.db --input step.json --reuse-input reuse-request.json
-
-# V40 memory/context remains available
-aasm hierarchical-memory-contract
-aasm memory-report MACHINE_ID --store runs.db
-aasm reasoning-frontier MACHINE_ID --store runs.db --input context-request.json
-aasm context-project MACHINE_ID --store runs.db --input context-request.json
 ```
 
 ## Roadmap
@@ -226,13 +281,14 @@ aasm context-project MACHINE_ID --store runs.db --input context-request.json
 - v0.36 Semantic Compiler SDK ✅
 - v0.37 Reasoning Artifacts & Epistemic Admission ✅
 - v0.38 Dependency Graph & Truth Maintenance ✅
-- v0.39 Typed Capability ABI & Formal Verification Workers ✅
+- v0.39 Typed Capability ABI & Z3/cvc5/Vampire/Lean Formal Workers ✅
 - v0.40 Hierarchical Memory, Reasoning Frontier & Context Projection ✅
 - v0.41 Domain-Neutral Solver Loop & Deterministic Reuse Plane ✅
 - v0.42 Reference Domains & Reuse/Memory/Reasoning Stress Tests ✅
-- **v0.43 Semantic Conformance, Adversarial Domains, and Certification ✅**
-- **v0.44 next — Symbiotic Intelligence Interface & Governed Intelligence Economics**
-- v0.45 Cross-Run Certified Knowledge & Governed Long-Term Memory
-- v0.46 Semantic Solver Release Candidate
+- v0.43 Semantic Conformance, Adversarial Domains & Certification ✅
+- **v0.44 Heterogeneous Optimization Solver Portfolio — CaDiCaL / CP-SAT / HiGHS ✅**
+- **v0.45 next — Symbiotic Intelligence Interface & Governed Intelligence Economics**
+- v0.46 Cross-Run Certified Knowledge & Governed Long-Term Memory
+- v0.47 Semantic Solver Release Candidate
 
-See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/SEMANTIC_CERTIFICATION.md](docs/SEMANTIC_CERTIFICATION.md), [docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md](docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md), [docs/REFERENCE_DOMAIN_STRESS.md](docs/REFERENCE_DOMAIN_STRESS.md), and [docs/REUSE_AND_SOLVER_LOOP.md](docs/REUSE_AND_SOLVER_LOOP.md).
+See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md](docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md), [docs/SEMANTIC_CERTIFICATION.md](docs/SEMANTIC_CERTIFICATION.md), [docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md](docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md), and [docs/REUSE_AND_SOLVER_LOOP.md](docs/REUSE_AND_SOLVER_LOOP.md).
