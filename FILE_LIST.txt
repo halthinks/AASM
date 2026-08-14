@@ -75,6 +75,7 @@
 ./docs/RELEASE_0.30.md
 ./docs/RELEASE_0.31.md
 ./docs/RELEASE_0.32.md
+./docs/RELEASE_0.42.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
