@@ -93,7 +93,7 @@ def test_v39_contract_version_and_public_surface():
     assert __version__ == "0.41.0"
     report = validate_public_api_contract()
     assert report["valid"] is True, report
-    assert report["contract"]["contract_version"] == "0.16.0"
+    assert report["contract"]["contract_version"] == "0.17.0"
     assert report["contract"]["typed_protocol"]["direct_pattern_register"] == "REJECTED"
     assert report["contract"]["capability_abi"]["lease_boundary"] == "AASM_TASK_LEASE"
     assert report["contract"]["formal_verification"]["solver_authority"] == "EVIDENCE_ONLY"
