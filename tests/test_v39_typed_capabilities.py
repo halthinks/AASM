@@ -90,7 +90,7 @@ def progress_guard(engine: AASMEngine, obligation_id: str):
 
 
 def test_v39_contract_version_and_public_surface():
-    assert __version__ == "0.40.0"
+    assert __version__ == "0.41.0"
     report = validate_public_api_contract()
     assert report["valid"] is True, report
     assert report["contract"]["contract_version"] == "0.16.0"
@@ -146,7 +146,6 @@ def test_unknown_pattern_scope_is_rejected_before_durable_admission():
     with pytest.raises(KeyError, match="unknown typed pattern scope"):
         engine.admit_typed_pattern(pattern, authority_id="policy", authority_class="POLICY")
     assert len(engine.events) == before
-
 
 def test_typed_transition_compiles_guards_to_obligations_and_only_policy_activates():
     engine = AASMEngine(ProblemSpec("typed transition"))
