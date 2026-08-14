@@ -24,7 +24,7 @@ jobs:
       - name: Install RC and native solver dependencies
         run: python -m pip install -e '.[dev,optimization]'
       - name: Compile v0.49 surface
-        run: python -m compileall -q src/aasm/semantic_solver_rc.py src/aasm/_runtime_v49_rc.py src/aasm/runtime_v49.py tests/test_v49_rc.py tests/test_v49_rc_real.py
+        run: python -m compileall -q src/aasm/semantic_solver_rc.py src/aasm/_runtime_v49_rc.py src/aasm/runtime_v49.py src/aasm/public_v49.py src/aasm/cli_v49.py tests/test_v49_rc.py tests/test_v49_rc_real.py
       - name: Run dependency-neutral RC assurance
         run: pytest -q tests/test_v49_rc.py
       - name: Run real cross-backend and benchmark certification
@@ -33,13 +33,30 @@ jobs:
         run: |
           python - <<'PY'
           import json
-          from aasm.public_v48 import public_api_contract
+          from aasm import public_api_contract
           from aasm.runtime_v49 import AASMEngine
           from aasm.semantic_solver_rc import run_semantic_solver_rc_certification
           report = run_semantic_solver_rc_certification(real=True, target_engine_cls=AASMEngine, public_contract=public_api_contract())
           print(json.dumps(report, sort_keys=True))
           if report["status"] != "PASS":
               raise SystemExit(1)
+          if report["freeze_manifest"]["runtime_version"] != "0.49.0":
+              raise SystemExit("RC freeze manifest is not the v0.49 public contract")
+          PY
+      - name: Run public RC CLI surfaces
+        run: |
+          aasm semantic-solver-rc-contract >/tmp/rc-contract.json
+          aasm semantic-solver-rc-freeze >/tmp/rc-freeze.json
+          aasm semantic-solver-rc-upgrade >/tmp/rc-upgrade.json
+          aasm semantic-solver-rc-cross-backend --real >/tmp/rc-overlap.json
+          aasm semantic-solver-rc-benchmark --real --iterations 8 >/tmp/rc-benchmark.json
+          aasm semantic-solver-rc-claim-audit >/tmp/rc-claims.json
+          aasm semantic-solver-rc-certify --real >/tmp/rc-certification.json
+          python - <<'PY'
+          import json
+          for path in ("/tmp/rc-contract.json", "/tmp/rc-freeze.json", "/tmp/rc-upgrade.json", "/tmp/rc-overlap.json", "/tmp/rc-benchmark.json", "/tmp/rc-claims.json", "/tmp/rc-certification.json"):
+              with open(path, encoding="utf-8") as handle:
+                  json.load(handle)
           PY
       - name: Publish Semantic Solver RC status
         if: always()
