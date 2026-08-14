@@ -24,7 +24,11 @@ Skip ==
     /\ skipped' = TRUE
     /\ UNCHANGED <<sourceValid, visible, environmentValid, dependencyValid, fresh, effectReusable, certified>>
 
-Next == Certify \/ Skip
+Quiesce ==
+    /\ (~sourceValid \/ ~visible \/ ~environmentValid \/ ~dependencyValid \/ ~fresh \/ ~effectReusable \/ skipped)
+    /\ UNCHANGED vars
+
+Next == Certify \/ Skip \/ Quiesce
 Spec == Init /\ [][Next]_vars
 
 SkipRequiresCertificate == skipped => certified
