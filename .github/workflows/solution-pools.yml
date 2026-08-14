@@ -1,5 +1,4 @@
 name: Solution Pools
-# third v0.51 sentinel repair trigger
 
 on:
   push:
@@ -12,57 +11,6 @@ permissions:
   statuses: write
 
 jobs:
-  repair_v51_current_sentinels:
-    if: github.event_name == 'push' && github.event.head_commit.message == 'Run v0.51 sentinel repair'
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 2
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.13'
-      - name: Advance current-public sentinels
-        run: python scripts/_advance_v51_current_sentinels.py
-      - name: Remove one-shot helper
-        run: rm scripts/_advance_v51_current_sentinels.py
-      - name: Validate affected contracts and tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m pip install -e '.[dev]'
-          python scripts/check_formal_models.py
-          python scripts/check_release_contracts.py
-          python -m compileall -q src/aasm tests scripts
-          pytest -q \
-            tests/test_v32_trace_conformance.py \
-            tests/test_v37_reasoning.py \
-            tests/test_v38_semantic_dependencies.py \
-            tests/test_v39_typed_capabilities.py \
-            tests/test_v40_hierarchical_memory.py \
-            tests/test_v42_reference_domains.py \
-            tests/test_v44_optimization.py \
-            tests/test_v45_public.py \
-            tests/test_v46_public.py \
-            tests/test_v47_public.py \
-            tests/test_v48_public.py \
-            tests/test_v49_rc.py \
-            tests/test_v49_rc_real.py
-      - name: Regenerate exact tracked inventory
-        run: python scripts/release_manifest.py --write-file-list
-      - name: Commit sentinel repair to main
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --cached --check
-          git commit -m 'Advance v0.51 current-public sentinels'
-          git push origin HEAD:main
-
   solution_pools:
     runs-on: ubuntu-24.04
     env:
