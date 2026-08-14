@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.40.0 / experimental**.
+AASM is currently **v0.42.0 / experimental**.
 
 ## Released
 
@@ -9,7 +9,9 @@ AASM is currently **v0.40.0 / experimental**.
 - v0.37.0 Reasoning Artifacts and Epistemic Admission
 - v0.38.0 Semantic Dependency Graph, Causal Decisions, and Reactive Truth Maintenance
 - v0.39.0 Typed Capability ABI and Formal Verification Workers
-- **v0.40.0 — Hierarchical Memory, Reasoning Frontier, and Context Projection — Current — implemented**
+- v0.40.0 Hierarchical Memory, Reasoning Frontier, and Context Projection
+- v0.41.0 Domain-Neutral Solver Loop and Deterministic Reuse Plane
+- **v0.42.0 Reference Domains & Reuse/Memory/Reasoning Stress Tests — Current — implemented**
 
 ## v0.40.0 — Hierarchical Memory, Reasoning Frontier, and Context Projection
 
@@ -28,45 +30,36 @@ Delivered:
 - replay/restart, schema, CLI, server rebinding, conformance, and formal assurance;
 - legacy `DPMemory` preserved as the algorithmic memo cache.
 
-## v0.41.0 — Domain-Neutral Autonomous Solver Loop
+## v0.41.0 — Domain-Neutral Solver Loop and Deterministic Reuse Plane
 
-**Next.** Close the loop over the existing semantic, epistemic, capability, truth-maintenance, and memory layers.
+Delivered:
 
-```text
-compile / ingest
-   ↓
-context + reasoning frontier
-   ↓
-select next obligation / information gap / objective
-   ↓
-propose candidate decision or capability action
-   ↓
-authority / policy
-   ↓
-lease typed capability
-   ↓
-execute / observe
-   ↓
-Evidence
-   ↓
-verify / admit
-   ↓
-truth maintenance
-   ↓
-re-project context
-   ↓
-continue | backjump | investigate | complete
-```
-
-Requirements: deterministic frontier selection, fairness/resource constraints, information-gap handling, v0.39 capability routing, ordinary Evidence ingestion, v0.37 admission, v0.38 truth maintenance, v0.40 context reprojection, deterministic completion/failure criteria, pause/resume, user steering, and exact replay. No new scheduler/event log/epistemic store.
+- canonical reuse requests/candidates referencing existing Evidence, Reasoning Artifacts, and Hierarchical Memory;
+- policy/controller admission and durable reuse certificates;
+- exact, idempotent, explicit-subsumption, and certified-equivalence modes;
+- deterministic scope/privacy/environment/dependency/freshness/effect validation;
+- a disposable process-local `HotReuseIndex` that cannot change machine truth;
+- reuse metrics and durable reporting;
+- a solver step that checks reusable prior work before routing capability execution;
+- replay-safe integration without a second scheduler, reducer, event log, or truth store;
+- formal reuse-plane checks in TLA+ and Promela/SPIN.
 
 ## v0.42.0 — Reference Domains and Stress Tests
 
-Exercise the full loop across constraint solving, software repair, research synthesis, mathematical/formal reasoning, and long-horizon memory consolidation.
+Delivered:
+
+- `aasm.reference-domains.v1 / 0.1.0`;
+- deterministic offline stress execution across constraint solving, software repair, research synthesis, formal reasoning, and long-horizon memory;
+- controlled tests for hot-index deletion, environment/dependency/freshness invalidation, non-idempotent effects, reasoning staleness, memory privacy/revocation, and replay identity;
+- explicit `ReuseRequest.required_strength` enforcement against candidate verification strength;
+- reference-domain public API, CLI commands, schema, example, documentation, and regression suite;
+- no new kernel runtime: the harness exercises the existing v0.41 domain-neutral solver engine.
 
 ## v0.43.0 — Semantic Conformance and Adversarial Certification
 
-Certify domain packages, compilers, reasoning, truth maintenance, capabilities, formal verifiers, memory/context, solver traces, and recovery with `PASS | FAIL | INCONCLUSIVE` adversarial fixtures.
+**Next.** Certify domain packages, compilers, reasoning, truth maintenance, capabilities, formal verifiers, memory/context, solver traces, and recovery with explicit `PASS | FAIL | INCONCLUSIVE` adversarial fixtures.
+
+The v0.43 layer should distinguish architectural stress success from semantic certification. It must not reinterpret the synthetic v0.42 reference domains as proof that arbitrary real-world domain data or conclusions are correct.
 
 ## v0.44.0 — Cross-Run Certified Knowledge and Governed Long-Term Memory
 
