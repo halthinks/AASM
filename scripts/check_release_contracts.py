@@ -87,8 +87,8 @@ def main():
     require(root / "README.md", [
         "Current release — v0.47.0", "Governed Symbiotic Intelligence & Intelligence Economics",
         "aasm.adoption.v1 / 0.23.0", "aasm.certification.v1 / 0.2.0", "aasm.sii.v1 / 0.3.0",
-        "Kissat", "CaDiCaL", "OR-Tools CP-SAT", "HiGHS", "CVXPY", "PuLP",
-        "Z3", "cvc5", "Vampire", "Lean 4", "REQUIRED VERIFICATION IS NEVER REDUCED BY SII",
+        "Kissat", "CaDiCaL", "CP-SAT scheduling — OR-Tools", "HiGHS", "CVXPY", "PuLP",
+        "Z3", "cvc5", "Vampire", "Lean 4", "Required verification is never reduced",
         "v0.48.0", "aasm.remote.v1 / 0.19.0",
     ])
     require(root / "ROADMAP.md", ["v0.47.0", "Governed Symbiotic Intelligence", "v0.48.0", "Cross-Run Certified Knowledge"])
