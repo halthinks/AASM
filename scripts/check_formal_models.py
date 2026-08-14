@@ -13,7 +13,7 @@ def main():
     root = Path(__file__).resolve().parents[1]
     with (root / "pyproject.toml").open("rb") as handle:
         version = str(tomllib.load(handle)["project"]["version"])
-    if version != "0.47.0":
+    if version != "0.47.1":
         raise SystemExit(f"unexpected formal release version: {version}")
 
     require(root / "formal/AASMCalculus.tla", ["HardRequiresCertificate", "CandidateActivationIsAtomic"])
@@ -107,7 +107,7 @@ def main():
         "advanced_optimization_reuse_request",
     ])
 
-    print("v0.47 formal contracts: PASS")
+    print("v0.47.1 formal contracts: PASS")
     return 0
 
 
