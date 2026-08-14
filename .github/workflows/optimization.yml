@@ -27,6 +27,10 @@ jobs:
         env:
           AASM_REQUIRE_MODELING_BACKENDS: "1"
         run: pytest -q tests/test_v45_modeling_adapters_real.py
+      - name: Execute v0.46 real advanced solver lifecycle tests
+        env:
+          AASM_REQUIRE_ADVANCED_BACKENDS: "1"
+        run: pytest -q tests/test_v46_advanced_optimization_real.py
       - name: Execute real optimization conformance CLI
         run: |
           aasm optimization-conformance --real > /tmp/aasm-optimization.json
@@ -48,5 +52,26 @@ jobs:
           assert report['status']=='PASS', report
           assert report['real_backends'] is True
           for check in ('cvxpy_qp_executes','cvxpy_soc_executes','pulp_imports_to_native_milp'):
+              assert report['checks'][check] is True, report
+          PY
+      - name: Execute v0.46 real advanced optimization conformance module
+        env:
+          AASM_REQUIRE_ADVANCED_BACKENDS: "1"
+        run: |
+          python - <<'PY'
+          from aasm.advanced_optimization_conformance import run_advanced_optimization_conformance
+          report=run_advanced_optimization_conformance(real=True)
+          assert report['status']=='PASS', report
+          for check in (
+              'fast_sat_real_backend_executes',
+              'incremental_sat_real_backend_executes',
+              'incremental_sat_unsat_core_returned',
+              'incremental_sat_session_reused',
+              'cp_sat_scheduling_real_backend_executes',
+              'milp_advanced_real_backend_executes',
+              'milp_bound_telemetry_present',
+              'milp_warm_start_recorded',
+              'convex_advanced_real_backend_executes',
+          ):
               assert report['checks'][check] is True, report
           PY
