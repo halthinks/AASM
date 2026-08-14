@@ -1,8 +1,8 @@
 import os
 import pytest
 
+from aasm import public_api_contract
 from aasm.model import ProblemSpec
-from aasm.public_v48 import public_api_contract
 from aasm.runtime_v49 import AASMEngine as V49Engine
 from aasm.semantic_solver_rc import (
     run_cross_backend_overlap_certification,
@@ -45,6 +45,7 @@ def test_real_semantic_solver_rc_certification_passes_complete_native_portfolio(
     assert report["status"] == "PASS", report
     assert report["real_backends"] is True
     assert all(report["checks"].values())
+    assert report["freeze_manifest"]["runtime_version"] == "0.49.0"
     assert report["component_status"]["optimization"] == "PASS"
     assert report["component_status"]["modeling"] == "PASS"
     assert report["component_status"]["advanced_optimization"] == "PASS"
