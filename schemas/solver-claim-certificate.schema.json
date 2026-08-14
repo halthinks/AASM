@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/solver-claim-certificate.schema.json",
+  "title": "AASM Solver Claim Certificate",
+  "type": "object",
+  "required": ["certificate_id", "claim_id", "claim_fingerprint", "proof_artifact_id", "proof_artifact_fingerprint", "checker_id", "checker_version", "independent_of_solver", "model_fingerprint", "result_fingerprint", "verification_level", "status", "coverage", "fingerprint"],
+  "properties": {
+    "certificate_id": {"type": "string", "minLength": 1},
+    "claim_id": {"type": "string", "minLength": 1},
+    "claim_fingerprint": {"type": "string", "minLength": 1},
+    "proof_artifact_id": {"type": "string", "minLength": 1},
+    "proof_artifact_fingerprint": {"type": "string", "minLength": 1},
+    "checker_id": {"type": "string", "minLength": 1},
+    "checker_version": {"type": "string", "minLength": 1},
+    "independent_of_solver": {"const": true},
+    "model_fingerprint": {"type": "string", "minLength": 1},
+    "result_fingerprint": {"type": "string", "minLength": 1},
+    "verification_level": {"enum": ["SOLVER_VALIDATED", "PROOF_CERTIFIED"]},
+    "status": {"enum": ["PASS", "FAIL", "UNSUPPORTED"]},
+    "coverage": {"type": "object"},
+    "diagnostics": {"type": "array", "items": {"type": "string"}},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false,
+  "allOf": [{
+    "if": {"properties": {"verification_level": {"const": "PROOF_CERTIFIED"}}},
+    "then": {"properties": {"status": {"const": "PASS"}, "independent_of_solver": {"const": true}}}
+  }]
+}
