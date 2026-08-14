@@ -45,7 +45,9 @@ def test_real_semantic_solver_rc_certification_passes_complete_native_portfolio(
     assert report["status"] == "PASS", report
     assert report["real_backends"] is True
     assert all(report["checks"].values())
-    assert report["freeze_manifest"]["runtime_version"] == "0.49.0"
+    # The RC implementation remains v0.49, but certification freezes the
+    # current public contract supplied by the caller, which is v0.50 here.
+    assert report["freeze_manifest"]["runtime_version"] == "0.50.0"
     assert report["component_status"]["optimization"] == "PASS"
     assert report["component_status"]["modeling"] == "PASS"
     assert report["component_status"]["advanced_optimization"] == "PASS"
