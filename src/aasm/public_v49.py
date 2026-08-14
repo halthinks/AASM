@@ -20,6 +20,7 @@ from .semantic_solver_rc import (
 from .runtime_v49 import AASMEngine
 
 __version__ = "0.49.0"
+PUBLIC_RELEASE_STABILITY = "RELEASE_CANDIDATE"
 REMOTE_PROTOCOL_NAME = _v48.REMOTE_PROTOCOL_NAME
 REMOTE_PROTOCOL_VERSION = _v48.REMOTE_PROTOCOL_VERSION
 
@@ -33,6 +34,7 @@ _NEW_ENGINE_METHODS = [
     "semantic_solver_rc_certify",
 ]
 _NEW_IMPORTS = [
+    "PUBLIC_RELEASE_STABILITY",
     "SEMANTIC_SOLVER_RC_CONTRACT_ID",
     "SEMANTIC_SOLVER_RC_CONTRACT_VERSION",
     "SEMANTIC_SOLVER_RC_STABILITY",
@@ -69,6 +71,7 @@ PUBLIC_API_CONTRACT = deepcopy(_v48.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
     "contract_version": "0.25.0",
     "runtime_version": __version__,
+    "release_stability": PUBLIC_RELEASE_STABILITY,
     "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
     "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
     "supported_cli_commands": SUPPORTED_CLI_COMMANDS,
@@ -76,6 +79,7 @@ PUBLIC_API_CONTRACT.update({
 })
 PUBLIC_API_CONTRACT["semantic_solver_rc"] = semantic_solver_rc_contract()
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
+PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
 
 
 def public_api_contract():
@@ -97,8 +101,12 @@ def validate_public_api_contract():
         errors.append("runtime version mismatch")
     if PUBLIC_API_CONTRACT.get("contract_version") != "0.25.0":
         errors.append("adoption contract mismatch")
+    if PUBLIC_API_CONTRACT.get("release_stability") != PUBLIC_RELEASE_STABILITY:
+        errors.append("release stability mismatch")
     if PUBLIC_API_CONTRACT.get("distribution", {}).get("version") != __version__:
         errors.append("distribution version mismatch")
+    if PUBLIC_API_CONTRACT.get("distribution", {}).get("stability") != PUBLIC_RELEASE_STABILITY:
+        errors.append("distribution stability mismatch")
     rc = PUBLIC_API_CONTRACT.get("semantic_solver_rc") or {}
     if rc.get("contract_id") != SEMANTIC_SOLVER_RC_CONTRACT_ID or rc.get("contract_version") != SEMANTIC_SOLVER_RC_CONTRACT_VERSION:
         errors.append("semantic solver RC contract identity mismatch")
