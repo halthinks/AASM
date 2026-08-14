@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.49.0 / Semantic Solver Release Candidate**.
+AASM is currently **v0.50.0 / Proof-Carrying Solver Claims**.
 
 ## Released
 
@@ -20,7 +20,8 @@ AASM is currently **v0.49.0 / Semantic Solver Release Candidate**.
 - v0.47.1 Apache-2.0 License Transition
 - v0.48.0 Cross-Run Certified Knowledge & Governed Long-Term Memory
 - v0.48.1 Project-Wide Apache-2.0 Policy Correction
-- **v0.49.0 Semantic Solver Release Candidate — Current**
+- v0.49.0 Semantic Solver Release Candidate
+- **v0.50.0 Proof-Carrying Solver Claims — Current**
 
 ## v0.44.0 — Heterogeneous Optimization Solver Portfolio
 
@@ -102,6 +103,32 @@ The v0.50–v0.57 sequence closes the **currently identified** semantic-solver g
 The dependency order is deliberate: proof semantics land before completeness claims; enumeration lands before Pareto completeness; cross-run native learning lands before cross-solver exchange; stabilization happens only after those capabilities exist and have adversarial evidence.
 
 ## v0.50.0 — Proof-Carrying Solver Claims
+
+**Status: Delivered/current.**
+
+Delivered in v0.50:
+
+1. `aasm.solver.proof-certificate.v1 / 0.1.0` with `EXPERIMENTAL_ENFORCED` stability;
+2. public adoption contract `aasm.adoption.v1 / 0.26.0`;
+3. thin `ProofClaimRuntimeMixin + runtime_v49.AASMEngine` composition with no new scheduler, reducer, solver kernel, memory store, or truth authority;
+4. `SolverClaim`, `SolverProofArtifact`, and `SolverClaimCertificate` exact-bound objects;
+5. explicit `SOLVER_VALIDATED` versus `PROOF_CERTIFIED` levels;
+6. mandatory independent-checker requirement for `PROOF_CERTIFIED`;
+7. exact problem/formulation/model/result fingerprint binding;
+8. AASM-owned `aasm.checker.finite-domain-exhaustive.v1 / 0.1.0` checker for bounded Boolean/integer claims;
+9. exhaustive certification of supported `UNSAT`, `INFEASIBLE`, and `OPTIMAL` claims;
+10. deterministic proof trace digest and independent reconstruction/recheck;
+11. `UNSUPPORTED != FAIL`: continuous, uncovered, or over-budget proof modes never masquerade as failed claims;
+12. false optimality and false negative claims fail closed without a proof certificate;
+13. proof artifacts/certificates persisted through the existing Evidence/event history and exact replay;
+14. certificate authority fixed at `EVIDENCE_ONLY`, with truth authority remaining `EXISTING_AASM_POLICY_ONLY`;
+15. JSON Schema 2020-12 contracts for claims, proof artifacts, and certificates;
+16. bounded TLA+ and Promela/SPIN proof-certification invariants;
+17. public CLI contract/conformance commands;
+18. dedicated exact-head `aasm/proof-claims` gate with applicability and adversarial tests;
+19. release workflow hardened to require the proof-claims gate before publishing v0.50.
+
+**Next planned implementation release: v0.51.0 — Governed Solution Pools & Complete Enumeration.**
 
 Primary contract target:
 

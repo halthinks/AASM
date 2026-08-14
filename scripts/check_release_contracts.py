@@ -21,7 +21,7 @@ def main():
     with (root / "pyproject.toml").open("rb") as handle:
         project = tomllib.load(handle)["project"]
         version = str(project["version"])
-    if version != "0.49.0":
+    if version != "0.50.0":
         raise SystemExit(f"unexpected release version: {version}")
 
     # Project-wide Apache-2.0 / PEP 639 packaging is a permanent release invariant.
@@ -52,13 +52,47 @@ def main():
     ]
     for policy_doc in (
         root / "README.md", root / "ROADMAP.md", root / "CHANGELOG.md", root / "docs/CURRENT_RELEASE.md",
-        root / "docs/RELEASE_0.47.1.md", root / "docs/RELEASE_0.48.1.md", root / "docs/RELEASE_0.49.md",
+        root / "docs/RELEASE_0.47.1.md", root / "docs/RELEASE_0.48.1.md", root / "docs/RELEASE_0.49.md", root / "docs/RELEASE_0.50.md",
     ):
         forbid(policy_doc, stale_license_policy)
 
-    # Current v0.49 public surface.
-    require(root / "src/aasm/__init__.py", ["public_v49"])
-    require(root / "src/aasm/cli.py", ["cli_v49"])
+    # Current v0.50 public surface and proof-carrying solver claim boundary.
+    require(root / "src/aasm/__init__.py", ["public_v50"])
+    require(root / "src/aasm/cli.py", ["cli_v50"])
+    require(root / "src/aasm/public_v50.py", [
+        '__version__ = "0.50.0"', '"contract_version": "0.26.0"', "runtime_v50",
+        'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
+        "SOLVER_PROOF_CONTRACT_ID", "SOLVER_PROOF_CONTRACT_VERSION",
+        '"solver_status_is_proof_grade"', '"proof_certified_requires_independent_checker"',
+        '"certificate_authority"', '"truth_authority"',
+    ])
+    require(root / "src/aasm/runtime_v50.py", ["ProofClaimRuntimeMixin", "V49Engine"])
+    require(root / "src/aasm/_runtime_v50_proof.py", [
+        "solver_proof_contract_report", "solver_proof_claim_report", "certify_optimization_claim",
+        '"authority": "EVIDENCE_ONLY"', 'snapshot.evidence.get("records", [])',
+    ])
+    require(root / "src/aasm/proof_claims.py", [
+        'SOLVER_PROOF_CONTRACT_ID = "aasm.solver.proof-certificate.v1"',
+        'SOLVER_PROOF_CONTRACT_VERSION = "0.1.0"',
+        'SOLVER_PROOF_STABILITY = "EXPERIMENTAL_ENFORCED"',
+        '"solver_status_is_proof_grade": False',
+        '"proof_certified_requires_independent_checker": True',
+        '"exact_problem_binding_required": True',
+        '"exact_model_binding_required": True',
+        '"exact_result_binding_required": True',
+        '"certificate_authority": "EVIDENCE_ONLY"',
+        '"truth_authority": "EXISTING_AASM_POLICY_ONLY"',
+        "ProofUnsupportedError", "build_finite_domain_proof", "verify_finite_domain_proof",
+        "finite-domain proof budget exceeded", "negative solver claim is false",
+        "OPTIMAL solver claim is false", "proof checker must be independent of the solver provider",
+    ])
+    require(root / "src/aasm/proof_claim_conformance.py", [
+        "run_solver_proof_conformance", "unsat_is_proof_certified", "optimal_is_proof_certified",
+        "false_optimality_never_certifies", "positive_claim_does_not_fake_proof", "replay_exact",
+    ])
+    require(root / "src/aasm/cli_v50.py", ["solver-proof-contract", "solver-proof-conformance"])
+
+    # v0.49 remains a frozen parent contract.
     require(root / "src/aasm/public_v49.py", [
         '__version__ = "0.49.0"', '"contract_version": "0.25.0"', "runtime_v49",
         "SEMANTIC_SOLVER_RC_CONTRACT_VERSION", "RELEASE_CANDIDATE",
@@ -76,20 +110,12 @@ def main():
         'SEMANTIC_SOLVER_RC_CONTRACT_ID = "aasm.semantic.solver.rc.v1"',
         'SEMANTIC_SOLVER_RC_CONTRACT_VERSION = "0.1.0"',
         'SEMANTIC_SOLVER_RC_STABILITY = "RELEASE_CANDIDATE"',
-        'SEMANTIC_SOLVER_RC_COMPATIBILITY_FLOOR = "v0.41"',
         '"runtime_extension": "THIN_V48_COMPOSITION_NO_NEW_KERNEL"',
         '"cross_backend_rule": "AGREEMENT_OR_INCONCLUSIVE_NEVER_VOTE"',
-        '"benchmark_policy": "MEASURE_OVERHEAD_AND_SAVINGS_NO_UNGATED_SPEEDUP_CLAIM"',
         '"native_solver_claim": "AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS"',
         '"claim_policy": "NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE"',
-        "run_upgrade_compatibility", "run_cross_backend_overlap_certification", "run_rc_benchmarks",
-        "run_claim_gate_audit", "run_semantic_solver_rc_certification",
     ])
-    require(root / "src/aasm/cli_v49.py", [
-        "semantic-solver-rc-contract", "semantic-solver-rc-freeze", "semantic-solver-rc-upgrade",
-        "semantic-solver-rc-cross-backend", "semantic-solver-rc-benchmark",
-        "semantic-solver-rc-claim-audit", "semantic-solver-rc-certify",
-    ])
+    require(root / "src/aasm/cli_v49.py", ["semantic-solver-rc-contract", "semantic-solver-rc-certify"])
 
     # Preserve v0.48 cross-run authority boundaries.
     require(root / "src/aasm/public_v48.py", ['"contract_version": "0.24.0"', "PROVENANCE_ONLY_NEVER_INHERITED", "LOCAL_AUTHORIZED_REASONING_REQUIRED", "EXISTING_V41_REUSE_CERTIFICATE_REQUIRED"])
@@ -129,18 +155,16 @@ def main():
     require(root / "src/aasm/formal_workers.py", ['provider == "z3"', 'provider == "cvc5"', 'provider == "vampire"', "lean4"])
     require(root / "src/aasm/reuse_model.py", ["aasm.reuse.v1", "OPTIMIZATION_RESULT"])
 
-    # Public release/docs claims must agree with the RC contract and actual gates.
+    # Public release/docs claims must agree with v0.50 and the open-ended roadmap.
     require(root / "README.md", [
-        "Current release — v0.49.0", "Semantic Solver Release Candidate",
-        "aasm.adoption.v1 / 0.25.0", "aasm.semantic.solver.rc.v1 / 0.1.0", "aasm.remote.v1 / 0.19.0",
-        "AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS", "NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE",
-        "aasm/semantic-solver-rc", "Kissat", "CaDiCaL", "CP-SAT scheduling — OR-Tools", "HiGHS", "CVXPY", "PuLP",
-        "Z3", "cvc5", "Vampire", "Lean 4", "Required verification is never reduced",
-        "Apache License, Version 2.0", "LICENSE_POLICY.md", "v0.50.0", "Proof-Carrying Solver Claims",
-        "no presumed v1.0",
+        "Current release — v0.50.0", "Proof-Carrying Solver Claims",
+        "aasm.adoption.v1 / 0.26.0", "aasm.solver.proof-certificate.v1 / 0.1.0",
+        "SOLVER STATUS != PROOF GRADE", "PROOF_CERTIFIED", "SOLVER_VALIDATED",
+        "aasm/proof-claims", "v0.51", "Governed Solution Pools & Complete Enumeration",
+        "Apache License, Version 2.0", "LICENSE_POLICY.md", "no presumed v1.0",
     ])
     require(root / "ROADMAP.md", [
-        "v0.49.0", "Semantic Solver Release Candidate", "v0.50.0", "Proof-Carrying Solver Claims",
+        "v0.50.0 / Proof-Carrying Solver Claims", "v0.50.0 Proof-Carrying Solver Claims — Current",
         "v0.51.0", "Governed Solution Pools & Complete Enumeration",
         "v0.52.0", "Lexicographic Multi-Objective & Pareto Solving",
         "v0.53.0", "Durable Cross-Run Solver Learning",
@@ -151,22 +175,37 @@ def main():
     ])
     forbid(root / "README.md", ["v0.50 Post-RC Stabilization", "v0.50.0 — Post-RC Stabilization"])
     forbid(root / "ROADMAP.md", ["v0.50.0 — Post-RC Stabilization"])
-    require(root / "CHANGELOG.md", ["[0.49.0]", "Semantic Solver Release Candidate", "[0.48.1]", "Project-Wide Apache-2.0 Policy Correction"])
-    require(root / "docs/CURRENT_RELEASE.md", ["AASM v0.49.0", "runtime_v49", "0.25.0", "aasm.semantic.solver.rc.v1 / 0.1.0", "Apache-2.0", "aasm/semantic-solver-rc"])
-    require(root / "docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md", [
-        "aasm.semantic.solver.rc.v1 / 0.1.0", "v0.41 → v0.49", "AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS",
-        "NO PUBLIC CAPABILITY CLAIM WITHOUT A REPRODUCIBLE GATE", "AGREEMENT_OR_INCONCLUSIVE_NEVER_VOTE",
+    require(root / "CHANGELOG.md", ["[0.50.0]", "Proof-Carrying Solver Claims", "[0.49.0]", "Semantic Solver Release Candidate"])
+    require(root / "docs/CURRENT_RELEASE.md", [
+        "AASM v0.50.0", "runtime_v50", "0.26.0", "aasm.solver.proof-certificate.v1 / 0.1.0",
+        "aasm/proof-claims", "Apache-2.0",
+    ])
+    require(root / "docs/PROOF_CARRYING_SOLVER_CLAIMS.md", [
+        "SOLVER STATUS != PROOF GRADE", "UNSUPPORTED != FAIL", "PROOF_CERTIFIED",
+        "aasm.checker.finite-domain-exhaustive.v1", "EXISTING_AASM_POLICY_ONLY",
+    ])
+    require(root / "docs/RELEASE_0.50.md", [
+        "AASM v0.50.0", "0.26.0", "aasm.solver.proof-certificate.v1 / 0.1.0",
+        "PROOF_CERTIFIED", "SOLVER_VALIDATED", "aasm/proof-claims", "Apache-2.0",
     ])
     require(root / "docs/RELEASE_0.49.md", ["AASM v0.49.0", "0.25.0", "RELEASE_CANDIDATE", "aasm/semantic-solver-rc", "Apache-2.0"])
     require(root / "docs/RELEASE_0.48.1.md", ["Project-Wide Apache-2.0 Policy Correction", "LICENSE_POLICY.md", "prior AASM versions", "MIT permissions remain valid"])
     require(root / "docs/RELEASE_0.47.1.md", ["Project-wide relicensing declaration", "also offered under Apache-2.0", "MIT-only", "LICENSE_POLICY.md"])
 
+    require(root / "tests/test_v50_proof_claims.py", ["PROOF_CERTIFIED", "false_optimality_fails", "tampered_artifact", "replays"])
+    require(root / "tests/test_v50_proof_claim_limits.py", ["UNSUPPORTED", "budget_exhaustion"])
+    require(root / "tests/test_v50_public.py", ["0.50.0", "0.26.0", "solver-proof-contract", "solver-proof-conformance"])
     require(root / "tests/test_v49_rc.py", ["0.49.0", "0.25.0", "v41_memo_preserved", "v47_sii_policy_preserved", "v48_foreign_authority_still_not_inherited"])
-    require(root / "tests/test_v49_rc_real.py", ["AASM_REQUIRE_RC_BACKENDS", "cp_sat_and_milp_objectives_agree", "observed_orchestration_overhead_ratio"])
+    require(root / ".github/workflows/proof-claims.yml", ["Proof Claims", "test_v50_public.py", "solver-proof-conformance", "aasm/proof-claims"])
     require(root / ".github/workflows/rc.yml", ["Semantic Solver RC", "AASM_REQUIRE_RC_BACKENDS", "semantic-solver-rc-certify --real", "aasm/semantic-solver-rc"])
-    require(root / ".github/workflows/release.yml", ["aasm/ci-summary", "aasm/formal-assurance", "aasm/semantic-solver-rc", "Require exact main commit and all release gates"])
+    require(root / ".github/workflows/release.yml", [
+        "aasm/ci-summary", "aasm/formal-assurance", "aasm/semantic-solver-rc", "aasm/proof-claims",
+        "Require exact main commit and all release gates",
+    ])
     require(root / ".github/workflows/cross-run.yml", ["Cross-Run Knowledge", "test_v48_cross_run_knowledge.py", "test_v48_cross_run_sii_mapping.py"])
     require(root / ".github/workflows/optimization.yml", ["AASM_REQUIRE_OPTIMIZATION_BACKENDS", "AASM_REQUIRE_MODELING_BACKENDS", "AASM_REQUIRE_ADVANCED_BACKENDS", "AASM_REQUIRE_SII_BACKENDS", "test_v47_sii_real.py"])
+    for name in ("solver-claim.schema.json", "solver-proof-artifact.schema.json", "solver-claim-certificate.schema.json"):
+        require(root / "schemas" / name, ['"$schema"', "2020-12"])
 
     extras = project["optional-dependencies"]
     optimization = " ".join(extras.get("optimization", []))
@@ -189,7 +228,7 @@ def main():
     ):
         require(root / "schemas" / name, ['"$schema"', "2020-12"])
 
-    print("v0.49.0 release contracts: PASS")
+    print("v0.50.0 release contracts: PASS")
     return 0
 
 

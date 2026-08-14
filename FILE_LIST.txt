@@ -9,6 +9,7 @@
 ./.github/workflows/cross-run.yml
 ./.github/workflows/formal.yml
 ./.github/workflows/optimization.yml
+./.github/workflows/proof-claims.yml
 ./.github/workflows/rc.yml
 ./.github/workflows/release.yml
 ./.gitignore
@@ -69,6 +70,7 @@
 ./docs/MODEL_ROUTING.md
 ./docs/OBSERVABILITY.md
 ./docs/PROFILE_PACKAGES.md
+./docs/PROOF_CARRYING_SOLVER_CLAIMS.md
 ./docs/PROVIDER_ADAPTERS_ARTIFACTS_CONTROLS.md
 ./docs/REFERENCE_DOMAIN_STRESS.md
 ./docs/RELEASE_0.19.md
@@ -94,6 +96,7 @@
 ./docs/RELEASE_0.48.1.md
 ./docs/RELEASE_0.48.md
 ./docs/RELEASE_0.49.md
+./docs/RELEASE_0.50.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
@@ -162,6 +165,8 @@
 ./formal/AASMScopeHierarchy.tla
 ./formal/AASMSemanticTruthMaintenance.cfg
 ./formal/AASMSemanticTruthMaintenance.tla
+./formal/AASMSolverProofClaims.cfg
+./formal/AASMSolverProofClaims.tla
 ./formal/AASMTraceConformance.cfg
 ./formal/AASMTraceConformance.tla
 ./formal/AASMTypedCapabilities.cfg
@@ -174,6 +179,7 @@
 ./formal/aasm_reuse_plane.pml
 ./formal/aasm_scope_hierarchy.pml
 ./formal/aasm_semantic_truth_maintenance.pml
+./formal/aasm_solver_proof_claims.pml
 ./formal/aasm_trace_conformance.pml
 ./formal/aasm_typed_capabilities.pml
 ./formal/toolchain.lock.json
@@ -294,6 +300,9 @@
 ./schemas/sii-proposal.schema.json
 ./schemas/sii-resource-lease.schema.json
 ./schemas/sii-scoring-policy.schema.json
+./schemas/solver-claim-certificate.schema.json
+./schemas/solver-claim.schema.json
+./schemas/solver-proof-artifact.schema.json
 ./schemas/solver-step.schema.json
 ./schemas/state.schema.json
 ./schemas/task-demand.schema.json
@@ -346,6 +355,7 @@
 ./src/aasm/_runtime_v47_sii.py
 ./src/aasm/_runtime_v48_knowledge.py
 ./src/aasm/_runtime_v49_rc.py
+./src/aasm/_runtime_v50_proof.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -389,6 +399,7 @@
 ./src/aasm/cli_v47.py
 ./src/aasm/cli_v48.py
 ./src/aasm/cli_v49.py
+./src/aasm/cli_v50.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -458,6 +469,8 @@
 ./src/aasm/persistence/sqlite.py
 ./src/aasm/profile_conformance.py
 ./src/aasm/profile_packages.py
+./src/aasm/proof_claim_conformance.py
+./src/aasm/proof_claims.py
 ./src/aasm/protocols.py
 ./src/aasm/provider_adapters.py
 ./src/aasm/provisioning.py
@@ -470,6 +483,7 @@
 ./src/aasm/public_v47.py
 ./src/aasm/public_v48.py
 ./src/aasm/public_v49.py
+./src/aasm/public_v50.py
 ./src/aasm/pulp_adapter.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
@@ -530,6 +544,7 @@
 ./src/aasm/runtime_v47.py
 ./src/aasm/runtime_v48.py
 ./src/aasm/runtime_v49.py
+./src/aasm/runtime_v50.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
@@ -629,4 +644,7 @@
 ./tests/test_v48_public.py
 ./tests/test_v49_rc.py
 ./tests/test_v49_rc_real.py
+./tests/test_v50_proof_claim_limits.py
+./tests/test_v50_proof_claims.py
+./tests/test_v50_public.py
 ./tests/test_workers_leases.py

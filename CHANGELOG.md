@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.50.0] - 2026-08-14
+
+### Proof-Carrying Solver Claims
+
+- advanced the package/public surface to `0.50.0` and `aasm.adoption.v1` to `0.26.0`;
+- added `aasm.solver.proof-certificate.v1 / 0.1.0` with `EXPERIMENTAL_ENFORCED` stability;
+- added `SolverClaim`, `SolverProofArtifact`, and `SolverClaimCertificate` with exact problem/formulation/model/result bindings;
+- separates `SOLVER_VALIDATED` from `PROOF_CERTIFIED`; solver status alone is never proof grade;
+- requires an independent passing checker before any claim can become `PROOF_CERTIFIED`;
+- added AASM-owned exhaustive finite-domain certification for bounded Boolean/integer `UNSAT`, `INFEASIBLE`, and `OPTIMAL` claims;
+- added deterministic proof trace digests and independent proof reconstruction/recheck;
+- distinguishes unsupported proof scope/budget from a contradicted claim (`UNSUPPORTED != FAIL`);
+- rejects forged/tampered proof artifacts, false optimality, self-checking, unsupported continuous models, and over-budget exhaustive spaces;
+- persists proof claims/artifacts/certificates through the existing Evidence/event history with exact replay;
+- keeps proof certificates `EVIDENCE_ONLY`; AASM policy remains the only truth/state authority;
+- added JSON schemas, public API/CLI, proof conformance, dedicated `aasm/proof-claims` CI, and bounded TLA+/SPIN assurance;
+- hardened release publication to require CI + Formal Assurance + Semantic Solver RC + Proof Claims on the exact current `main` SHA;
+- preserved project-wide Apache-2.0 policy and all v0.49/v0.48/v0.47 authority, solver, memory, reuse, SII, and cross-run boundaries.
+
 ## [0.49.0] - 2026-08-14
 
 ### Semantic Solver Release Candidate

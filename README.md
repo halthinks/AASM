@@ -2,23 +2,24 @@
 
 **Durable deterministic control for agents, tools, models, humans, formal systems, native solvers, governed memory, and cross-run knowledge.**
 
-## Current release — v0.49.0
+## Current release — v0.50.0
 
-**Semantic Solver Release Candidate**
+**Proof-Carrying Solver Claims**
 
-**Next release:** v0.50.0 — Proof-Carrying Solver Claims
+**Next release:** v0.51.0 — Governed Solution Pools & Complete Enumeration
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 
-v0.49 does not add another execution kernel. It freezes and certifies the architecture assembled through v0.48: deterministic replay, typed authority, formal verification, governed memory, certified reuse, native optimization, SII resource economics, cross-run knowledge, and project-wide Apache-2.0 licensing.
+v0.50 adds proof-carrying solver claims as a thin layer over the v0.49 release-candidate runtime. Solver status remains Evidence; only an independent passing checker can label an exact-bound claim `PROOF_CERTIFIED`, and that certificate still does not become policy or truth authority.
 
 AASM's declared project license is **Apache License, Version 2.0 (`Apache-2.0`) across the project**. To the extent AASM has the necessary relicensing rights, prior AASM versions—including versions first distributed under MIT—are **also offered under Apache-2.0**. Previously granted MIT permissions remain valid for their recipients, but prior AASM versions are not designated MIT-only. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`LICENSE_POLICY.md`](LICENSE_POLICY.md).
 
 ### Current release contracts
 
 ```text
-package / public surface: 0.49.0
-aasm.adoption.v1 / 0.25.0
+package / public surface: 0.50.0
+aasm.adoption.v1 / 0.26.0
+aasm.solver.proof-certificate.v1 / 0.1.0
 aasm.semantic.solver.rc.v1 / 0.1.0
 aasm.remote.v1 / 0.19.0
 aasm.knowledge.cross-run.v1 / 0.1.0
@@ -60,6 +61,36 @@ proposal / observation / solver output
 ```
 
 Performance state is allowed to improve performance. It is not allowed to redefine correctness.
+
+## v0.50 — Proof-Carrying Solver Claims
+
+The governing distinction is:
+
+```text
+SOLVER STATUS != PROOF GRADE
+SOLVER_VALIDATED = ordinary independently validated solver Evidence
+PROOF_CERTIFIED  = exact-bound claim + proof artifact + independent checker PASS
+```
+
+The v0.50 contract is `aasm.solver.proof-certificate.v1 / 0.1.0`. Its first checker, `aasm.checker.finite-domain-exhaustive.v1 / 0.1.0`, exhaustively verifies bounded Boolean/integer `UNSAT`, `INFEASIBLE`, and `OPTIMAL` claims. Continuous domains, unsupported claim kinds, and proof spaces beyond the configured finite-domain budget remain explicitly `UNSUPPORTED`; they are never mislabeled as failed proofs or silently promoted.
+
+Claims, proof artifacts, and certificates are durable through the existing AASM Evidence/event history. A passing certificate has `certificate_authority = EVIDENCE_ONLY` and `truth_authority = EXISTING_AASM_POLICY_ONLY`.
+
+```text
+proof failure       -> no PROOF_CERTIFIED
+proof unsupported   -> no PROOF_CERTIFIED
+solver self-check   -> no PROOF_CERTIFIED
+independent PASS    -> PROOF_CERTIFIED Evidence only
+```
+
+Public CLI:
+
+```bash
+aasm solver-proof-contract
+aasm solver-proof-conformance
+```
+
+See `docs/PROOF_CARRYING_SOLVER_CLAIMS.md` for exact scope and non-claims.
 
 ## v0.49 — Semantic Solver Release Candidate
 
@@ -393,6 +424,7 @@ AASM's current release gates include:
 - **Cross-Run Knowledge** governance/adversarial tests;
 - **Formal Assurance** with bounded TLA+ and Promela/SPIN;
 - **Semantic Solver RC** upgrade, cross-backend, benchmark, claim-audit, public CLI, and full real certification;
+- **Proof Claims** exact binding, proof applicability, adversarial rejection, public CLI, replay, and conformance; publishes exact-head `aasm/proof-claims`;
 - project-wide Apache-2.0 / PEP 639 / `LICENSE` / `NOTICE` / `LICENSE_POLICY.md` release checks;
 - exact-head release publication and remote asset byte verification.
 
@@ -420,9 +452,9 @@ Third-party material, if any, remains subject to its own applicable terms.
 - v0.46 Advanced Solver Control & Search Artifacts ✅
 - v0.47 Governed Symbiotic Intelligence & Intelligence Economics ✅
 - v0.48 Cross-Run Certified Knowledge & Governed Long-Term Memory ✅
-- **v0.49 Semantic Solver Release Candidate — current ✅**
-- **v0.50 Proof-Carrying Solver Claims — next**
-- v0.51 Governed Solution Pools & Complete Enumeration
+- v0.49 Semantic Solver Release Candidate ✅
+- **v0.50 Proof-Carrying Solver Claims — current ✅**
+- **v0.51 Governed Solution Pools & Complete Enumeration — next**
 - v0.52 Lexicographic Multi-Objective & Pareto Solving
 - v0.53 Durable Cross-Run Solver Learning
 - v0.54 Certified Cross-Solver Exchange & Deterministic Portfolio Racing
@@ -433,4 +465,4 @@ Third-party material, if any, remains subject to its own applicable terms.
 
 The v0.50–v0.57 sequence closes the **currently identified semantic-solver gap cluster**. It does not close AASM and does not imply readiness for a stable-major release.
 
-See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md](docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md), [docs/RELEASE_0.49.md](docs/RELEASE_0.49.md), and [LICENSE_POLICY.md](LICENSE_POLICY.md).
+See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/PROOF_CARRYING_SOLVER_CLAIMS.md](docs/PROOF_CARRYING_SOLVER_CLAIMS.md), [docs/RELEASE_0.50.md](docs/RELEASE_0.50.md), [docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md](docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md), and [LICENSE_POLICY.md](LICENSE_POLICY.md).
