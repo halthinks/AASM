@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.48.0 / experimental**.
+AASM is currently **v0.48.1 / experimental**.
 
 ## Released
 
@@ -18,7 +18,8 @@ AASM is currently **v0.48.0 / experimental**.
 - v0.46.0 Advanced Solver Control & Search Artifacts
 - v0.47.0 Governed Symbiotic Intelligence & Intelligence Economics
 - v0.47.1 Apache-2.0 License Transition
-- **v0.48.0 Cross-Run Certified Knowledge & Governed Long-Term Memory — Current — implemented**
+- v0.48.0 Cross-Run Certified Knowledge & Governed Long-Term Memory
+- **v0.48.1 Project-Wide Apache-2.0 Policy Correction — Current — implemented**
 
 ## v0.44.0 — Heterogeneous Optimization Solver Portfolio
 
@@ -38,7 +39,7 @@ Graduated SII to `aasm.sii.v1 / 0.3.0` / `GOVERNED_ENFORCED`: durable principals
 
 ## v0.47.1 — Apache-2.0 License Transition
 
-Preserved the v0.47 runtime while changing the active project/distribution license to Apache License 2.0 with PEP 639/SPDX metadata, packaged `LICENSE`/`NOTICE`, contribution alignment, and release gates. The already-published v0.47.0 artifact remains historically MIT licensed.
+Preserved the v0.47 runtime while introducing Apache License 2.0 packaging with PEP 639/SPDX metadata, packaged `LICENSE`/`NOTICE`, contribution alignment, and release gates. The project-wide policy is now stated explicitly in `LICENSE_POLICY.md`: to the extent AASM has the necessary relicensing rights, prior AASM versions first distributed under MIT are also offered under Apache-2.0. Earlier MIT grants remain valid for their recipients, but prior AASM versions are not designated MIT-only.
 
 ## v0.48.0 — Cross-Run Certified Knowledge & Governed Long-Term Memory
 
@@ -74,6 +75,19 @@ Delivered:
 28. preservation of the entire v0.39 formal, v0.40 memory, v0.41 reuse, v0.44–v0.46 solver, and v0.47 SII pathways;
 29. preservation of Apache-2.0 / PEP 639 / NOTICE packaging from v0.47.1.
 
+## v0.48.1 — Project-Wide Apache-2.0 Policy Correction
+
+Corrects the licensing-policy description without changing runtime semantics:
+
+1. adds `LICENSE_POLICY.md` as the explicit project-wide Apache-2.0 declaration;
+2. declares prior AASM versions also offered under Apache-2.0 to the extent AASM has the necessary relicensing rights;
+3. states that previously granted MIT permissions remain valid for recipients;
+4. removes the incorrect implication that those surviving MIT permissions make old AASM versions MIT-only;
+5. removes the incorrect implication that v0.47.1 is the first/only Apache-2.0 point in AASM history;
+6. adds release-gate checks requiring the project-wide declaration;
+7. adds forbidden-text regression checks so the incorrect historical-policy framing cannot silently return;
+8. preserves package/runtime contracts at the v0.48 semantic level and keeps adoption at `aasm.adoption.v1 / 0.24.0`.
+
 ### Explicit v0.48 limits
 
 - the cross-run envelope is not itself a network authentication protocol;
@@ -96,6 +110,6 @@ Delivered:
 
 ## v0.49.0 — Semantic Solver Release Candidate
 
-**Next.** Freeze the coherent public solver/control contracts after replay, formal, distributed, adversarial, memory/privacy, reference-domain, certification, native optimization, convex/modeling adapters, advanced solver control, governed SII, Apache packaging, and cross-run knowledge gates all pass.
+**Next.** Freeze the coherent public solver/control contracts after replay, formal, distributed, adversarial, memory/privacy, reference-domain, certification, native optimization, convex/modeling adapters, advanced solver control, governed SII, project-wide Apache packaging/policy, and cross-run knowledge gates all pass.
 
 Release-candidate work should focus on compatibility freeze, benchmark evidence, upgrade/migration guarantees, final cross-backend certification, documentation consolidation, and removal of claims that are not backed by a reproducible gate.
