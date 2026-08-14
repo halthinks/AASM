@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.48.1] - 2026-08-14
+
+### Project-Wide Apache-2.0 Policy Correction
+
+- added `LICENSE_POLICY.md` as AASM's explicit project-wide Apache-2.0 licensing declaration;
+- declares prior AASM versions also offered under Apache-2.0 to the extent AASM has the necessary relicensing rights, including versions first distributed under MIT;
+- states that previously granted MIT permissions remain valid for recipients while removing the incorrect implication that prior AASM versions are MIT-only;
+- removed the incorrect implication that v0.47.1 is the first or only Apache-2.0 point in AASM history;
+- corrected README, roadmap, current-release, and v0.47.1 release documentation accordingly;
+- added release-gate requirements for the project-wide Apache policy and regression checks that reject the stale MIT-only/first-Apache framing;
+- advanced the package/public distribution version to `0.48.1` while keeping `aasm.adoption.v1 / 0.24.0` and all runtime, cross-run, SII, solver, formal, memory, reuse, persistence, scheduler, and replay semantics unchanged.
+
 ## [0.48.0] - 2026-08-14
 
 ### Cross-Run Certified Knowledge & Governed Long-Term Memory
@@ -31,11 +43,11 @@
 
 ### Apache-2.0 License Transition
 
-- changed the active AASM project/distribution license from MIT to Apache License 2.0 (`Apache-2.0`);
+- changed AASM package/project metadata to Apache License 2.0 (`Apache-2.0`);
 - replaced the root `LICENSE` with the standard Apache License 2.0 text and added packaged `NOTICE` attribution;
 - uses PEP 639/SPDX `license = "Apache-2.0"` with no legacy `License :: ...` classifier;
 - preserved every v0.47.0 runtime/authority/solver/SII behavior unchanged;
-- preserved the already-published v0.47.0 release as the historical MIT-licensed artifact.
+- under the project-wide declaration now recorded in `LICENSE_POLICY.md`, prior AASM versions are also offered under Apache-2.0 where AASM has the necessary relicensing rights; previously granted MIT permissions remain valid for their recipients without making those prior versions MIT-only.
 
 ## [0.47.0] - 2026-08-14
 
