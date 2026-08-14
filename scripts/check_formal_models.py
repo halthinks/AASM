@@ -13,7 +13,7 @@ def main():
     root = Path(__file__).resolve().parents[1]
     with (root / "pyproject.toml").open("rb") as handle:
         version = str(tomllib.load(handle)["project"]["version"])
-    if version != "0.49.0":
+    if version != "0.50.0":
         raise SystemExit(f"unexpected formal release version: {version}")
 
     require(root / "formal/AASMCalculus.tla", ["HardRequiresCertificate", "CandidateActivationIsAtomic"])
@@ -50,9 +50,43 @@ def main():
         "reputation_granted_authority", "reputation_granted_resources",
     ])
 
-    # v0.49 adds no new state-machine semantics. Its source gate proves that the
-    # RC is a thin assurance composition over the already model-checked v0.48
-    # runtime and that cross-backend/benchmark evidence cannot become authority.
+    # v0.50 adds proof-carrying solver claims without granting proof artifacts
+    # independent authority. Certification requires an independent checker,
+    # exact binding, and PASS; unsupported/failed proof checks never certify.
+    require(root / "formal/AASMSolverProofClaims.tla", [
+        "ProofCertifiedImpliesIndependentChecker", "ProofCertifiedImpliesExactBinding",
+        "ProofCertifiedImpliesPassingCheck", "SolverClaimNeverSelfCertifies",
+        "FailedProofNeverCertifies", "UnsupportedProofNeverCertifies",
+        "ProofCertificateNeverDirectlyAuthorizesTruth",
+    ])
+    require(root / "formal/AASMSolverProofClaims.cfg", [
+        "ProofCertifiedImpliesIndependentChecker", "ProofCertifiedImpliesExactBinding",
+        "ProofCertifiedImpliesPassingCheck", "SolverClaimNeverSelfCertifies",
+        "FailedProofNeverCertifies", "UnsupportedProofNeverCertifies",
+        "ProofCertificateNeverDirectlyAuthorizesTruth",
+    ])
+    require(root / "formal/aasm_solver_proof_claims.pml", [
+        "checker_independent", "exact_binding", "proof_passed", "proof_failed",
+        "proof_unsupported", "proof_certified", "policy_acted", "truth_authorized",
+    ])
+    require(root / "src/aasm/proof_claims.py", [
+        'SOLVER_PROOF_CONTRACT_ID = "aasm.solver.proof-certificate.v1"',
+        'SOLVER_PROOF_CONTRACT_VERSION = "0.1.0"',
+        'SOLVER_PROOF_STABILITY = "EXPERIMENTAL_ENFORCED"',
+        '"solver_status_is_proof_grade": False',
+        '"proof_certified_requires_independent_checker": True',
+        '"certificate_authority": "EVIDENCE_ONLY"',
+        '"truth_authority": "EXISTING_AASM_POLICY_ONLY"',
+        "ProofUnsupportedError", "build_finite_domain_proof", "verify_finite_domain_proof",
+        "independent of the solver provider", "UNSUPPORTED",
+    ])
+    require(root / "src/aasm/runtime_v50.py", ["ProofClaimRuntimeMixin", "V49Engine"])
+    require(root / "src/aasm/_runtime_v50_proof.py", [
+        "solver_proof_contract_report", "solver_proof_claim_report", "certify_optimization_claim",
+        '"authority": "EVIDENCE_ONLY"', 'snapshot.evidence.get("records", [])',
+    ])
+
+    # v0.49 RC remains the parent assurance layer.
     require(root / "src/aasm/semantic_solver_rc.py", [
         'SEMANTIC_SOLVER_RC_CONTRACT_ID = "aasm.semantic.solver.rc.v1"',
         'SEMANTIC_SOLVER_RC_CONTRACT_VERSION = "0.1.0"',
@@ -95,7 +129,7 @@ def main():
     require(root / "src/aasm/advanced_optimization.py", ["aasm.optimization.advanced.v1", "SEARCH_STATE_NEVER_PROMOTES_TRUTH", "EPHEMERAL_PERFORMANCE_ONLY", "unsat_core", "warm_start", "affine_soc"])
     require(root / "src/aasm/_runtime_v46_advanced.py", ["advanced result lease expired before result commit", "advanced result implementation does not match admitted provider", "EVIDENCE_ONLY"])
 
-    print("v0.49.0 formal contracts: PASS")
+    print("v0.50.0 formal contracts: PASS")
     return 0
 
 
