@@ -1,10 +1,23 @@
 import pytest
 
+from aasm import __version__, validate_public_api_contract
+from aasm.cli import build_parser
 from aasm.reference_domains import (
     REFERENCE_DOMAIN_IDS,
     reference_domain_contract,
     run_reference_domain_stress,
 )
+
+
+def test_v42_public_and_cli_surfaces_are_active():
+    assert __version__ == "0.42.0"
+    report = validate_public_api_contract()
+    assert report["valid"] is True, report
+    assert report["contract"]["contract_version"] == "0.18.0"
+    assert report["contract"]["reference_domains"]["contract_id"] == "aasm.reference-domains.v1"
+    help_text = build_parser().format_help()
+    assert "reference-domain-contract" in help_text
+    assert "reference-domain-stress" in help_text
 
 
 def test_reference_domain_contract_is_offline_and_kernel_neutral():
