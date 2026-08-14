@@ -29,12 +29,12 @@ v0.47.1 changes the active project/distribution license from MIT to Apache Licen
 
 - the standard Apache License 2.0 text in `LICENSE`;
 - a distributable `NOTICE` file preserving AASM attribution;
-- `license = "Apache-2.0"` package metadata;
-- the `License :: OSI Approved :: Apache Software License` classifier;
+- PEP 639/SPDX `license = "Apache-2.0"` package metadata;
+- no legacy `License :: ...` classifier, as required by the current setuptools PEP 639 path;
 - `LICENSE` and `NOTICE` in `license-files`;
 - `NOTICE` in the source-distribution manifest;
 - contribution terms aligned to Apache-2.0;
-- release gates that reject an incorrect license expression or missing Apache/NOTICE files.
+- release gates that reject an incorrect license expression, a legacy license classifier, or missing Apache/NOTICE files.
 
 No solver, authority, SII, memory, reuse, persistence, or verification semantics change in this patch.
 
