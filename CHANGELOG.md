@@ -7,7 +7,7 @@
 - changed the active AASM project/distribution license from MIT to Apache License 2.0 (`Apache-2.0`);
 - replaced the root `LICENSE` with the standard Apache License 2.0 text;
 - added a distributable `NOTICE` preserving AASM attribution;
-- updated package metadata to `license = "Apache-2.0"` and added the Apache OSI classifier;
+- updated package metadata to the PEP 639/SPDX expression `license = "Apache-2.0"` and intentionally carries no legacy `License :: ...` classifier;
 - declared both `LICENSE` and `NOTICE` as package license files and included `NOTICE` in the source-distribution manifest;
 - updated contribution terms to Apache-2.0;
 - added release/source checks so the active distribution cannot silently regress to MIT or omit `NOTICE`;
