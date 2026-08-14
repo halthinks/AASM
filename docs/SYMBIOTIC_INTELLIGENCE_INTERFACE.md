@@ -2,14 +2,14 @@
 
 ## Status
 
-Experimental v0.44 participation plane staged in v0.43 as an adversarial certification target.
+Experimental v0.45 participation plane staged as an adversarial certification target and now sitting above the v0.44 native solver portfolio.
 
 ```text
 aasm.sii.v1 / 0.2.0
 stability = EXPERIMENTAL_CERTIFICATION_TARGET
 ```
 
-SII sits above the existing AASM authority machinery. It does not create another truth store, scheduler, reducer, event log, or kernel runtime.
+SII sits above the existing AASM authority machinery. It does not create another truth store, scheduler, reducer, event log, or competing solver runtime.
 
 ## Core laws
 
@@ -32,12 +32,13 @@ intelligences: models / agents / humans / solvers / ensembles
      v0.37 reasoning + v0.38 truth maintenance
      v0.39 capabilities + formal verification
      v0.40 memory/context + v0.41 solver/reuse
+     v0.44 native SAT / CP-SAT / MILP portfolio
                          |
                          v
              v0.43 adversarial certification
 ```
 
-The active engine remains `runtime_v41.AASMEngine`. v0.43 intentionally does not add `runtime_v43.py` or resurrect the old candidate `runtime_v42.py` overlay.
+The active public engine in v0.44 is `runtime_v44.AASMEngine`, a thin optimization mixin over `runtime_v41.AASMEngine`. SII itself still does not add a separate runtime or authority plane.
 
 ## Proposal contract
 
@@ -97,8 +98,12 @@ It may eventually grant more:
 
 - context budget;
 - parallel candidate budget;
-- allowed solver classes;
 - scheduler priority;
+- SAT search/conflict budget;
+- CP-SAT deterministic-time/search budget;
+- MILP node/iteration budget;
+- heterogeneous portfolio width;
+- formal-verification budget;
 - permission to request long-lived memory;
 - permission to propose schema changes.
 
@@ -109,13 +114,7 @@ It can never grant:
 - self-verification;
 - POLICY or CONTROLLER authority.
 
-v0.43 deliberately marks lease enforcement as:
-
-```text
-POLICY_PROJECTION_ONLY_V043
-```
-
-The lease is computed and inspectable, but scheduler/capability enforcement is a v0.44 graduation gate.
+The lease is computed and inspectable today, but enforcement remains a v0.45 graduation gate. v0.44 supplies the real scheduler/capability/native-solver resources that the lease must govern rather than inventing a second resource system.
 
 ## Symbiotic context loop
 
@@ -126,23 +125,25 @@ more verified reusable machine knowledge
         ↓
 smaller / better future governed context
         ↓
-more budget available for novel reasoning
+more budget available for novel reasoning and solving
         ↓
-better reasoning
+better reasoning / better solver allocation
         ↓
 more reusable knowledge
 ```
 
-SII uses the existing v0.40 bounded context projection and reasoning frontier. Returned knowledge retains its original AASM truth state and authority.
+SII uses the existing bounded context projection and reasoning frontier. Returned knowledge retains its original AASM truth state and authority.
 
-## v0.44 graduation gates
+## v0.45 graduation gates
 
 SII does not graduate to an active runtime participation plane until all of these are satisfied:
 
 1. **measurement principal/authority binding** — `measured_by` and its authority class must resolve from durable governed actor identity rather than caller assertion;
 2. **scheduler enforcement** — context/candidate/priority budgets must be enforced by the existing resource/scheduling path;
-3. **capability enforcement** — solver-class and privilege restrictions must be enforced by the existing capability/lease boundary;
-4. **adversarial certification** — the SII certification target must reach `PASS`, including farming, forgery, reset, collusion, stale-data, and privilege-escalation fixtures.
+3. **native solver budget enforcement** — SAT/CP-SAT/MILP resource allowances must bind to v0.44 capability/provider/task-lease execution;
+4. **formal capability enforcement** — formal solver restrictions must remain enforced by the existing v0.39 capability/lease boundary;
+5. **versioned policy** — scoring thresholds and weight profiles must move into explicit governed policy objects;
+6. **adversarial certification** — the SII certification target must reach `PASS`, including farming, forgery, reset, collusion, stale-data, and privilege-escalation fixtures.
 
 Until then `aasm certify --target sii-preview` is expected to return `INCONCLUSIVE`, not `PASS`.
 
