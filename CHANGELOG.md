@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.43.0] - 2026-08-14
+
+### Semantic Conformance, Adversarial Domains, and Certification
+
+- added `aasm.certification.v1 / 0.1.0` and advanced `aasm.adoption.v1` to `0.19.0`;
+- added explicit `PASS | FAIL | INCONCLUSIVE` certification semantics so missing evidence or enforcement cannot silently become success;
+- added deterministic certification profiles for reference domains, solver/reuse, truth/memory, and formal-verification boundaries;
+- added adversarial checks for freshness/dependency/effect mismatches, stale reasoning, privacy/revocation, and insufficient formal verification strength;
+- preserved the distinction between deterministic architecture/contract certification and the semantic truth of arbitrary external conclusions;
+- staged `aasm.sii.v1 / 0.2.0` as an experimental v0.44 Symbiotic Intelligence Interface participation plane rather than creating another runtime kernel;
+- added SII structured proposals, stable principal identities, durable outcome attribution, bounded performance vectors, contextual ResourceLease projections, and governed context access;
+- ensured SII savings credit comes only from durable AASM reuse telemetry and that resource utility never promotes truth/state authority;
+- added SII adversarial checks for producer-controlled fingerprints, identity reset, self-measurement, forged reuse metrics, authority escalation, and repeated-outcome farming;
+- intentionally reports the SII preview as `INCONCLUSIVE` until measurement authority is durably actor-bound and ResourceLease values are enforced by existing scheduler/capability paths;
+- added certification/SII public API, CLI commands, JSON schemas, documentation, regression tests, and release/formal source gates;
+- kept `runtime_v41.AASMEngine` as the active kernel; no `runtime_v43.py` or replacement v0.42 runtime path was introduced.
+
 ## [0.42.0] - 2026-08-13
 
 ### Reference Domains & Reuse/Memory/Reasoning Stress Tests
