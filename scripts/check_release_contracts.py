@@ -101,7 +101,7 @@ def main():
     ])
     require(root / "docs/RELEASE_0.47.md", ["AASM v0.47.0", "0.23.0", "0.2.0", "0.3.0", "REQUIRED VERIFICATION IS NEVER REDUCED BY SII"])
     require(root / "tests/test_v47_public.py", ["0.47.0", "0.23.0", "0.2.0", "0.3.0", "sii-preview"])
-    require(root / "tests/test_v47_sii_governance.py", ["measurement authority", "max_parallel_candidates", "authority_reward", "10_000", "20_000"])
+    require(root / "tests/test_v47_sii_governance.py", ["test_measurement_authority_is_resolved", "max_parallel_candidates", "authority_reward", "10_000", "20_000"])
     require(root / "tests/test_v47_sii_real.py", ["AASM_REQUIRE_SII_BACKENDS", "cadical-incremental", "authority_reward", "EVIDENCE_ONLY"])
     require(root / ".github/workflows/optimization.yml", [
         "AASM_REQUIRE_OPTIMIZATION_BACKENDS", "AASM_REQUIRE_MODELING_BACKENDS", "AASM_REQUIRE_ADVANCED_BACKENDS",
