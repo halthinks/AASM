@@ -84,6 +84,7 @@
 ./docs/RELEASE_0.44.md
 ./docs/RELEASE_0.45.md
 ./docs/RELEASE_0.46.md
+./docs/RELEASE_0.47.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
@@ -92,6 +93,7 @@
 ./docs/REUSE_AND_SOLVER_LOOP.md
 ./docs/SEMANTIC_CERTIFICATION.md
 ./docs/SEMANTIC_TRUTH_MAINTENANCE.md
+./docs/SII_GOVERNED_ECONOMICS.md
 ./docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md
 ./docs/TRACE_CONFORMANCE.md
 ./docs/TYPED_CAPABILITIES_FORMAL_VERIFICATION.md
@@ -136,6 +138,8 @@
 ./examples/sii_demo.py
 ./formal/AASMCalculus.cfg
 ./formal/AASMCalculus.tla
+./formal/AASMGovernedSII.cfg
+./formal/AASMGovernedSII.tla
 ./formal/AASMHierarchicalMemory.cfg
 ./formal/AASMHierarchicalMemory.tla
 ./formal/AASMOptimizationPortfolio.cfg
@@ -151,6 +155,7 @@
 ./formal/AASMTypedCapabilities.cfg
 ./formal/AASMTypedCapabilities.tla
 ./formal/aasm_calculus.pml
+./formal/aasm_governed_sii.pml
 ./formal/aasm_hierarchical_memory.pml
 ./formal/aasm_optimization_portfolio.pml
 ./formal/aasm_reuse_plane.pml
@@ -263,9 +268,12 @@
 ./schemas/semantic-dependency.schema.json
 ./schemas/semantic-result.schema.json
 ./schemas/semantic-trace-report.schema.json
+./schemas/sii-governed-resource-lease.schema.json
 ./schemas/sii-outcome.schema.json
+./schemas/sii-principal-binding.schema.json
 ./schemas/sii-proposal.schema.json
 ./schemas/sii-resource-lease.schema.json
+./schemas/sii-scoring-policy.schema.json
 ./schemas/solver-step.schema.json
 ./schemas/state.schema.json
 ./schemas/task-demand.schema.json
@@ -315,6 +323,7 @@
 ./src/aasm/_runtime_v44_optimization.py
 ./src/aasm/_runtime_v45_convex.py
 ./src/aasm/_runtime_v46_advanced.py
+./src/aasm/_runtime_v47_sii.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -330,6 +339,7 @@
 ./src/aasm/authority.py
 ./src/aasm/calculus.py
 ./src/aasm/certification.py
+./src/aasm/certification_v47.py
 ./src/aasm/change_impact.py
 ./src/aasm/checkpoint.py
 ./src/aasm/checkpoint_triggers.py
@@ -354,6 +364,7 @@
 ./src/aasm/cli_v44.py
 ./src/aasm/cli_v45.py
 ./src/aasm/cli_v46.py
+./src/aasm/cli_v47.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -430,6 +441,7 @@
 ./src/aasm/public_v44.py
 ./src/aasm/public_v45.py
 ./src/aasm/public_v46.py
+./src/aasm/public_v47.py
 ./src/aasm/pulp_adapter.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
@@ -487,6 +499,7 @@
 ./src/aasm/runtime_v44.py
 ./src/aasm/runtime_v45.py
 ./src/aasm/runtime_v46.py
+./src/aasm/runtime_v47.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
@@ -505,6 +518,7 @@
 ./src/aasm/server_v40.py
 ./src/aasm/server_v41.py
 ./src/aasm/sii.py
+./src/aasm/sii_governance.py
 ./src/aasm/solver_loop.py
 ./src/aasm/solver_types.py
 ./src/aasm/supervisor_adapters.py
@@ -576,4 +590,7 @@
 ./tests/test_v46_advanced_optimization.py
 ./tests/test_v46_advanced_optimization_real.py
 ./tests/test_v46_public.py
+./tests/test_v47_public.py
+./tests/test_v47_sii_governance.py
+./tests/test_v47_sii_real.py
 ./tests/test_workers_leases.py
