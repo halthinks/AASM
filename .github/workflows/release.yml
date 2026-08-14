@@ -128,7 +128,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Require exact main commit and both release gates
+      - name: Require exact main commit and all release gates
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -136,7 +136,7 @@ jobs:
           set -euo pipefail
           commit_sha="$(git rev-parse HEAD)"
           test "$commit_sha" = "$(git rev-parse origin/main)"
-          for context in aasm/ci-summary aasm/formal-assurance; do
+          for context in aasm/ci-summary aasm/formal-assurance aasm/semantic-solver-rc; do
             state=""
             for _ in $(seq 1 90); do
               state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" --jq "[.statuses[] | select(.context == \"$context\")][0].state // \"\"")"
