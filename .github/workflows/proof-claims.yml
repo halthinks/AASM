@@ -11,38 +11,6 @@ permissions:
   statuses: write
 
 jobs:
-  advance_sentinels:
-    if: github.event_name == 'push' && github.event.head_commit.message == 'Run v0.50 current-version sentinel updater'
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 2
-      - uses: actions/setup-python@v7
-        with:
-          python-version: '3.13'
-      - name: Advance only current-version sentinels
-        run: python scripts/_advance_v50_test_sentinels.py
-      - name: Verify affected historical behavior tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          python -m pip install -e '.[dev]'
-          pytest -q tests/test_v32_trace_conformance.py tests/test_v37_reasoning.py tests/test_v38_semantic_dependencies.py tests/test_v39_typed_capabilities.py
-      - name: Commit sentinel updates
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm scripts/_advance_v50_test_sentinels.py
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --cached --check
-          git commit -m 'Advance remaining current-version sentinels to v0.50'
-          git push origin HEAD:main
-
   proof_claims:
     runs-on: ubuntu-24.04
     steps:
