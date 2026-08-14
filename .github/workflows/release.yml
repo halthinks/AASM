@@ -136,7 +136,7 @@ jobs:
           set -euo pipefail
           commit_sha="$(git rev-parse HEAD)"
           test "$commit_sha" = "$(git rev-parse origin/main)"
-          for context in aasm/ci-summary aasm/formal-assurance aasm/semantic-solver-rc; do
+          for context in aasm/ci-summary aasm/formal-assurance aasm/semantic-solver-rc aasm/proof-claims; do
             state=""
             for _ in $(seq 1 90); do
               state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" --jq "[.statuses[] | select(.context == \"$context\")][0].state // \"\"")"
