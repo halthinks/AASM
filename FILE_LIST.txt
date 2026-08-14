@@ -76,13 +76,16 @@
 ./docs/RELEASE_0.31.md
 ./docs/RELEASE_0.32.md
 ./docs/RELEASE_0.42.md
+./docs/RELEASE_0.43.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
 ./docs/RESEARCH_SYNTHESIS_DEMO.md
 ./docs/RESOURCE_SCHEDULER.md
 ./docs/REUSE_AND_SOLVER_LOOP.md
+./docs/SEMANTIC_CERTIFICATION.md
 ./docs/SEMANTIC_TRUTH_MAINTENANCE.md
+./docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md
 ./docs/TRACE_CONFORMANCE.md
 ./docs/TYPED_CAPABILITIES_FORMAL_VERIFICATION.md
 ./docs/USE_CASES.md
@@ -97,6 +100,7 @@
 ./examples/adaptive_routing.py
 ./examples/automatic_checkpoint_fleet.py
 ./examples/certificate_assurance.py
+./examples/certification_demo.py
 ./examples/change_impact.py
 ./examples/decision_backend_maintenance.py
 ./examples/distributed_workers.py
@@ -121,6 +125,7 @@
 ./examples/research_synthesis_demo.py
 ./examples/runtime-config.local.json
 ./examples/scheduler_demo.py
+./examples/sii_demo.py
 ./formal/AASMCalculus.cfg
 ./formal/AASMCalculus.tla
 ./formal/AASMHierarchicalMemory.cfg
@@ -179,6 +184,7 @@
 ./schemas/capability-contract.schema.json
 ./schemas/causal-decision.schema.json
 ./schemas/certificate.schema.json
+./schemas/certification-report.schema.json
 ./schemas/change-signal.schema.json
 ./schemas/checkpoint-trigger-policy.schema.json
 ./schemas/collaboration-policy.schema.json
@@ -237,6 +243,9 @@
 ./schemas/semantic-dependency.schema.json
 ./schemas/semantic-result.schema.json
 ./schemas/semantic-trace-report.schema.json
+./schemas/sii-outcome.schema.json
+./schemas/sii-proposal.schema.json
+./schemas/sii-resource-lease.schema.json
 ./schemas/solver-step.schema.json
 ./schemas/state.schema.json
 ./schemas/task-demand.schema.json
@@ -294,6 +303,7 @@
 ./src/aasm/assurance.py
 ./src/aasm/authority.py
 ./src/aasm/calculus.py
+./src/aasm/certification.py
 ./src/aasm/change_impact.py
 ./src/aasm/checkpoint.py
 ./src/aasm/checkpoint_triggers.py
@@ -314,6 +324,7 @@
 ./src/aasm/cli_v40.py
 ./src/aasm/cli_v41.py
 ./src/aasm/cli_v42.py
+./src/aasm/cli_v43.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -382,6 +393,7 @@
 ./src/aasm/provisioning.py
 ./src/aasm/public_v41.py
 ./src/aasm/public_v42.py
+./src/aasm/public_v43.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
 ./src/aasm/reference_data/research/manifest.json
@@ -452,6 +464,7 @@
 ./src/aasm/server_v39.py
 ./src/aasm/server_v40.py
 ./src/aasm/server_v41.py
+./src/aasm/sii.py
 ./src/aasm/solver_loop.py
 ./src/aasm/solver_types.py
 ./src/aasm/supervisor_adapters.py
@@ -514,4 +527,5 @@
 ./tests/test_v40_hierarchical_memory.py
 ./tests/test_v41_reuse_solver.py
 ./tests/test_v42_reference_domains.py
+./tests/test_v43_certification.py
 ./tests/test_workers_leases.py
