@@ -24,9 +24,9 @@ jobs:
         with:
           python-version: '3.13'
       - name: Apply v0.51 promotion
-        run: python scripts/_promote_v51_once.py
-      - name: Remove one-shot helper
-        run: rm scripts/_promote_v51_once.py
+        run: python scripts/_promote_v51_fix.py
+      - name: Remove one-shot helpers
+        run: rm scripts/_promote_v51_once.py scripts/_promote_v51_fix.py
       - name: Validate promoted v0.51 surface before commit
         shell: bash
         run: |
