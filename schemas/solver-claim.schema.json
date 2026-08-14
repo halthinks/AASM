@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/solver-claim.schema.json",
+  "title": "AASM Solver Claim",
+  "type": "object",
+  "required": ["claim_id", "claim_type", "problem_fingerprint", "formulation_fingerprint", "model_fingerprint", "result_fingerprint", "solver_provider_id", "fingerprint"],
+  "properties": {
+    "claim_id": {"type": "string", "minLength": 1},
+    "claim_type": {"enum": ["SAT", "UNSAT", "FEASIBLE", "INFEASIBLE", "BOUNDED", "UNBOUNDED", "OPTIMAL", "SUBOPTIMAL", "UNKNOWN"]},
+    "problem_fingerprint": {"type": "string", "minLength": 1},
+    "formulation_fingerprint": {"type": "string", "minLength": 1},
+    "model_fingerprint": {"type": "string", "minLength": 1},
+    "result_fingerprint": {"type": "string", "minLength": 1},
+    "solver_provider_id": {"type": "string", "minLength": 1},
+    "claimed_value": {},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
