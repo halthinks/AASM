@@ -21,7 +21,19 @@ jobs:
           cache: pip
       - name: Install
         run: python -m pip install -e '.[dev]'
-      - name: Compile v0.48 staging surface
-        run: python -m compileall -q src/aasm/cross_run_knowledge.py src/aasm/_runtime_v48_knowledge.py src/aasm/runtime_v48.py tests/test_v48_cross_run_knowledge.py tests/test_v48_cross_run_sii_mapping.py
-      - name: Run cross-run admission, revocation, reuse, privacy, and SII separation tests
-        run: pytest -q tests/test_v48_cross_run_knowledge.py tests/test_v48_cross_run_sii_mapping.py
+      - name: Compile v0.48 surface
+        run: python -m compileall -q src/aasm/cross_run_knowledge.py src/aasm/_runtime_v48_knowledge.py src/aasm/runtime_v48.py src/aasm/public_v48.py src/aasm/cli_v48.py src/aasm/cross_run_conformance.py tests/test_v48_cross_run_knowledge.py tests/test_v48_cross_run_sii_mapping.py tests/test_v48_public.py
+      - name: Run cross-run admission, revocation, reuse, privacy, SII-separation, and public tests
+        run: pytest -q tests/test_v48_cross_run_knowledge.py tests/test_v48_cross_run_sii_mapping.py tests/test_v48_public.py
+      - name: Run cross-run CLI conformance
+        run: |
+          aasm cross-run-knowledge-contract >/tmp/cross-run-contract.json
+          aasm cross-run-knowledge-conformance >/tmp/cross-run-conformance.json
+          python - <<'PY'
+          import json
+          contract=json.load(open('/tmp/cross-run-contract.json'))
+          report=json.load(open('/tmp/cross-run-conformance.json'))
+          assert contract['contract_id']=='aasm.knowledge.cross-run.v1'
+          assert report['status']=='PASS', report
+          print('v0.48 cross-run CLI: PASS')
+          PY
