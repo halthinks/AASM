@@ -1,4 +1,5 @@
 name: Solution Pools
+# second v0.51 sentinel repair trigger
 
 on:
   push:
