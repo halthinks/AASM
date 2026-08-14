@@ -1,0 +1,60 @@
+name: Solution Pools
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  solution_pools:
+    runs-on: ubuntu-24.04
+    env:
+      AASM_REQUIRE_SOLUTION_POOL_BACKENDS: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install solution-pool and native solver dependencies
+        run: python -m pip install -e '.[dev,optimization]'
+      - name: Compile v0.51 solution-pool surface
+        run: python -m compileall -q src/aasm/solution_pools.py src/aasm/_runtime_v51_pools.py src/aasm/runtime_v51.py src/aasm/solution_pool_conformance.py tests/test_v51_solution_pools.py tests/test_v51_solution_pools_real.py
+      - name: Run dependency-neutral solution-pool tests
+        run: pytest -q tests/test_v51_solution_pools.py
+      - name: Run real cross-backend enumeration consistency
+        run: pytest -q tests/test_v51_solution_pools_real.py
+      - name: Run complete solution-pool conformance
+        run: |
+          python - <<'PY'
+          import json
+          from aasm.solution_pool_conformance import run_solution_pool_conformance
+          report = run_solution_pool_conformance(real_backends=True)
+          print(json.dumps(report, sort_keys=True))
+          if report['status'] != 'PASS':
+              raise SystemExit(1)
+          PY
+      - name: Publish Solution Pools status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='solution pools, restart-safe enumeration, exhaustion certification, and real cross-backend consistency passed'
+          else
+            state=failure
+            description='governed solution-pool and complete-enumeration gate failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" -f context='aasm/solution-pools' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
