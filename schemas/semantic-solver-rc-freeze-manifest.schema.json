@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/semantic-solver-rc-freeze-manifest.schema.json",
+  "title": "AASM Semantic Solver RC Freeze Manifest",
+  "type": "object",
+  "required": [
+    "rc_contract_id",
+    "rc_contract_version",
+    "runtime_version",
+    "adoption_contract_version",
+    "contracts",
+    "supported_engine_methods",
+    "supported_cli_commands",
+    "supported_public_imports",
+    "schemas",
+    "solver_providers",
+    "license",
+    "license_policy_file",
+    "freeze_fingerprint"
+  ],
+  "properties": {
+    "rc_contract_id": {"const": "aasm.semantic.solver.rc.v1"},
+    "rc_contract_version": {"const": "0.1.0"},
+    "runtime_version": {"type": "string", "minLength": 1},
+    "adoption_contract_id": {"type": "string", "minLength": 1},
+    "adoption_contract_version": {"type": "string", "minLength": 1},
+    "contracts": {"type": "array", "items": {"type": "object"}},
+    "supported_engine_methods": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "supported_cli_commands": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "supported_public_imports": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "supported_inspection_surfaces": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "schemas": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "solver_providers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "persistence_replay": {"const": "EVENT_HISTORY_REPLAY_REQUIRED"},
+    "license": {"const": "Apache-2.0"},
+    "license_policy_file": {"const": "LICENSE_POLICY.md"},
+    "performance_claims": {"const": "MEASURED_VALUES_INFORMATIONAL_UNLESS_EXPLICIT_THRESHOLD_GATE_EXISTS"},
+    "freeze_fingerprint": {"type": "string", "minLength": 32}
+  },
+  "additionalProperties": true
+}
