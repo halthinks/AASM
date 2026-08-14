@@ -14,9 +14,10 @@ def main():
     with (root / "pyproject.toml").open("rb") as handle:
         project = tomllib.load(handle)["project"]
         version = str(project["version"])
-    if version != "0.47.1":
+    if version != "0.48.0":
         raise SystemExit(f"unexpected release version: {version}")
 
+    # Apache-2.0 / PEP 639 packaging is a permanent release invariant.
     if project.get("license") != "Apache-2.0":
         raise SystemExit(f"unexpected active license: {project.get('license')}")
     if set(project.get("license-files", [])) != {"LICENSE", "NOTICE"}:
@@ -29,67 +30,47 @@ def main():
     require(root / "MANIFEST.in", ["LICENSE NOTICE pyproject.toml"])
     require(root / "CONTRIBUTING.md", ["Apache License, Version 2.0", "Apache-2.0", "NOTICE"])
 
-    require(root / "src/aasm/__init__.py", ["public_v47"])
-    require(root / "src/aasm/cli.py", ["cli_v47"])
-    require(root / "src/aasm/public_v47.py", [
-        '__version__ = "0.47.1"',
-        '"contract_version": "0.23.0"',
-        "CERTIFICATION_CONTRACT_VERSION",
-        "SII_GOVERNED_CONTRACT_VERSION",
-        "runtime_v47",
-        "GOVERNED_ENFORCED",
-        "RESOLVED_FROM_DURABLE_PRINCIPAL_BINDING",
-        "NEVER_REDUCED_BY_SII",
+    require(root / "src/aasm/__init__.py", ["public_v48"])
+    require(root / "src/aasm/cli.py", ["cli_v48"])
+    require(root / "src/aasm/public_v48.py", [
+        '__version__ = "0.48.0"', '"contract_version": "0.24.0"', "runtime_v48",
+        "CrossRunKnowledgeEnvelope", "CrossRunAdmissionCertificate", "CrossRunPrincipalMap",
+        "PROVENANCE_ONLY_NEVER_INHERITED", "LOCAL_AUTHORIZED_REASONING_REQUIRED",
+        "EXISTING_V41_REUSE_CERTIFICATE_REQUIRED", "ACCOUNTING_ONLY_NEVER_AUTHORITY_OR_RESOURCE_ENTITLEMENT",
     ])
+    require(root / "src/aasm/runtime_v48.py", [
+        "CrossRunKnowledgeRuntimeMixin", "V47Engine", "cross_run_source_not_active",
+        "propose_memory_forget", "source_principal_id", "does not match admitted stable principal mapping",
+    ])
+    require(root / "src/aasm/cross_run_knowledge.py", [
+        'CROSS_RUN_KNOWLEDGE_CONTRACT_ID = "aasm.knowledge.cross-run.v1"',
+        'CROSS_RUN_ADMISSION_CONTRACT_ID = "aasm.knowledge.cross-run.admission.v1"',
+        'CROSS_RUN_PRINCIPAL_MAP_CONTRACT_ID = "aasm.principal.cross-run-map.v1"',
+        "CrossRunKnowledgeEnvelope", "CrossRunKnowledgeSignal", "CrossRunKnowledgeBundle",
+        "CrossRunAdmissionContext", "CrossRunAdmissionCertificate", "CrossRunPrincipalMap",
+        '"authority_transfer": "NEVER"', '"receiving_admission": "POLICY_OR_CONTROLLER_REQUIRED"',
+    ])
+    require(root / "src/aasm/_runtime_v48_knowledge.py", [
+        "export_cross_run_knowledge", "export_cross_run_delta", "propose_cross_run_admission",
+        "authorize_cross_run_admission", "commit_cross_run_admission", "materialize_cross_run_knowledge",
+        "register_cross_run_reuse_candidate", "apply_cross_run_signal", "map_cross_run_principal",
+        "admit_cross_run_sii_reputation", "source_authority_inherited", "used_by_sii_resource_lease",
+    ])
+    require(root / "src/aasm/cross_run_conformance.py", ["run_cross_run_knowledge_conformance", "revocation_blocks_existing_reuse", "exact_replay"])
+    require(root / "src/aasm/cli_v48.py", ["cross-run-knowledge-contract", "cross-run-knowledge-conformance"])
+    require(root / "src/aasm/_runtime_v41_reuse_certify.py", ["admission_validator_id", "admission_validator_version", '"authority_inherited": False'])
+
+    # Preserve v0.47 governed SII and certification unchanged.
+    require(root / "src/aasm/public_v47.py", ['__version__ = "0.47.1"', '"contract_version": "0.23.0"', "GOVERNED_ENFORCED", "NEVER_REDUCED_BY_SII"])
     require(root / "src/aasm/runtime_v47.py", ["SIIGovernanceRuntimeMixin", "V46Engine"])
-    require(root / "src/aasm/sii_governance.py", [
-        'SII_GOVERNED_CONTRACT_ID = "aasm.sii.v1"',
-        'SII_GOVERNED_CONTRACT_VERSION = "0.3.0"',
-        'SII_GOVERNED_STABILITY = "GOVERNED_ENFORCED"',
-        "SIIPrincipalBinding", "SIIScoringPolicy", "GovernedResourceLease",
-        "DURABLE_POLICY_OR_CONTROLLER_ADMISSION", "RESOLVED_FROM_DURABLE_PRINCIPAL_BINDING",
-        "VERSIONED_DURABLE_POLICY", "EXISTING_CONTEXT_CAPABILITY_SCHEDULER_TASKLEASE_NATIVE_SOLVER_PATHS",
-        "REQUIRED_VERIFICATION_NEVER_REDUCED", '"authority_reward": "NEVER"',
-        "enforce_advanced_problem_budget", "outstanding_discretionary_tasks", "record_enforcement",
-    ])
-    require(root / "src/aasm/_runtime_v47_sii.py", [
-        "request_sii_advanced_optimization", "request_sii_formal_verification",
-        "sii_context", "sii_resource_lease", "priority=lease.budget.scheduler_priority",
-        "SII max_parallel_candidates budget exhausted",
-        "policy-required verification must use the ordinary formal path",
-        '"authority_reward": "NEVER"',
-    ])
-    require(root / "src/aasm/certification_v47.py", [
-        'CERTIFICATION_CONTRACT_VERSION = "0.2.0"',
-        '"sii-preview": "sii-governance"',
-        "measurement-principal-authority-binding",
-        "versioned-scoring-policy-active",
-        "resource-lease-native-solver-enforcement",
-        "resource-lease-scheduler-enforcement",
-        "mandatory-verification-not-reduced",
-        "replay-preserves-governed-sii",
-    ])
-    require(root / "src/aasm/cli_v47.py", [
-        "sii-governance-contract", "sii-default-scoring-policy",
-        "certification_contract", "run_certification", "sii_contract",
-    ])
+    require(root / "src/aasm/sii_governance.py", ['SII_GOVERNED_CONTRACT_VERSION = "0.3.0"', 'SII_GOVERNED_STABILITY = "GOVERNED_ENFORCED"', "REQUIRED_VERIFICATION_NEVER_REDUCED", '"authority_reward": "NEVER"'])
+    require(root / "src/aasm/_runtime_v47_sii.py", ["request_sii_advanced_optimization", "request_sii_formal_verification", "policy-required verification must use the ordinary formal path"])
+    require(root / "src/aasm/certification_v47.py", ['CERTIFICATION_CONTRACT_VERSION = "0.2.0"', '"sii-preview": "sii-governance"', "mandatory-verification-not-reduced"])
 
     # Preserve v0.46/v0.45/v0.44/native/formal pathways as first-class APIs.
-    require(root / "src/aasm/advanced_optimization.py", [
-        "aasm.optimization.advanced.v1", "AASM_OWNED_EXPLICIT_SEARCH_ARTIFACTS",
-        "EXISTING_AASM_RESOURCE_WORKER_LEASE", "EVIDENCE_ONLY", "SEARCH_STATE_NEVER_PROMOTES_TRUTH",
-        "EPHEMERAL_PERFORMANCE_ONLY", "FAST_SAT", "INCREMENTAL_SAT", "CP_SAT_SCHEDULING",
-        "MILP_ADVANCED", "CONVEX_ADVANCED", "cadical-incremental", "ortools-cp-sat-scheduling",
-        "highs-advanced", "cvxpy-advanced", "unsat_core", "warm_start", "affine_soc",
-    ])
-    require(root / "src/aasm/advanced_execution.py", ["Kissat404", "pysat:kissat404", "aggregate_statistics_exposed", "non_incremental"])
-    require(root / "src/aasm/_runtime_v46_advanced.py", [
-        "register_advanced_optimization_provider_runtime", "request_advanced_optimization",
-        "commit_advanced_optimization_result", "execute_advanced_optimization_lease",
-        "advanced_optimization_reuse_request", "advanced result lease expired before result commit",
-        "advanced result lease was superseded by a newer attempt",
-        "advanced result implementation does not match admitted provider", "result_authority", "EVIDENCE_ONLY",
-    ])
+    require(root / "src/aasm/advanced_optimization.py", ["aasm.optimization.advanced.v1", "SEARCH_STATE_NEVER_PROMOTES_TRUTH", "EPHEMERAL_PERFORMANCE_ONLY", "cadical-incremental", "ortools-cp-sat-scheduling", "highs-advanced", "cvxpy-advanced", "unsat_core", "warm_start", "affine_soc"])
+    require(root / "src/aasm/advanced_execution.py", ["Kissat404", "pysat:kissat404"])
+    require(root / "src/aasm/_runtime_v46_advanced.py", ["advanced result lease expired before result commit", "advanced result implementation does not match admitted provider", "EVIDENCE_ONLY"])
     require(root / "src/aasm/convex_optimization.py", ["aasm.optimization.convex.v1", "solver.convex", "cvxpy", "EVIDENCE_ONLY"])
     require(root / "src/aasm/pulp_adapter.py", ["aasm.adapter.pulp.v1", "TRANSLATION_ONLY", '"solver_execution": "NEVER"'])
     require(root / "src/aasm/optimization.py", ["cadical", "ortools-cp-sat", "highs", "PySATCadicalWorker", "ORToolsCPSATWorker", "HighsMILPWorker"])
@@ -97,29 +78,23 @@ def main():
     require(root / "src/aasm/reuse_model.py", ["aasm.reuse.v1", "OPTIMIZATION_RESULT"])
 
     require(root / "README.md", [
-        "Current release — v0.47.1", "Governed Symbiotic Intelligence & Intelligence Economics — Apache-2.0 patch",
-        "aasm.adoption.v1 / 0.23.0", "aasm.certification.v1 / 0.2.0", "aasm.sii.v1 / 0.3.0",
+        "Current release — v0.48.0", "Cross-Run Certified Knowledge & Governed Long-Term Memory",
+        "aasm.adoption.v1 / 0.24.0", "aasm.knowledge.cross-run.v1 / 0.1.0",
+        "aasm.certification.v1 / 0.2.0", "aasm.sii.v1 / 0.3.0",
         "Kissat", "CaDiCaL", "CP-SAT scheduling — OR-Tools", "HiGHS", "CVXPY", "PuLP",
         "Z3", "cvc5", "Vampire", "Lean 4", "Required verification is never reduced",
-        "Apache License, Version 2.0", "Apache-2.0", "NOTICE", "v0.48.0", "aasm.remote.v1 / 0.19.0",
+        "Apache License, Version 2.0", "Apache-2.0", "NOTICE", "v0.49.0", "aasm.remote.v1 / 0.19.0",
     ])
-    require(root / "ROADMAP.md", ["v0.47.1", "Apache-2.0 License Transition", "v0.48.0", "Cross-Run Certified Knowledge"])
-    require(root / "CHANGELOG.md", ["[0.47.1]", "Apache-2.0 License Transition", "[0.47.0]", "GOVERNED_ENFORCED"])
-    require(root / "docs/CURRENT_RELEASE.md", ["AASM v0.47.1", "runtime_v47", "0.23.0", "0.2.0", "0.3.0", "Apache-2.0", "REQUIRED VERIFICATION IS NEVER REDUCED BY SII", "v0.48"])
-    require(root / "docs/SII_GOVERNED_ECONOMICS.md", [
-        "aasm.sii.v1 / 0.3.0", "GOVERNED_ENFORCED", "SIIPrincipalBinding", "SIIScoringPolicy",
-        "GovernedResourceLease", "Incremental CaDiCaL", "TaskDemand", "TaskLease",
-        "never reduced by SII", "sii-preview", "PASS",
-    ])
-    require(root / "docs/RELEASE_0.47.md", ["AASM v0.47.0", "0.23.0", "0.2.0", "0.3.0", "REQUIRED VERIFICATION IS NEVER REDUCED BY SII"])
-    require(root / "docs/RELEASE_0.47.1.md", ["AASM v0.47.1", "Apache-2.0", "v0.47.0", "MIT", "REQUIRED VERIFICATION IS NEVER REDUCED BY SII"])
-    require(root / "tests/test_v47_public.py", ["0.47.1", "0.23.0", "0.2.0", "0.3.0", "sii-preview"])
-    require(root / "tests/test_v47_sii_governance.py", ["test_measurement_authority_is_resolved", "max_parallel_candidates", "authority_reward", "10_000", "20_000"])
-    require(root / "tests/test_v47_sii_real.py", ["AASM_REQUIRE_SII_BACKENDS", "cadical-incremental", "authority_reward", "EVIDENCE_ONLY"])
-    require(root / ".github/workflows/optimization.yml", [
-        "AASM_REQUIRE_OPTIMIZATION_BACKENDS", "AASM_REQUIRE_MODELING_BACKENDS", "AASM_REQUIRE_ADVANCED_BACKENDS",
-        "AASM_REQUIRE_SII_BACKENDS", "test_v47_sii_real.py", "certify --target sii-preview",
-    ])
+    require(root / "ROADMAP.md", ["v0.48.0", "Cross-Run Certified Knowledge", "v0.49.0", "Semantic Solver Release Candidate"])
+    require(root / "CHANGELOG.md", ["[0.48.0]", "Cross-Run Certified Knowledge", "[0.47.1]", "Apache-2.0"])
+    require(root / "docs/CURRENT_RELEASE.md", ["AASM v0.48.0", "runtime_v48", "0.24.0", "Apache-2.0", "PROVENANCE, NEVER RECEIVING AUTHORITY", "v0.49.0"])
+    require(root / "docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md", ["aasm.knowledge.cross-run.v1 / 0.1.0", "A prior run may provide provenance and evidence", "ReuseCertificate", "used_by_sii_resource_lease", "ForeignAuthorityNeverInherited"])
+    require(root / "docs/RELEASE_0.48.md", ["AASM v0.48.0", "0.24.0", "Apache-2.0", "FOREIGN AUTHORITY IS PROVENANCE", "v0.49"])
+    require(root / "tests/test_v48_public.py", ["0.48.0", "0.24.0", "cross-run-knowledge-conformance"])
+    require(root / "tests/test_v48_cross_run_knowledge.py", ["cross_run_source_not_active", "local AUTHORIZED reasoning", "used_by_sii_resource_lease"])
+    require(root / "tests/test_v48_cross_run_sii_mapping.py", ["exact_source_principal_mapping", "does not match admitted stable principal mapping"])
+    require(root / ".github/workflows/cross-run.yml", ["Cross-Run Knowledge", "test_v48_cross_run_knowledge.py", "test_v48_cross_run_sii_mapping.py"])
+    require(root / ".github/workflows/optimization.yml", ["AASM_REQUIRE_OPTIMIZATION_BACKENDS", "AASM_REQUIRE_MODELING_BACKENDS", "AASM_REQUIRE_ADVANCED_BACKENDS", "AASM_REQUIRE_SII_BACKENDS", "test_v47_sii_real.py"])
 
     extras = project["optional-dependencies"]
     optimization = " ".join(extras.get("optimization", []))
@@ -132,6 +107,8 @@ def main():
             raise SystemExit(f"modeling extra missing {token}")
 
     for name in (
+        "cross-run-knowledge-envelope.schema.json", "cross-run-knowledge-bundle.schema.json",
+        "cross-run-admission-certificate.schema.json", "cross-run-principal-map.schema.json",
         "optimization-model.schema.json", "optimization-request.schema.json", "optimization-result.schema.json",
         "convex-optimization-model.schema.json", "convex-optimization-request.schema.json", "convex-optimization-result.schema.json",
         "advanced-optimization-problem.schema.json", "advanced-optimization-request.schema.json", "advanced-optimization-result.schema.json",
@@ -140,7 +117,7 @@ def main():
     ):
         require(root / "schemas" / name, ['"$schema"', "2020-12"])
 
-    print("v0.47.1 release contracts: PASS")
+    print("v0.48 release contracts: PASS")
     return 0
 
 
