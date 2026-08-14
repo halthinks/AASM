@@ -7,10 +7,10 @@ from aasm.cli import build_parser, main
 
 
 def test_v45_public_contract_and_cli_are_active():
-    assert __version__ == "0.48.1"
+    assert __version__ == "0.49.0"
     report = validate_public_api_contract()
     assert report["valid"], report
-    assert report["contract"]["contract_version"] == "0.24.0"
+    assert report["contract"]["contract_version"] == "0.25.0"
     assert report["contract"]["convex_optimization"]["contract_id"] == "aasm.optimization.convex.v1"
     assert report["contract"]["convex_optimization"]["result_authority"] == "EVIDENCE_ONLY"
     assert report["contract"]["pulp_adapter"]["authority"] == "TRANSLATION_ONLY"
