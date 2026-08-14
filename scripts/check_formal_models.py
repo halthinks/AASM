@@ -13,7 +13,7 @@ def main():
     root = Path(__file__).resolve().parents[1]
     with (root / "pyproject.toml").open("rb") as handle:
         version = str(tomllib.load(handle)["project"]["version"])
-    if version != "0.45.0":
+    if version != "0.46.0":
         raise SystemExit(f"unexpected formal release version: {version}")
 
     require(root / "formal/AASMCalculus.tla", ["HardRequiresCertificate", "CandidateActivationIsAtomic"])
@@ -32,33 +32,32 @@ def main():
 
     require(root / "src/aasm/optimization.py", ["aasm.optimization.v1", "EXISTING_AASM_RESOURCE_WORKER_LEASE", "EVIDENCE_ONLY", "NATIVE_SOLVER_PROVIDER"])
     require(root / "src/aasm/_runtime_v44_optimization.py", ["commit_optimization_result", "optimization_reuse_request", "result_authority", "EVIDENCE_ONLY"])
-    require(root / "src/aasm/convex_optimization.py", [
-        "aasm.optimization.convex.v1",
-        "AASM_OWNED",
+    require(root / "src/aasm/convex_optimization.py", ["aasm.optimization.convex.v1", "EXISTING_AASM_RESOURCE_WORKER_LEASE", "EVIDENCE_ONLY", "DIAGONAL_ONLY_V0_45"])
+    require(root / "src/aasm/_runtime_v45_convex.py", ["convex result lease expired before result commit", "convex result lease was superseded by a newer attempt", "result_authority", "EVIDENCE_ONLY"])
+    require(root / "src/aasm/pulp_adapter.py", ["aasm.adapter.pulp.v1", "TRANSLATION_ONLY", '"solver_execution": "NEVER"', "REJECT_NOT_APPROXIMATE"])
+
+    # v0.46 uses the already model-checked optimization lease/Evidence authority
+    # boundary; its additional search artifacts must remain non-authoritative.
+    require(root / "src/aasm/advanced_optimization.py", [
+        "aasm.optimization.advanced.v1",
         "EXISTING_AASM_RESOURCE_WORKER_LEASE",
         "EVIDENCE_ONLY",
-        "DIAGONAL_ONLY_V0_45",
-        "NORM2_VARIABLE_VECTOR_LE_CONSTANT_RADIUS",
-        "direct_native_v44_paths_preserved",
+        "SEARCH_STATE_NEVER_PROMOTES_TRUTH",
+        "EPHEMERAL_PERFORMANCE_ONLY",
+        "unsat_core",
+        "warm_start",
+        "affine_soc",
     ])
-    require(root / "src/aasm/_runtime_v45_convex.py", [
-        "_validate_convex_lease",
-        "convex result lease expired before result commit",
-        "convex result lease was superseded by a newer attempt",
-        "convex result implementation does not match admitted provider",
+    require(root / "src/aasm/_runtime_v46_advanced.py", [
+        "advanced result lease expired before result commit",
+        "advanced result lease was superseded by a newer attempt",
+        "advanced result implementation does not match admitted provider",
         "result_authority",
         "EVIDENCE_ONLY",
-        "convex_reuse_request",
-    ])
-    require(root / "src/aasm/pulp_adapter.py", [
-        "aasm.adapter.pulp.v1",
-        "TRANSLATION_ONLY",
-        '"solver_execution": "NEVER"',
-        "REJECT_NOT_APPROXIMATE",
-        "AASM_NATIVE_PORTFOLIO",
+        "advanced_optimization_reuse_request",
     ])
 
-    print("v0.45 formal contracts: PASS")
+    print("v0.46 formal contracts: PASS")
     return 0
 
 
