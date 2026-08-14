@@ -84,7 +84,13 @@ def main():
     )
     require(
         root / "docs/REFERENCE_DOMAIN_STRESS.md",
-        ["constraint-solving", "software-repair", "research-synthesis", "formal-reasoning", "long-horizon-memory"],
+        [
+            "Constraint solving",
+            "Software repair",
+            "Research synthesis",
+            "Formal reasoning",
+            "Long-horizon memory",
+        ],
     )
     require(root / "tests/test_v42_reference_domains.py", ["0.42.0", "0.18.0", "reference-domain-stress"])
 
