@@ -20,6 +20,7 @@
 ./FILE_LIST.txt
 ./GOVERNANCE.md
 ./LICENSE
+./LICENSE_POLICY.md
 ./MANIFEST.in
 ./MANIFEST.md
 ./NOTICE
@@ -89,6 +90,7 @@
 ./docs/RELEASE_0.46.md
 ./docs/RELEASE_0.47.1.md
 ./docs/RELEASE_0.47.md
+./docs/RELEASE_0.48.1.md
 ./docs/RELEASE_0.48.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
