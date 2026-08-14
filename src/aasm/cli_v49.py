@@ -1,3 +1,6 @@
+from contextlib import redirect_stdout
+import io
+
 from . import cli_v48 as _v48
 from .public_v49 import public_api_contract
 from .runtime_v49 import AASMEngine
@@ -16,6 +19,15 @@ def _json(value):
     _v48._json(value)
 
 
+def _capture_report(producer):
+    # Native numerical/modeling backends can emit incidental diagnostics to
+    # stdout even when verbose modes are disabled. The public CLI contract is
+    # one JSON document, so capture backend chatter before serializing the
+    # governed report. Exceptions still propagate normally.
+    with redirect_stdout(io.StringIO()):
+        return producer()
+
+
 def _rc_contract(args):
     _json(semantic_solver_rc_contract())
 
@@ -25,15 +37,15 @@ def _rc_freeze(args):
 
 
 def _rc_upgrade(args):
-    _json(run_upgrade_compatibility(target_engine_cls=AASMEngine))
+    _json(_capture_report(lambda: run_upgrade_compatibility(target_engine_cls=AASMEngine)))
 
 
 def _rc_cross_backend(args):
-    _json(run_cross_backend_overlap_certification(real=bool(args.real)))
+    _json(_capture_report(lambda: run_cross_backend_overlap_certification(real=bool(args.real))))
 
 
 def _rc_benchmark(args):
-    _json(run_rc_benchmarks(real=bool(args.real), target_engine_cls=AASMEngine, iterations=int(args.iterations)))
+    _json(_capture_report(lambda: run_rc_benchmarks(real=bool(args.real), target_engine_cls=AASMEngine, iterations=int(args.iterations))))
 
 
 def _rc_claim_audit(args):
@@ -41,7 +53,7 @@ def _rc_claim_audit(args):
 
 
 def _rc_certify(args):
-    _json(run_semantic_solver_rc_certification(real=bool(args.real), target_engine_cls=AASMEngine, public_contract=public_api_contract()))
+    _json(_capture_report(lambda: run_semantic_solver_rc_certification(real=bool(args.real), target_engine_cls=AASMEngine, public_contract=public_api_contract())))
 
 
 def build_parser():
