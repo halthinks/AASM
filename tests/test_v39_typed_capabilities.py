@@ -90,10 +90,10 @@ def progress_guard(engine: AASMEngine, obligation_id: str):
 
 
 def test_v39_contract_version_and_public_surface():
-    assert __version__ == "0.50.0"
+    assert __version__ == "0.51.0"
     report = validate_public_api_contract()
     assert report["valid"] is True, report
-    assert report["contract"]["contract_version"] == "0.26.0"
+    assert report["contract"]["contract_version"] == "0.27.0"
     assert report["contract"]["typed_protocol"]["direct_pattern_register"] == "REJECTED"
     assert report["contract"]["capability_abi"]["lease_boundary"] == "AASM_TASK_LEASE"
     assert report["contract"]["formal_verification"]["solver_authority"] == "EVIDENCE_ONLY"
