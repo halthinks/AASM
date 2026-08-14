@@ -24,9 +24,9 @@ jobs:
       - name: Install solution-pool and native solver dependencies
         run: python -m pip install -e '.[dev,optimization]'
       - name: Compile v0.51 solution-pool surface
-        run: python -m compileall -q src/aasm/solution_pools.py src/aasm/_runtime_v51_pools.py src/aasm/runtime_v51.py src/aasm/solution_pool_conformance.py tests/test_v51_solution_pools.py tests/test_v51_solution_pools_real.py
+        run: python -m compileall -q src/aasm/solution_pools.py src/aasm/_runtime_v51_pools.py src/aasm/runtime_v51.py src/aasm/solution_pool_conformance.py src/aasm/public_v51.py src/aasm/cli_v51.py tests/test_v51_solution_pools.py tests/test_v51_solution_pools_real.py tests/test_v51_public.py
       - name: Run dependency-neutral solution-pool tests
-        run: pytest -q tests/test_v51_solution_pools.py
+        run: pytest -q tests/test_v51_solution_pools.py tests/test_v51_public.py
       - name: Run real cross-backend enumeration consistency
         run: pytest -q tests/test_v51_solution_pools_real.py
       - name: Run complete solution-pool conformance
@@ -39,6 +39,17 @@ jobs:
           if report['status'] != 'PASS':
               raise SystemExit(1)
           PY
+      - name: Run v0.51 public CLI surfaces
+        run: |
+          python - <<'PY'
+          import contextlib, io, json
+          from aasm.cli_v51 import main
+          for command in (["solution-pool-contract"], ["enumeration-contract"], ["solution-pool-conformance"]):
+              out = io.StringIO()
+              with contextlib.redirect_stdout(out):
+                  main(command)
+              json.loads(out.getvalue())
+          PY
       - name: Publish Solution Pools status
         if: always()
         env:
@@ -49,7 +60,7 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='solution pools, restart-safe enumeration, exhaustion certification, and real cross-backend consistency passed'
+            description='solution pools, restart-safe enumeration, public contract, exhaustion certification, and real cross-backend consistency passed'
           else
             state=failure
             description='governed solution-pool and complete-enumeration gate failed'
