@@ -128,7 +128,7 @@ def test_cross_run_reuse_uses_existing_certificate_and_revocation_blocks_hot_can
         semantic_payload=payload,
         scope_id="root",
         privacy_level="PUBLIC",
-        required_strength="SOLVER_VERDICT",
+        required_strength="CHECKED_CERTIFICATE",
     )
     receiver.register_cross_run_reuse_candidate(envelope.envelope_id, request, authority_id="policy", authority_class="POLICY")
     lookup = receiver.lookup_reuse(request)
