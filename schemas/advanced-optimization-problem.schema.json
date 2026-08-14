@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/advanced-optimization-problem.schema.json",
+  "title": "AASM Advanced Optimization Problem",
+  "type": "object",
+  "required": ["kind"],
+  "properties": {
+    "kind": {"enum": ["FAST_SAT", "INCREMENTAL_SAT", "CP_SAT_SCHEDULING", "MILP_ADVANCED", "CONVEX_ADVANCED"]},
+    "model": {"type": "object"},
+    "assumptions": {"type": "array"},
+    "conflict_budget": {"type": ["integer", "null"], "minimum": 1},
+    "decision_budget": {"type": ["integer", "null"], "minimum": 1},
+    "intervals": {"type": "array"},
+    "no_overlap": {"type": "array"},
+    "cumulative": {"type": "array"},
+    "search_workers": {"type": "integer", "minimum": 1},
+    "deterministic_time_limit": {"type": ["number", "null"], "exclusiveMinimum": 0},
+    "warm_start": {"type": "object", "additionalProperties": {"type": "number"}},
+    "mip_relative_gap": {"type": ["number", "null"], "minimum": 0},
+    "node_limit": {"type": ["integer", "null"], "minimum": 0},
+    "name": {"type": "string"},
+    "variables": {"type": "array"},
+    "linear_constraints": {"type": "array"},
+    "affine_soc_constraints": {"type": "array"},
+    "objective": {"type": ["object", "null"]}
+  },
+  "additionalProperties": true,
+  "$comment": "Runtime dataclasses are the canonical semantic validator; this schema defines the durable wire envelope without weakening backend-specific invariants."
+}
