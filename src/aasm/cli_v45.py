@@ -1,3 +1,6 @@
+from contextlib import redirect_stdout
+import io
+
 from . import cli_v44 as _v44
 from .convex_optimization import convex_optimization_contract
 from .pulp_adapter import pulp_adapter_contract
@@ -17,7 +20,12 @@ def _pulp_contract(args):
 
 
 def _modeling_conformance(args):
-    _json(run_modeling_conformance(real=args.real))
+    # Numerical/modeling backends may write incidental diagnostics directly to
+    # stdout even when their own verbose flags are disabled. Capture that
+    # backend chatter so the CLI remains a strict one-document JSON interface.
+    with redirect_stdout(io.StringIO()):
+        report = run_modeling_conformance(real=args.real)
+    _json(report)
 
 
 def build_parser():
