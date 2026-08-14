@@ -96,8 +96,8 @@ def main():
     require(root / "docs/CURRENT_RELEASE.md", ["AASM v0.47.0", "runtime_v47", "0.23.0", "0.2.0", "0.3.0", "REQUIRED VERIFICATION IS NEVER REDUCED BY SII", "v0.48"])
     require(root / "docs/SII_GOVERNED_ECONOMICS.md", [
         "aasm.sii.v1 / 0.3.0", "GOVERNED_ENFORCED", "SIIPrincipalBinding", "SIIScoringPolicy",
-        "GovernedResourceLease", "incremental CaDiCaL", "TaskDemand", "TaskLease",
-        "Required verification is never reduced", "sii-preview", "PASS",
+        "GovernedResourceLease", "Incremental CaDiCaL", "TaskDemand", "TaskLease",
+        "never reduced by SII", "sii-preview", "PASS",
     ])
     require(root / "docs/RELEASE_0.47.md", ["AASM v0.47.0", "0.23.0", "0.2.0", "0.3.0", "REQUIRED VERIFICATION IS NEVER REDUCED BY SII"])
     require(root / "tests/test_v47_public.py", ["0.47.0", "0.23.0", "0.2.0", "0.3.0", "sii-preview"])
