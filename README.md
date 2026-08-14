@@ -2,20 +2,20 @@
 
 **Durable deterministic control for agents, tools, models, humans, formal systems, native solvers, and governed knowledge.**
 
-## Current release — v0.48.0
+## Current release — v0.48.1
 
-**Cross-Run Certified Knowledge & Governed Long-Term Memory**
+**Cross-Run Certified Knowledge & Governed Long-Term Memory — Project-Wide Apache-2.0 Policy Correction**
 
 **Next release:** v0.49.0 — Semantic Solver Release Candidate
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 
-The active project/distribution license is **Apache License, Version 2.0 (`Apache-2.0`)**. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE). The already-published `v0.47.0` artifact remains historically MIT licensed.
+AASM's declared project license is **Apache License, Version 2.0 (`Apache-2.0`) across the project**. To the extent AASM has the necessary relicensing rights, prior AASM versions—including versions first distributed under MIT—are **also offered under Apache-2.0**. Previously granted MIT permissions remain valid for their recipients, but prior AASM versions are not designated MIT-only. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`LICENSE_POLICY.md`](LICENSE_POLICY.md).
 
 ### Current release contracts
 
 ```text
-package / public surface: 0.48.0
+package / public surface: 0.48.1
 aasm.adoption.v1 / 0.24.0
 aasm.remote.v1 / 0.19.0
 aasm.knowledge.cross-run.v1 / 0.1.0
@@ -297,7 +297,7 @@ Learned SAT state remains `EPHEMERAL_PERFORMANCE_ONLY`; deleting it changes spee
 PuLP remains a compatibility importer only:
 
 ```text
-authority       = TRANSLATION_ONLY
+authority        = TRANSLATION_ONLY
 solver_execution = NEVER
 ```
 
@@ -413,6 +413,7 @@ The repository independently validates AASM through:
 - Compose full-stack smoke testing;
 - byte-reproducible wheel/sdist builds and clean install;
 - Apache-2.0 PEP 639 / `LICENSE` / `NOTICE` release checks;
+- project-wide Apache-2.0 licensing-policy checks through `LICENSE_POLICY.md`;
 - LangGraph and framework-neutral adapter conformance;
 - **Optimization Backends** real native solver workflow;
 - **Cross-Run Knowledge** admission/revocation/privacy/reuse/SII-separation workflow;
@@ -438,9 +439,11 @@ ReputationNeverGrantsResourceEntitlement
 
 ## License
 
-AASM v0.47.1 and later source releases are licensed under the **Apache License, Version 2.0** (`Apache-2.0`). See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+AASM is licensed under the **Apache License, Version 2.0** (`Apache-2.0`) as a project-wide declaration. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`LICENSE_POLICY.md`](LICENSE_POLICY.md).
 
-The already-published `v0.47.0` release remains under the MIT License that applied to that artifact when it was published.
+To the extent AASM controls the necessary relicensing rights, **prior AASM versions are also offered under Apache-2.0**, including versions that were first distributed under MIT. Previously granted MIT permissions remain valid for recipients who received those grants; that does not make those prior AASM versions MIT-only.
+
+Third-party material, if any, remains subject to its own applicable terms.
 
 ---
 
@@ -460,7 +463,8 @@ The already-published `v0.47.0` release remains under the MIT License that appli
 - v0.46 Advanced Solver Control & Search Artifacts ✅
 - v0.47 Governed Symbiotic Intelligence & Intelligence Economics ✅
 - v0.47.1 Apache-2.0 License Transition ✅
-- **v0.48 Cross-Run Certified Knowledge & Governed Long-Term Memory — current ✅**
+- v0.48 Cross-Run Certified Knowledge & Governed Long-Term Memory ✅
+- **v0.48.1 Project-Wide Apache-2.0 Policy Correction — current ✅**
 - **v0.49 Semantic Solver Release Candidate — next**
 
-See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md](docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md), [docs/RELEASE_0.48.md](docs/RELEASE_0.48.md), [docs/SII_GOVERNED_ECONOMICS.md](docs/SII_GOVERNED_ECONOMICS.md), and [docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md](docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md).
+See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [LICENSE_POLICY.md](LICENSE_POLICY.md), [docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md](docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md), [docs/RELEASE_0.48.1.md](docs/RELEASE_0.48.1.md), [docs/SII_GOVERNED_ECONOMICS.md](docs/SII_GOVERNED_ECONOMICS.md), and [docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md](docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md).
