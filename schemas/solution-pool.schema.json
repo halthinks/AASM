@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/solution-pool.schema.json",
+  "title": "AASM Solution Pool",
+  "type": "object",
+  "required": ["pool_id", "model_fingerprint", "mode", "solutions", "solution_ids", "exclusion_ids", "completeness_status", "cursor_fingerprint", "completeness_certificate_id", "lineage", "fingerprint"],
+  "properties": {
+    "pool_id": {"type": "string", "minLength": 1},
+    "model_fingerprint": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["COMPLETE_FINITE_ENUMERATION", "BOUNDED_PARTIAL_POOL", "TOP_K", "DIVERSE_POOL", "INCUMBENT_HISTORY"]},
+    "solutions": {"type": "array", "items": {"$ref": "solution-record.schema.json"}},
+    "solution_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "exclusion_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "completeness_status": {"enum": ["PARTIAL", "PARTIAL_NON_EXHAUSTIVE", "EXHAUSTED_PENDING_CERTIFICATION", "COMPLETE", "FAILED_COMPLETENESS"]},
+    "cursor_fingerprint": {"type": "string"},
+    "completeness_certificate_id": {"type": "string"},
+    "lineage": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

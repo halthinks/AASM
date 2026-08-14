@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/solution-record.schema.json",
+  "title": "AASM Solution Record",
+  "type": "object",
+  "required": ["solution_id", "model_fingerprint", "assignment", "solver_provider_id", "lineage_ids", "fingerprint"],
+  "properties": {
+    "solution_id": {"type": "string", "minLength": 1},
+    "model_fingerprint": {"type": "string", "minLength": 1},
+    "assignment": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number"}},
+    "solver_provider_id": {"type": "string", "minLength": 1},
+    "objective": {"type": ["number", "null"]},
+    "lineage_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

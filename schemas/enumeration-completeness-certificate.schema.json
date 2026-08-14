@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/enumeration-completeness-certificate.schema.json",
+  "title": "AASM Enumeration Completeness Certificate",
+  "type": "object",
+  "required": ["certificate_id", "pool_id", "model_fingerprint", "pool_fingerprint", "checker_id", "checker_version", "independent_of_solver", "total_states", "feasible_count", "pool_solution_count", "unseen_solution_count", "duplicate_count", "trace_digest", "status", "diagnostics", "fingerprint"],
+  "properties": {
+    "certificate_id": {"type": "string", "minLength": 1},
+    "pool_id": {"type": "string", "minLength": 1},
+    "model_fingerprint": {"type": "string", "minLength": 1},
+    "pool_fingerprint": {"type": "string", "minLength": 1},
+    "checker_id": {"type": "string", "minLength": 1},
+    "checker_version": {"type": "string", "minLength": 1},
+    "independent_of_solver": {"type": "boolean"},
+    "total_states": {"type": "integer", "minimum": 0},
+    "feasible_count": {"type": "integer", "minimum": 0},
+    "pool_solution_count": {"type": "integer", "minimum": 0},
+    "unseen_solution_count": {"type": "integer", "minimum": 0},
+    "duplicate_count": {"type": "integer", "minimum": 0},
+    "trace_digest": {"type": "string", "minLength": 1},
+    "status": {"enum": ["PASS", "FAIL", "UNSUPPORTED"]},
+    "diagnostics": {"type": "array", "items": {"type": "string"}},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
