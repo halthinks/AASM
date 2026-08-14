@@ -14,13 +14,24 @@ def main():
     with (root / "pyproject.toml").open("rb") as handle:
         project = tomllib.load(handle)["project"]
         version = str(project["version"])
-    if version != "0.47.0":
+    if version != "0.47.1":
         raise SystemExit(f"unexpected release version: {version}")
+
+    if project.get("license") != "Apache-2.0":
+        raise SystemExit(f"unexpected active license: {project.get('license')}")
+    if set(project.get("license-files", [])) != {"LICENSE", "NOTICE"}:
+        raise SystemExit(f"unexpected license files: {project.get('license-files')}")
+    if "License :: OSI Approved :: Apache Software License" not in project.get("classifiers", []):
+        raise SystemExit("Apache OSI classifier missing")
+    require(root / "LICENSE", ["Apache License", "Version 2.0, January 2004", "Grant of Patent License", "END OF TERMS AND CONDITIONS"])
+    require(root / "NOTICE", ["AASM", "Copyright 2026 AASM contributors"])
+    require(root / "MANIFEST.in", ["LICENSE NOTICE pyproject.toml"])
+    require(root / "CONTRIBUTING.md", ["Apache License, Version 2.0", "Apache-2.0", "NOTICE"])
 
     require(root / "src/aasm/__init__.py", ["public_v47"])
     require(root / "src/aasm/cli.py", ["cli_v47"])
     require(root / "src/aasm/public_v47.py", [
-        '__version__ = "0.47.0"',
+        '__version__ = "0.47.1"',
         '"contract_version": "0.23.0"',
         "CERTIFICATION_CONTRACT_VERSION",
         "SII_GOVERNED_CONTRACT_VERSION",
@@ -85,22 +96,23 @@ def main():
     require(root / "src/aasm/reuse_model.py", ["aasm.reuse.v1", "OPTIMIZATION_RESULT"])
 
     require(root / "README.md", [
-        "Current release — v0.47.0", "Governed Symbiotic Intelligence & Intelligence Economics",
+        "Current release — v0.47.1", "Governed Symbiotic Intelligence & Intelligence Economics — Apache-2.0 patch",
         "aasm.adoption.v1 / 0.23.0", "aasm.certification.v1 / 0.2.0", "aasm.sii.v1 / 0.3.0",
         "Kissat", "CaDiCaL", "CP-SAT scheduling — OR-Tools", "HiGHS", "CVXPY", "PuLP",
         "Z3", "cvc5", "Vampire", "Lean 4", "Required verification is never reduced",
-        "v0.48.0", "aasm.remote.v1 / 0.19.0",
+        "Apache License, Version 2.0", "Apache-2.0", "NOTICE", "v0.48.0", "aasm.remote.v1 / 0.19.0",
     ])
-    require(root / "ROADMAP.md", ["v0.47.0", "Governed Symbiotic Intelligence", "v0.48.0", "Cross-Run Certified Knowledge"])
-    require(root / "CHANGELOG.md", ["[0.47.0]", "GOVERNED_ENFORCED", "REQUIRED_VERIFICATION_NEVER_REDUCED_BY_SII"])
-    require(root / "docs/CURRENT_RELEASE.md", ["AASM v0.47.0", "runtime_v47", "0.23.0", "0.2.0", "0.3.0", "REQUIRED VERIFICATION IS NEVER REDUCED BY SII", "v0.48"])
+    require(root / "ROADMAP.md", ["v0.47.1", "Apache-2.0 License Transition", "v0.48.0", "Cross-Run Certified Knowledge"])
+    require(root / "CHANGELOG.md", ["[0.47.1]", "Apache-2.0 License Transition", "[0.47.0]", "GOVERNED_ENFORCED"])
+    require(root / "docs/CURRENT_RELEASE.md", ["AASM v0.47.1", "runtime_v47", "0.23.0", "0.2.0", "0.3.0", "Apache-2.0", "REQUIRED VERIFICATION IS NEVER REDUCED BY SII", "v0.48"])
     require(root / "docs/SII_GOVERNED_ECONOMICS.md", [
         "aasm.sii.v1 / 0.3.0", "GOVERNED_ENFORCED", "SIIPrincipalBinding", "SIIScoringPolicy",
         "GovernedResourceLease", "Incremental CaDiCaL", "TaskDemand", "TaskLease",
         "never reduced by SII", "sii-preview", "PASS",
     ])
     require(root / "docs/RELEASE_0.47.md", ["AASM v0.47.0", "0.23.0", "0.2.0", "0.3.0", "REQUIRED VERIFICATION IS NEVER REDUCED BY SII"])
-    require(root / "tests/test_v47_public.py", ["0.47.0", "0.23.0", "0.2.0", "0.3.0", "sii-preview"])
+    require(root / "docs/RELEASE_0.47.1.md", ["AASM v0.47.1", "Apache-2.0", "v0.47.0", "MIT", "REQUIRED VERIFICATION IS NEVER REDUCED BY SII"])
+    require(root / "tests/test_v47_public.py", ["0.47.1", "0.23.0", "0.2.0", "0.3.0", "sii-preview"])
     require(root / "tests/test_v47_sii_governance.py", ["test_measurement_authority_is_resolved", "max_parallel_candidates", "authority_reward", "10_000", "20_000"])
     require(root / "tests/test_v47_sii_real.py", ["AASM_REQUIRE_SII_BACKENDS", "cadical-incremental", "authority_reward", "EVIDENCE_ONLY"])
     require(root / ".github/workflows/optimization.yml", [
@@ -127,7 +139,7 @@ def main():
     ):
         require(root / "schemas" / name, ['"$schema"', "2020-12"])
 
-    print("v0.47 release contracts: PASS")
+    print("v0.47.1 release contracts: PASS")
     return 0
 
 
