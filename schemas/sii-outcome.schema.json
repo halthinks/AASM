@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/sii-outcome.schema.json",
+  "title": "AASM SII Outcome Measurement",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["outcome_id", "proposal_id", "measured_by", "authority_class", "disposition", "verification_verdict", "artifact_ids", "authorized_artifact_ids", "reusable_artifact_ids", "reuse_metrics_evidence_ids", "evidence_ids", "learned_constraint_ids", "repair_required", "actual_input_tokens", "actual_output_tokens", "downstream_reuse_hits", "metadata", "fingerprint"],
+  "properties": {
+    "outcome_id": {"type": "string", "minLength": 1},
+    "proposal_id": {"type": "string", "minLength": 1},
+    "measured_by": {"type": "string", "minLength": 1},
+    "authority_class": {"enum": ["VERIFIER", "POLICY", "CONTROLLER"]},
+    "disposition": {"enum": ["ADMITTED", "REJECTED_SCHEMA", "REJECTED_POLICY", "EXECUTED", "VERIFIED", "AUTHORIZED", "REFUTED", "STALE", "SUPERSEDED", "FAILED", "INCONCLUSIVE"]},
+    "verification_verdict": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+    "artifact_ids": {"type": "array", "items": {"type": "string"}},
+    "authorized_artifact_ids": {"type": "array", "items": {"type": "string"}},
+    "reusable_artifact_ids": {"type": "array", "items": {"type": "string"}},
+    "reuse_metrics_evidence_ids": {"type": "array", "items": {"type": "string"}},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}},
+    "learned_constraint_ids": {"type": "array", "items": {"type": "string"}},
+    "repair_required": {"type": "boolean"},
+    "actual_input_tokens": {"type": "integer", "minimum": 0},
+    "actual_output_tokens": {"type": "integer", "minimum": 0},
+    "downstream_reuse_hits": {"type": "integer", "minimum": 0},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  }
+}
