@@ -7,7 +7,7 @@ from aasm.cli import build_parser, main
 
 
 def test_v45_public_contract_and_cli_are_active():
-    assert __version__ == "0.47.0"
+    assert __version__ == "0.47.1"
     report = validate_public_api_contract()
     assert report["valid"], report
     assert report["contract"]["contract_version"] == "0.23.0"
