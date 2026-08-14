@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/cross-run-knowledge-envelope.schema.json",
+  "title": "AASM Cross-Run Knowledge Envelope",
+  "type": "object",
+  "required": ["envelope_id", "source_run_id", "source_machine_id", "source_scope_id", "knowledge_kind", "content", "applicability_scope_ids", "privacy_level", "retention_policy", "created_at", "authority_transfer", "fingerprint"],
+  "properties": {
+    "envelope_id": {"type": "string", "minLength": 1},
+    "source_run_id": {"type": "string", "minLength": 1},
+    "source_machine_id": {"type": "string", "minLength": 1},
+    "source_scope_id": {"type": "string", "minLength": 1},
+    "knowledge_kind": {"enum": ["SEMANTIC", "PROCEDURAL", "OBSERVATION", "REUSE_RESULT", "SII_REPUTATION", "SUMMARY"]},
+    "content": {},
+    "source_memory_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "source_evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "source_artifact_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "source_fingerprints": {"type": "object", "additionalProperties": {"type": "string"}},
+    "source_authority_provenance": {"type": "object"},
+    "applicability_scope_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+    "environment_fingerprint": {"type": "string"},
+    "dependency_fingerprints": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "verification_strength": {"enum": ["", "SOLVER_VERDICT", "MULTI_SOLVER_AGREEMENT", "CHECKED_CERTIFICATE", "TRUSTED_KERNEL"]},
+    "privacy_level": {"enum": ["AGENT", "USER", "SHARED", "PUBLIC"]},
+    "privacy_principal_id": {"type": "string"},
+    "retention_policy": {"type": "string", "minLength": 1},
+    "freshness_seconds": {"type": ["number", "null"], "minimum": 0},
+    "created_at": {"type": "number"},
+    "metadata": {"type": "object"},
+    "authority_transfer": {"const": "NEVER"},
+    "fingerprint": {"type": "string", "minLength": 32}
+  },
+  "additionalProperties": false
+}
