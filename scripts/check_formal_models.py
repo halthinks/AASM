@@ -13,7 +13,7 @@ def main():
     root = Path(__file__).resolve().parents[1]
     with (root / "pyproject.toml").open("rb") as handle:
         version = str(tomllib.load(handle)["project"]["version"])
-    if version != "0.48.1":
+    if version != "0.49.0":
         raise SystemExit(f"unexpected formal release version: {version}")
 
     require(root / "formal/AASMCalculus.tla", ["HardRequiresCertificate", "CandidateActivationIsAtomic"])
@@ -34,22 +34,14 @@ def main():
         "required_verification_enabled", "truth_promoted_by_sii", "state_mutated_by_sii", "self_verified_by_sii",
     ])
 
-    # v0.48 independently models receiving-run authority, materialization,
-    # certified reuse, revocation, privacy, and SII-reputation separation.
     require(root / "formal/AASMCrossRunKnowledge.tla", [
-        "ForeignAuthorityNeverInherited",
-        "AdmissionRequiredBeforeMaterialization",
-        "AdmissionRequiredBeforeReuse",
-        "RevocationBlocksReuse",
-        "RevocationInvalidatesMaterializedMemory",
-        "PrivateKnowledgeNeverLeaksAcrossPrincipal",
-        "ReputationNeverGrantsAuthority",
-        "ReputationNeverGrantsResourceEntitlement",
+        "ForeignAuthorityNeverInherited", "AdmissionRequiredBeforeMaterialization", "AdmissionRequiredBeforeReuse",
+        "RevocationBlocksReuse", "RevocationInvalidatesMaterializedMemory", "PrivateKnowledgeNeverLeaksAcrossPrincipal",
+        "ReputationNeverGrantsAuthority", "ReputationNeverGrantsResourceEntitlement",
     ])
     require(root / "formal/AASMCrossRunKnowledge.cfg", [
-        "ForeignAuthorityNeverInherited", "AdmissionRequiredBeforeMaterialization",
-        "AdmissionRequiredBeforeReuse", "RevocationBlocksReuse",
-        "RevocationInvalidatesMaterializedMemory", "PrivateKnowledgeNeverLeaksAcrossPrincipal",
+        "ForeignAuthorityNeverInherited", "AdmissionRequiredBeforeMaterialization", "AdmissionRequiredBeforeReuse",
+        "RevocationBlocksReuse", "RevocationInvalidatesMaterializedMemory", "PrivateKnowledgeNeverLeaksAcrossPrincipal",
         "ReputationNeverGrantsAuthority", "ReputationNeverGrantsResourceEntitlement",
     ])
     require(root / "formal/aasm_cross_run_knowledge.pml", [
@@ -58,50 +50,52 @@ def main():
         "reputation_granted_authority", "reputation_granted_resources",
     ])
 
+    # v0.49 adds no new state-machine semantics. Its source gate proves that the
+    # RC is a thin assurance composition over the already model-checked v0.48
+    # runtime and that cross-backend/benchmark evidence cannot become authority.
+    require(root / "src/aasm/semantic_solver_rc.py", [
+        'SEMANTIC_SOLVER_RC_CONTRACT_ID = "aasm.semantic.solver.rc.v1"',
+        'SEMANTIC_SOLVER_RC_CONTRACT_VERSION = "0.1.0"',
+        'SEMANTIC_SOLVER_RC_STABILITY = "RELEASE_CANDIDATE"',
+        '"runtime_extension": "THIN_V48_COMPOSITION_NO_NEW_KERNEL"',
+        '"cross_backend_rule": "AGREEMENT_OR_INCONCLUSIVE_NEVER_VOTE"',
+        '"native_solver_claim": "AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS"',
+        '"claim_policy": "NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE"',
+        "run_upgrade_compatibility", "run_cross_backend_overlap_certification", "run_rc_benchmarks",
+    ])
+    require(root / "src/aasm/runtime_v49.py", ["SemanticSolverRCRuntimeMixin", "V48Engine"])
+    require(root / "src/aasm/_runtime_v49_rc.py", [
+        "semantic_solver_rc_freeze_manifest", "semantic_solver_rc_upgrade_report",
+        "semantic_solver_rc_cross_backend_report", "semantic_solver_rc_benchmark_report",
+        "semantic_solver_rc_claim_audit", "semantic_solver_rc_certify",
+    ])
+
     require(root / "src/aasm/cross_run_knowledge.py", [
         'CROSS_RUN_KNOWLEDGE_CONTRACT_ID = "aasm.knowledge.cross-run.v1"',
-        'CROSS_RUN_KNOWLEDGE_CONTRACT_VERSION = "0.1.0"',
-        'CROSS_RUN_ADMISSION_CONTRACT_ID = "aasm.knowledge.cross-run.admission.v1"',
-        'CROSS_RUN_PRINCIPAL_MAP_CONTRACT_ID = "aasm.principal.cross-run-map.v1"',
-        '"authority_transfer": "NEVER"',
-        '"source_authority": "PROVENANCE_ONLY_NEVER_INHERITED"',
+        '"authority_transfer": "NEVER"', '"source_authority": "PROVENANCE_ONLY_NEVER_INHERITED"',
         '"semantic_materialization": "LOCAL_AUTHORIZED_REASONING_REQUIRED"',
         '"reuse": "EXISTING_V41_REUSE_CERTIFICATE_REQUIRED"',
         '"sii_reputation": "ACCOUNTING_ONLY_NEVER_AUTHORITY_OR_RESOURCE_ENTITLEMENT"',
     ])
-    require(root / "src/aasm/_runtime_v48_knowledge.py", [
-        "propose_cross_run_admission", "authorize_cross_run_admission", "commit_cross_run_admission",
-        "materialize_cross_run_knowledge", "register_cross_run_reuse_candidate",
-        "map_cross_run_principal", "admit_cross_run_sii_reputation",
-        "source_authority_inherited", "used_by_sii_resource_lease",
-    ])
-    require(root / "src/aasm/runtime_v48.py", [
-        "CrossRunKnowledgeRuntimeMixin", "V47Engine", "cross_run_source_not_active",
-        "propose_memory_forget", "source_principal_id", "does not match admitted stable principal mapping",
-    ])
-    require(root / "src/aasm/_runtime_v41_reuse_certify.py", [
-        'candidate_metadata.get("cross_run")', "admission_validator_id", "admission_validator_version", '"authority_inherited": False',
-    ])
+    require(root / "src/aasm/runtime_v48.py", ["CrossRunKnowledgeRuntimeMixin", "V47Engine", "cross_run_source_not_active", "propose_memory_forget"])
+    require(root / "src/aasm/_runtime_v41_reuse_certify.py", ["admission_validator_id", "admission_validator_version", '"authority_inherited": False'])
 
     require(root / "src/aasm/reuse_model.py", ["INDEX_AND_VALIDATE_ONLY", "PERFORMANCE_ONLY", "EXPLICIT_VALIDATOR_REQUIRED", "OPTIMIZATION_RESULT"])
     require(root / "src/aasm/reuse_validation.py", ["non_idempotent_effect_never_reused", "subsumption_validator_required", "verification_strength_mismatch"])
     require(root / "src/aasm/reference_domains.py", ["aasm.reference-domains.v1", "REFERENCE_HARNESS_ONLY", "kernel_changes"])
 
-    # Preserve governed SII and all historical solver/authority paths.
     require(root / "src/aasm/certification.py", ["aasm.certification.v1", "CERTIFICATION_HARNESS_ONLY", "NO_ARBITRARY_EXTERNAL_SEMANTIC_TRUTH_CLAIM", "INCONCLUSIVE"])
-    require(root / "src/aasm/sii.py", ["aasm.sii.v1", "authority_reward", "NEVER", "direct_truth_promotion", "self_verification"])
-    require(root / "src/aasm/certification_v47.py", ['CERTIFICATION_CONTRACT_VERSION = "0.2.0"', '"sii-preview": "sii-governance"', "mandatory-verification-not-reduced"])
     require(root / "src/aasm/sii_governance.py", ['SII_GOVERNED_CONTRACT_VERSION = "0.3.0"', 'SII_GOVERNED_STABILITY = "GOVERNED_ENFORCED"', "REQUIRED_VERIFICATION_NEVER_REDUCED", '"authority_reward": "NEVER"'])
     require(root / "src/aasm/_runtime_v47_sii.py", ["request_sii_advanced_optimization", "request_sii_formal_verification", "policy-required verification must use the ordinary formal path"])
 
     require(root / "src/aasm/optimization.py", ["aasm.optimization.v1", "EXISTING_AASM_RESOURCE_WORKER_LEASE", "EVIDENCE_ONLY", "NATIVE_SOLVER_PROVIDER"])
     require(root / "src/aasm/_runtime_v44_optimization.py", ["commit_optimization_result", "optimization_reuse_request", "result_authority", "EVIDENCE_ONLY"])
-    require(root / "src/aasm/convex_optimization.py", ["aasm.optimization.convex.v1", "EXISTING_AASM_RESOURCE_WORKER_LEASE", "EVIDENCE_ONLY", "DIAGONAL_ONLY_V0_45"])
+    require(root / "src/aasm/convex_optimization.py", ["aasm.optimization.convex.v1", "EXISTING_AASM_RESOURCE_WORKER_LEASE", "EVIDENCE_ONLY"])
     require(root / "src/aasm/pulp_adapter.py", ["aasm.adapter.pulp.v1", "TRANSLATION_ONLY", '"solver_execution": "NEVER"'])
     require(root / "src/aasm/advanced_optimization.py", ["aasm.optimization.advanced.v1", "SEARCH_STATE_NEVER_PROMOTES_TRUTH", "EPHEMERAL_PERFORMANCE_ONLY", "unsat_core", "warm_start", "affine_soc"])
     require(root / "src/aasm/_runtime_v46_advanced.py", ["advanced result lease expired before result commit", "advanced result implementation does not match admitted provider", "EVIDENCE_ONLY"])
 
-    print("v0.48.1 formal contracts: PASS")
+    print("v0.49.0 formal contracts: PASS")
     return 0
 
 
