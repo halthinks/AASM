@@ -1,4 +1,4 @@
-from .cli_v49 import build_parser, main
+from .cli_v50 import build_parser, main
 
 __all__ = ["build_parser", "main"]
 
