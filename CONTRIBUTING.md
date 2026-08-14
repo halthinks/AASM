@@ -125,4 +125,4 @@ Participation in this project is governed by [`CODE_OF_CONDUCT.md`](CODE_OF_COND
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the project's MIT License.
+By contributing, you agree that your contributions will be licensed under the Apache License, Version 2.0 (`Apache-2.0`). See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
