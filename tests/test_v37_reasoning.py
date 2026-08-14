@@ -60,7 +60,7 @@ def authorize_fixture(engine: AASMEngine):
 
 def test_v37_reasoning_contract_and_public_surface():
     contract = reasoning_contract()
-    assert __version__ == "0.47.0"
+    assert __version__ == "0.47.1"
     assert contract["artifact_contract_id"] == "aasm.reasoning.artifact.v1"
     assert contract["admission_contract_id"] == "aasm.reasoning.admission.v1"
     assert contract["commit_contract_id"] == "aasm.reasoning.commit.v1"
