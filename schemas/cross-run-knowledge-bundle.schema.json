@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/cross-run-knowledge-bundle.schema.json",
+  "title": "AASM Cross-Run Knowledge Bundle",
+  "type": "object",
+  "required": ["bundle_id", "source_run_id", "envelopes", "signals", "metadata", "fingerprint"],
+  "properties": {
+    "bundle_id": {"type": "string", "minLength": 1},
+    "source_run_id": {"type": "string", "minLength": 1},
+    "envelopes": {"type": "array", "items": {"$ref": "cross-run-knowledge-envelope.schema.json"}},
+    "signals": {"type": "array", "items": {"type": "object"}},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 32}
+  },
+  "additionalProperties": false
+}
