@@ -42,7 +42,7 @@ def main():
     ])
     require(root / "src/aasm/_runtime_v47_sii.py", [
         "request_sii_advanced_optimization", "request_sii_formal_verification",
-        "sii_context", "sii_resource_lease", "TaskDemand.priority",
+        "sii_context", "sii_resource_lease", "priority=lease.budget.scheduler_priority",
         "SII max_parallel_candidates budget exhausted",
         "policy-required verification must use the ordinary formal path",
         '"authority_reward": "NEVER"',
