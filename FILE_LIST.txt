@@ -30,6 +30,7 @@
 ./compose.yaml
 ./docs/ADAPTER_CONFORMANCE.md
 ./docs/ADAPTIVE_MODEL_ROUTING.md
+./docs/ADVANCED_SOLVER_CONTROL.md
 ./docs/ARCHITECTURE.md
 ./docs/AUTOMATIC_CHECKPOINTS_FLEET_CONTROL.md
 ./docs/COMPATIBILITY.md
@@ -82,6 +83,7 @@
 ./docs/RELEASE_0.43.md
 ./docs/RELEASE_0.44.md
 ./docs/RELEASE_0.45.md
+./docs/RELEASE_0.46.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
@@ -184,6 +186,9 @@
 ./release-history.json
 ./schemas/adapter-capability.schema.json
 ./schemas/adapter-conformance-report.schema.json
+./schemas/advanced-optimization-problem.schema.json
+./schemas/advanced-optimization-request.schema.json
+./schemas/advanced-optimization-result.schema.json
 ./schemas/agent-message.schema.json
 ./schemas/assurance-state.schema.json
 ./schemas/calculus-state.schema.json
@@ -309,11 +314,15 @@
 ./src/aasm/_runtime_v41_solver.py
 ./src/aasm/_runtime_v44_optimization.py
 ./src/aasm/_runtime_v45_convex.py
+./src/aasm/_runtime_v46_advanced.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
 ./src/aasm/_scopes_projection.py
 ./src/aasm/adaptive_routing.py
+./src/aasm/advanced_execution.py
+./src/aasm/advanced_optimization.py
+./src/aasm/advanced_optimization_conformance.py
 ./src/aasm/adversary.py
 ./src/aasm/agents.py
 ./src/aasm/artifact_backends.py
@@ -344,6 +353,7 @@
 ./src/aasm/cli_v43.py
 ./src/aasm/cli_v44.py
 ./src/aasm/cli_v45.py
+./src/aasm/cli_v46.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -419,6 +429,7 @@
 ./src/aasm/public_v43.py
 ./src/aasm/public_v44.py
 ./src/aasm/public_v45.py
+./src/aasm/public_v46.py
 ./src/aasm/pulp_adapter.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
@@ -475,6 +486,7 @@
 ./src/aasm/runtime_v41.py
 ./src/aasm/runtime_v44.py
 ./src/aasm/runtime_v45.py
+./src/aasm/runtime_v46.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
@@ -561,4 +573,7 @@
 ./tests/test_v45_modeling_adapters.py
 ./tests/test_v45_modeling_adapters_real.py
 ./tests/test_v45_public.py
+./tests/test_v46_advanced_optimization.py
+./tests/test_v46_advanced_optimization_real.py
+./tests/test_v46_public.py
 ./tests/test_workers_leases.py
