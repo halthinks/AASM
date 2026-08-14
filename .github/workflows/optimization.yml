@@ -17,12 +17,16 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-      - name: Install AASM native optimization extra
+      - name: Install AASM native optimization and modeling extras
         run: python -m pip install -e '.[dev,optimization]'
       - name: Execute real CaDiCaL CP-SAT and HiGHS lifecycle tests
         env:
           AASM_REQUIRE_OPTIMIZATION_BACKENDS: "1"
         run: pytest -q tests/test_v44_optimization_real.py
+      - name: Execute real CVXPY and PuLP integration tests
+        env:
+          AASM_REQUIRE_MODELING_BACKENDS: "1"
+        run: pytest -q tests/test_v45_modeling_adapters_real.py
       - name: Execute real optimization conformance CLI
         run: |
           aasm optimization-conformance --real > /tmp/aasm-optimization.json
@@ -32,5 +36,16 @@ jobs:
           assert report['status']=='PASS', report
           assert report['real_backends'] is True
           for check in ('sat_native_backend_executes','cp_sat_native_backend_executes','milp_native_backend_executes'):
+              assert report['checks'][check] is True, report
+          PY
+      - name: Execute real modeling conformance module
+        env:
+          AASM_REQUIRE_MODELING_BACKENDS: "1"
+        run: |
+          python - <<'PY'
+          from aasm.modeling_conformance import run_modeling_conformance
+          report=run_modeling_conformance(real=True)
+          assert report['status']=='PASS', report
+          for check in ('cvxpy_qp_executes','cvxpy_soc_executes','pulp_imports_to_native_milp'):
               assert report['checks'][check] is True, report
           PY
