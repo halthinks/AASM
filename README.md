@@ -1,22 +1,25 @@
 # AASM — Algorithmic Agent State Machine
 
-**Durable deterministic control for agents, tools, models, humans, formal systems, native solvers, and governed knowledge.**
+**Durable deterministic control for agents, tools, models, humans, formal systems, native solvers, governed memory, and cross-run knowledge.**
 
-## Current release — v0.48.1
+## Current release — v0.49.0
 
-**Cross-Run Certified Knowledge & Governed Long-Term Memory — Project-Wide Apache-2.0 Policy Correction**
+**Semantic Solver Release Candidate**
 
-**Next release:** v0.49.0 — Semantic Solver Release Candidate
+**Next release:** v0.50.0 — Post-RC Stabilization
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
+
+v0.49 does not add another execution kernel. It freezes and certifies the architecture assembled through v0.48: deterministic replay, typed authority, formal verification, governed memory, certified reuse, native optimization, SII resource economics, cross-run knowledge, and project-wide Apache-2.0 licensing.
 
 AASM's declared project license is **Apache License, Version 2.0 (`Apache-2.0`) across the project**. To the extent AASM has the necessary relicensing rights, prior AASM versions—including versions first distributed under MIT—are **also offered under Apache-2.0**. Previously granted MIT permissions remain valid for their recipients, but prior AASM versions are not designated MIT-only. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`LICENSE_POLICY.md`](LICENSE_POLICY.md).
 
 ### Current release contracts
 
 ```text
-package / public surface: 0.48.1
-aasm.adoption.v1 / 0.24.0
+package / public surface: 0.49.0
+aasm.adoption.v1 / 0.25.0
+aasm.semantic.solver.rc.v1 / 0.1.0
 aasm.remote.v1 / 0.19.0
 aasm.knowledge.cross-run.v1 / 0.1.0
 aasm.knowledge.cross-run.admission.v1 / 0.1.0
@@ -37,222 +40,184 @@ aasm.formal.verification.v1 / 0.1.0
 license: Apache-2.0
 ```
 
-## The architecture
+## Why AASM exists
+
+The failure mode AASM targets is architectural: useful reasoning, solver output, memory, cached results, model confidence, or prior-run success gets mistaken for authority.
+
+AASM separates those concerns:
 
 ```text
-                         model / human / solver
-                                  |
-                                  v
-                            proposal / work
-                                  |
-                    +-------------+-------------+
-                    |                           |
-                    v                           v
-             reasoning Evidence          solver portfolio
-                    |               Kissat / CaDiCaL / CP-SAT
-                    |               HiGHS / CVXPY / Z3 / cvc5
-                    |                    Vampire / Lean 4
-                    |                           |
-                    v                           v
-             AASM validation             normalized Evidence
-                    |                           |
-                    +-------------+-------------+
-                                  |
-                                  v
-                     policy / authority boundary
-                                  |
-                +-----------------+------------------+
-                |                 |                  |
-                v                 v                  v
-          governed memory     certified reuse     durable truth
-                |                 |                  |
-                +--------+--------+                  |
-                         |                           |
-                         v                           |
-                cross-run knowledge                 |
-                         |                           |
-              receiving-run admission               |
-                         +---------------------------+
+proposal / observation / solver output
+                 |
+                 v
+              Evidence
+                 |
+        validation / policy
+                 |
+        authority boundary
+                 |
+      durable state / truth
 ```
 
-AASM's operating rule is intentionally asymmetric:
+Performance state is allowed to improve performance. It is not allowed to redefine correctness.
 
-> **Intelligence, solvers, memory, and prior runs may propose useful evidence. Only the receiving AASM authority path determines what becomes locally admissible, reusable, durable, or true.**
+## v0.49 — Semantic Solver Release Candidate
 
----
-
-## v0.48 — Cross-Run Certified Knowledge
-
-AASM can now carry useful knowledge from one durable run into another without carrying the source run's authority with it.
-
-### Immutable knowledge envelopes
-
-A `CrossRunKnowledgeEnvelope` fingerprints:
-
-- source run, machine, and scope;
-- source memory, Evidence, and reasoning-artifact lineage;
-- exact source fingerprints;
-- content;
-- declared environment and dependency compatibility;
-- verification strength;
-- target receiving scopes;
-- privacy principal and privacy level;
-- freshness and retention policy;
-- source authority provenance.
-
-Every envelope fixes:
+The RC contract is:
 
 ```text
-authority_transfer = NEVER
+aasm.semantic.solver.rc.v1 / 0.1.0
+stability        = RELEASE_CANDIDATE
+runtime_extension = THIN_V48_COMPOSITION_NO_NEW_KERNEL
+compatibility_floor exercised = v0.41
 ```
 
-Source authority is useful provenance. It is **not** a receiving-run credential.
-
-### Receiving-run admission
-
-Before a foreign envelope can even be proposed for admission, AASM checks:
-
-1. the source run is actually foreign;
-2. the requested receiving scope is allowed;
-3. USER/AGENT privacy matches the receiving principal;
-4. a declared environment fingerprint matches;
-5. declared dependency fingerprints are available;
-6. freshness has not expired;
-7. retention has not expired;
-8. verification strength satisfies the receiving requirement;
-9. source authority will not be inherited.
-
-A successful check produces a `CrossRunAdmissionCertificate` containing the receiving validator ID and version. That certificate **still does not admit the knowledge by itself**.
-
-The durable path is:
+The current runtime is:
 
 ```text
-CrossRunKnowledgeEnvelope
-          |
-          v
-receiving validator
-          |
-CrossRunAdmissionCertificate
-          |
-          v
-DecisionRecord(PROPOSED)
-          |
-POLICY / CONTROLLER
-          |
-      Obligation
-          |
-       worker
-          |
-foreign knowledge Evidence
+SemanticSolverRCRuntimeMixin
+          +
+runtime_v48.AASMEngine
 ```
 
-### Foreign semantic truth does not become local truth
+### Public contract freeze
 
-An admitted foreign envelope is receiving-run Evidence.
+`aasm semantic-solver-rc-freeze` emits and fingerprints the current public compatibility surface:
 
-For `SEMANTIC` knowledge, AASM refuses local semantic-memory materialization unless the receiving run supplies local reasoning artifacts already in `AUTHORIZED` state. Materialization then uses the ordinary v0.40 memory operation and still requires local POLICY/CONTROLLER authorization and commit.
+- contract IDs and versions;
+- engine methods;
+- CLI commands;
+- public imports;
+- inspection surfaces;
+- JSON schemas;
+- solver/provider identities;
+- event-history replay expectation;
+- Apache-2.0 + `LICENSE_POLICY.md` identity.
 
-That boundary is deliberate:
+The freeze manifest is a reviewable target for the `0.49.x` line. It does not pretend undocumented private implementation details are permanent APIs.
+
+### Upgrade and replay guarantees exercised by the RC
+
+The dedicated RC fixture creates durable histories with prior released generations and resumes them under v0.49:
 
 ```text
-FOREIGN SEMANTIC CONTENT
-        !=
-LOCAL AUTHORIZED SEMANTIC MEMORY
+v0.41 → v0.49
+  events
+  memoized state
+  governed v0.40 memory
+
+v0.47 → v0.49
+  governed SII policy
+  durable SII principal binding
+
+v0.48 → v0.49
+  admitted cross-run knowledge
+  foreign-authority non-inheritance
 ```
 
-### Cross-run reuse uses the existing reuse plane
+Each fixture must replay to the exact canonical snapshot hash and preserve the representative durable state under test.
 
-v0.48 does **not** create a second cross-run cache.
+### Cross-backend certification
 
-A foreign result may be registered as an ordinary v0.41 `ReuseCandidate`. It must pass the same existing applicability checks and receive the same existing `ReuseCertificate` before execution can be skipped.
-
-The current cross-run path starts conservatively with exact semantic-payload equality and preserves v0.41's exact verification-strength rule. A `CHECKED_CERTIFICATE` result is not silently downcast into a `SOLVER_VERDICT` request merely to obtain a cache hit.
-
-When a cross-run result is reusable, the normal reuse certificate also records:
-
-- source run ID;
-- receiving run ID;
-- envelope ID and fingerprint;
-- admission validator ID/version;
-- `authority_inherited = false`.
-
-### Revocation and supersession are operational
-
-A source run can emit a signed/authenticated-out-of-band revocation or supersession signal. The envelope format itself is not claimed to authenticate untrusted transport; receiving POLICY/CONTROLLER still admits the matching signal.
-
-Once admitted, v0.48 does more than change a status badge:
-
-- the envelope becomes `REVOKED` or `SUPERSEDED`;
-- an already-hot cross-run reuse candidate is blocked before reuse certification can be used;
-- locally materialized memories tied to that envelope are tombstoned through the existing v0.40 `FORGET` decision → authorization → commit path;
-- historical provenance remains append-only.
-
-### Stable cross-run principal identity
-
-AASM can explicitly bind:
+OR-Tools CP-SAT and HiGHS independently solve the same exact discrete optimization model:
 
 ```text
-(source_run_id, source_principal_id) -> local_principal_id
+x, y ∈ {0,1}
+x + y >= 1
+minimize x + y
 ```
 
-The mapping is POLICY/CONTROLLER admitted and fixes:
+Both must return and independently validate optimum `1`.
+
+CaDiCaL independently solves the Boolean feasibility projection:
 
 ```text
-authority_transfer            = NEVER
-resource_entitlement_transfer = NEVER
+x OR y
 ```
 
-Stable source identities cannot silently rebind to another local principal.
-
-### Cross-run SII reputation is accounting, not privilege
-
-An `SII_REPUTATION` envelope must name the exact source principal and match the admitted stable principal map.
-
-Imported reputation is recorded as a separate reference-accounting surface:
+The rule is explicit:
 
 ```text
-truth_authority              = NONE
-resource_entitlement         = NONE
-used_by_sii_resource_lease   = false
-accounting_plane             = CROSS_RUN_REFERENCE_ONLY
+AGREEMENT_OR_INCONCLUSIVE_NEVER_VOTE
 ```
 
-So historical performance may be inspected without turning reputation into a local authority credential or automatic compute allocation.
+Cross-backend agreement is corroborating Evidence. Backend disagreement is not converted into majority truth.
 
----
+### Benchmark evidence without benchmark theater
 
-## Governed SII — v0.47
+The RC measures:
 
-SII answers a different question from AASM truth maintenance:
+- canonical semantic fingerprint workloads;
+- event append + deterministic replay workloads;
+- direct native CP-SAT execution when native dependencies are present;
+- the equivalent full AASM provider → request → TaskLease → solve → validate → Evidence lifecycle;
+- observed orchestration-overhead ratio.
 
-> **Which intelligence is worth spending more compute on next?**
-
-The governed SII contract is `aasm.sii.v1 / 0.3.0`, stability `GOVERNED_ENFORCED`.
-
-It provides:
-
-- durable `SIIPrincipalBinding` records;
-- measurement authority resolved from durable AASM identity rather than caller assertion;
-- self-measurement rejection;
-- versioned `SIIScoringPolicy` objects;
-- bounded performance windows;
-- real `GovernedResourceLease` enforcement over context, scheduler priority, SAT budgets, CP-SAT time/workers, MILP nodes, convex time, and discretionary formal work.
-
-The safety laws remain:
+Those measurements are environment-specific evidence. AASM makes **no ungated speedup claim** from them:
 
 ```text
-UTILITY MAY BUY COMPUTE / SEARCH / CONTEXT.
-UTILITY NEVER BUYS TRUTH / STATE AUTHORITY / SELF VERIFICATION.
-REQUIRED VERIFICATION IS NEVER REDUCED BY SII.
+MEASURE_OVERHEAD_AND_SAVINGS_NO_UNGATED_SPEEDUP_CLAIM
+AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS
 ```
 
-**Required verification is never reduced** because a reasoner has a low or high SII score.
+### Public claims must map to real gates
 
----
+The RC adds:
+
+```text
+NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE
+```
+
+The claim audit ties major README claims to concrete source/workflow evidence, including Python support, Formal Assurance, Optimization Backends, Cross-Run Knowledge, project-wide Apache licensing, and the Semantic Solver RC gate.
+
+### The RC is a release gate
+
+`.github/workflows/rc.yml` installs the real native optimization/modeling stack and publishes:
+
+```text
+aasm/semantic-solver-rc
+```
+
+A release now requires the exact current `main` SHA to have all three:
+
+```text
+aasm/ci-summary
+aasm/formal-assurance
+aasm/semantic-solver-rc
+```
+
+at `success` before publication.
+
+## Core architecture
+
+```text
+                           AASM
+                            |
+                canonical semantic state
+                            |
+      +----------+-----------+-----------+----------+
+      |          |           |           |          |
+      v          v           v           v          v
+ reasoning    memory       reuse       solvers      SII
+      |          |           |           |          |
+      |          |       certificate     |       resources
+      |          |           |           |          |
+      +----------+-----------+-----------+----------+
+                            |
+                         Evidence
+                            |
+                    validation / policy
+                            |
+                    authority boundary
+                            |
+                       durable state
+```
+
+There is one scheduler/TaskLease plane and one durable authority path.
 
 ## Native solver portfolio
 
-AASM owns problem identity, provider admission, scheduling, TaskLease provenance, Evidence, validation, reuse, and authority boundaries. Native projects own their optimized inner solving loops.
+AASM owns semantic identity, provider admission, leases, provenance, independent validation, Evidence, certified reuse, and authority boundaries. Native solver projects own their optimized inner search loops.
 
 ```text
                               AASM
@@ -269,78 +234,101 @@ AASM owns problem identity, provider admission, scheduling, TaskLease provenance
        +---------+--------------+------------+--------------+---------+
                                |
                       normalized Evidence
-                               |
-                 validation / certification / reuse
 ```
 
-### SAT
+### Fast and incremental SAT
 
-- **Kissat** — fast non-incremental Boolean solving through PySAT's dedicated `Kissat404` binding.
+- **Kissat** — fast non-incremental Boolean solving.
 - **CaDiCaL** — direct SAT plus incremental assumptions, UNSAT cores, conflict/decision budgets, and bounded session reuse.
 
-Learned SAT state remains `EPHEMERAL_PERFORMANCE_ONLY`; deleting it changes speed, not truth.
+Learned SAT state is `EPHEMERAL_PERFORMANCE_ONLY`.
 
 ### CP-SAT scheduling — OR-Tools
 
-`solver.cp_sat.scheduling@0.1.0` supports fixed/optional intervals, `NO_OVERLAP`, `CUMULATIVE`, deterministic time, search-worker controls, conflicts/branches, and scheduling validation.
+Supports fixed/optional intervals, `NO_OVERLAP`, `CUMULATIVE`, deterministic-time budgets, search-worker controls, and search telemetry.
 
 ### MILP — HiGHS
 
-`solver.milp.advanced@0.1.0` supports warm starts, node limits, MIP gap targets, primal/dual bounds, gap, node count, and iteration telemetry.
+Supports warm starts, MIP gap targets, node limits, primal/dual bounds, gap, node count, and iteration telemetry.
 
-### Convex — CVXPY
+### Convex optimization — CVXPY
 
-`solver.convex.advanced@0.1.0` supports factorized PSD/NSD quadratic objectives, cross terms, and affine second-order cone constraints. AASM independently rechecks canonical feasibility/objective values before Evidence admission.
+Supports governed convex LP/QP/SOC execution, factorized PSD/NSD quadratic objectives, cross terms, and affine SOC constraints with independent AASM validation.
 
 ### PuLP
 
-PuLP remains a compatibility importer only:
+PuLP is compatibility only:
 
 ```text
 authority        = TRANSLATION_ONLY
 solver_execution = NEVER
 ```
 
-Supported models become AASM IR and are then routed to native providers such as HiGHS.
-
----
+Supported PuLP models become AASM IR and are then routed to native providers.
 
 ## Formal verification portfolio
 
-The existing v0.39 formal path remains first-class:
+The formal path remains first-class:
 
 - **Z3** — SMT-LIB2;
 - **cvc5** — SMT-LIB2;
 - **Vampire** — TPTP first-order theorem proving;
 - **Lean 4** — trusted proof-kernel checking.
 
-Formal output is Evidence. Solver agreement is not majority voting. Lean rejection is not automatically a logical refutation. No solver result bypasses AASM's authority boundary.
+Formal output is Evidence. Solver agreement is not majority voting. Lean rejection is not automatically a logical refutation.
 
----
+## Governed SII
 
-## One scheduler, one authority path
+SII measures which reasoners create durable utility and allocates discretionary resources accordingly.
 
-Neither solver extensions, SII, nor cross-run knowledge create parallel execution authority.
+It can govern:
+
+- context budget;
+- scheduler priority;
+- SAT conflicts/decisions;
+- CP-SAT deterministic time/workers;
+- MILP nodes;
+- convex solve time;
+- discretionary formal work;
+- portfolio width.
+
+Its safety law remains:
 
 ```text
-canonical work / admitted knowledge
-          |
-Capability / Decision contract
-          |
-POLICY / CONTROLLER admission
-          |
-Resource / Obligation
-          |
-TaskDemand / TaskLease where execution is needed
-          |
-execution / Evidence
-          |
-validation
-          |
-optional certified reuse / epistemic admission
+UTILITY MAY BUY COMPUTE / SEARCH / CONTEXT.
+UTILITY NEVER BUYS TRUTH / STATE AUTHORITY / SELF VERIFICATION.
+REQUIRED VERIFICATION IS NEVER REDUCED BY SII.
 ```
 
----
+**Required verification is never reduced** by a reasoner's SII score.
+
+## Cross-Run Knowledge
+
+v0.48 allows useful verified material to move across durable runs without moving source authority.
+
+A `CrossRunKnowledgeEnvelope` records source run/machine/scope, source lineage, content fingerprints, environment/dependencies, verification strength, privacy, freshness, and retention.
+
+```text
+authority_transfer = NEVER
+```
+
+Receiving-run applicability is validated before local POLICY/CONTROLLER admission.
+
+Foreign semantic content cannot become local semantic memory without receiving-run `AUTHORIZED` reasoning. Cross-run reuse goes through the existing v0.41 `ReuseCandidate` → validation → `ReuseCertificate` path. Source revocation/supersession blocks hot reuse and tombstones materialized memory through governed FORGET operations.
+
+Imported SII reputation remains:
+
+```text
+truth_authority              = NONE
+resource_entitlement         = NONE
+used_by_sii_resource_lease   = false
+```
+
+The governing boundary is:
+
+```text
+FOREIGN AUTHORITY IS PROVENANCE, NEVER RECEIVING AUTHORITY.
+```
 
 ## Installation
 
@@ -356,86 +344,57 @@ Full native optimization/modeling portfolio:
 pip install 'aasm-runtime[optimization]'
 ```
 
-CVXPY + PuLP modeling surfaces only:
+CVXPY + PuLP modeling only:
 
 ```bash
 pip install 'aasm-runtime[modeling]'
 ```
 
-PostgreSQL integration:
+PostgreSQL support:
 
 ```bash
 pip install 'aasm-runtime[postgres]'
 ```
 
----
-
-## CLI
+## RC CLI
 
 ```bash
-# v0.48 cross-run knowledge
-aasm cross-run-knowledge-contract
-aasm cross-run-knowledge-conformance
-
-# v0.47 governed SII
-aasm sii-contract
-aasm sii-governance-contract
-aasm sii-default-scoring-policy
-aasm certification-contract
-aasm certify
-aasm certify --target sii-preview
-
-# v0.46 advanced solver control
-aasm advanced-optimization-contract
-aasm advanced-optimization-blueprint
-aasm advanced-optimization-conformance --real
-
-# v0.45 modeling
-aasm convex-optimization-contract
-aasm pulp-adapter-contract
-aasm modeling-conformance --real
-
-# v0.44 native portfolio
-aasm optimization-contract
-aasm optimization-blueprint
-aasm optimization-conformance --real
+aasm semantic-solver-rc-contract
+aasm semantic-solver-rc-freeze
+aasm semantic-solver-rc-upgrade
+aasm semantic-solver-rc-cross-backend --real
+aasm semantic-solver-rc-benchmark --real --iterations 64
+aasm semantic-solver-rc-claim-audit
+aasm semantic-solver-rc-certify --real
 ```
 
----
+Existing solver/SII/certification CLI remains available, including:
+
+```bash
+aasm optimization-conformance --real
+aasm modeling-conformance --real
+aasm advanced-optimization-conformance --real
+aasm cross-run-knowledge-conformance
+aasm certify
+aasm certify --target sii-preview
+```
 
 ## Verification
 
-The repository independently validates AASM through:
+AASM's current release gates include:
 
 - Python 3.11 / 3.12 / 3.13 full test matrices;
 - deterministic replay;
 - SQLite and PostgreSQL persistence;
 - Compose full-stack smoke testing;
-- byte-reproducible wheel/sdist builds and clean install;
-- Apache-2.0 PEP 639 / `LICENSE` / `NOTICE` release checks;
-- project-wide Apache-2.0 licensing-policy checks through `LICENSE_POLICY.md`;
+- byte-reproducible wheel/sdist builds and clean installation;
 - LangGraph and framework-neutral adapter conformance;
-- **Optimization Backends** real native solver workflow;
-- **Cross-Run Knowledge** admission/revocation/privacy/reuse/SII-separation workflow;
-- bounded TLA+ models;
-- Promela/SPIN models;
-- semantic/adversarial certification;
-- exact-head release gating and remote release-asset byte verification.
-
-v0.48 adds formal invariants including:
-
-```text
-ForeignAuthorityNeverInherited
-AdmissionRequiredBeforeMaterialization
-AdmissionRequiredBeforeReuse
-RevocationBlocksReuse
-RevocationInvalidatesMaterializedMemory
-PrivateKnowledgeNeverLeaksAcrossPrincipal
-ReputationNeverGrantsAuthority
-ReputationNeverGrantsResourceEntitlement
-```
-
----
+- **Optimization Backends** with real native solvers;
+- **Cross-Run Knowledge** governance/adversarial tests;
+- **Formal Assurance** with bounded TLA+ and Promela/SPIN;
+- **Semantic Solver RC** upgrade, cross-backend, benchmark, claim-audit, public CLI, and full real certification;
+- project-wide Apache-2.0 / PEP 639 / `LICENSE` / `NOTICE` / `LICENSE_POLICY.md` release checks;
+- exact-head release publication and remote asset byte verification.
 
 ## License
 
@@ -444,8 +403,6 @@ AASM is licensed under the **Apache License, Version 2.0** (`Apache-2.0`) as a p
 To the extent AASM controls the necessary relicensing rights, **prior AASM versions are also offered under Apache-2.0**, including versions that were first distributed under MIT. Previously granted MIT permissions remain valid for recipients who received those grants; that does not make those prior AASM versions MIT-only.
 
 Third-party material, if any, remains subject to its own applicable terms.
-
----
 
 ## Roadmap
 
@@ -462,9 +419,8 @@ Third-party material, if any, remains subject to its own applicable terms.
 - v0.45 Convex Optimization & Modeling Adapters — CVXPY / PuLP ✅
 - v0.46 Advanced Solver Control & Search Artifacts ✅
 - v0.47 Governed Symbiotic Intelligence & Intelligence Economics ✅
-- v0.47.1 Apache-2.0 License Transition ✅
 - v0.48 Cross-Run Certified Knowledge & Governed Long-Term Memory ✅
-- **v0.48.1 Project-Wide Apache-2.0 Policy Correction — current ✅**
-- **v0.49 Semantic Solver Release Candidate — next**
+- **v0.49 Semantic Solver Release Candidate — current ✅**
+- **v0.50 Post-RC Stabilization — next, evidence-dependent**
 
-See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [LICENSE_POLICY.md](LICENSE_POLICY.md), [docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md](docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md), [docs/RELEASE_0.48.1.md](docs/RELEASE_0.48.1.md), [docs/SII_GOVERNED_ECONOMICS.md](docs/SII_GOVERNED_ECONOMICS.md), and [docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md](docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md).
+See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md](docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md), [docs/RELEASE_0.49.md](docs/RELEASE_0.49.md), and [LICENSE_POLICY.md](LICENSE_POLICY.md).
