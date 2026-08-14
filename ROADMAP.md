@@ -89,17 +89,274 @@ Delivered:
 - Cross-backend agreement is corroborating Evidence, never voting authority.
 - The cross-run envelope is not a network authentication protocol.
 - Source-run authority never becomes receiving-run authority.
+- Complete Pareto-frontier enumeration is not yet established.
+- General governed solution pools and complete finite enumeration are not yet established.
+- Arbitrary lexicographic multi-objective optimization is not yet established.
+- Durable cross-run solver-native learning is not yet established.
+- Proof-carrying certification for every negative, bound, or optimality claim is not yet established.
 
-### Solver work still worth doing after the RC
+# Current Semantic-Solver Closure Program
 
-- proof-producing SAT/infeasibility certificate integration where native backends expose it;
-- pseudo-Boolean/cardinality native representations;
-- MILP basis/cut-pool exchange with numerical/provenance compatibility;
-- deterministic multi-backend racing under governed budgets;
-- certified cross-solver translation/bound/conflict exchange;
-- broader benchmark corpora with explicit hardware/runtime metadata;
-- additional conic families with independent validation.
+The v0.50–v0.57 sequence closes the **currently identified** semantic-solver gap cluster. It does **not** imply that AASM is nearly complete, and it does **not** imply readiness for v1.0.
 
-## v0.50.0 — Post-RC Stabilization
+The dependency order is deliberate: proof semantics land before completeness claims; enumeration lands before Pareto completeness; cross-run native learning lands before cross-solver exchange; stabilization happens only after those capabilities exist and have adversarial evidence.
 
-**Next only after RC evidence is satisfactory.** Use the v0.49 freeze manifest and field/benchmark evidence to decide which contracts can be declared stable, which remain experimental, and which require another compatibility cycle. No stability claim should be made merely because the version number reaches 0.50.
+## v0.50.0 — Proof-Carrying Solver Claims
+
+Primary contract target:
+
+```text
+aasm.solver.proof-certificate.v1
+```
+
+Required scope:
+
+1. classify solver claims explicitly: `FEASIBLE`, `INFEASIBLE`, `SAT`, `UNSAT`, `BOUNDED`, `UNBOUNDED`, `OPTIMAL`, `SUBOPTIMAL`, `UNKNOWN`;
+2. separate ordinary validated solver evidence from proof-grade certification;
+3. introduce durable `SolverClaimCertificate` objects bound to exact problem, formulation, solver, assumptions, tolerances, proof/bound artifact, verifier, and checker versions;
+4. support proof-producing SAT/UNSAT and infeasibility/optimality paths where native backends expose suitable artifacts;
+5. add independent certificate checkers rather than accepting solver self-attestation;
+6. make unsupported proof modes explicit rather than silently treating solver status as proof;
+7. carry exact provenance through replay, persistence, CLI, schemas, and release reports;
+8. add adversarial fixtures for forged proofs, wrong formulation fingerprints, stale assumptions, mismatched tolerances, truncated artifacts, and solver/checker version incompatibility.
+
+Hard completion criterion:
+
+> No `UNSAT`, `INFEASIBLE`, `UNBOUNDED`, or `OPTIMAL` result may receive a proof-grade status unless an independent checker verifies a certificate covering the exact canonical problem/formulation and declared assumptions/tolerances.
+
+## v0.51.0 — Governed Solution Pools & Complete Enumeration
+
+Primary contract targets:
+
+```text
+aasm.optimization.solution-pool.v1
+aasm.optimization.enumeration.v1
+```
+
+Required scope:
+
+1. durable `SolutionPool` objects rather than one-request/one-assignment semantics only;
+2. explicit modes: `COMPLETE_FINITE_ENUMERATION`, `BOUNDED_PARTIAL_POOL`, `TOP_K`, `DIVERSE_POOL`, `INCUMBENT_HISTORY`;
+3. deterministic solution identity and deduplication;
+4. durable exclusion/no-good constraints for already accepted finite solutions;
+5. continuation cursors and crash/restart-safe enumeration;
+6. pool provenance, solver lineage, completeness status, and certificate linkage;
+7. explicit distinction between complete enumeration and a solver-native bounded pool;
+8. cross-backend enumeration consistency fixtures where semantics overlap;
+9. adversarial tests for duplicate solutions, missing exclusions, stale cursors, corrupted pool lineage, and false completeness claims.
+
+Hard completion criterion:
+
+> For finite oracle-known reference problems, AASM must enumerate every satisfying solution exactly once, survive restart mid-enumeration, resume correctly, and independently certify that no additional finite solutions remain before reporting completeness.
+
+## v0.52.0 — Lexicographic Multi-Objective & Pareto Solving
+
+Primary contract targets:
+
+```text
+aasm.optimization.multi-objective.v1
+aasm.optimization.frontier.v1
+```
+
+Required scope:
+
+1. ordered objective vectors with explicit priority, sense, expression, and tolerance;
+2. full lexicographic solving where each higher-priority optimum is independently fixed/certified before optimizing the next objective;
+3. proof that lower-priority optimization cannot degrade higher-priority objectives outside declared tolerances;
+4. exact finite Pareto-frontier enumeration built on v0.51 solution enumeration;
+5. explicit frontier modes: `EXACT_FINITE_PARETO_FRONTIER`, `BOUNDED_PARTIAL_FRONTIER`, `EPSILON_APPROXIMATE_FRONTIER`;
+6. nondominance checking for every admitted frontier point;
+7. exhaustion/completeness evidence for exact finite frontiers;
+8. deterministic frontier fingerprints and restart-safe frontier enumeration;
+9. independent cross-backend frontier checks on oracle-known reference problems;
+10. adversarial fixtures for dominated points, missing frontier members, tolerance abuse, priority inversion, duplicate points, and false exactness claims.
+
+Hard completion criterion:
+
+> On oracle-known finite multi-objective problems, AASM must return exactly the nondominated set, prove pairwise nondominance, prove exhaustion, preserve lexicographic priority semantics, survive restart, and reproduce the same frontier fingerprint across supported exact backends.
+
+## v0.53.0 — Durable Cross-Run Solver Learning
+
+Primary contract target:
+
+```text
+aasm.solver.learning.cross-run.v1
+```
+
+Required scope:
+
+1. explicitly separate canonical reusable learning from solver-native accelerator state;
+2. canonical transferable learning may include validated no-goods, bound tightenings, conflicts, assumption cores, incumbents, dominance exclusions, enumeration exclusions, and objective bounds;
+3. native accelerator state may include learned clauses, cut pools, LP/MILP bases, branching hints, presolve hints, and native incumbents where supported;
+4. every native artifact carries a compatibility envelope including problem fingerprint, formulation fingerprint, variable mapping, provider, solver version, presolve/configuration, numerical tolerances, environment, and dependency fingerprints;
+5. imported native state is performance state only and never truth/authority;
+6. receiving runs must independently validate final solver results using ordinary AASM admission rules;
+7. stale/incompatible learning must be rejected before activation;
+8. cross-run revocation/supersession must invalidate reusable native learning when its source basis is no longer admissible;
+9. cold-vs-learned benchmark evidence must measure search work without turning performance into correctness.
+
+Permanent invariant:
+
+```text
+SEARCH_STATE_NEVER_PROMOTES_TRUTH
+```
+
+Hard completion criterion:
+
+> A receiving run must safely reuse compatible learned solver state, reject deliberately incompatible state, preserve the same canonical answer with or without imported learning, and demonstrate any search reduction only as measured performance evidence.
+
+## v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing
+
+Primary contract targets:
+
+```text
+aasm.solver.exchange.v1
+aasm.solver.portfolio.v1
+```
+
+Required scope:
+
+1. deterministic multi-backend racing under governed resource budgets;
+2. typed exchange of incumbents, lower/upper bounds, conflicts/no-goods, UNSAT cores, dominance constraints, and cut candidates where semantics permit;
+3. certified translation before one solver consumes another solver's semantic artifact;
+4. explicit source and target formulation fingerprints for every exchanged object;
+5. compatibility checks for MILP basis/cut-pool exchange and numerical state;
+6. deterministic scheduling/portfolio decisions under identical inputs, budgets, and seeds;
+7. no winner-by-speed truth shortcut;
+8. backend disagreement remains `INCONCLUSIVE`/investigate, never majority authority;
+9. adversarial fixtures for malformed translations, stale bounds, incompatible bases, poisoned incumbents, unsound cuts, and forged cross-solver provenance.
+
+Hard completion criterion:
+
+> Multiple eligible backends must race reproducibly under fixed budgets; every exchanged semantic object must be traceably translated and independently admissible; disagreement must never become voting authority.
+
+## v0.55.0 — Extended Mathematical IR
+
+Required scope:
+
+1. pseudo-Boolean constraints;
+2. native cardinality constraints;
+3. richer scheduling/global constraints;
+4. additional conic families;
+5. stronger quadratic representations;
+6. explicit objective-vector IR shared with v0.52;
+7. native backend representations where they preserve semantics better than generic compilation;
+8. source semantic fingerprint, target formulation fingerprint, translation certificate, and validation strategy for every nontrivial lowering;
+9. at least two independent validation paths for every new representation.
+
+Hard completion criterion:
+
+> Every newly supported mathematical representation must have reproducible semantic identity, a documented lowering/native path, and independent validation sufficient to prevent a translation error from silently becoming authoritative solver evidence.
+
+## v0.56.0 — Proof/Enumeration/Optimization Stress Corpus
+
+Required permanent corpora:
+
+1. SAT/UNSAT positive models and certified negative claims;
+2. CP-SAT scheduling, enumeration, and objective-bound cases;
+3. MILP feasible/infeasible/optimal/bounded cases;
+4. convex primal/dual validation and failure cases;
+5. lexicographic and Pareto oracle-known multi-objective problems;
+6. exact solution-pool problems with known solution counts;
+7. cold-vs-learned cross-run solver-learning cases;
+8. valid and malicious cross-solver exchange cases;
+9. forged proof, stale cut, wrong mapping, poisoned incumbent, false completeness, and false optimality adversarial cases.
+
+Every benchmark record must bind exact hardware/runtime metadata, OS, Python, dependency versions, solver version/configuration, seed, budgets, problem hash, formulation hash, and relevant certificate/checker versions.
+
+Hard completion criterion:
+
+> Every public capability claim added in v0.50–v0.55 must map to a reproducible corpus/gate, including negative and adversarial fixtures; no universal performance claim may be inferred without an explicit statistical threshold and methodology.
+
+## v0.57.0 — Semantic Solver RC2 / Contract Review
+
+This is a **subsystem reassessment release**, not a declaration that AASM is nearly complete.
+
+Required scope:
+
+1. freeze proof-certificate ABI;
+2. freeze solution-pool and enumeration semantics;
+3. freeze multi-objective and Pareto semantics;
+4. freeze cross-run solver-learning compatibility rules;
+5. freeze cross-solver exchange and portfolio scheduling ABI;
+6. extend replay/migration fixtures across the new release generations;
+7. repeat the public claim-to-gate audit across the complete semantic-solver surface;
+8. classify each contract as stable, experimental, or requiring another compatibility cycle based on evidence rather than version number;
+9. preserve every existing AASM truth, authority, memory, reuse, SII, and cross-run boundary;
+10. explicitly publish all remaining non-claims and unresolved research questions.
+
+Hard completion criterion:
+
+> No semantic-solver capability advertised by AASM may lack a reproducible gate, schema, compatibility rule, negative/adversarial fixture, and documented authority boundary.
+
+## Closure Matrix for the Current Gap Cluster
+
+| Capability | Planned release | Hard completion criterion |
+|---|---:|---|
+| Proof-grade negative/optimality claims | v0.50 | independently checkable exact-claim certificate |
+| General solution pools | v0.51 | resumable, deduplicated, completeness-aware pools |
+| Complete finite enumeration | v0.51 | oracle solution set reproduced exactly and exhaustion certified |
+| Full lexicographic objectives | v0.52 | higher-priority optima provably preserved |
+| Pareto-frontier enumeration | v0.52 | exact finite nondominated set plus exhaustion certification |
+| Durable cross-run solver-native learning | v0.53 | compatible learning reused; incompatible learning rejected |
+| MILP basis/cut-pool reuse | v0.53–v0.54 | compatibility envelope plus performance-only semantics |
+| Cross-solver bounds/conflicts | v0.54 | certified translation before reuse |
+| Deterministic portfolio racing | v0.54 | reproducible budget/scheduling decisions |
+| PB/cardinality support | v0.55 | native/certified formulations |
+| Additional conic families | v0.55 | independent semantic validation |
+| Broad benchmark/adversarial corpus | v0.56 | reproducible hardware/config-bound evidence and negative fixtures |
+| Semantic-solver RC2 review | v0.57 | full closure audit for this capability tranche |
+
+# No Presumed v1.0
+
+AASM does **not** presently schedule, promise, or infer a v1.0 release from this roadmap.
+
+Completion of v0.50–v0.57 means only that the **currently identified semantic-solver gap cluster** has been implemented and reassessed. It does not mean the broader AASM architecture, agent runtime, distributed execution model, proof system, semantic compiler, memory architecture, orchestration economics, real-world validation program, or future research program is finished.
+
+Permanent versioning rule:
+
+```text
+0.x = architecture is still expanding
+RC  = a subsystem or contract family is mature enough to freeze and test seriously
+1.0 = considered only after a separate project-wide readiness review
+```
+
+There is no version arithmetic such as `v0.57 → v1.0`. Future work may continue through as many `0.x` releases as required.
+
+A future v1.0 may be considered only after a dedicated project-wide readiness review establishes—with evidence—that the architecture, public contracts, migration guarantees, authority/safety boundaries, solver semantics, operational tooling, and real-world field results justify a stable-major declaration.
+
+# Beyond v0.57 — Open Research & Capability Program
+
+The roadmap beyond v0.57 is intentionally **not version-bounded**. New releases will be assigned as architectural work is identified, specified, implemented, tested, and validated.
+
+Candidate research/capability areas include, but are not limited to:
+
+- deeper proof-producing and proof-checking infrastructure;
+- abstraction/refinement and counterexample-guided loops;
+- compositional and hierarchical solving;
+- temporal planning and temporal logics;
+- stochastic, robust, and chance-constrained optimization;
+- nonlinear and global optimization;
+- richer SMT/theorem-prover integration;
+- distributed search and distributed portfolio solving;
+- durable cross-run search intelligence beyond the first solver-learning ABI;
+- semantic compiler completeness and ambiguity management;
+- explanation, minimal-cause, and minimal-unsatisfied-subset generation;
+- solver/model/agent cooperative reasoning protocols;
+- stronger uncertainty and epistemic-status handling;
+- large-scale resource economics and scheduling;
+- adversarial solver-state poisoning resistance;
+- distributed and independently replicated certificate verification;
+- hardware-aware solver orchestration and heterogeneous accelerators;
+- real-world reference-domain campaigns;
+- long-duration autonomous execution studies;
+- privacy/security hardening for distributed and cross-run artifacts;
+- provenance compression without loss of auditability;
+- new formal models as the architecture expands;
+- capabilities and failure modes discovered through field use that are not yet known.
+
+This list is **append-only in spirit**: discovery of new requirements expands the program rather than forcing them into an artificial endpoint.
+
+The governing principle remains:
+
+> **v0.50–v0.57 closes the currently identified semantic-solver gap cluster. It does not close AASM.**
