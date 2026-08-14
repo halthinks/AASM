@@ -14,8 +14,8 @@ from aasm.runtime_v47 import AASMEngine as V47Engine
 from aasm.runtime_v48 import AASMEngine as V48Engine
 
 
-def test_v47_public_contract_is_current_and_composes_over_v46():
-    assert __version__ == "0.48.0"
+def test_v47_public_contract_remains_active_under_v48_composition():
+    assert __version__ == "0.48.1"
     assert AASMEngine is V48Engine
     assert issubclass(V48Engine, V47Engine)
     assert issubclass(V47Engine, V46Engine)
@@ -23,8 +23,8 @@ def test_v47_public_contract_is_current_and_composes_over_v46():
     assert report["valid"], report
     contract = report["contract"]
     assert contract["contract_version"] == "0.24.0"
-    assert contract["runtime_version"] == "0.48.0"
-    assert contract["distribution"]["version"] == "0.48.0"
+    assert contract["runtime_version"] == "0.48.1"
+    assert contract["distribution"]["version"] == "0.48.1"
     assert contract["certification"]["contract_version"] == "0.2.0"
     assert contract["sii_governance"]["contract_version"] == "0.3.0"
     assert contract["sii_governance"]["authority_reward"] == "NEVER"
