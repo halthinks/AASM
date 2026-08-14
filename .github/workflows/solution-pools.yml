@@ -1,4 +1,5 @@
 name: Solution Pools
+# one-shot promotion trigger; removed after guarded promotion
 
 on:
   push:
