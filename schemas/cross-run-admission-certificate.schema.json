@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/cross-run-admission-certificate.schema.json",
+  "title": "AASM Cross-Run Admission Certificate",
+  "type": "object",
+  "required": ["certificate_id", "envelope_id", "envelope_fingerprint", "receiving_run_id", "target_scope_id", "validator_id", "validator_version", "checks", "reasons", "valid", "authority_inherited", "fingerprint"],
+  "properties": {
+    "certificate_id": {"type": "string", "minLength": 1},
+    "envelope_id": {"type": "string", "minLength": 1},
+    "envelope_fingerprint": {"type": "string", "minLength": 32},
+    "receiving_run_id": {"type": "string", "minLength": 1},
+    "target_scope_id": {"type": "string", "minLength": 1},
+    "validator_id": {"type": "string", "minLength": 1},
+    "validator_version": {"type": "string", "minLength": 1},
+    "checks": {"type": "object", "additionalProperties": {"type": "boolean"}},
+    "reasons": {"type": "array", "items": {"type": "string"}},
+    "valid": {"type": "boolean"},
+    "authority_inherited": {"const": false},
+    "fingerprint": {"type": "string", "minLength": 32}
+  },
+  "additionalProperties": false
+}
