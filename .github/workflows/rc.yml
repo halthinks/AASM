@@ -23,7 +23,7 @@ jobs:
           cache: pip
       - name: Install RC and native solver dependencies
         run: python -m pip install -e '.[dev,optimization]'
-      - name: Compile v0.49 staging surface
+      - name: Compile v0.49 surface
         run: python -m compileall -q src/aasm/semantic_solver_rc.py src/aasm/_runtime_v49_rc.py src/aasm/runtime_v49.py tests/test_v49_rc.py tests/test_v49_rc_real.py
       - name: Run dependency-neutral RC assurance
         run: pytest -q tests/test_v49_rc.py
@@ -41,3 +41,22 @@ jobs:
           if report["status"] != "PASS":
               raise SystemExit(1)
           PY
+      - name: Publish Semantic Solver RC status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='semantic solver RC compatibility, real-backend certification, benchmarks, and claim audit passed'
+          else
+            state=failure
+            description='semantic solver RC gate failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" -f context='aasm/semantic-solver-rc' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
