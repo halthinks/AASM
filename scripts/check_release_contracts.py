@@ -28,7 +28,7 @@ def main():
     # are permanent release invariants.
     if project.get("license") != "Apache-2.0":
         raise SystemExit(f"unexpected active license: {project.get('license')}")
-    if set(project.get("license-files", [])) != {"LICENSE", "NOTICE"}:
+    if set(project.get("license-files", [])) != {"LICENSE", "NOTICE", "LICENSE_POLICY.md"}:
         raise SystemExit(f"unexpected license files: {project.get('license-files')}")
     legacy_license_classifiers = [value for value in project.get("classifiers", []) if value.startswith("License ::")]
     if legacy_license_classifiers:
@@ -41,7 +41,7 @@ def main():
         "Earlier MIT grants remain valid",
         "prior AASM versions are not designated MIT-only",
     ])
-    require(root / "MANIFEST.in", ["LICENSE NOTICE pyproject.toml"])
+    require(root / "MANIFEST.in", ["LICENSE NOTICE LICENSE_POLICY.md pyproject.toml"])
     require(root / "CONTRIBUTING.md", ["Apache License, Version 2.0", "Apache-2.0", "NOTICE"])
 
     stale_license_policy = [
