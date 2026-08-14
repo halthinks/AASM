@@ -284,7 +284,7 @@
 ./schemas/trace-projection.schema.json
 ./schemas/transition.schema.json
 ./schemas/truth-maintenance-plan.schema.json
-./schemas/typed-event-schema.json
+./schemas/typed-event-schema.schema.json
 ./schemas/worker-control.schema.json
 ./schemas/worker.schema.json
 ./scripts/check_formal_models.py
