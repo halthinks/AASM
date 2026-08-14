@@ -79,7 +79,7 @@ The v0.46 advanced convex IR supports:
 - factorized positive-semidefinite quadratic minimization;
 - factorized negative-semidefinite quadratic maximization;
 - cross terms through weighted squares of linear forms;
-- affine second-order-cone constraints of the form `||A x + b||₂ <= cᵀx + d`.
+- affine SOC / second-order-cone constraints of the form `||A x + b||₂ <= cᵀx + d`.
 
 The factor representation makes convexity structural: non-negative factor weights form a PSD quadratic for minimization, while AASM negates the factor contribution for concave maximization. The runtime independently re-evaluates constraints and the canonical objective before Evidence admission.
 
