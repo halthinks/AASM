@@ -69,6 +69,31 @@ def test_non_idempotent_effect_is_never_reused():
     assert "non_idempotent_effect_never_reused" in result["rejections"][0]["reasons"]
 
 
+def test_required_verification_strength_is_checked_independently_of_request_fingerprint():
+    engine = AASMEngine(ProblemSpec("v41-strength"))
+    source_evidence = engine.add_evidence(
+        EvidenceRecord(kind="formal_verification", statement="proved", source="test.v41"),
+        reason="seed formal result",
+    )
+    request = ReuseRequest(
+        kind="FORMAL_VERIFICATION_RESULT",
+        semantic_payload={"claim": "invariant"},
+        required_strength="MULTI_SOLVER_AGREEMENT",
+    )
+    candidate = ReuseCandidate(
+        kind=request.kind,
+        request_fingerprint=request.fingerprint,
+        source=engine.canonical_reuse_ref("EVIDENCE", source_evidence.evidence_id),
+        semantic_payload=request.semantic_payload,
+        verification_strength="SOLVER_VERDICT",
+        reusable_modes=("EXACT",),
+    )
+    engine.register_reuse_candidate(candidate, authority_id="policy", authority_class="POLICY")
+    result = engine.lookup_reuse(request)
+    assert result["hit"] is False
+    assert "verification_strength_mismatch" in result["rejections"][0]["reasons"]
+
+
 def test_solver_loop_skips_execution_only_after_validated_reuse():
     engine, request = seeded_reuse_engine()
     result = engine.solver_step(SolverStepRequest(scope_id="root"), reuse_request=request)
