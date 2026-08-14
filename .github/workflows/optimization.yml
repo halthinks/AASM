@@ -31,6 +31,10 @@ jobs:
         env:
           AASM_REQUIRE_ADVANCED_BACKENDS: "1"
         run: pytest -q tests/test_v46_advanced_optimization_real.py
+      - name: Execute v0.47 real governed SII native solver lifecycle test
+        env:
+          AASM_REQUIRE_SII_BACKENDS: "1"
+        run: pytest -q tests/test_v47_sii_real.py
       - name: Execute real optimization conformance CLI
         run: |
           aasm optimization-conformance --real > /tmp/aasm-optimization.json
@@ -74,4 +78,22 @@ jobs:
               'convex_advanced_real_backend_executes',
           ):
               assert report['checks'][check] is True, report
+          PY
+      - name: Execute governed v0.47 SII graduation certification
+        run: |
+          aasm certify --target sii-preview > /tmp/aasm-sii-certification.json
+          python - <<'PY'
+          import json
+          report=json.load(open('/tmp/aasm-sii-certification.json'))
+          assert report['status']=='PASS', report
+          target=report['targets'][0]
+          assert target['status']=='PASS', target
+          checks={row['check_id']: row['status'] for row in target['checks']}
+          for check in (
+              'measurement-principal-authority-binding',
+              'resource-lease-native-solver-enforcement',
+              'resource-lease-scheduler-enforcement',
+              'mandatory-verification-not-reduced',
+          ):
+              assert checks[check]=='PASS', report
           PY
