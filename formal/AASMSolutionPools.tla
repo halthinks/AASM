@@ -41,6 +41,7 @@ StartPartial ==
 AcceptUnique ==
   /\ pool_started
   /\ ~exhausted
+  /\ solution_count < 3
   /\ solution_count' = solution_count + 1
   /\ exclusion_count' = exclusion_count + 1
   /\ UNCHANGED <<pool_started, partial_mode, cursor_durable, exhausted,
@@ -59,6 +60,7 @@ Exhaust ==
   /\ pool_started
   /\ ~partial_mode
   /\ cursor_durable
+  /\ solution_count = 3
   /\ exhausted' = TRUE
   /\ UNCHANGED <<pool_started, partial_mode, cursor_durable, solution_count,
                   exclusion_count, checker_independent, checker_passed,
