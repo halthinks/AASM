@@ -21,8 +21,9 @@ def main():
         raise SystemExit(f"unexpected active license: {project.get('license')}")
     if set(project.get("license-files", [])) != {"LICENSE", "NOTICE"}:
         raise SystemExit(f"unexpected license files: {project.get('license-files')}")
-    if "License :: OSI Approved :: Apache Software License" not in project.get("classifiers", []):
-        raise SystemExit("Apache OSI classifier missing")
+    legacy_license_classifiers = [value for value in project.get("classifiers", []) if value.startswith("License ::")]
+    if legacy_license_classifiers:
+        raise SystemExit(f"PEP 639 license expression must not be paired with legacy license classifiers: {legacy_license_classifiers}")
     require(root / "LICENSE", ["Apache License", "Version 2.0, January 2004", "Grant of Patent License", "END OF TERMS AND CONDITIONS"])
     require(root / "NOTICE", ["AASM", "Copyright 2026 AASM contributors"])
     require(root / "MANIFEST.in", ["LICENSE NOTICE pyproject.toml"])
