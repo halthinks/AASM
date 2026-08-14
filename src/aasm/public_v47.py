@@ -5,6 +5,17 @@ for _name in dir(_v46):
     if not _name.startswith("_"):
         globals()[_name] = getattr(_v46, _name)
 
+from .certification_v47 import (
+    CERTIFICATION_CONTRACT_ID,
+    CERTIFICATION_CONTRACT_VERSION,
+    CERTIFICATION_STATUSES,
+    CERTIFICATION_TARGET_IDS,
+    CERTIFICATION_TARGET_ALIASES,
+    CertificationCheck,
+    CertificationReport,
+    certification_contract,
+    run_certification,
+)
 from .sii_governance import (
     SII_GOVERNED_CONTRACT_ID,
     SII_GOVERNED_CONTRACT_VERSION,
@@ -27,7 +38,7 @@ __version__ = "0.47.0"
 REMOTE_PROTOCOL_NAME = _v46.REMOTE_PROTOCOL_NAME
 REMOTE_PROTOCOL_VERSION = _v46.REMOTE_PROTOCOL_VERSION
 
-# Current SII contract aliases.  The v0.43 preview types/create_sii remain
+# Current SII contract aliases. The v0.43 preview types/create_sii remain
 # available for compatibility, while v0.47's governed interface is canonical.
 SII_CONTRACT_ID = SII_GOVERNED_CONTRACT_ID
 SII_CONTRACT_VERSION = SII_GOVERNED_CONTRACT_VERSION
@@ -51,6 +62,7 @@ _NEW_ENGINE_METHODS = [
     "request_sii_formal_verification",
 ]
 _NEW_IMPORTS = [
+    "CERTIFICATION_TARGET_ALIASES",
     "SIIPrincipalBinding",
     "SIIResourceBudget",
     "SIITierRule",
@@ -86,6 +98,7 @@ PUBLIC_API_CONTRACT.update({
     "supported_cli_commands": SUPPORTED_CLI_COMMANDS,
     "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
 })
+PUBLIC_API_CONTRACT["certification"] = certification_contract()
 PUBLIC_API_CONTRACT["sii_governance"] = governed_sii_contract()
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 
@@ -111,6 +124,11 @@ def validate_public_api_contract():
         errors.append("adoption contract mismatch")
     if PUBLIC_API_CONTRACT.get("distribution", {}).get("version") != __version__:
         errors.append("distribution version mismatch")
+    cert = PUBLIC_API_CONTRACT.get("certification") or {}
+    if cert.get("contract_id") != CERTIFICATION_CONTRACT_ID or cert.get("contract_version") != CERTIFICATION_CONTRACT_VERSION:
+        errors.append("v0.47 certification contract mismatch")
+    if cert.get("sii_graduation") != "GOVERNED_V047_ENFORCEMENT_REQUIRED":
+        errors.append("v0.47 SII certification graduation mismatch")
     sii = PUBLIC_API_CONTRACT.get("sii_governance") or {}
     if sii.get("contract_id") != SII_GOVERNED_CONTRACT_ID or sii.get("contract_version") != SII_GOVERNED_CONTRACT_VERSION:
         errors.append("governed SII contract identity mismatch")
