@@ -2,9 +2,9 @@
 
 **Durable deterministic control for agents, tools, models, humans, formal systems, and high-performance native solvers.**
 
-## Current release — v0.47.0
+## Current release — v0.47.1
 
-**Governed Symbiotic Intelligence & Intelligence Economics**
+**Governed Symbiotic Intelligence & Intelligence Economics — Apache-2.0 patch**
 
 **Next release:** v0.48.0 — Cross-Run Certified Knowledge & Governed Long-Term Memory
 
@@ -12,9 +12,12 @@ AASM is a deterministic, event-sourced control plane that separates proposal, ex
 
 v0.47 closes the loop between AASM's semantic/authority machinery and the real native solver substrate introduced in v0.44–v0.46. SII can now measure which reasoners are producing durable value and allocate **more or less compute, search, context, and portfolio width** accordingly—without ever granting truth authority or weakening verification required by policy.
 
+v0.47.1 preserves that runtime unchanged and switches the active project/distribution license to the **Apache License, Version 2.0 (`Apache-2.0`)**. The already-published v0.47.0 artifacts remain historically accurate under their original MIT license.
+
 ### Current release contracts
 
 ```text
+package / public surface: 0.47.1
 aasm.adoption.v1 / 0.23.0
 aasm.remote.v1 / 0.19.0
 aasm.certification.v1 / 0.2.0
@@ -30,6 +33,7 @@ aasm.solver.loop.v1 / 0.1.0
 aasm.memory.hierarchical.v1 / 0.1.0
 aasm.capability.abi.v1 / 0.1.0
 aasm.formal.verification.v1 / 0.1.0
+license: Apache-2.0
 ```
 
 ## The architecture
@@ -445,6 +449,12 @@ The repository validates the runtime in several independent ways:
 - release/source contract gates;
 - semantic/adversarial certification.
 
+## License
+
+AASM v0.47.1 and later source releases are licensed under the **Apache License, Version 2.0** (`Apache-2.0`). See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+
+The already-published `v0.47.0` release remains under the MIT License that applied to that artifact when it was published.
+
 ## Roadmap
 
 - v0.35 Semantic Problem Model ✅
@@ -459,8 +469,9 @@ The repository validates the runtime in several independent ways:
 - v0.44 Heterogeneous Optimization — CaDiCaL / CP-SAT / HiGHS ✅
 - v0.45 Convex Optimization & Modeling Adapters — CVXPY / PuLP ✅
 - v0.46 Advanced Solver Control & Search Artifacts ✅
-- **v0.47 Governed Symbiotic Intelligence & Intelligence Economics — current ✅**
+- v0.47 Governed Symbiotic Intelligence & Intelligence Economics ✅
+- **v0.47.1 Apache-2.0 License Transition — current ✅**
 - **v0.48 next — Cross-Run Certified Knowledge & Governed Long-Term Memory**
 - v0.49 Semantic Solver Release Candidate
 
-See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/SII_GOVERNED_ECONOMICS.md](docs/SII_GOVERNED_ECONOMICS.md), [docs/ADVANCED_SOLVER_CONTROL.md](docs/ADVANCED_SOLVER_CONTROL.md), and [docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md](docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md).
+See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/RELEASE_0.47.1.md](docs/RELEASE_0.47.1.md), [docs/SII_GOVERNED_ECONOMICS.md](docs/SII_GOVERNED_ECONOMICS.md), [docs/ADVANCED_SOLVER_CONTROL.md](docs/ADVANCED_SOLVER_CONTROL.md), and [docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md](docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md).
