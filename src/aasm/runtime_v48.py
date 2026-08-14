@@ -1,5 +1,6 @@
 from .runtime_v47 import AASMEngine as V47Engine
 from ._runtime_v48_knowledge import CrossRunKnowledgeRuntimeMixin
+from .cross_run_knowledge import CrossRunKnowledgeEnvelope
 
 
 class AASMEngine(CrossRunKnowledgeRuntimeMixin, V47Engine):
@@ -53,6 +54,30 @@ class AASMEngine(CrossRunKnowledgeRuntimeMixin, V47Engine):
             revoked.append({"memory_id": memory_id, "decision_id": decision_id, "evidence_id": committed.get("evidence_id")})
         result["materialized_memory_revocations"] = revoked
         return result
+
+    def admit_cross_run_sii_reputation(self, envelope_id: str, *, local_principal_id: str, authority_id: str, authority_class: str):
+        report = self.cross_run_knowledge_report()
+        row = report.get("envelopes", {}).get(envelope_id)
+        if row is None:
+            raise KeyError(envelope_id)
+        envelope = CrossRunKnowledgeEnvelope.from_dict(row["envelope"])
+        source_principal_id = str((envelope.metadata or {}).get("source_principal_id") or "")
+        if not source_principal_id:
+            raise ValueError("cross-run SII reputation requires source_principal_id metadata")
+        exact_mapping = any(
+            item["mapping"]["source_run_id"] == envelope.source_run_id
+            and item["mapping"]["source_principal_id"] == source_principal_id
+            and item["mapping"]["local_principal_id"] == local_principal_id
+            for item in report.get("principal_maps", {}).values()
+        )
+        if not exact_mapping:
+            raise ValueError("cross-run SII reputation source principal does not match admitted stable principal mapping")
+        return super().admit_cross_run_sii_reputation(
+            envelope_id,
+            local_principal_id=local_principal_id,
+            authority_id=authority_id,
+            authority_class=authority_class,
+        )
 
 
 __all__ = ["AASMEngine"]
