@@ -15,6 +15,8 @@ BOUNDED/NATIVE POOL != COMPLETE ENUMERATION.
 
 ## COMPLETE semantics
 
+The public complete-enumeration mode is `COMPLETE_FINITE_ENUMERATION`.
+
 `COMPLETE` requires a supported finite Boolean/integer model, deterministic exact solution identity, a durable no-good for every accepted solution, an exhausted durable cursor, and an independent exhaustion checker PASS proving exact feasible-set equality. Partial or solver-native pools cannot satisfy this rule merely because a backend stopped returning incumbents.
 
 The checker reconstructs the finite domain independently of solver output and compares the complete oracle solution-ID set with the pool. Missing solutions, duplicates, foreign solutions, stale cursors, or incomplete traversal fail closed.
