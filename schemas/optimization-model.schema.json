@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/optimization-model.schema.json",
+  "title": "AASM Canonical Optimization Model",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["model_id", "name", "variables", "constraints", "objective", "family", "metadata", "solver_family", "fingerprint"],
+  "properties": {
+    "model_id": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "variables": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "constraints": {"type": "array", "items": {"type": "object"}},
+    "objective": {"type": ["object", "null"]},
+    "family": {"enum": ["AUTO", "SAT", "CP_SAT", "MILP"]},
+    "metadata": {"type": "object"},
+    "solver_family": {"enum": ["SAT", "CP_SAT", "MILP"]},
+    "fingerprint": {"type": "string", "minLength": 1}
+  }
+}
