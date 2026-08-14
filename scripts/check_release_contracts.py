@@ -28,7 +28,17 @@ def main():
             "optimization-portfolio",
         ],
     )
-    require(root / "src/aasm/runtime_v44.py", ["OptimizationRuntimeMixin", "V41Engine"])
+    require(
+        root / "src/aasm/runtime_v44.py",
+        [
+            "OptimizationHardeningMixin",
+            "OptimizationRuntimeMixin",
+            "V41Engine",
+            "optimization result lease expired before result commit",
+            "optimization result lease was superseded by a newer attempt",
+            "optimization result implementation does not match admitted provider",
+        ],
+    )
     require(
         root / "src/aasm/optimization.py",
         [
@@ -71,7 +81,7 @@ def main():
 
     # Existing formal and reuse pathways remain active rather than being replaced.
     require(root / "src/aasm/formal_workers.py", ["provider == \"z3\"", "provider == \"cvc5\"", "provider == \"vampire\"", "lean4"])
-    require(root / "src/aasm/reuse_model.py", ["aasm.reuse.v1", "INDEX_AND_VALIDATE_ONLY", "EXPLICIT_VALIDATOR_REQUIRED"])
+    require(root / "src/aasm/reuse_model.py", ["aasm.reuse.v1", "INDEX_AND_VALIDATE_ONLY", "EXPLICIT_VALIDATOR_REQUIRED", "OPTIMIZATION_RESULT"])
     require(root / "src/aasm/_runtime_v41_solver.py", ["def solver_step", "SKIP_EXECUTION", "ROUTE_CAPABILITY"])
 
     require(
@@ -99,7 +109,19 @@ def main():
         root / "docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md",
         ["Canonical Constraint IR", "CaDiCaL", "CP-SAT", "HiGHS", "Z3", "cvc5", "Vampire", "Lean 4", "reuse"],
     )
-    require(root / "tests/test_v44_optimization.py", ["0.44.0", "0.20.0", "SKIP_EXECUTION", "EVIDENCE_ONLY"])
+    require(
+        root / "tests/test_v44_optimization.py",
+        [
+            "0.44.0",
+            "0.20.0",
+            "SKIP_EXECUTION",
+            "EVIDENCE_ONLY",
+            "forged-backend",
+            "expired before result commit",
+            "superseded by a newer attempt",
+            "completed optimization lease cannot commit a new result",
+        ],
+    )
     require(root / "tests/test_v44_optimization_real.py", ["cadical", "ortools-cp-sat", "highs", "AASM_REQUIRE_OPTIMIZATION_BACKENDS"])
     require(root / ".github/workflows/optimization.yml", ["optimization", "--real", "AASM_REQUIRE_OPTIMIZATION_BACKENDS"])
 
