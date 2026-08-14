@@ -90,7 +90,7 @@ def progress_guard(engine: AASMEngine, obligation_id: str):
 
 
 def test_v39_contract_version_and_public_surface():
-    assert __version__ == "0.48.0"
+    assert __version__ == "0.48.1"
     report = validate_public_api_contract()
     assert report["valid"] is True, report
     assert report["contract"]["contract_version"] == "0.24.0"
