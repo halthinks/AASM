@@ -1,13 +1,13 @@
-# AASM v0.48.0 — Cross-Run Certified Knowledge & Governed Long-Term Memory
+# AASM v0.48.1 — Cross-Run Certified Knowledge & Project-Wide Apache-2.0 Policy Correction
 
-AASM v0.48 extends the existing event-sourced authority, v0.40 hierarchical memory, v0.41 certified reuse, v0.47 governed SII, and native solver stack across durable run boundaries **without importing authority from a prior run**.
+AASM v0.48.1 preserves the v0.48 cross-run runtime and corrects the public licensing policy so it matches the intended project-wide Apache-2.0 declaration.
 
-The runtime is `CrossRunKnowledgeRuntimeMixin + runtime_v47.AASMEngine`. There is still one event/reducer path, one scheduler/TaskLease plane, one memory governance path, one reuse certificate path, and one truth boundary.
+The runtime remains `CrossRunKnowledgeRuntimeMixin + runtime_v47.AASMEngine`. There is still one event/reducer path, one scheduler/TaskLease plane, one memory governance path, one reuse certificate path, and one truth boundary.
 
 ## Contracts
 
 ```text
-package/public surface: 0.48.0
+package/public surface: 0.48.1
 aasm.adoption.v1 / 0.24.0
 aasm.knowledge.cross-run.v1 / 0.1.0
 aasm.knowledge.cross-run.admission.v1 / 0.1.0
@@ -25,6 +25,14 @@ aasm.formal.verification.v1 / 0.1.0
 aasm.remote.v1 / 0.19.0
 license: Apache-2.0
 ```
+
+## Project-wide Apache-2.0 policy
+
+AASM's declared license is **Apache License 2.0 (`Apache-2.0`) across the project**.
+
+`LICENSE_POLICY.md` states the project-wide grant: to the extent AASM has the necessary relicensing rights, prior AASM versions that were first distributed under MIT are **also offered under Apache-2.0**. Previously granted MIT permissions remain valid for their recipients, but those surviving grants do not classify prior AASM versions as MIT-only.
+
+Current distributions package `LICENSE` and `NOTICE` through PEP 639/SPDX metadata. Release gates require the project-wide declaration and reject stale “first Apache release” or “old release is MIT-only” wording.
 
 ## Cross-run boundary
 
@@ -76,24 +84,20 @@ REQUIRED VERIFICATION IS NEVER REDUCED BY SII.
 - PuLP translation-only import;
 - Z3 / cvc5 / Vampire / Lean 4 formal verification.
 
-## License
-
-AASM remains licensed under Apache License 2.0 (`Apache-2.0`) with `LICENSE` and `NOTICE` packaged under the PEP 639 metadata introduced in v0.47.1. The already-published v0.47.0 artifact remains historically MIT licensed.
-
 ## Verification
 
-v0.48 adds a dedicated Cross-Run Knowledge workflow, dependency-neutral conformance, adversarial runtime tests, JSON schemas, and bounded `AASMCrossRunKnowledge.tla` / `aasm_cross_run_knowledge.pml` assurance. All existing CI, Formal Assurance, Optimization Backends, replay, persistence, packaging, scopes, adapters, and LangGraph gates remain required.
+v0.48.1 preserves the dedicated Cross-Run Knowledge workflow, dependency-neutral conformance, adversarial runtime tests, JSON schemas, and bounded `AASMCrossRunKnowledge.tla` / `aasm_cross_run_knowledge.pml` assurance. All existing CI, Formal Assurance, Optimization Backends, replay, persistence, packaging, scopes, adapters, and LangGraph gates remain required.
 
 ## Release identity
 
 ```text
-package/public surface: 0.48.0
+package/public surface: 0.48.1
 runtime: runtime_v48.AASMEngine
 base governed-SII runtime: runtime_v47.AASMEngine
 base solver/reuse kernel: runtime_v41.AASMEngine
 adoption: aasm.adoption.v1 / 0.24.0
-license: Apache-2.0
+license: Apache-2.0 project-wide declaration
 next: v0.49.0 Semantic Solver Release Candidate
 ```
 
-See `docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md` and `docs/RELEASE_0.48.md`.
+See `LICENSE_POLICY.md`, `docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md`, `docs/RELEASE_0.48.md`, and `docs/RELEASE_0.48.1.md`.
