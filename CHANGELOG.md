@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.47.0] - 2026-08-14
+
+### Governed Symbiotic Intelligence & Intelligence Economics
+
+- advanced `aasm.adoption.v1` to `0.23.0`, `aasm.certification.v1` to `0.2.0`, and the current SII contract to `aasm.sii.v1 / 0.3.0`;
+- graduated SII stability from the v0.43 experimental certification target to `GOVERNED_ENFORCED`;
+- added durable POLICY/CONTROLLER-admitted `SIIPrincipalBinding` records for stable proposer and measurement identities;
+- removed caller-controlled measurement authority from the governed path: `measure_sii_outcome()` resolves authority from durable principal state;
+- rejects stable-principal rebinding and principal-level self-measurement;
+- added versioned durable `SIIScoringPolicy` objects with explicit default/exploration/exploitation/formal profiles and tier thresholds;
+- added durable `GovernedResourceLease` records bound to proposer, principal, scoring-policy version, measured performance window, utility, and tier;
+- fixed every governed ResourceLease to `PROPOSER` authority with direct truth promotion, direct state mutation, and self-verification false;
+- enforced context budgets through the existing v0.40 context projection;
+- enforced SII scheduler priority through ordinary `TaskDemand.priority` and copied SII provenance into ordinary task/TaskLease metadata;
+- enforced maximum outstanding discretionary SII candidate count before queue growth;
+- compiled tier budgets into real v0.46 advanced solver requests: incremental CaDiCaL conflict/decision limits, solver timeout, CP-SAT deterministic time/search workers, HiGHS MIP node limits, and convex timeout;
+- added an explicitly discretionary governed formal-verification path with timeout/provider-width limits while preserving ordinary policy-required verification outside SII caps;
+- added the invariant `REQUIRED_VERIFICATION_NEVER_REDUCED_BY_SII` so SII cannot remove required verifiers, shrink required independent-result quorums, weaken proof strength, or bypass epistemic admission;
+- added durable `ENFORCEMENT` Evidence connecting governed ResourceLease records to actual solver/formal requests;
+- added a v0.47 certification facade that keeps existing core fixtures and turns the historical `sii-preview` target into an alias for the governed graduation fixture;
+- added governed SII adversarial certification for unbound measurement actors, authority escalation, native solver-budget bypass, scheduler-budget bypass, required-verification reduction, and replay;
+- preserved the v0.43 preview implementation/import surface for compatibility while making the current package-level `sii_contract()` resolve to v0.47 governance;
+- preserved all v0.44–v0.46 native solver, v0.45 CVXPY/PuLP, and v0.39 Z3/cvc5/Vampire/Lean execution paths;
+- added public/CLI surfaces, JSON schemas, documentation, release notes, roadmap updates, release/formal source gates, and regression coverage;
+- moved cross-run certified knowledge and governed long-term memory to v0.48.
+
 ## [0.46.0] - 2026-08-14
 
 ### Advanced Solver Control & Search Artifacts
