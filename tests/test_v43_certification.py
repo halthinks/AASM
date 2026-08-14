@@ -12,7 +12,7 @@ from aasm.runtime_v41 import AASMEngine
 from aasm.sii import DynamicWeightController, StructuredProposal, create_sii, sii_contract
 
 
-def test_certification_contract_is_explicit_and_non_truth-promoting():
+def test_certification_contract_is_explicit_and_non_truth_promoting():
     contract = certification_contract()
     assert contract["statuses"] == ["PASS", "FAIL", "INCONCLUSIVE"]
     assert contract["authority"] == "CERTIFICATION_HARNESS_ONLY"
