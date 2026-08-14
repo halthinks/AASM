@@ -28,6 +28,22 @@ for name in FILES:
     text = text.replace("v0.50 here", "v0.51 here")
     p.write_text(text)
 
+for name in ("tests/test_v47_public.py", "tests/test_v48_public.py"):
+    p = Path(name)
+    text = p.read_text()
+    import_anchor = "from aasm.runtime_v50 import AASMEngine as V50Engine\n"
+    if import_anchor not in text:
+        raise SystemExit(f"{name}: missing V50 import anchor")
+    text = text.replace(import_anchor, import_anchor + "from aasm.runtime_v51 import AASMEngine as V51Engine\n", 1)
+    if "assert AASMEngine is V50Engine" not in text:
+        raise SystemExit(f"{name}: missing active-engine identity anchor")
+    text = text.replace(
+        "assert AASMEngine is V50Engine\n    assert issubclass(V50Engine, V49Engine)",
+        "assert AASMEngine is V51Engine\n    assert issubclass(V51Engine, V50Engine)\n    assert issubclass(V50Engine, V49Engine)",
+        1,
+    )
+    p.write_text(text)
+
 p = Path(".github/workflows/rc.yml")
 text = p.read_text()
 old = 'if report["freeze_manifest"]["runtime_version"] != "0.50.0":\n              raise SystemExit("RC freeze manifest is not the current v0.50 public contract")'
