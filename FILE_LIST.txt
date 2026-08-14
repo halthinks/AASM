@@ -21,6 +21,7 @@
 ./LICENSE
 ./MANIFEST.in
 ./MANIFEST.md
+./NOTICE
 ./README.md
 ./ROADMAP.md
 ./SECURITY.md
@@ -84,6 +85,7 @@
 ./docs/RELEASE_0.44.md
 ./docs/RELEASE_0.45.md
 ./docs/RELEASE_0.46.md
+./docs/RELEASE_0.47.1.md
 ./docs/RELEASE_0.47.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
@@ -282,7 +284,7 @@
 ./schemas/trace-projection.schema.json
 ./schemas/transition.schema.json
 ./schemas/truth-maintenance-plan.schema.json
-./schemas/typed-event-schema.schema.json
+./schemas/typed-event-schema.json
 ./schemas/worker-control.schema.json
 ./schemas/worker.schema.json
 ./scripts/check_formal_models.py
