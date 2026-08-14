@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/semantic-solver-rc-certification-report.schema.json",
+  "title": "AASM Semantic Solver RC Certification Report",
+  "type": "object",
+  "required": ["status", "real_backends", "contract", "checks", "freeze_manifest", "upgrade_compatibility", "cross_backend_overlap", "benchmark", "claim_gate_audit", "component_status", "report_fingerprint"],
+  "properties": {
+    "status": {"enum": ["PASS", "FAIL"]},
+    "real_backends": {"type": "boolean"},
+    "contract": {"type": "object", "required": ["contract_id", "contract_version", "stability"]},
+    "checks": {"type": "object", "additionalProperties": {"type": "boolean"}},
+    "freeze_manifest": {"type": "object"},
+    "upgrade_compatibility": {"type": "object"},
+    "cross_backend_overlap": {"type": "object"},
+    "benchmark": {"type": "object"},
+    "claim_gate_audit": {"type": "object"},
+    "component_status": {"type": "object"},
+    "report_fingerprint": {"type": "string", "minLength": 32}
+  },
+  "additionalProperties": true
+}
