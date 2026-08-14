@@ -19,7 +19,7 @@ def event(sequence:int,event_type:str,*,data=None)->Event:
     return Event(event_id=f"E{sequence}",ts=float(sequence),event_type=event_type,from_state=None,to_state=None,reason="fixture",data=data or {},machine_id="M1",sequence=sequence)
 
 def test_trace_contract_and_version_are_public():
-    assert __version__=="0.43.0"; assert trace_contract()["contract_id"]=="aasm.trace.v1"; assert provenance_contract()["contract_id"]=="aasm.provenance.v1"; assert semantic_problem_contract()["contract_id"]=="aasm.semantic.problem.v1"; assert semantic_compiler_contract()["contract_id"]==SEMANTIC_COMPILER_CONTRACT_ID; assert validate_public_api_contract()["valid"] is True
+    assert __version__=="0.44.0"; assert trace_contract()["contract_id"]=="aasm.trace.v1"; assert provenance_contract()["contract_id"]=="aasm.provenance.v1"; assert semantic_problem_contract()["contract_id"]=="aasm.semantic.problem.v1"; assert semantic_compiler_contract()["contract_id"]==SEMANTIC_COMPILER_CONTRACT_ID; assert validate_public_api_contract()["valid"] is True
 
 def test_lossless_projection_preserves_order_identity_and_digests():
     source=[event(1,"machine_created"),event(2,"transition_committed"),event(3,"evidence_added")]; first=project_trace(source); assert first==project_trace(source); assert [s["event_id"] for s in first["steps"]]==["E1","E2","E3"]
