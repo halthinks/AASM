@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/advanced-optimization-request.schema.json",
+  "title": "AASM Advanced Optimization Request",
+  "type": "object",
+  "required": ["request_id", "problem", "capability_id", "capability_version", "obligation_id", "required_provider", "timeout_ms", "kind", "fingerprint"],
+  "properties": {
+    "request_id": {"type": "string", "minLength": 1},
+    "problem": {"type": "object"},
+    "capability_id": {"type": "string", "minLength": 1},
+    "capability_version": {"const": "0.1.0"},
+    "obligation_id": {"type": "string", "minLength": 1},
+    "required_provider": {"type": "string", "minLength": 1},
+    "timeout_ms": {"type": "integer", "minimum": 1},
+    "environment_fingerprint": {"type": "string"},
+    "dependency_fingerprints": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "metadata": {"type": "object"},
+    "kind": {"enum": ["FAST_SAT", "INCREMENTAL_SAT", "CP_SAT_SCHEDULING", "MILP_ADVANCED", "CONVEX_ADVANCED"]},
+    "capability_token": {"type": "string"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
