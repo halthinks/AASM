@@ -1,87 +1,73 @@
-# AASM v0.43.0 — Semantic Conformance, Adversarial Domains, and Certification
+# AASM v0.44.0 — Heterogeneous Optimization Solver Portfolio
 
-AASM v0.43 is a certification/public-surface release over the existing domain-neutral v0.41 solver runtime and the v0.42 reference-domain harness. It does not introduce `runtime_v43.py`, a second scheduler, a second reducer, or another truth store. The active engine remains `runtime_v41.AASMEngine`.
+AASM v0.44 adds executable SAT, CP-SAT, and MILP capabilities through a real `runtime_v44.AASMEngine` composition while preserving the existing AASM authority stack. The new runtime is `runtime_v41.AASMEngine` plus `OptimizationRuntimeMixin`; it does not introduce a second scheduler, reducer, event log, provider registry, or truth store.
 
 Contracts:
 
 ```text
-aasm.adoption.v1 / 0.19.0
+aasm.adoption.v1 / 0.20.0
+aasm.optimization.v1 / 0.1.0
 aasm.certification.v1 / 0.1.0
-aasm.sii.v1 / 0.2.0              # experimental v0.44 target
+aasm.sii.v1 / 0.2.0              # experimental v0.45 target
 aasm.reference-domains.v1 / 0.1.0
 aasm.reuse.v1 / 0.1.0
 aasm.reuse.certificate.v1 / 0.1.0
 aasm.solver.loop.v1 / 0.1.0
 aasm.memory.hierarchical.v1 / 0.1.0
 aasm.capability.abi.v1 / 0.1.0
-aasm.semantic.dependencies.v1 / 0.1.0
-aasm.reasoning.admission.v1 / 0.1.0
+aasm.formal.verification.v1 / 0.1.0
 aasm.remote.v1 / 0.19.0
 ```
 
-## Certification semantics
+## Native optimization backends
 
-Every v0.43 certification target terminates as one of:
+- `cadical` — SAT through PySAT/CaDiCaL;
+- `ortools-cp-sat` — integer/Boolean constraint programming through OR-Tools CP-SAT;
+- `highs` — LP/MILP through HiGHS/highspy.
 
-- `PASS`: all required observed checks passed;
-- `FAIL`: at least one required observed check failed;
-- `INCONCLUSIVE`: no required observed check failed, but required evidence or enforcement is absent.
+The existing formal providers remain active on the v0.39 pathway:
 
-The harness has `CERTIFICATION_HARNESS_ONLY` authority. It does not promote evidence, authorize reasoning, mutate canonical state, or claim that arbitrary external domain conclusions are true.
+- Z3;
+- cvc5;
+- Vampire;
+- Lean 4.
 
-## Core certification targets
+## Canonical IR and lowering
 
-The release certifies deterministic AASM behavior for:
+AASM now owns a canonical optimization identity for Boolean/integer/continuous variables, clause/linear/all-different constraints, and linear objectives. Deterministic family selection chooses SAT, CP-SAT, or MILP only when the current canonical subset can represent the model. Unsupported models are rejected rather than guessed.
 
-1. the complete v0.42 reference-domain suite;
-2. solver/reuse boundaries including freshness, dependency, effect, and verification-strength rejection;
-3. truth-maintenance and governed-memory privacy/revocation;
-4. formal verification-strength and certificate-gated reuse.
+## Existing scheduler and authority boundaries
 
-The aggregate report exposes `core_status` separately from experimental targets so unfinished experiments cannot be mistaken for either core failure or core proof.
+Optimization provider admission reuses the v0.39 Capability ABI. Execution reuses ordinary `ResourceRecord`, `WorkerRecord`, `TaskDemand`, and `TaskLease` objects. Results are committed as ordinary Evidence and are explicitly `EVIDENCE_ONLY`.
 
-## Experimental SII preview
+Successful assignments are independently checked against the canonical model before durable admission. Solver claims of UNSAT/INFEASIBLE remain solver Evidence unless a separate proof/certificate path establishes stronger assurance.
 
-v0.43 also stages `aasm.sii.v1 / 0.2.0` as the next release's participation/economic plane.
+## Reuse
 
-The SII preview preserves these laws:
+Optimization results enter the v0.41 reuse plane only through explicit POLICY/CONTROLLER candidate admission. A future identical request may skip native execution only after ordinary reuse validation and durable `ReuseCertificate` commit.
 
-1. the reasoner proposes; AASM measures;
-2. utility may buy resources; utility never buys truth;
-3. successful participation returns better governed context/search/compute, not authority.
+## Verification
 
-Its adversarial profile already requires rejection of producer-controlled semantic fingerprints, stable-identity resets, self-measurement, forged reuse-metrics credit, resource-to-authority promotion, and repeated outcome farming.
+The standard CI suite checks the dependency-neutral optimization lifecycle along with Python 3.11/3.12/3.13, packaging, PostgreSQL, Compose/replay, scopes, adapters, and LangGraph.
 
-The SII profile intentionally remains `INCONCLUSIVE` in v0.43 because two enforcement boundaries are not yet complete:
+A dedicated `Optimization Backends` workflow installs `python-sat`, `ortools`, and `highspy`, then executes real CaDiCaL, CP-SAT, and HiGHS solves through AASM's provider/resource/worker/lease/result path and requires `aasm optimization-conformance --real` to pass.
 
-- measurement principal/authority still needs durable binding to governed AASM actor identity;
-- computed `ResourceLease` values still need enforcement through existing scheduler/resource/capability paths.
+Formal Assurance includes `AASMOptimizationPortfolio.tla` and `aasm_optimization_portfolio.pml` to check that result commit requires a lease, solver output becomes Evidence, and solver execution cannot directly authorize knowledge.
 
-These are v0.44 graduation gates, not hidden TODOs.
+## SII ordering
 
-## Correctness boundary
-
-v0.43 certifies observed contract behavior in deterministic fixtures. It does not establish the semantic truth of arbitrary external inputs, domain packages, model outputs, theorem statements, research claims, or real-world conclusions.
-
-The following are explicitly invalid equivalences:
-
-```text
-synthetic fixture PASS != arbitrary external answer is correct
-self-attestation       != certification
-missing evidence       != PASS
-resource utility       != epistemic authority
-similarity             != safe reuse
-```
+SII remains experimental and moves to v0.45. This is intentional: SII resource economics can now be bound to actual solver budgets and portfolio width rather than abstract compute alone.
 
 Release identity:
 
 ```text
-package/public surface: 0.43.0
-kernel engine: runtime_v41.AASMEngine
-adoption: aasm.adoption.v1 / 0.19.0
+package/public surface: 0.44.0
+runtime: runtime_v44.AASMEngine
+base solver kernel: runtime_v41.AASMEngine
+adoption: aasm.adoption.v1 / 0.20.0
+optimization: aasm.optimization.v1 / 0.1.0
 certification: aasm.certification.v1 / 0.1.0
 SII preview: aasm.sii.v1 / 0.2.0
-reference domains: aasm.reference-domains.v1 / 0.1.0
 remote: aasm.remote.v1 / 0.19.0
-next: v0.44.0 Symbiotic Intelligence Interface & Governed Intelligence Economics
+next: v0.45.0 Symbiotic Intelligence Interface & Governed Intelligence Economics
 ```
