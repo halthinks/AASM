@@ -68,7 +68,7 @@ def test_v37_reasoning_contract_and_public_surface():
     assert contract["dependency_truth_maintenance"] == "RESERVED_FOR_V0.38"
     report = validate_public_api_contract()
     assert report["valid"] is True, report
-    assert report["contract"]["contract_version"] == "0.16.0"
+    assert report["contract"]["contract_version"] == "0.17.0"
 
 
 def test_typed_reasoning_artifacts_have_deterministic_ids_and_fingerprints():
