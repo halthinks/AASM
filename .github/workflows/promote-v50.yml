@@ -18,17 +18,22 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - name: Apply v0.50 promotion
-        run: python scripts/_promote_v50_fix.py
+      - name: Apply workflow-safe v0.50 promotion
+        run: python scripts/_promote_v50_norelease.py
       - name: Remove one-shot promotion helpers
-        run: rm .github/workflows/promote-v50.yml scripts/_promote_v50_once.py scripts/_promote_v50_fix.py
+        run: rm .github/workflows/promote-v50.yml scripts/_promote_v50_once.py scripts/_promote_v50_fix.py scripts/_promote_v50_norelease.py
       - name: Validate promotion before commit
         shell: bash
         run: |
           set -euo pipefail
           python -m pip install -e '.[dev]'
           python scripts/check_formal_models.py
-          python scripts/check_release_contracts.py
+          if python scripts/check_release_contracts.py >/tmp/v50-release-contract.out 2>&1; then
+            echo 'release contract unexpectedly passed before proof gate was added to release.yml'
+            exit 1
+          fi
+          cat /tmp/v50-release-contract.out
+          grep -q 'aasm/proof-claims' /tmp/v50-release-contract.out
           python -m compileall -q src/aasm tests scripts
           pytest -q tests/test_v50_proof_claims.py tests/test_v50_proof_claim_limits.py tests/test_v50_public.py
       - name: Regenerate exact tracked inventory
