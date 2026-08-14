@@ -1,14 +1,20 @@
-# AASM v0.48.1 — Cross-Run Certified Knowledge & Project-Wide Apache-2.0 Policy Correction
+# AASM v0.49.0 — Semantic Solver Release Candidate
 
-AASM v0.48.1 preserves the v0.48 cross-run runtime and corrects the public licensing policy so it matches the intended project-wide Apache-2.0 declaration.
+AASM v0.49 is the release-candidate freeze of the semantic solver/control architecture assembled through v0.48. It adds assurance and compatibility surfaces over `runtime_v48.AASMEngine`; it does **not** add another scheduler, reducer, memory store, truth plane, authority mechanism, or inner solver kernel.
 
-The runtime remains `CrossRunKnowledgeRuntimeMixin + runtime_v47.AASMEngine`. There is still one event/reducer path, one scheduler/TaskLease plane, one memory governance path, one reuse certificate path, and one truth boundary.
+Runtime composition:
+
+```text
+SemanticSolverRCRuntimeMixin + runtime_v48.AASMEngine
+```
 
 ## Contracts
 
 ```text
-package/public surface: 0.48.1
-aasm.adoption.v1 / 0.24.0
+package/public surface: 0.49.0
+aasm.adoption.v1 / 0.25.0
+aasm.semantic.solver.rc.v1 / 0.1.0
+stability: RELEASE_CANDIDATE
 aasm.knowledge.cross-run.v1 / 0.1.0
 aasm.knowledge.cross-run.admission.v1 / 0.1.0
 aasm.principal.cross-run-map.v1 / 0.1.0
@@ -23,81 +29,120 @@ aasm.reuse.certificate.v1 / 0.1.0
 aasm.capability.abi.v1 / 0.1.0
 aasm.formal.verification.v1 / 0.1.0
 aasm.remote.v1 / 0.19.0
-license: Apache-2.0
+license: Apache-2.0 project-wide declaration
 ```
 
-## Project-wide Apache-2.0 policy
+## Release-candidate freeze
 
-AASM's declared license is **Apache License 2.0 (`Apache-2.0`) across the project**.
+`semantic-solver-rc-freeze` emits a deterministic manifest over public contract IDs/versions, engine methods, CLI commands, imports, inspection surfaces, schemas, provider identities, replay expectations, and the project-wide Apache-2.0 licensing identity. The manifest fingerprint is the 0.49.x review target for intentional compatibility changes.
 
-`LICENSE_POLICY.md` states the project-wide grant: to the extent AASM has the necessary relicensing rights, prior AASM versions that were first distributed under MIT are **also offered under Apache-2.0**. Previously granted MIT permissions remain valid for their recipients, but those surviving grants do not classify prior AASM versions as MIT-only.
+## Upgrade/replay compatibility
 
-Current distributions package `LICENSE` and `NOTICE` through PEP 639/SPDX metadata. Release gates require the project-wide declaration and reject stale “first Apache release” or “old release is MIT-only” wording.
-
-## Cross-run boundary
-
-A source run exports immutable `CrossRunKnowledgeEnvelope` objects with source run/machine/scope, memory/evidence/artifact lineage, fingerprints, environment/dependency declarations, privacy, retention/freshness, verification strength, content, and source authority provenance.
-
-The receiving run validates applicability and emits a `CrossRunAdmissionCertificate`. A valid certificate still requires an ordinary AASM Decision plus POLICY/CONTROLLER authorization and an Obligation before the envelope becomes receiving-run Evidence.
+The RC runs durable upgrade fixtures:
 
 ```text
-FOREIGN AUTHORITY IS PROVENANCE, NEVER RECEIVING AUTHORITY.
+v0.41 → v0.49  event history + memo + governed memory
+v0.47 → v0.49  governed SII policy + principal binding
+v0.48 → v0.49  admitted cross-run knowledge + no authority inheritance
 ```
 
-## Memory and reuse
+Every resumed fixture must reproduce the canonical snapshot hash and preserve the representative state introduced by that generation.
 
-Foreign Evidence never becomes semantic memory merely because the source run considered it true. Local semantic materialization requires receiving-run reasoning artifacts already in `AUTHORIZED` state, then uses the normal v0.40 memory authorization/commit path.
+## Cross-backend certification
 
-Cross-run reuse uses the existing v0.41 candidate/validation/`ReuseCertificate` path and preserves exact verification-strength matching. The ordinary reuse certificate records the envelope ID/fingerprint and receiving validator ID/version.
-
-## Revocation and supersession
-
-A source signal must itself be admitted by receiving POLICY/CONTROLLER. Once admitted, the source envelope becomes REVOKED/SUPERSEDED, already-hot reuse candidates are blocked, and locally materialized memories are tombstoned through the existing v0.40 FORGET path. History is never deleted.
-
-## SII identity/reputation
-
-Stable cross-run principal mapping is explicit. SII reputation must name the exact source principal and match an admitted `(source run, source principal → local principal)` mapping. Cross-run reputation is reference accounting only:
+OR-Tools CP-SAT and HiGHS independently solve the same exact Boolean/integer optimization problem:
 
 ```text
-truth_authority              = NONE
-resource_entitlement         = NONE
-used_by_sii_resource_lease   = false
+x, y ∈ {0,1}
+x + y >= 1
+minimize x + y
 ```
 
-It does not modify local SII authority or local compute tiers.
-
-## Preserved v0.47 safety boundary
+Both must validate optimum `1`. CaDiCaL solves the corresponding Boolean feasibility projection `x OR y`.
 
 ```text
-UTILITY MAY BUY COMPUTE / SEARCH / CONTEXT.
-UTILITY NEVER BUYS TRUTH / STATE AUTHORITY / SELF VERIFICATION.
-REQUIRED VERIFICATION IS NEVER REDUCED BY SII.
+cross_backend_rule = AGREEMENT_OR_INCONCLUSIVE_NEVER_VOTE
 ```
 
-## Solver/formal portfolio preserved
+Backend disagreement cannot become majority truth.
+
+## Benchmark evidence
+
+The RC measures semantic fingerprinting, event append/replay, direct CP-SAT execution, and the corresponding full provider → request → TaskLease → native solve → validation → Evidence lifecycle.
+
+Timings are environment-specific measurements, not authority and not automatic performance claims:
+
+```text
+benchmark_policy    = MEASURE_OVERHEAD_AND_SAVINGS_NO_UNGATED_SPEEDUP_CLAIM
+native_solver_claim = AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS
+```
+
+## Claim-to-gate audit
+
+The RC introduces:
+
+```text
+NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE
+```
+
+Claims about Python support, formal assurance, native solvers, cross-run governance, project-wide Apache licensing, and RC readiness are linked to concrete repository workflows/source gates.
+
+## Required release gates
+
+The dedicated **Semantic Solver RC** workflow installs the real optimization/modeling portfolio and executes the RC compatibility, real-backend, benchmark, public-CLI, and claim-audit suite. It publishes:
+
+```text
+aasm/semantic-solver-rc
+```
+
+The release workflow now requires the exact current `main` SHA to have:
+
+```text
+aasm/ci-summary
+aasm/formal-assurance
+aasm/semantic-solver-rc
+```
+
+all at `success` before a package can be published.
+
+## Existing authority boundaries preserved
+
+```text
+SEARCH_STATE_NEVER_PROMOTES_TRUTH
+UTILITY MAY BUY COMPUTE / SEARCH / CONTEXT
+UTILITY NEVER BUYS TRUTH / STATE AUTHORITY / SELF VERIFICATION
+REQUIRED VERIFICATION IS NEVER REDUCED BY SII
+FOREIGN AUTHORITY IS PROVENANCE, NEVER RECEIVING AUTHORITY
+```
+
+Solver outputs remain Evidence. Search state remains performance state. Benchmark timing remains measurement. Cross-run knowledge remains foreign Evidence until receiving admission. SII remains resource economics rather than truth authority.
+
+## Solver/formal portfolio
+
+The complete released portfolio remains active:
 
 - Kissat fast SAT;
-- incremental CaDiCaL assumptions/UNSAT cores/session reuse;
-- OR-Tools CP-SAT scheduling;
+- CaDiCaL direct/incremental SAT, assumptions and UNSAT cores;
+- OR-Tools CP-SAT and scheduling;
 - HiGHS MILP with warm starts/bounds/gap telemetry;
-- CVXPY advanced convex optimization;
+- CVXPY convex/QP/SOC;
 - PuLP translation-only import;
 - Z3 / cvc5 / Vampire / Lean 4 formal verification.
 
-## Verification
+## Project-wide Apache-2.0 policy
 
-v0.48.1 preserves the dedicated Cross-Run Knowledge workflow, dependency-neutral conformance, adversarial runtime tests, JSON schemas, and bounded `AASMCrossRunKnowledge.tla` / `aasm_cross_run_knowledge.pml` assurance. All existing CI, Formal Assurance, Optimization Backends, replay, persistence, packaging, scopes, adapters, and LangGraph gates remain required.
+AASM remains licensed under Apache-2.0 across the project through `LICENSE`, `NOTICE`, and `LICENSE_POLICY.md`. To the extent AASM has the necessary relicensing rights, prior AASM versions first distributed under MIT are also offered under Apache-2.0. Previously granted MIT permissions remain valid for their recipients; prior AASM versions are not designated MIT-only.
 
 ## Release identity
 
 ```text
-package/public surface: 0.48.1
-runtime: runtime_v48.AASMEngine
-base governed-SII runtime: runtime_v47.AASMEngine
-base solver/reuse kernel: runtime_v41.AASMEngine
-adoption: aasm.adoption.v1 / 0.24.0
+package/public surface: 0.49.0
+runtime: runtime_v49.AASMEngine
+semantic base: runtime_v48.AASMEngine
+solver/reuse kernel lineage: runtime_v41.AASMEngine
+adoption: aasm.adoption.v1 / 0.25.0
+RC: aasm.semantic.solver.rc.v1 / 0.1.0
 license: Apache-2.0 project-wide declaration
-next: v0.49.0 Semantic Solver Release Candidate
 ```
 
-See `LICENSE_POLICY.md`, `docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md`, `docs/RELEASE_0.48.md`, and `docs/RELEASE_0.48.1.md`.
+See `docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md`, `docs/RELEASE_0.49.md`, `docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md`, and `LICENSE_POLICY.md`.
