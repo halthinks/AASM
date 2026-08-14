@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/optimization-request.schema.json",
+  "title": "AASM Optimization Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["request_id", "model", "capability_id", "capability_version", "obligation_id", "timeout_ms", "required_provider", "accept_feasible", "environment_fingerprint", "dependency_fingerprints", "metadata", "capability_token", "fingerprint"],
+  "properties": {
+    "request_id": {"type": "string", "minLength": 1},
+    "model": {"type": "object"},
+    "capability_id": {"enum": ["solver.sat", "solver.cp_sat", "solver.milp"]},
+    "capability_version": {"type": "string", "minLength": 1},
+    "obligation_id": {"type": "string", "minLength": 1},
+    "timeout_ms": {"type": "integer", "minimum": 1},
+    "required_provider": {"type": "string", "minLength": 1},
+    "accept_feasible": {"type": "boolean"},
+    "environment_fingerprint": {"type": "string"},
+    "dependency_fingerprints": {"type": "array", "items": {"type": "string"}},
+    "metadata": {"type": "object"},
+    "capability_token": {"type": "string", "minLength": 1},
+    "fingerprint": {"type": "string", "minLength": 1}
+  }
+}
