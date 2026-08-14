@@ -1,14 +1,17 @@
-# AASM v0.47.1 — Governed Symbiotic Intelligence & Apache-2.0 Licensing
+# AASM v0.48.0 — Cross-Run Certified Knowledge & Governed Long-Term Memory
 
-AASM v0.47.1 is a licensing/packaging patch over v0.47.0. The runtime and public behavioral contracts remain the governed SII architecture introduced in v0.47.0; the project license is now Apache License 2.0 (`Apache-2.0`). The already-published v0.47.0 artifacts remain historically accurate under their original MIT license.
+AASM v0.48 extends the existing event-sourced authority, v0.40 hierarchical memory, v0.41 certified reuse, v0.47 governed SII, and native solver stack across durable run boundaries **without importing authority from a prior run**.
 
-The runtime is still `SIIGovernanceRuntimeMixin + runtime_v46.AASMEngine`; there is one scheduler, one event/reducer path, one capability/provider registry, one reuse plane, and one truth boundary.
+The runtime is `CrossRunKnowledgeRuntimeMixin + runtime_v47.AASMEngine`. There is still one event/reducer path, one scheduler/TaskLease plane, one memory governance path, one reuse certificate path, and one truth boundary.
 
 ## Contracts
 
 ```text
-package/public surface: 0.47.1
-aasm.adoption.v1 / 0.23.0
+package/public surface: 0.48.0
+aasm.adoption.v1 / 0.24.0
+aasm.knowledge.cross-run.v1 / 0.1.0
+aasm.knowledge.cross-run.admission.v1 / 0.1.0
+aasm.principal.cross-run-map.v1 / 0.1.0
 aasm.certification.v1 / 0.2.0
 aasm.sii.v1 / 0.3.0
 aasm.optimization.advanced.v1 / 0.1.0
@@ -23,47 +26,39 @@ aasm.remote.v1 / 0.19.0
 license: Apache-2.0
 ```
 
-## Licensing patch
+## Cross-run boundary
 
-v0.47.1 changes the active project/distribution license from MIT to Apache License 2.0 and adds:
+A source run exports immutable `CrossRunKnowledgeEnvelope` objects with source run/machine/scope, memory/evidence/artifact lineage, fingerprints, environment/dependency declarations, privacy, retention/freshness, verification strength, content, and source authority provenance.
 
-- the standard Apache License 2.0 text in `LICENSE`;
-- a distributable `NOTICE` file preserving AASM attribution;
-- PEP 639/SPDX `license = "Apache-2.0"` package metadata;
-- no legacy `License :: ...` classifier, as required by the current setuptools PEP 639 path;
-- `LICENSE` and `NOTICE` in `license-files`;
-- `NOTICE` in the source-distribution manifest;
-- contribution terms aligned to Apache-2.0;
-- release gates that reject an incorrect license expression, a legacy license classifier, or missing Apache/NOTICE files.
+The receiving run validates applicability and emits a `CrossRunAdmissionCertificate`. A valid certificate still requires an ordinary AASM Decision plus POLICY/CONTROLLER authorization and an Obligation before the envelope becomes receiving-run Evidence.
 
-No solver, authority, SII, memory, reuse, persistence, or verification semantics change in this patch.
+```text
+FOREIGN AUTHORITY IS PROVENANCE, NEVER RECEIVING AUTHORITY.
+```
 
-## What graduated in v0.47.0
+## Memory and reuse
 
-### Durable principals
+Foreign Evidence never becomes semantic memory merely because the source run considered it true. Local semantic materialization requires receiving-run reasoning artifacts already in `AUTHORIZED` state, then uses the normal v0.40 memory authorization/commit path.
 
-SII proposal and measurement actors require policy-admitted `SIIPrincipalBinding` records. The same stable principal cannot silently rebind to a different authority/role set. Measurement authority is resolved from durable AASM state; callers do not supply their own authority class at measurement time.
+Cross-run reuse uses the existing v0.41 candidate/validation/`ReuseCertificate` path and preserves exact verification-strength matching. The ordinary reuse certificate records the envelope ID/fingerprint and receiving validator ID/version.
 
-### Versioned intelligence economics
+## Revocation and supersession
 
-Resource thresholds and weights are durable `SIIScoringPolicy` data. The default policy is version `1.0.0` and preserves reliability, calibration, verified utility, reuse contribution, compute efficiency, conflict-learning value, and artifact durability as the measured performance vector.
+A source signal must itself be admitted by receiving POLICY/CONTROLLER. Once admitted, the source envelope becomes REVOKED/SUPERSEDED, already-hot reuse candidates are blocked, and locally materialized memories are tombstoned through the existing v0.40 FORGET path. History is never deleted.
 
-### Enforced ResourceLease
+## SII identity/reputation
 
-`GovernedResourceLease` values are compiled into existing AASM execution surfaces:
+Stable cross-run principal mapping is explicit. SII reputation must name the exact source principal and match an admitted `(source run, source principal → local principal)` mapping. Cross-run reputation is reference accounting only:
 
-- v0.40 context projection size;
-- TaskDemand scheduler priority;
-- outstanding discretionary-task count;
-- incremental CaDiCaL conflict/decision budgets;
-- OR-Tools CP-SAT deterministic time and worker count;
-- HiGHS MIP node budget;
-- native/convex solve timeout;
-- discretionary formal verification timeout and provider width.
+```text
+truth_authority              = NONE
+resource_entitlement         = NONE
+used_by_sii_resource_lease   = false
+```
 
-Every governed request records enforcement Evidence and tags the ordinary task/TaskLease provenance with proposer, principal, scoring policy, resource tier, lease ID, and `authority_reward = NEVER`.
+It does not modify local SII authority or local compute tiers.
 
-## Safety boundary
+## Preserved v0.47 safety boundary
 
 ```text
 UTILITY MAY BUY COMPUTE / SEARCH / CONTEXT.
@@ -71,44 +66,34 @@ UTILITY NEVER BUYS TRUTH / STATE AUTHORITY / SELF VERIFICATION.
 REQUIRED VERIFICATION IS NEVER REDUCED BY SII.
 ```
 
-A low SII score cannot remove a required verifier, weaken proof strength, shrink a required independent-result quorum, or bypass epistemic admission. Policy-required formal verification stays on the ordinary formal path; SII's formal path is explicitly discretionary.
-
-## Certification
-
-`aasm.certification.v1 / 0.2.0` includes governed SII in the default certification set. For compatibility:
-
-```bash
-aasm certify --target sii-preview
-```
-
-aliases the governed v0.47 SII graduation fixture and must return `PASS` instead of the v0.43 expected `INCONCLUSIVE`.
-
-The fixture checks durable measurement-principal binding, active versioned scoring policy, rejection of unbound meters, no authority reward, native SAT/time budget enforcement, scheduler provenance, mandatory-verification non-reduction, and exact replay.
-
-## Solver portfolio preserved
-
-v0.47.1 preserves the native solver work from v0.44–v0.47.0:
+## Solver/formal portfolio preserved
 
 - Kissat fast SAT;
-- incremental CaDiCaL with assumptions/UNSAT cores/session reuse;
+- incremental CaDiCaL assumptions/UNSAT cores/session reuse;
 - OR-Tools CP-SAT scheduling;
 - HiGHS MILP with warm starts/bounds/gap telemetry;
 - CVXPY advanced convex optimization;
 - PuLP translation-only import;
 - Z3 / cvc5 / Vampire / Lean 4 formal verification.
 
-Release identity:
+## License
+
+AASM remains licensed under Apache License 2.0 (`Apache-2.0`) with `LICENSE` and `NOTICE` packaged under the PEP 639 metadata introduced in v0.47.1. The already-published v0.47.0 artifact remains historically MIT licensed.
+
+## Verification
+
+v0.48 adds a dedicated Cross-Run Knowledge workflow, dependency-neutral conformance, adversarial runtime tests, JSON schemas, and bounded `AASMCrossRunKnowledge.tla` / `aasm_cross_run_knowledge.pml` assurance. All existing CI, Formal Assurance, Optimization Backends, replay, persistence, packaging, scopes, adapters, and LangGraph gates remain required.
+
+## Release identity
 
 ```text
-package/public surface: 0.47.1
-runtime: runtime_v47.AASMEngine
-base advanced solver runtime: runtime_v46.AASMEngine
-base convex runtime: runtime_v45.AASMEngine
-base optimization runtime: runtime_v44.AASMEngine
+package/public surface: 0.48.0
+runtime: runtime_v48.AASMEngine
+base governed-SII runtime: runtime_v47.AASMEngine
 base solver/reuse kernel: runtime_v41.AASMEngine
-adoption: aasm.adoption.v1 / 0.23.0
+adoption: aasm.adoption.v1 / 0.24.0
 license: Apache-2.0
-next: v0.48.0 Cross-Run Certified Knowledge & Governed Long-Term Memory
+next: v0.49.0 Semantic Solver Release Candidate
 ```
 
-See `docs/SII_GOVERNED_ECONOMICS.md`, `docs/RELEASE_0.47.md`, and `docs/RELEASE_0.47.1.md`.
+See `docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md` and `docs/RELEASE_0.48.md`.
