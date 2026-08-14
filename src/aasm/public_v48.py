@@ -24,7 +24,7 @@ from .cross_run_knowledge import (
 from .cross_run_conformance import run_cross_run_knowledge_conformance
 from .runtime_v48 import AASMEngine
 
-__version__ = "0.48.0"
+__version__ = "0.48.1"
 REMOTE_PROTOCOL_NAME = _v47.REMOTE_PROTOCOL_NAME
 REMOTE_PROTOCOL_VERSION = _v47.REMOTE_PROTOCOL_VERSION
 
