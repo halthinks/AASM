@@ -74,7 +74,7 @@ Delivered:
 
 ## v0.47.1 — Apache-2.0 License Transition
 
-Patch release preserving all v0.47 runtime and contract behavior while changing the project license from MIT to Apache License 2.0. It adds the standard Apache 2.0 `LICENSE`, a distributable `NOTICE`, SPDX package metadata (`Apache-2.0`), the Apache OSI classifier, contribution-policy alignment, and release gates that verify the active license and packaged NOTICE. The already-published `v0.47.0` release remains historically accurate under its original MIT license.
+Patch release preserving all v0.47 runtime and contract behavior while changing the project license from MIT to Apache License 2.0. It adds the standard Apache 2.0 `LICENSE`, a distributable `NOTICE`, PEP 639/SPDX package metadata (`Apache-2.0`) without legacy `License :: ...` classifiers, contribution-policy alignment, and release gates that verify the active license and packaged NOTICE. The already-published `v0.47.0` release remains historically accurate under its original MIT license.
 
 ### Deliberate SII limits after v0.47
 
