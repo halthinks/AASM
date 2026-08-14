@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.46.0 / experimental**.
+AASM is currently **v0.47.0 / experimental**.
 
 ## Released
 
@@ -15,7 +15,8 @@ AASM is currently **v0.46.0 / experimental**.
 - v0.43.0 Semantic Conformance, Adversarial Domains, and Certification
 - v0.44.0 Heterogeneous Optimization Solver Portfolio
 - v0.45.0 Convex Optimization & Modeling Adapters
-- **v0.46.0 Advanced Solver Control & Search Artifacts — Current — implemented**
+- v0.46.0 Advanced Solver Control & Search Artifacts
+- **v0.47.0 Governed Symbiotic Intelligence & Intelligence Economics — Current — implemented**
 
 ## v0.44.0 — Heterogeneous Optimization Solver Portfolio
 
@@ -27,70 +28,89 @@ Delivered governed CVXPY LP/QP/SOC execution, a translation-only PuLP import bou
 
 ## v0.46.0 — Advanced Solver Control & Search Artifacts
 
+Delivered Kissat fast SAT, incremental CaDiCaL assumptions/UNSAT cores/session reuse, CP-SAT scheduling primitives and deterministic-time/search-worker controls, HiGHS warm starts and bound/gap/node telemetry, richer factorized PSD/NSD + affine-SOC CVXPY models, and durable advanced result/reuse/lease hardening under `SEARCH_STATE_NEVER_PROMOTES_TRUTH`.
+
+## v0.47.0 — Governed Symbiotic Intelligence & Intelligence Economics
+
 Delivered:
 
-1. `aasm.optimization.advanced.v1 / 0.1.0`;
-2. `solver.sat.fast@0.1.0` backed by real Kissat through PySAT's dedicated `Kissat404` binding;
-3. `solver.sat.incremental@0.1.0` backed by incremental CaDiCaL;
-4. exact SAT assumptions and UNSAT core extraction;
-5. conflict and decision budgets for incremental SAT;
-6. bounded in-process CaDiCaL session reuse;
-7. learned SAT state explicitly classified as `EPHEMERAL_PERFORMANCE_ONLY`;
-8. `solver.cp_sat.scheduling@0.1.0` with fixed/optional intervals;
-9. CP-SAT `NO_OVERLAP` and `CUMULATIVE` constraints;
-10. search-worker and deterministic-time controls plus conflict/branch/time telemetry;
-11. `solver.milp.advanced@0.1.0` with warm start submission;
-12. HiGHS MIP relative-gap target and node limit;
-13. primal/dual bound, MIP gap, node, and simplex-iteration telemetry;
-14. `solver.convex.advanced@0.1.0` with factorized general PSD quadratic minimization and NSD maximization;
-15. cross terms through weighted squares of linear forms;
-16. affine second-order-cone constraints `||A x + b||₂ <= cᵀx + d`;
-17. canonical `AdvancedSolverRequest` / `AdvancedSolverResult` identities carrying UNSAT core, best bound, relative gap, and telemetry;
-18. provider/resource/worker/TaskLease execution through the existing AASM scheduler;
-19. exact lease-expiry, supersession, implementation-binding, collision, and replay hardening;
-20. independent AASM validation before successful advanced results become Evidence;
-21. advanced results remain `EVIDENCE_ONLY` under `SEARCH_STATE_NEVER_PROMOTES_TRUTH`;
-22. reuse through the existing v0.41 `OPTIMIZATION_RESULT` candidate/certificate path;
-23. real backend CI for Kissat, incremental CaDiCaL, CP-SAT scheduling, advanced HiGHS, and advanced CVXPY;
-24. preservation of v0.44 direct solver, v0.45 CVXPY/PuLP, and v0.39 Z3/cvc5/Vampire/Lean pathways;
-25. public/CLI/schema/docs/release and formal source-gate coverage.
+1. `aasm.sii.v1 / 0.3.0` with stability `GOVERNED_ENFORCED`;
+2. `aasm.certification.v1 / 0.2.0` with governed SII included in default certification;
+3. durable `SIIPrincipalBinding` records admitted only by existing POLICY/CONTROLLER authority;
+4. stable-principal rebinding rejection;
+5. measurement authority resolution from durable principal state instead of a caller-supplied authority string;
+6. explicit rejection of self-measurement at principal identity level;
+7. versioned durable `SIIScoringPolicy` objects with active-policy selection;
+8. default/exploration/exploitation/formal scoring profiles preserved as policy data;
+9. bounded performance windows retained so old success cannot grant permanent compute privilege;
+10. durable `GovernedResourceLease` records bound to proposer, principal, policy version, performance window, utility, and tier;
+11. context budgets enforced through the existing v0.40 context projection;
+12. scheduler priority enforced through ordinary `TaskDemand.priority`;
+13. max outstanding discretionary candidate count enforced before queue growth;
+14. incremental CaDiCaL conflict-budget enforcement;
+15. incremental CaDiCaL decision-budget enforcement;
+16. native solver timeout enforcement;
+17. CP-SAT deterministic-time enforcement;
+18. CP-SAT search-worker enforcement;
+19. HiGHS MIP-node enforcement;
+20. advanced convex solve-time enforcement;
+21. discretionary formal-verification timeout enforcement;
+22. discretionary formal provider-width enforcement;
+23. explicit preservation of the ordinary policy-required formal-verification path outside SII caps;
+24. invariant `REQUIRED_VERIFICATION_NEVER_REDUCED_BY_SII`;
+25. durable `ENFORCEMENT` Evidence connecting SII ResourceLease records to solver/formal requests;
+26. SII lease/policy/principal/enforcement provenance copied into the ordinary task and TaskLease metadata;
+27. `authority_reward = NEVER` attached to governed execution provenance;
+28. resource leases permanently fixed to `PROPOSER` authority with direct truth promotion/state mutation/self-verification false;
+29. `request_sii_advanced_optimization()` compiling resource policy into the real v0.46 advanced solver IR/request path;
+30. `request_sii_formal_verification()` as an explicitly discretionary governed formal path;
+31. `sii_context()` compiling resource policy into the real v0.40 context path;
+32. current `sii-contract` reporting the governed v0.47 contract while the v0.43 preview implementation remains importable;
+33. `sii-preview` certification retained as a compatibility alias to the governed graduation fixture;
+34. adversarial certification for unbound measurement actors, authority escalation, native-budget bypass, scheduler-budget bypass, and replay;
+35. public API, CLI, schemas, docs, release/source gates, and regression coverage;
+36. preservation of all v0.44–v0.46 native solver and v0.39 formal-verification pathways rather than routing them through a new SII executor.
+
+### Deliberate SII limits after v0.47
+
+The major graduation gaps are closed, but these remain explicit future work rather than hidden claims:
+
+- model calls are represented in SII resource policy but model execution is not yet a universal first-class TaskLease provider across every adapter;
+- learned SAT clauses, MILP cuts/bases, and solver-specific search state remain performance artifacts unless separately certified/admitted;
+- collusion/easy-problem farming need larger empirical/reference-domain campaigns beyond deterministic contract fixtures;
+- resource policy currently applies to SII-discretionary work and must never intercept correctness-required verification in a way that can weaken it;
+- cross-run performance/resource reputation remains run-local until cross-run identity/knowledge admission is formalized.
 
 ### Solver work still worth doing
 
-The remaining solver-depth work is now narrower and can be introduced as explicit governed contracts:
-
-- durable learned-clause provenance without pretending ephemeral clauses are truth;
+- durable learned-clause provenance with proof/certificate boundaries;
 - pseudo-Boolean/cardinality native representations;
-- richer CP-SAT scheduling constructs and hints/solution callbacks where determinism is defined;
-- MILP LP-basis and cut-pool exchange with provenance and numerical-compatibility checks;
-- proof logging / certificate checking for SAT UNSAT and optimization infeasibility;
-- solver portfolio racing and selection under deterministic budget policy;
+- MILP LP-basis and cut-pool exchange with provenance/numerical compatibility;
+- SAT proof logging and optimization infeasibility certificates;
+- deterministic solver portfolio racing under governed budgets;
 - cross-solver translation certificates and certified bound/conflict exchange;
 - raw matrix-form PSD/NSD quadratic input with deterministic canonicalization;
 - additional conic problem families where independent validation is available.
 
-## v0.47.0 — Symbiotic Intelligence Interface & Governed Intelligence Economics
-
-**Next.** Graduate SII from the experimental certification target to an enforceable participation plane over the now-concrete solver and reasoning resource surfaces.
-
-Required graduation work:
-
-1. bind proposer and measurement identities to durable governed AASM principals;
-2. resolve measurement authority from AASM authority/capability state rather than caller-supplied strings;
-3. bind ResourceLease context budgets to v0.40 context projection;
-4. bind parallel-candidate and scheduling budgets to the existing resource/scheduler path;
-5. bind solver privileges to the v0.39–v0.46 capability and TaskLease boundaries;
-6. meter real resources: SAT conflict/decision budgets, incremental-session eligibility, CP-SAT deterministic time/search workers, MILP node/gap budgets, convex solver time, formal verification, model calls, context, and portfolio width;
-7. externalize scoring thresholds and weight profiles into versioned policy;
-8. preserve bounded-window decay so old success never grants permanent compute privilege;
-9. adversarially test farming, collusion, identity reset, stale data, score oscillation, privilege escalation, resource-policy bypass, solver-budget laundering, and easy-problem farming;
-10. require `aasm certify --target sii-preview` to graduate from `INCONCLUSIVE` to `PASS` before authority-adjacent resource control is activated;
-11. preserve the invariant that utility can buy compute/search/context, never truth or canonical-state authority.
-
 ## v0.48.0 — Cross-Run Certified Knowledge & Governed Long-Term Memory
 
-Opt-in cross-run knowledge with immutable provenance, applicability scope, compatibility, epistemic status, privacy/retention, revocation/supersession, explicit receiving-run admission, and SII-aware resource accounting without authority inheritance.
+**Next.** Extend durable knowledge across run boundaries without allowing prior-run authority or stale context to leak into a receiving run.
+
+Planned work:
+
+1. immutable cross-run knowledge envelopes with source-run identity and exact provenance;
+2. explicit applicability scope, environment/dependency compatibility, freshness, privacy, and retention metadata;
+3. receiving-run admission rather than automatic inheritance;
+4. revocation and supersession propagation across retained knowledge;
+5. cross-run reuse certificates with exact validator/version provenance;
+6. stable governed principal identity mapping without making SII reputation an authority credential;
+7. separate cross-run SII performance/resource accounting from truth admission;
+8. provenance-preserving memory compaction and summarized knowledge objects;
+9. certified long-term procedural/semantic memory with invalidation boundaries;
+10. adversarial checks for stale-run poisoning, identity conflation, privacy leakage, revocation loss, and authority inheritance;
+11. deterministic export/import and replay fixtures;
+12. reference-domain tests that demonstrate genuine cross-run savings without truth drift.
 
 ## v0.49.0 — Semantic Solver Release Candidate
 
-Freeze the coherent public solver contracts after replay, formal, distributed, adversarial, memory/privacy, reference-domain, certification, native optimization, convex/modeling adapters, advanced solver control, SII, packaging, and upgrade gates pass.
+Freeze the coherent public solver/control contracts after replay, formal, distributed, adversarial, memory/privacy, reference-domain, certification, native optimization, convex/modeling adapters, advanced solver control, governed SII, packaging, upgrade, and cross-run knowledge gates pass.
