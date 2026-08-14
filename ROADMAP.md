@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.47.0 / experimental**.
+AASM is currently **v0.47.1 / experimental**.
 
 ## Released
 
@@ -16,7 +16,8 @@ AASM is currently **v0.47.0 / experimental**.
 - v0.44.0 Heterogeneous Optimization Solver Portfolio
 - v0.45.0 Convex Optimization & Modeling Adapters
 - v0.46.0 Advanced Solver Control & Search Artifacts
-- **v0.47.0 Governed Symbiotic Intelligence & Intelligence Economics — Current — implemented**
+- v0.47.0 Governed Symbiotic Intelligence & Intelligence Economics
+- **v0.47.1 Apache-2.0 License Transition — Current — implemented**
 
 ## v0.44.0 — Heterogeneous Optimization Solver Portfolio
 
@@ -70,6 +71,10 @@ Delivered:
 34. adversarial certification for unbound measurement actors, authority escalation, native-budget bypass, scheduler-budget bypass, and replay;
 35. public API, CLI, schemas, docs, release/source gates, and regression coverage;
 36. preservation of all v0.44–v0.46 native solver and v0.39 formal-verification pathways rather than routing them through a new SII executor.
+
+## v0.47.1 — Apache-2.0 License Transition
+
+Patch release preserving all v0.47 runtime and contract behavior while changing the project license from MIT to Apache License 2.0. It adds the standard Apache 2.0 `LICENSE`, a distributable `NOTICE`, SPDX package metadata (`Apache-2.0`), the Apache OSI classifier, contribution-policy alignment, and release gates that verify the active license and packaged NOTICE. The already-published `v0.47.0` release remains historically accurate under its original MIT license.
 
 ### Deliberate SII limits after v0.47
 
