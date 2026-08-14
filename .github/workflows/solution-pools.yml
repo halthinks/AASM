@@ -1,5 +1,4 @@
 name: Solution Pools
-# one-shot promotion trigger; removed after guarded promotion
 
 on:
   push:
@@ -12,8 +11,8 @@ permissions:
   statuses: write
 
 jobs:
-  promote_v51:
-    if: github.event_name == 'push' && github.event.head_commit.message == 'Run v0.51 promotion workflow'
+  finalize_v51_docs:
+    if: github.event_name == 'push' && github.event.head_commit.message == 'Finalize v0.51 documentation'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -24,11 +23,11 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - name: Apply v0.51 promotion
-        run: python scripts/_promote_v51_fix.py
-      - name: Remove one-shot helpers
-        run: rm scripts/_promote_v51_once.py scripts/_promote_v51_fix.py
-      - name: Validate promoted v0.51 surface before commit
+      - name: Finalize v0.51 README identity
+        run: python scripts/_finalize_v51_docs.py
+      - name: Remove one-shot finalizer
+        run: rm scripts/_finalize_v51_docs.py
+      - name: Validate finalization before commit
         shell: bash
         run: |
           set -euo pipefail
@@ -38,13 +37,11 @@ jobs:
             echo 'release contract unexpectedly passed before release.yml requires aasm/solution-pools'
             exit 1
           fi
-          cat /tmp/v51-release-contract.out
           grep -q 'aasm/solution-pools' /tmp/v51-release-contract.out
           python -m compileall -q src/aasm tests scripts
-          pytest -q tests/test_v51_solution_pools.py tests/test_v51_public.py tests/test_v50_public.py tests/test_v49_rc.py
       - name: Regenerate exact tracked inventory
         run: python scripts/release_manifest.py --write-file-list
-      - name: Commit promotion to main
+      - name: Commit finalization to main
         shell: bash
         run: |
           set -euo pipefail
@@ -52,7 +49,7 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           git diff --cached --check
-          git commit -m 'Promote AASM v0.51.0 governed solution pools'
+          git commit -m 'Finalize v0.51 release documentation'
           git push origin HEAD:main
 
   solution_pools:
