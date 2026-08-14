@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.49.0] - 2026-08-14
+
+### Semantic Solver Release Candidate
+
+- advanced the package/public surface to `0.49.0` and `aasm.adoption.v1` to `0.25.0`;
+- added `aasm.semantic.solver.rc.v1 / 0.1.0` with stability `RELEASE_CANDIDATE`;
+- added a thin `SemanticSolverRCRuntimeMixin + runtime_v48.AASMEngine` assurance layer with no new scheduler, reducer, truth store, authority plane, memory store, or inner solver kernel;
+- added deterministic public freeze manifests over contract identities, engine methods, CLI commands, imports, inspection surfaces, schemas, provider identities, replay expectations, and project-wide Apache licensing;
+- added a freeze-manifest semantic fingerprint for 0.49.x compatibility review;
+- added v0.41 → v0.49 replay/upgrade coverage for event history, memoized state, and governed memory;
+- added v0.47 → v0.49 replay/upgrade coverage for governed SII policy and principal binding;
+- added v0.48 → v0.49 replay/upgrade coverage for admitted cross-run knowledge and foreign-authority non-inheritance;
+- requires exact canonical replay/hash equality for each upgrade fixture;
+- added exact overlapping OR-Tools CP-SAT and HiGHS MILP certification for the same Boolean/integer optimum, plus a CaDiCaL Boolean feasibility projection;
+- added `AGREEMENT_OR_INCONCLUSIVE_NEVER_VOTE` as the cross-backend certification rule;
+- added semantic fingerprint and event append/replay benchmark workloads;
+- added direct native CP-SAT versus full AASM provider/request/TaskLease/solve/validate/Evidence lifecycle measurement;
+- records observed orchestration-overhead ratio as environment-specific evidence only;
+- added `AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS` and `MEASURE_OVERHEAD_AND_SAVINGS_NO_UNGATED_SPEEDUP_CLAIM`;
+- added `NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE` and a claim-to-gate audit;
+- added complete RC certification aggregating cross-run, semantic/adversarial, optimization, modeling, advanced solver, overlap, upgrade, benchmark, and claim-audit gates;
+- added RC freeze/benchmark/certification JSON schemas;
+- added public RC CLI surfaces;
+- added a dedicated `Semantic Solver RC` GitHub Actions workflow with real native backends;
+- publishes exact-head `aasm/semantic-solver-rc` commit status;
+- hardened the release workflow to require `aasm/ci-summary`, `aasm/formal-assurance`, and `aasm/semantic-solver-rc` on the exact current `main` commit;
+- preserved project-wide Apache-2.0 policy and all prior formal, memory, reuse, solver, SII, and cross-run authority boundaries.
+
 ## [0.48.1] - 2026-08-14
 
 ### Project-Wide Apache-2.0 Policy Correction
@@ -36,8 +64,7 @@
 - added JSON schemas, public/CLI contracts, dependency-neutral conformance, adversarial tests, and a dedicated Cross-Run Knowledge CI workflow;
 - added bounded TLA+ and Promela/SPIN invariants for authority inheritance, admission, privacy, revocation, materialization, reuse, and SII reputation separation;
 - preserved all v0.39 formal, v0.40 memory, v0.41 reuse, v0.44–v0.46 native solver, and v0.47 SII pathways;
-- preserved Apache-2.0 / PEP 639 / packaged `LICENSE` + `NOTICE` behavior from v0.47.1;
-- moved the Semantic Solver Release Candidate to v0.49.
+- preserved Apache-2.0 / PEP 639 / packaged `LICENSE` + `NOTICE` + `LICENSE_POLICY.md` behavior.
 
 ## [0.47.1] - 2026-08-14
 
