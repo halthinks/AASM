@@ -79,6 +79,7 @@
 ./docs/REPLAY_FORK.md
 ./docs/RESEARCH_SYNTHESIS_DEMO.md
 ./docs/RESOURCE_SCHEDULER.md
+./docs/REUSE_AND_SOLVER_LOOP.md
 ./docs/SEMANTIC_TRUTH_MAINTENANCE.md
 ./docs/TRACE_CONFORMANCE.md
 ./docs/TYPED_CAPABILITIES_FORMAL_VERIFICATION.md
@@ -121,6 +122,8 @@
 ./formal/AASMCalculus.tla
 ./formal/AASMHierarchicalMemory.cfg
 ./formal/AASMHierarchicalMemory.tla
+./formal/AASMReusePlane.cfg
+./formal/AASMReusePlane.tla
 ./formal/AASMScopeHierarchy.cfg
 ./formal/AASMScopeHierarchy.tla
 ./formal/AASMSemanticTruthMaintenance.cfg
@@ -131,6 +134,7 @@
 ./formal/AASMTypedCapabilities.tla
 ./formal/aasm_calculus.pml
 ./formal/aasm_hierarchical_memory.pml
+./formal/aasm_reuse_plane.pml
 ./formal/aasm_scope_hierarchy.pml
 ./formal/aasm_semantic_truth_maintenance.pml
 ./formal/aasm_trace_conformance.pml
@@ -221,12 +225,15 @@
 ./schemas/reasoning-commit.schema.json
 ./schemas/reasoning-transition.schema.json
 ./schemas/resource.schema.json
+./schemas/reuse-certificate.schema.json
+./schemas/reuse-request.schema.json
 ./schemas/runtime-config.schema.json
 ./schemas/scope-dependency.schema.json
 ./schemas/scope-report.schema.json
 ./schemas/semantic-dependency.schema.json
 ./schemas/semantic-result.schema.json
 ./schemas/semantic-trace-report.schema.json
+./schemas/solver-step.schema.json
 ./schemas/state.schema.json
 ./schemas/task-demand.schema.json
 ./schemas/trace-contract.schema.json
@@ -234,7 +241,7 @@
 ./schemas/trace-projection.schema.json
 ./schemas/transition.schema.json
 ./schemas/truth-maintenance-plan.schema.json
-./schemas/typed-event-schema.schema.json
+./schemas/typed-event-schema.json
 ./schemas/worker-control.schema.json
 ./schemas/worker.schema.json
 ./scripts/check_formal_models.py
@@ -265,6 +272,13 @@
 ./src/aasm/_runtime_v39_typed.py
 ./src/aasm/_runtime_v40_memory.py
 ./src/aasm/_runtime_v40_privacy.py
+./src/aasm/_runtime_v41_metrics.py
+./src/aasm/_runtime_v41_reuse_certify.py
+./src/aasm/_runtime_v41_reuse_commit.py
+./src/aasm/_runtime_v41_reuse_lookup.py
+./src/aasm/_runtime_v41_reuse_records.py
+./src/aasm/_runtime_v41_reuse_refs.py
+./src/aasm/_runtime_v41_solver.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -294,6 +308,7 @@
 ./src/aasm/cli_v38.py
 ./src/aasm/cli_v39.py
 ./src/aasm/cli_v40.py
+./src/aasm/cli_v41.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -360,6 +375,7 @@
 ./src/aasm/protocols.py
 ./src/aasm/provider_adapters.py
 ./src/aasm/provisioning.py
+./src/aasm/public_v41.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
 ./src/aasm/reference_data/research/manifest.json
@@ -373,6 +389,12 @@
 ./src/aasm/research_demo.py
 ./src/aasm/research_profile.py
 ./src/aasm/resources.py
+./src/aasm/reuse_certificate.py
+./src/aasm/reuse_index.py
+./src/aasm/reuse_metrics.py
+./src/aasm/reuse_model.py
+./src/aasm/reuse_policy.py
+./src/aasm/reuse_validation.py
 ./src/aasm/router.py
 ./src/aasm/runbook_approval.py
 ./src/aasm/runbook_common.py
@@ -405,6 +427,7 @@
 ./src/aasm/runtime_v32.py
 ./src/aasm/runtime_v39.py
 ./src/aasm/runtime_v40.py
+./src/aasm/runtime_v41.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
@@ -421,6 +444,9 @@
 ./src/aasm/server_v32.py
 ./src/aasm/server_v39.py
 ./src/aasm/server_v40.py
+./src/aasm/server_v41.py
+./src/aasm/solver_loop.py
+./src/aasm/solver_types.py
 ./src/aasm/supervisor_adapters.py
 ./src/aasm/team_protocol.py
 ./src/aasm/trace_conformance.py
@@ -479,4 +505,5 @@
 ./tests/test_v38_semantic_dependencies.py
 ./tests/test_v39_typed_capabilities.py
 ./tests/test_v40_hierarchical_memory.py
+./tests/test_v41_reuse_solver.py
 ./tests/test_workers_leases.py
