@@ -22,6 +22,6 @@ jobs:
       - name: Install
         run: python -m pip install -e '.[dev]'
       - name: Compile v0.48 staging surface
-        run: python -m compileall -q src/aasm/cross_run_knowledge.py src/aasm/_runtime_v48_knowledge.py src/aasm/runtime_v48.py tests/test_v48_cross_run_knowledge.py
+        run: python -m compileall -q src/aasm/cross_run_knowledge.py src/aasm/_runtime_v48_knowledge.py src/aasm/runtime_v48.py tests/test_v48_cross_run_knowledge.py tests/test_v48_cross_run_sii_mapping.py
       - name: Run cross-run admission, revocation, reuse, privacy, and SII separation tests
-        run: pytest -q tests/test_v48_cross_run_knowledge.py
+        run: pytest -q tests/test_v48_cross_run_knowledge.py tests/test_v48_cross_run_sii_mapping.py
