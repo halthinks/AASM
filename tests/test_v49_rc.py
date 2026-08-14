@@ -1,3 +1,4 @@
+from aasm import __version__, public_api_contract, validate_public_api_contract
 from aasm.model import ProblemSpec
 from aasm.runtime_v48 import AASMEngine as V48Engine
 from aasm.runtime_v49 import AASMEngine as V49Engine
@@ -14,7 +15,8 @@ from aasm.semantic_solver_rc import (
 )
 
 
-def test_rc_runtime_is_thin_v48_composition():
+def test_rc_runtime_is_thin_v48_composition_and_public():
+    assert __version__ == "0.49.0"
     assert issubclass(V49Engine, V48Engine)
     engine = V49Engine(ProblemSpec("v0.49 thin composition"))
     contract = engine.semantic_solver_rc_contract_report()
@@ -23,15 +25,19 @@ def test_rc_runtime_is_thin_v48_composition():
     assert contract["runtime_extension"] == "THIN_V48_COMPOSITION_NO_NEW_KERNEL"
     assert contract["scheduler"] == "EXISTING_AASM_TASKLEASE_ONLY"
     assert contract["authority"] == "EXISTING_AASM_AUTHORITY_ONLY"
+    public = validate_public_api_contract()
+    assert public["valid"], public
+    assert public["contract"]["contract_version"] == "0.25.0"
+    assert public["contract"]["semantic_solver_rc"]["contract_id"] == SEMANTIC_SOLVER_RC_CONTRACT_ID
 
 
-def test_freeze_manifest_is_deterministic_for_same_public_contract():
-    from aasm.public_v48 import public_api_contract
-
+def test_freeze_manifest_is_deterministic_for_current_public_contract():
     contract = public_api_contract()
     first = build_semantic_solver_rc_freeze_manifest(contract)
     second = build_semantic_solver_rc_freeze_manifest(contract)
     assert first == second
+    assert first["runtime_version"] == "0.49.0"
+    assert first["adoption_contract_version"] == "0.25.0"
     assert first["freeze_fingerprint"]
     assert first["license"] == "Apache-2.0"
     assert first["license_policy_file"] == "LICENSE_POLICY.md"
@@ -73,20 +79,17 @@ def test_claim_gate_audit_requires_reproducible_repository_evidence():
     assert all(row["passed"] for row in report["claims"].values())
 
 
-def test_dependency_neutral_rc_certification_passes():
-    from aasm.public_v48 import public_api_contract
-
+def test_dependency_neutral_rc_certification_passes_current_public_contract():
     report = run_semantic_solver_rc_certification(real=False, target_engine_cls=V49Engine, public_contract=public_api_contract())
     assert report["status"] == "PASS", report
     assert report["real_backends"] is False
     assert all(report["checks"].values())
+    assert report["freeze_manifest"]["runtime_version"] == "0.49.0"
     assert report["benchmark"]["inner_solver_claim"] == "NONE"
     assert report["contract"]["native_solver_claim"] == "AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS"
 
 
 def test_runtime_rc_facade_delegates_without_new_authority():
-    from aasm.public_v48 import public_api_contract
-
     engine = V49Engine(ProblemSpec("rc facade"))
     manifest = engine.semantic_solver_rc_freeze_manifest(public_api_contract())
     assert manifest["freeze_fingerprint"]
