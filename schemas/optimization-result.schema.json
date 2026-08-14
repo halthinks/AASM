@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/optimization-result.schema.json",
+  "title": "AASM Optimization Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["result_id", "request_id", "request_fingerprint", "model_fingerprint", "status", "solver", "assignment", "objective_value", "best_bound", "relative_gap", "wall_time_ms", "statistics", "diagnostics", "metadata", "fingerprint"],
+  "properties": {
+    "result_id": {"type": "string", "minLength": 1},
+    "request_id": {"type": "string", "minLength": 1},
+    "request_fingerprint": {"type": "string", "minLength": 1},
+    "model_fingerprint": {"type": "string", "minLength": 1},
+    "status": {"enum": ["SAT", "UNSAT", "OPTIMAL", "FEASIBLE", "INFEASIBLE", "UNKNOWN", "TIMEOUT", "ERROR"]},
+    "solver": {"type": "object"},
+    "assignment": {"type": "object", "additionalProperties": {"type": "number"}},
+    "objective_value": {"type": ["number", "null"]},
+    "best_bound": {"type": ["number", "null"]},
+    "relative_gap": {"type": ["number", "null"]},
+    "wall_time_ms": {"type": "integer", "minimum": 0},
+    "statistics": {"type": "object"},
+    "diagnostics": {"type": "array", "items": {"type": "string"}},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  }
+}
