@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.50.0 / Proof-Carrying Solver Claims**.
+AASM is currently **v0.51.0 / Governed Solution Pools & Complete Enumeration**.
 
 ## Released
 
@@ -21,7 +21,8 @@ AASM is currently **v0.50.0 / Proof-Carrying Solver Claims**.
 - v0.48.0 Cross-Run Certified Knowledge & Governed Long-Term Memory
 - v0.48.1 Project-Wide Apache-2.0 Policy Correction
 - v0.49.0 Semantic Solver Release Candidate
-- **v0.50.0 Proof-Carrying Solver Claims — Current**
+- v0.50.0 Proof-Carrying Solver Claims
+- **v0.51.0 Governed Solution Pools & Complete Enumeration — Current**
 
 ## v0.44.0 — Heterogeneous Optimization Solver Portfolio
 
@@ -153,28 +154,36 @@ Hard completion criterion:
 
 ## v0.51.0 — Governed Solution Pools & Complete Enumeration
 
-Primary contract targets:
+**Status: Delivered/current.**
 
-```text
-aasm.optimization.solution-pool.v1
-aasm.optimization.enumeration.v1
-```
+Delivered in v0.51:
 
-Required scope:
+1. `aasm.optimization.solution-pool.v1 / 0.1.0` and `aasm.optimization.enumeration.v1 / 0.1.0`;
+2. public adoption contract `aasm.adoption.v1 / 0.27.0`;
+3. thin `SolutionPoolRuntimeMixin + runtime_v50.AASMEngine` composition with no new scheduler, reducer, memory store, solver kernel, or truth authority;
+4. durable `SolutionRecord`, `SolutionExclusion`, `EnumerationCursor`, `SolutionPool`, and `EnumerationCompletenessCertificate`;
+5. explicit pool modes `COMPLETE_FINITE_ENUMERATION`, `BOUNDED_PARTIAL_POOL`, `TOP_K`, `DIVERSE_POOL`, and `INCUMBENT_HISTORY`;
+6. deterministic assignment identity and exact deduplication;
+7. durable exact-assignment no-goods for every accepted finite solution;
+8. crash/restart-safe continuation from durable next-state cursors;
+9. exact Evidence/event replay for pool, cursor, solutions, exclusions, and completeness certificate;
+10. finite Boolean/integer exhaustion checker `aasm.checker.finite-enumeration-exhaustion.v1 / 0.1.0`;
+11. `COMPLETE` forbidden until full finite-state exhaustion and independent checker PASS;
+12. bounded/native/partial pools never imply completeness;
+13. false completeness fails closed with explicit unseen-solution diagnostics;
+14. continuous-variable complete enumeration explicitly unsupported;
+15. exact oracle-known restart fixture enumerating every feasible assignment exactly once;
+16. real OR-Tools CP-SAT and HiGHS iterative no-good enumeration;
+17. cross-backend requirement `EXACT_SOLUTION_SET_EQUALITY_NEVER_VOTING`;
+18. JSON Schema 2020-12 contracts for solution records, pools, cursors, and completeness certificates;
+19. bounded TLA+ and Promela/SPIN completeness invariants;
+20. dedicated exact-head `aasm/solution-pools` release gate and public contract/conformance CLI.
 
-1. durable `SolutionPool` objects rather than one-request/one-assignment semantics only;
-2. explicit modes: `COMPLETE_FINITE_ENUMERATION`, `BOUNDED_PARTIAL_POOL`, `TOP_K`, `DIVERSE_POOL`, `INCUMBENT_HISTORY`;
-3. deterministic solution identity and deduplication;
-4. durable exclusion/no-good constraints for already accepted finite solutions;
-5. continuation cursors and crash/restart-safe enumeration;
-6. pool provenance, solver lineage, completeness status, and certificate linkage;
-7. explicit distinction between complete enumeration and a solver-native bounded pool;
-8. cross-backend enumeration consistency fixtures where semantics overlap;
-9. adversarial tests for duplicate solutions, missing exclusions, stale cursors, corrupted pool lineage, and false completeness claims.
+**Next planned implementation release: v0.52.0 — Lexicographic Multi-Objective & Pareto Solving.**
 
-Hard completion criterion:
+Hard completion criterion achieved:
 
-> For finite oracle-known reference problems, AASM must enumerate every satisfying solution exactly once, survive restart mid-enumeration, resume correctly, and independently certify that no additional finite solutions remain before reporting completeness.
+> For finite oracle-known reference problems, AASM enumerates every satisfying solution exactly once, survives restart mid-enumeration, resumes correctly, and independently certifies that no additional finite solutions remain before reporting completeness.
 
 ## v0.52.0 — Lexicographic Multi-Objective & Pareto Solving
 

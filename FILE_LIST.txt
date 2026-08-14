@@ -12,6 +12,7 @@
 ./.github/workflows/proof-claims.yml
 ./.github/workflows/rc.yml
 ./.github/workflows/release.yml
+./.github/workflows/solution-pools.yml
 ./.gitignore
 ./CHANGELOG.md
 ./CHANGELOG_0.18_AND_EARLIER.md
@@ -97,6 +98,7 @@
 ./docs/RELEASE_0.48.md
 ./docs/RELEASE_0.49.md
 ./docs/RELEASE_0.50.md
+./docs/RELEASE_0.51.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
@@ -107,6 +109,7 @@
 ./docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md
 ./docs/SEMANTIC_TRUTH_MAINTENANCE.md
 ./docs/SII_GOVERNED_ECONOMICS.md
+./docs/SOLUTION_POOLS_AND_ENUMERATION.md
 ./docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md
 ./docs/TRACE_CONFORMANCE.md
 ./docs/TYPED_CAPABILITIES_FORMAL_VERIFICATION.md
@@ -165,6 +168,8 @@
 ./formal/AASMScopeHierarchy.tla
 ./formal/AASMSemanticTruthMaintenance.cfg
 ./formal/AASMSemanticTruthMaintenance.tla
+./formal/AASMSolutionPools.cfg
+./formal/AASMSolutionPools.tla
 ./formal/AASMSolverProofClaims.cfg
 ./formal/AASMSolverProofClaims.tla
 ./formal/AASMTraceConformance.cfg
@@ -179,6 +184,7 @@
 ./formal/aasm_reuse_plane.pml
 ./formal/aasm_scope_hierarchy.pml
 ./formal/aasm_semantic_truth_maintenance.pml
+./formal/aasm_solution_pools.pml
 ./formal/aasm_solver_proof_claims.pml
 ./formal/aasm_trace_conformance.pml
 ./formal/aasm_typed_capabilities.pml
@@ -237,6 +243,8 @@
 ./schemas/cursor-page.schema.json
 ./schemas/decision-scope.schema.json
 ./schemas/effect.schema.json
+./schemas/enumeration-completeness-certificate.schema.json
+./schemas/enumeration-cursor.schema.json
 ./schemas/event.schema.json
 ./schemas/evidence.schema.json
 ./schemas/execution-contract.schema.json
@@ -300,6 +308,8 @@
 ./schemas/sii-proposal.schema.json
 ./schemas/sii-resource-lease.schema.json
 ./schemas/sii-scoring-policy.schema.json
+./schemas/solution-pool.schema.json
+./schemas/solution-record.schema.json
 ./schemas/solver-claim-certificate.schema.json
 ./schemas/solver-claim.schema.json
 ./schemas/solver-proof-artifact.schema.json
@@ -356,6 +366,7 @@
 ./src/aasm/_runtime_v48_knowledge.py
 ./src/aasm/_runtime_v49_rc.py
 ./src/aasm/_runtime_v50_proof.py
+./src/aasm/_runtime_v51_pools.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -400,6 +411,7 @@
 ./src/aasm/cli_v48.py
 ./src/aasm/cli_v49.py
 ./src/aasm/cli_v50.py
+./src/aasm/cli_v51.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -484,6 +496,7 @@
 ./src/aasm/public_v48.py
 ./src/aasm/public_v49.py
 ./src/aasm/public_v50.py
+./src/aasm/public_v51.py
 ./src/aasm/pulp_adapter.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
@@ -545,6 +558,7 @@
 ./src/aasm/runtime_v48.py
 ./src/aasm/runtime_v49.py
 ./src/aasm/runtime_v50.py
+./src/aasm/runtime_v51.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
@@ -565,6 +579,8 @@
 ./src/aasm/server_v41.py
 ./src/aasm/sii.py
 ./src/aasm/sii_governance.py
+./src/aasm/solution_pool_conformance.py
+./src/aasm/solution_pools.py
 ./src/aasm/solver_loop.py
 ./src/aasm/solver_types.py
 ./src/aasm/supervisor_adapters.py
@@ -647,4 +663,7 @@
 ./tests/test_v50_proof_claim_limits.py
 ./tests/test_v50_proof_claims.py
 ./tests/test_v50_public.py
+./tests/test_v51_public.py
+./tests/test_v51_solution_pools.py
+./tests/test_v51_solution_pools_real.py
 ./tests/test_workers_leases.py

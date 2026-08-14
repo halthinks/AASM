@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.51.0] - 2026-08-14
+
+### Governed Solution Pools & Complete Enumeration
+
+- advanced package/public surface to `0.51.0` and `aasm.adoption.v1 / 0.27.0`;
+- added governed solution pools, exact solution identity/deduplication, durable exclusions, and restart-safe cursors;
+- added complete finite Boolean/integer enumeration with independent exhaustion certification;
+- partial, bounded, native, top-k, diverse, and incumbent-history pools never imply completeness;
+- added adversarial false-completeness, duplicate, stale/corrupt cursor, and unsupported continuous-domain protections;
+- added real CP-SAT and HiGHS iterative no-good enumeration requiring exact set equality to an independent oracle and never voting;
+- persisted pool state through the existing Evidence/event history only;
+- added JSON schemas, public API/CLI, dedicated `aasm/solution-pools` CI, and TLA+/SPIN assurance;
+- preserved v0.50 proof certification and all prior authority, memory, reuse, solver, SII, and cross-run boundaries.
+
 ## [0.50.0] - 2026-08-14
 
 ### Proof-Carrying Solver Claims

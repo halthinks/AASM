@@ -2,9 +2,9 @@
 
 **Durable deterministic control for agents, tools, models, humans, formal systems, native solvers, governed memory, and cross-run knowledge.**
 
-## Current release — v0.50.0
+## Current release — v0.51.0
 
-**Proof-Carrying Solver Claims**
+**Governed Solution Pools & Complete Enumeration**
 
 **Next release:** v0.51.0 — Governed Solution Pools & Complete Enumeration
 
@@ -18,7 +18,7 @@ AASM's declared project license is **Apache License, Version 2.0 (`Apache-2.0`) 
 
 ```text
 package / public surface: 0.50.0
-aasm.adoption.v1 / 0.26.0
+aasm.adoption.v1 / 0.27.0
 aasm.solver.proof-certificate.v1 / 0.1.0
 aasm.semantic.solver.rc.v1 / 0.1.0
 aasm.remote.v1 / 0.19.0
@@ -61,6 +61,28 @@ proposal / observation / solver output
 ```
 
 Performance state is allowed to improve performance. It is not allowed to redefine correctness.
+
+
+## v0.51 — Governed Solution Pools & Complete Enumeration
+
+```text
+A SOLUTION POOL IS NOT A COMPLETENESS CLAIM.
+BOUNDED/NATIVE POOL != COMPLETE ENUMERATION.
+
+COMPLETE =>
+  finite model supported
+  durable cursor exhausted
+  deterministic exact dedup
+  durable no-good per accepted solution
+  independent exhaustion checker PASS
+  exact feasible-set equality
+```
+
+Contracts: `aasm.optimization.solution-pool.v1 / 0.1.0` and `aasm.optimization.enumeration.v1 / 0.1.0`. Runtime composition remains thin: `SolutionPoolRuntimeMixin + runtime_v50.AASMEngine`. Pool/cursor/solution/exclusion/certificate records use the existing Evidence/event history; result authority is `EVIDENCE_ONLY` and truth/state authority remains `EXISTING_AASM_POLICY_ONLY`.
+
+The exact finite reference suite survives SQLite restart mid-enumeration, resumes from a durable cursor, emits each satisfying assignment exactly once, and independently certifies exhaustion. Real OR-Tools CP-SAT and HiGHS fixtures must enumerate the same exact binary feasible set as an independent oracle using durable-style canonical no-goods: `EXACT_SOLUTION_SET_EQUALITY_NEVER_VOTING`.
+
+Release gate: `aasm/solution-pools`. Public CLI: `aasm solution-pool-contract`, `aasm enumeration-contract`, and `aasm solution-pool-conformance`.
 
 ## v0.50 — Proof-Carrying Solver Claims
 
@@ -453,8 +475,9 @@ Third-party material, if any, remains subject to its own applicable terms.
 - v0.47 Governed Symbiotic Intelligence & Intelligence Economics ✅
 - v0.48 Cross-Run Certified Knowledge & Governed Long-Term Memory ✅
 - v0.49 Semantic Solver Release Candidate ✅
-- **v0.50 Proof-Carrying Solver Claims — current ✅**
-- **v0.51 Governed Solution Pools & Complete Enumeration — next**
+- v0.50 Proof-Carrying Solver Claims ✅
+- **v0.51 Governed Solution Pools & Complete Enumeration — current ✅**
+- **v0.52 Lexicographic Multi-Objective & Pareto Solving — next**
 - v0.52 Lexicographic Multi-Objective & Pareto Solving
 - v0.53 Durable Cross-Run Solver Learning
 - v0.54 Certified Cross-Solver Exchange & Deterministic Portfolio Racing

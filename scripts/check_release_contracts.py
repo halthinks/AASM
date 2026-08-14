@@ -21,7 +21,7 @@ def main():
     with (root / "pyproject.toml").open("rb") as handle:
         project = tomllib.load(handle)["project"]
         version = str(project["version"])
-    if version != "0.50.0":
+    if version != "0.51.0":
         raise SystemExit(f"unexpected release version: {version}")
 
     # Project-wide Apache-2.0 / PEP 639 packaging is a permanent release invariant.
@@ -56,39 +56,61 @@ def main():
     ):
         forbid(policy_doc, stale_license_policy)
 
-    # Current v0.50 public surface and proof-carrying solver claim boundary.
-    require(root / "src/aasm/__init__.py", ["public_v50"])
-    require(root / "src/aasm/cli.py", ["cli_v50"])
+    # Current v0.51 public surface and governed solution-pool boundary.
+    require(root / "src/aasm/__init__.py", ["public_v51"])
+    require(root / "src/aasm/cli.py", ["cli_v51"])
+    require(root / "src/aasm/public_v51.py", [
+        '__version__ = "0.51.0"', '"contract_version": "0.27.0"', "runtime_v51",
+        'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
+        "SOLUTION_POOL_CONTRACT_ID", "ENUMERATION_CONTRACT_ID",
+        '"complete_requires_independent_exhaustion_certificate"',
+        '"bounded_or_native_pool_implies_completeness"',
+    ])
+    require(root / "src/aasm/runtime_v51.py", ["SolutionPoolRuntimeMixin", "V50Engine"])
+    require(root / "src/aasm/_runtime_v51_pools.py", [
+        "solution_pool_contract_report", "enumeration_contract_report", "solution_pool_report",
+        "start_solution_pool", "admit_solution_to_pool", "advance_solution_pool",
+        "enumerate_complete_solution_pool", '"authority": "EVIDENCE_ONLY"',
+    ])
+    require(root / "src/aasm/solution_pools.py", [
+        'SOLUTION_POOL_CONTRACT_ID = "aasm.optimization.solution-pool.v1"',
+        'SOLUTION_POOL_CONTRACT_VERSION = "0.1.0"',
+        'ENUMERATION_CONTRACT_ID = "aasm.optimization.enumeration.v1"',
+        'ENUMERATION_CONTRACT_VERSION = "0.1.0"',
+        'SOLUTION_POOL_STABILITY = "EXPERIMENTAL_ENFORCED"',
+        '"complete_requires_independent_exhaustion_certificate": True',
+        '"bounded_or_native_pool_implies_completeness": False',
+        '"result_authority": "EVIDENCE_ONLY"',
+        '"truth_authority": "EXISTING_AASM_POLICY_ONLY"',
+        "EnumerationCompletenessCertificate", "certify_complete_finite_enumeration",
+        "enumerate_native_binary_backend", "EXACT_SOLUTION_SET_EQUALITY_NEVER_VOTING",
+    ])
+    require(root / "src/aasm/solution_pool_conformance.py", [
+        "run_solution_pool_conformance", "finite_oracle_every_solution_exactly_once",
+        "complete_requires_passing_certificate", "false_completeness_fails_closed",
+        "real_cross_backend_exact_solution_set",
+    ])
+    require(root / "src/aasm/cli_v51.py", [
+        "solution-pool-contract", "enumeration-contract", "solution-pool-conformance",
+    ])
+    require(root / ".github/workflows/solution-pools.yml", [
+        "aasm/solution-pools", "test_v51_solution_pools.py", "test_v51_solution_pools_real.py",
+        "solution-pool-conformance",
+    ])
+    require(root / ".github/workflows/release.yml", ["aasm/solution-pools"])
+
+    # v0.50 remains the frozen proof-carrying parent contract.
     require(root / "src/aasm/public_v50.py", [
         '__version__ = "0.50.0"', '"contract_version": "0.26.0"', "runtime_v50",
-        'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
-        "SOLVER_PROOF_CONTRACT_ID", "SOLVER_PROOF_CONTRACT_VERSION",
-        '"solver_status_is_proof_grade"', '"proof_certified_requires_independent_checker"',
-        '"certificate_authority"', '"truth_authority"',
+        "SOLVER_PROOF_CONTRACT_ID", "PROOF_CERTIFIED",
     ])
     require(root / "src/aasm/runtime_v50.py", ["ProofClaimRuntimeMixin", "V49Engine"])
-    require(root / "src/aasm/_runtime_v50_proof.py", [
-        "solver_proof_contract_report", "solver_proof_claim_report", "certify_optimization_claim",
-        '"authority": "EVIDENCE_ONLY"', 'snapshot.evidence.get("records", [])',
-    ])
     require(root / "src/aasm/proof_claims.py", [
         'SOLVER_PROOF_CONTRACT_ID = "aasm.solver.proof-certificate.v1"',
-        'SOLVER_PROOF_CONTRACT_VERSION = "0.1.0"',
-        'SOLVER_PROOF_STABILITY = "EXPERIMENTAL_ENFORCED"',
         '"solver_status_is_proof_grade": False',
         '"proof_certified_requires_independent_checker": True',
-        '"exact_problem_binding_required": True',
-        '"exact_model_binding_required": True',
-        '"exact_result_binding_required": True',
         '"certificate_authority": "EVIDENCE_ONLY"',
         '"truth_authority": "EXISTING_AASM_POLICY_ONLY"',
-        "ProofUnsupportedError", "build_finite_domain_proof", "verify_finite_domain_proof",
-        "finite-domain proof budget exceeded", "negative solver claim is false",
-        "OPTIMAL solver claim is false", "proof checker must be independent of the solver provider",
-    ])
-    require(root / "src/aasm/proof_claim_conformance.py", [
-        "run_solver_proof_conformance", "unsat_is_proof_certified", "optimal_is_proof_certified",
-        "false_optimality_never_certifies", "positive_claim_does_not_fake_proof", "replay_exact",
     ])
     require(root / "src/aasm/cli_v50.py", ["solver-proof-contract", "solver-proof-conformance"])
 
@@ -155,42 +177,46 @@ def main():
     require(root / "src/aasm/formal_workers.py", ['provider == "z3"', 'provider == "cvc5"', 'provider == "vampire"', "lean4"])
     require(root / "src/aasm/reuse_model.py", ["aasm.reuse.v1", "OPTIMIZATION_RESULT"])
 
-    # Public release/docs claims must agree with v0.50 and the open-ended roadmap.
+    # Public release/docs claims must agree with v0.51 and the open-ended roadmap.
     require(root / "README.md", [
-        "Current release — v0.50.0", "Proof-Carrying Solver Claims",
-        "aasm.adoption.v1 / 0.26.0", "aasm.solver.proof-certificate.v1 / 0.1.0",
-        "SOLVER STATUS != PROOF GRADE", "PROOF_CERTIFIED", "SOLVER_VALIDATED",
-        "aasm/proof-claims", "v0.51", "Governed Solution Pools & Complete Enumeration",
+        "Current release — v0.51.0", "Governed Solution Pools & Complete Enumeration",
+        "aasm.adoption.v1 / 0.27.0", "aasm.optimization.solution-pool.v1 / 0.1.0",
+        "aasm.optimization.enumeration.v1 / 0.1.0", "A SOLUTION POOL IS NOT A COMPLETENESS CLAIM",
+        "aasm/solution-pools", "v0.52", "Lexicographic Multi-Objective & Pareto Solving",
         "Apache License, Version 2.0", "LICENSE_POLICY.md", "no presumed v1.0",
     ])
     require(root / "ROADMAP.md", [
-        "v0.50.0 / Proof-Carrying Solver Claims", "v0.50.0 Proof-Carrying Solver Claims — Current",
-        "v0.51.0", "Governed Solution Pools & Complete Enumeration",
+        "v0.51.0 / Governed Solution Pools & Complete Enumeration",
+        "v0.51.0 Governed Solution Pools & Complete Enumeration — Current",
         "v0.52.0", "Lexicographic Multi-Objective & Pareto Solving",
         "v0.53.0", "Durable Cross-Run Solver Learning",
         "v0.54.0", "Certified Cross-Solver Exchange & Deterministic Portfolio Racing",
         "v0.55.0", "Extended Mathematical IR", "v0.56.0", "Stress Corpus",
         "v0.57.0", "Semantic Solver RC2 / Contract Review", "No Presumed v1.0",
-        "v0.50–v0.57 closes the currently identified semantic-solver gap cluster. It does not close AASM.",
     ])
-    forbid(root / "README.md", ["v0.50 Post-RC Stabilization", "v0.50.0 — Post-RC Stabilization"])
-    forbid(root / "ROADMAP.md", ["v0.50.0 — Post-RC Stabilization"])
-    require(root / "CHANGELOG.md", ["[0.50.0]", "Proof-Carrying Solver Claims", "[0.49.0]", "Semantic Solver Release Candidate"])
+    require(root / "CHANGELOG.md", ["[0.51.0]", "Governed Solution Pools & Complete Enumeration", "[0.50.0]", "Proof-Carrying Solver Claims"])
     require(root / "docs/CURRENT_RELEASE.md", [
-        "AASM v0.50.0", "runtime_v50", "0.26.0", "aasm.solver.proof-certificate.v1 / 0.1.0",
-        "aasm/proof-claims", "Apache-2.0",
+        "AASM v0.51.0", "runtime_v51", "0.27.0",
+        "aasm.optimization.solution-pool.v1 / 0.1.0", "aasm.optimization.enumeration.v1 / 0.1.0",
+        "aasm/solution-pools", "Apache-2.0",
     ])
-    require(root / "docs/PROOF_CARRYING_SOLVER_CLAIMS.md", [
-        "SOLVER STATUS != PROOF GRADE", "UNSUPPORTED != FAIL", "PROOF_CERTIFIED",
-        "aasm.checker.finite-domain-exhaustive.v1", "EXISTING_AASM_POLICY_ONLY",
+    require(root / "docs/SOLUTION_POOLS_AND_ENUMERATION.md", [
+        "A SOLUTION POOL IS NOT A COMPLETENESS CLAIM", "COMPLETE_FINITE_ENUMERATION",
+        "EXACT_SOLUTION_SET_EQUALITY_NEVER_VOTING", "EXISTING_AASM_POLICY_ONLY",
     ])
-    require(root / "docs/RELEASE_0.50.md", [
-        "AASM v0.50.0", "0.26.0", "aasm.solver.proof-certificate.v1 / 0.1.0",
-        "PROOF_CERTIFIED", "SOLVER_VALIDATED", "aasm/proof-claims", "Apache-2.0",
+    require(root / "docs/RELEASE_0.51.md", [
+        "AASM v0.51.0", "0.27.0", "aasm.optimization.solution-pool.v1 / 0.1.0",
+        "aasm.optimization.enumeration.v1 / 0.1.0", "aasm/solution-pools", "Apache-2.0",
     ])
-    require(root / "docs/RELEASE_0.49.md", ["AASM v0.49.0", "0.25.0", "RELEASE_CANDIDATE", "aasm/semantic-solver-rc", "Apache-2.0"])
-    require(root / "docs/RELEASE_0.48.1.md", ["Project-Wide Apache-2.0 Policy Correction", "LICENSE_POLICY.md", "prior AASM versions", "MIT permissions remain valid"])
-    require(root / "docs/RELEASE_0.47.1.md", ["Project-wide relicensing declaration", "also offered under Apache-2.0", "MIT-only", "LICENSE_POLICY.md"])
+
+    require(root / "tests/test_v51_solution_pools.py", ["COMPLETE", "restart", "false_completeness_claim_fails_closed"])
+    require(root / "tests/test_v51_solution_pools_real.py", ["real_cp_sat_and_highs_enumerate_exact_same_binary_set"])
+    require(root / "tests/test_v51_public.py", ["0.51.0", "0.27.0", "solution-pool-contract", "solution-pool-conformance"])
+    for schema in (
+        "solution-record.schema.json", "solution-pool.schema.json",
+        "enumeration-cursor.schema.json", "enumeration-completeness-certificate.schema.json",
+    ):
+        require(root / "schemas" / schema, ['"$schema": "https://json-schema.org/draft/2020-12/schema"'])
 
     require(root / "tests/test_v50_proof_claims.py", ["PROOF_CERTIFIED", "false_optimality_fails", "tampered_artifact", "replays"])
     require(root / "tests/test_v50_proof_claim_limits.py", ["UNSUPPORTED", "budget_exhaustion"])
@@ -228,7 +254,7 @@ def main():
     ):
         require(root / "schemas" / name, ['"$schema"', "2020-12"])
 
-    print("v0.50.0 release contracts: PASS")
+    print("v0.51.0 release contracts: PASS")
     return 0
 
 

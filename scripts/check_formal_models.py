@@ -13,7 +13,7 @@ def main():
     root = Path(__file__).resolve().parents[1]
     with (root / "pyproject.toml").open("rb") as handle:
         version = str(tomllib.load(handle)["project"]["version"])
-    if version != "0.50.0":
+    if version != "0.51.0":
         raise SystemExit(f"unexpected formal release version: {version}")
 
     require(root / "formal/AASMCalculus.tla", ["HardRequiresCertificate", "CandidateActivationIsAtomic"])
@@ -48,6 +48,41 @@ def main():
         "foreign_authority_inherited", "admission_validated", "admission_authorized",
         "materialized_active", "reuse_enabled", "source_revoked", "privacy_compatible",
         "reputation_granted_authority", "reputation_granted_resources",
+    ])
+
+    # v0.51 adds governed solution pools and complete finite enumeration over
+    # the existing Evidence/event, optimization-provider, and proof-checker planes.
+    require(root / "formal/AASMSolutionPools.tla", [
+        "CompleteImpliesExhausted", "CompleteImpliesIndependentChecker",
+        "CompleteImpliesPassingChecker", "CompleteImpliesDurableCursor",
+        "CompleteImpliesExclusionPerSolution", "PartialModeNeverClaimsComplete",
+        "CompletenessNeverDirectlyAuthorizesTruth",
+    ])
+    require(root / "formal/AASMSolutionPools.cfg", [
+        "CompleteImpliesExhausted", "CompleteImpliesIndependentChecker",
+        "CompleteImpliesPassingChecker", "CompleteImpliesDurableCursor",
+        "CompleteImpliesExclusionPerSolution", "PartialModeNeverClaimsComplete",
+        "CompletenessNeverDirectlyAuthorizesTruth",
+    ])
+    require(root / "formal/aasm_solution_pools.pml", [
+        "cursor_durable", "solution_count", "exclusion_count", "exhausted",
+        "checker_independent", "checker_passed", "complete", "policy_acted", "truth_authorized",
+    ])
+    require(root / "src/aasm/solution_pools.py", [
+        'SOLUTION_POOL_CONTRACT_ID = "aasm.optimization.solution-pool.v1"',
+        'ENUMERATION_CONTRACT_ID = "aasm.optimization.enumeration.v1"',
+        'SOLUTION_POOL_STABILITY = "EXPERIMENTAL_ENFORCED"',
+        '"complete_requires_independent_exhaustion_certificate": True',
+        '"bounded_or_native_pool_implies_completeness": False',
+        '"result_authority": "EVIDENCE_ONLY"',
+        '"truth_authority": "EXISTING_AASM_POLICY_ONLY"',
+        "certify_complete_finite_enumeration", "enumerate_native_binary_backend",
+        "EXACT_SOLUTION_SET_EQUALITY_NEVER_VOTING",
+    ])
+    require(root / "src/aasm/runtime_v51.py", ["SolutionPoolRuntimeMixin", "V50Engine"])
+    require(root / "src/aasm/_runtime_v51_pools.py", [
+        "start_solution_pool", "admit_solution_to_pool", "advance_solution_pool",
+        "enumerate_complete_solution_pool", "solution_pool_record_type", "EVIDENCE_ONLY",
     ])
 
     # v0.50 adds proof-carrying solver claims without granting proof artifacts
@@ -129,7 +164,7 @@ def main():
     require(root / "src/aasm/advanced_optimization.py", ["aasm.optimization.advanced.v1", "SEARCH_STATE_NEVER_PROMOTES_TRUTH", "EPHEMERAL_PERFORMANCE_ONLY", "unsat_core", "warm_start", "affine_soc"])
     require(root / "src/aasm/_runtime_v46_advanced.py", ["advanced result lease expired before result commit", "advanced result implementation does not match admitted provider", "EVIDENCE_ONLY"])
 
-    print("v0.50.0 formal contracts: PASS")
+    print("v0.51.0 formal contracts: PASS")
     return 0
 
 
