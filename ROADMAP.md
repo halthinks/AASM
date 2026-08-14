@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.42.0 / experimental**.
+AASM is currently **v0.43.0 / experimental**.
 
 ## Released
 
@@ -11,7 +11,8 @@ AASM is currently **v0.42.0 / experimental**.
 - v0.39.0 Typed Capability ABI and Formal Verification Workers
 - v0.40.0 Hierarchical Memory, Reasoning Frontier, and Context Projection
 - v0.41.0 Domain-Neutral Solver Loop and Deterministic Reuse Plane
-- **v0.42.0 Reference Domains & Reuse/Memory/Reasoning Stress Tests — Current — implemented**
+- v0.42.0 Reference Domains & Reuse/Memory/Reasoning Stress Tests
+- **v0.43.0 Semantic Conformance, Adversarial Domains, and Certification — Current — implemented**
 
 ## v0.40.0 — Hierarchical Memory, Reasoning Frontier, and Context Projection
 
@@ -57,14 +58,41 @@ Delivered:
 
 ## v0.43.0 — Semantic Conformance and Adversarial Certification
 
-**Next.** Certify domain packages, compilers, reasoning, truth maintenance, capabilities, formal verifiers, memory/context, solver traces, and recovery with explicit `PASS | FAIL | INCONCLUSIVE` adversarial fixtures.
+Delivered:
 
-The v0.43 layer should distinguish architectural stress success from semantic certification. It must not reinterpret the synthetic v0.42 reference domains as proof that arbitrary real-world domain data or conclusions are correct.
+- `aasm.certification.v1 / 0.1.0` with explicit `PASS | FAIL | INCONCLUSIVE` semantics;
+- certification profiles for reference domains, solver/reuse, truth/memory, and formal-verification boundaries;
+- negative/adversarial fixtures where missing evidence is never converted to success;
+- a strict distinction between deterministic architectural certification and arbitrary external semantic truth;
+- public API, CLI, JSON schema, release/source gates, documentation, and regression coverage;
+- an experimental `aasm.sii.v1 / 0.2.0` participation-plane preview included as a certification target before activation;
+- explicit SII adversarial checks for producer-controlled fingerprints, identity-reset attempts, self-measurement, forged reuse telemetry, resource-to-authority escalation, and outcome farming;
+- expected SII `INCONCLUSIVE` status while actor-authority binding and ResourceLease enforcement remain unimplemented;
+- no new kernel runtime: `runtime_v41.AASMEngine` remains the active engine.
 
-## v0.44.0 — Cross-Run Certified Knowledge and Governed Long-Term Memory
+The v0.43 layer distinguishes architectural stress success from semantic certification. It does not reinterpret the synthetic v0.42 reference domains as proof that arbitrary real-world domain data or conclusions are correct.
 
-Opt-in cross-run knowledge with immutable provenance, applicability scope, compatibility, epistemic status, retention/privacy, revocation/supersession, and explicit receiving-run admission.
+## v0.44.0 — Symbiotic Intelligence Interface & Governed Intelligence Economics
 
-## v0.45.0 — Semantic Solver Release Candidate
+**Next.** Graduate SII from experimental certification target to enforceable participation plane without creating a second authority system.
 
-Freeze the coherent public solver contracts after replay, formal, distributed, adversarial, memory/privacy, reference-domain, packaging, and upgrade gates pass.
+Required graduation work:
+
+1. bind proposer and measurement identities to durable governed AASM principals;
+2. resolve measurement authority from existing AASM authority/capability state rather than caller-supplied strings;
+3. bind ResourceLease context budgets to v0.40 context projection;
+4. bind parallel-candidate and scheduling budgets to the existing resource/scheduler path;
+5. bind solver-class/resource privileges to the existing v0.39 capability/lease boundary;
+6. move scoring thresholds/weight profiles into explicit versioned policy objects rather than hidden kernel constants;
+7. preserve bounded-window decay so prior success never grants permanent power;
+8. add adversarial fixtures for easy-task farming, colluding verifier/proposer pairs, stale-data farming, identity games, score oscillation, privilege escalation, and resource-policy bypass;
+9. require `aasm certify --target sii-preview` to graduate from `INCONCLUSIVE` to `PASS` before making SII an active runtime integration surface;
+10. retain the invariant that utility can buy compute/search/context, never truth or canonical-state authority.
+
+## v0.45.0 — Cross-Run Certified Knowledge and Governed Long-Term Memory
+
+Opt-in cross-run knowledge with immutable provenance, applicability scope, compatibility, epistemic status, retention/privacy, revocation/supersession, explicit receiving-run admission, and SII-aware resource accounting without authority inheritance.
+
+## v0.46.0 — Semantic Solver Release Candidate
+
+Freeze the coherent public solver contracts after replay, formal, distributed, adversarial, memory/privacy, reference-domain, certification, SII, packaging, and upgrade gates pass.
