@@ -18,12 +18,12 @@ The patch includes:
 
 - the standard Apache License 2.0 text in `LICENSE`;
 - `NOTICE` with AASM attribution;
-- SPDX package metadata `Apache-2.0`;
-- the Apache OSI classifier;
+- PEP 639/SPDX package metadata `Apache-2.0`;
+- no legacy `License :: ...` classifier, matching the current setuptools PEP 639 requirements;
 - both `LICENSE` and `NOTICE` declared as package license files;
 - `NOTICE` included in source distributions;
 - contribution terms updated to Apache-2.0;
-- release/source gates that verify the active license and packaged attribution files.
+- release/source gates that verify the active license, reject legacy license classifiers, and verify packaged attribution files.
 
 ## Historical release integrity
 
