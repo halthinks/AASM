@@ -1,5 +1,13 @@
 from . import cli_v46 as _v46
+from .certification_v47 import certification_contract as _certification_contract_v47, run_certification as _run_certification_v47
 from .sii_governance import default_sii_scoring_policy, governed_sii_contract
+
+# Preserve the long-lived `certification-contract` and `certify` command names,
+# but make their module-level callbacks resolve through the v0.47 facade. This
+# keeps the old parser structure while allowing `certify --target sii-preview`
+# to become the governed graduation check.
+_v46._v45._v44._v43.certification_contract = _certification_contract_v47
+_v46._v45._v44._v43.run_certification = _run_certification_v47
 
 
 def _json(value):
