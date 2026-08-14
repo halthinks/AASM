@@ -34,7 +34,7 @@ from .sii_governance import (
 )
 from .runtime_v47 import AASMEngine
 
-__version__ = "0.47.0"
+__version__ = "0.47.1"
 REMOTE_PROTOCOL_NAME = _v46.REMOTE_PROTOCOL_NAME
 REMOTE_PROTOCOL_VERSION = _v46.REMOTE_PROTOCOL_VERSION
 
