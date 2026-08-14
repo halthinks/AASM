@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/sii-governed-resource-lease.schema.json",
+  "title": "AASM Governed SII Resource Lease",
+  "type": "object",
+  "required": ["lease_id", "proposer_id", "principal_id", "policy_id", "policy_version", "resource_tier", "contextual_utility", "weight_profile", "budget", "authority_class", "direct_truth_promotion", "direct_state_mutation", "self_verification", "mandatory_verification_override", "enforcement", "fingerprint"],
+  "properties": {
+    "lease_id": {"type": "string", "minLength": 1},
+    "proposer_id": {"type": "string", "minLength": 1},
+    "principal_id": {"type": "string", "minLength": 1},
+    "policy_id": {"type": "string", "minLength": 1},
+    "policy_version": {"type": "string", "minLength": 1},
+    "resource_tier": {"type": "integer", "minimum": 1},
+    "contextual_utility": {"type": "number", "minimum": 0, "maximum": 1},
+    "weight_profile": {"type": "string", "minLength": 1},
+    "performance_samples": {"type": "integer", "minimum": 0},
+    "terminal_samples": {"type": "integer", "minimum": 0},
+    "budget": {"type": "object"},
+    "authority_class": {"const": "PROPOSER"},
+    "direct_truth_promotion": {"const": false},
+    "direct_state_mutation": {"const": false},
+    "self_verification": {"const": false},
+    "mandatory_verification_override": {"const": "REQUIRED_VERIFICATION_NEVER_REDUCED"},
+    "enforcement": {"const": "AASM_CONTEXT_CAPABILITY_SCHEDULER_TASKLEASE_NATIVE_BUDGETS_V047"},
+    "fingerprint": {"type": "string", "minLength": 64, "maxLength": 64}
+  },
+  "additionalProperties": false
+}
