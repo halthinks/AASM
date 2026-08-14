@@ -8,23 +8,19 @@ from .proof_claims import certify_optimization_result, solver_proof_contract
 
 
 def _proof_value(snapshot, evidence_id: str):
-    row = snapshot.evidence.get(evidence_id)
-    if row is None:
-        return None
-    if hasattr(row, "to_dict"):
-        return row.to_dict()
-    if hasattr(row, "__dict__"):
-        return dict(row.__dict__)
-    return dict(row)
+    for row in snapshot.evidence.get("records", []):
+        if str(row.get("evidence_id")) == str(evidence_id):
+            return dict(row)
+    return None
 
 
 def _proof_projection(snapshot, kind: str) -> dict[str, Any]:
     out: dict[str, Any] = {}
-    for evidence_id, row in snapshot.evidence.items():
-        value = _proof_value(snapshot, evidence_id) or {}
+    for value in snapshot.evidence.get("records", []):
         metadata = value.get("metadata") or {}
         if metadata.get("proof_record_type") != kind:
             continue
+        evidence_id = str(value.get("evidence_id") or "")
         object_id = str(metadata.get("object_id") or evidence_id)
         out[object_id] = metadata.get("document") or {}
     return out
