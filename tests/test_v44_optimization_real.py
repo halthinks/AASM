@@ -5,9 +5,10 @@ import pytest
 
 from aasm.model import ProblemSpec
 from aasm.optimization import (
+    OptimizationRequest,
+    OptimizationResult,
     default_optimization_providers,
     reference_optimization_models,
-    solve_optimization_request,
     validate_optimization_result,
 )
 from aasm.optimization_conformance import run_optimization_conformance
@@ -61,7 +62,9 @@ def test_real_backends_cross_existing_aasm_lease_and_evidence_boundary():
         stored = engine.optimization_result_report(requested["request"]["request_id"])["results"]
         assert len(stored) == 1
         validate_optimization_result(
-            engine.optimization_request_report(requested["request"]["request_id"])["request"],
-            stored[0]["result"],
+            OptimizationRequest.from_dict(
+                engine.optimization_request_report(requested["request"]["request_id"])["request"]
+            ),
+            OptimizationResult.from_dict(stored[0]["result"]),
         )
     assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
