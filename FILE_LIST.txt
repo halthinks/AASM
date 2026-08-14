@@ -6,6 +6,7 @@
 ./.github/PULL_REQUEST_TEMPLATE.md
 ./.github/dependabot.yml
 ./.github/workflows/ci.yml
+./.github/workflows/cross-run.yml
 ./.github/workflows/formal.yml
 ./.github/workflows/optimization.yml
 ./.github/workflows/release.yml
@@ -37,6 +38,7 @@
 ./docs/COMPATIBILITY.md
 ./docs/CONTROL_CENTER.md
 ./docs/CONVEX_AND_MODELING_ADAPTERS.md
+./docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md
 ./docs/CURRENT_RELEASE.md
 ./docs/DECISION_BACKENDS.md
 ./docs/DECLARATIVE_MACHINES.md
@@ -87,6 +89,7 @@
 ./docs/RELEASE_0.46.md
 ./docs/RELEASE_0.47.1.md
 ./docs/RELEASE_0.47.md
+./docs/RELEASE_0.48.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
@@ -140,6 +143,8 @@
 ./examples/sii_demo.py
 ./formal/AASMCalculus.cfg
 ./formal/AASMCalculus.tla
+./formal/AASMCrossRunKnowledge.cfg
+./formal/AASMCrossRunKnowledge.tla
 ./formal/AASMGovernedSII.cfg
 ./formal/AASMGovernedSII.tla
 ./formal/AASMHierarchicalMemory.cfg
@@ -157,6 +162,7 @@
 ./formal/AASMTypedCapabilities.cfg
 ./formal/AASMTypedCapabilities.tla
 ./formal/aasm_calculus.pml
+./formal/aasm_cross_run_knowledge.pml
 ./formal/aasm_governed_sii.pml
 ./formal/aasm_hierarchical_memory.pml
 ./formal/aasm_optimization_portfolio.pml
@@ -213,6 +219,10 @@
 ./schemas/convex-optimization-model.schema.json
 ./schemas/convex-optimization-request.schema.json
 ./schemas/convex-optimization-result.schema.json
+./schemas/cross-run-admission-certificate.schema.json
+./schemas/cross-run-knowledge-bundle.schema.json
+./schemas/cross-run-knowledge-envelope.schema.json
+./schemas/cross-run-principal-map.schema.json
 ./schemas/cursor-page.schema.json
 ./schemas/decision-scope.schema.json
 ./schemas/effect.schema.json
@@ -326,6 +336,7 @@
 ./src/aasm/_runtime_v45_convex.py
 ./src/aasm/_runtime_v46_advanced.py
 ./src/aasm/_runtime_v47_sii.py
+./src/aasm/_runtime_v48_knowledge.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -367,6 +378,7 @@
 ./src/aasm/cli_v45.py
 ./src/aasm/cli_v46.py
 ./src/aasm/cli_v47.py
+./src/aasm/cli_v48.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -382,6 +394,8 @@
 ./src/aasm/convex_optimization.py
 ./src/aasm/core/__init__.py
 ./src/aasm/core/reducer.py
+./src/aasm/cross_run_conformance.py
+./src/aasm/cross_run_knowledge.py
 ./src/aasm/decision_backends.py
 ./src/aasm/definitions.py
 ./src/aasm/demo_stack.py
@@ -444,6 +458,7 @@
 ./src/aasm/public_v45.py
 ./src/aasm/public_v46.py
 ./src/aasm/public_v47.py
+./src/aasm/public_v48.py
 ./src/aasm/pulp_adapter.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
@@ -502,6 +517,7 @@
 ./src/aasm/runtime_v45.py
 ./src/aasm/runtime_v46.py
 ./src/aasm/runtime_v47.py
+./src/aasm/runtime_v48.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
@@ -595,4 +611,7 @@
 ./tests/test_v47_public.py
 ./tests/test_v47_sii_governance.py
 ./tests/test_v47_sii_real.py
+./tests/test_v48_cross_run_knowledge.py
+./tests/test_v48_cross_run_sii_mapping.py
+./tests/test_v48_public.py
 ./tests/test_workers_leases.py
