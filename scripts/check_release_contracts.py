@@ -136,9 +136,21 @@ def main():
         "AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS", "NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE",
         "aasm/semantic-solver-rc", "Kissat", "CaDiCaL", "CP-SAT scheduling — OR-Tools", "HiGHS", "CVXPY", "PuLP",
         "Z3", "cvc5", "Vampire", "Lean 4", "Required verification is never reduced",
-        "Apache License, Version 2.0", "LICENSE_POLICY.md", "v0.50.0",
+        "Apache License, Version 2.0", "LICENSE_POLICY.md", "v0.50.0", "Proof-Carrying Solver Claims",
+        "no presumed v1.0",
     ])
-    require(root / "ROADMAP.md", ["v0.49.0", "Semantic Solver Release Candidate", "v0.50.0", "Post-RC Stabilization"])
+    require(root / "ROADMAP.md", [
+        "v0.49.0", "Semantic Solver Release Candidate", "v0.50.0", "Proof-Carrying Solver Claims",
+        "v0.51.0", "Governed Solution Pools & Complete Enumeration",
+        "v0.52.0", "Lexicographic Multi-Objective & Pareto Solving",
+        "v0.53.0", "Durable Cross-Run Solver Learning",
+        "v0.54.0", "Certified Cross-Solver Exchange & Deterministic Portfolio Racing",
+        "v0.55.0", "Extended Mathematical IR", "v0.56.0", "Stress Corpus",
+        "v0.57.0", "Semantic Solver RC2 / Contract Review", "No Presumed v1.0",
+        "v0.50–v0.57 closes the currently identified semantic-solver gap cluster. It does not close AASM.",
+    ])
+    forbid(root / "README.md", ["v0.50 Post-RC Stabilization", "v0.50.0 — Post-RC Stabilization"])
+    forbid(root / "ROADMAP.md", ["v0.50.0 — Post-RC Stabilization"])
     require(root / "CHANGELOG.md", ["[0.49.0]", "Semantic Solver Release Candidate", "[0.48.1]", "Project-Wide Apache-2.0 Policy Correction"])
     require(root / "docs/CURRENT_RELEASE.md", ["AASM v0.49.0", "runtime_v49", "0.25.0", "aasm.semantic.solver.rc.v1 / 0.1.0", "Apache-2.0", "aasm/semantic-solver-rc"])
     require(root / "docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md", [
