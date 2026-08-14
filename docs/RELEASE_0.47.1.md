@@ -1,10 +1,10 @@
 # AASM v0.47.1 — Apache-2.0 License Transition
 
-AASM v0.47.1 is a patch release over v0.47.0. It does not change the governed SII runtime, solver portfolio, authority semantics, certification behavior, replay semantics, or public adoption contract.
+AASM v0.47.1 is a licensing/packaging patch over v0.47.0. It does not change the governed SII runtime, solver portfolio, authority semantics, certification behavior, replay semantics, or public adoption contract.
 
 ## Change
 
-The active project and distribution license changes from MIT to Apache License 2.0.
+The AASM project-wide declared license is Apache License 2.0.
 
 ```text
 package: 0.47.1
@@ -14,7 +14,7 @@ SII: aasm.sii.v1 / 0.3.0
 license: Apache-2.0
 ```
 
-The patch includes:
+The patch introduced:
 
 - the standard Apache License 2.0 text in `LICENSE`;
 - `NOTICE` with AASM attribution;
@@ -22,12 +22,25 @@ The patch includes:
 - no legacy `License :: ...` classifier, matching the current setuptools PEP 639 requirements;
 - both `LICENSE` and `NOTICE` declared as package license files;
 - `NOTICE` included in source distributions;
-- contribution terms updated to Apache-2.0;
+- contribution terms aligned to Apache-2.0;
 - release/source gates that verify the active license, reject legacy license classifiers, and verify packaged attribution files.
 
-## Historical release integrity
+## Project-wide relicensing declaration
 
-The existing `v0.47.0` release is not rewritten. Its published artifacts remain the original MIT-licensed distribution. v0.47.1 is the first Apache-2.0 AASM release.
+AASM does **not** designate v0.47.1 as the first or only Apache-2.0 point in the project's history.
+
+To the extent AASM has the legal right to relicense the relevant material, prior AASM versions—including versions first distributed under MIT—are **also offered under Apache-2.0** under the project-wide declaration in `LICENSE_POLICY.md`.
+
+Earlier MIT grants already received by users remain valid. That is a surviving permission for those recipients, not a statement that earlier AASM versions are MIT-only.
+
+In short:
+
+```text
+AASM project-wide declared license  = Apache-2.0
+prior versions                      = also offered under Apache-2.0 where AASM has relicensing rights
+previously granted MIT permissions  = remain valid for recipients
+prior AASM versions                 != MIT-only
+```
 
 ## Runtime invariants unchanged
 
@@ -38,3 +51,5 @@ REQUIRED VERIFICATION IS NEVER REDUCED BY SII.
 ```
 
 All v0.47.0 solver, SII, formal-verification, memory, reuse, persistence, scheduler, and replay contracts remain unchanged.
+
+See `LICENSE`, `NOTICE`, and `LICENSE_POLICY.md` for the current AASM licensing declaration.
