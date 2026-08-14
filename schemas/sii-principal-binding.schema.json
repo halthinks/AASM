@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/sii-principal-binding.schema.json",
+  "title": "AASM Governed SII Principal Binding",
+  "type": "object",
+  "required": ["binding_id", "principal_id", "authority_class", "can_propose", "can_measure", "active", "fingerprint"],
+  "properties": {
+    "binding_id": {"type": "string", "minLength": 1},
+    "principal_id": {"type": "string", "minLength": 1},
+    "authority_class": {"enum": ["PROPOSER", "VERIFIER", "POLICY", "CONTROLLER"]},
+    "can_propose": {"type": "boolean"},
+    "can_measure": {"type": "boolean"},
+    "active": {"type": "boolean"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 64, "maxLength": 64}
+  },
+  "additionalProperties": false
+}
