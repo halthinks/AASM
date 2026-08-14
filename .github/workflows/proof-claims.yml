@@ -22,9 +22,9 @@ jobs:
       - name: Install
         run: python -m pip install -e '.[dev]'
       - name: Compile proof-claim surface
-        run: python -m compileall -q src/aasm/proof_claims.py src/aasm/_runtime_v50_proof.py src/aasm/runtime_v50.py src/aasm/proof_claim_conformance.py tests/test_v50_proof_claims.py
+        run: python -m compileall -q src/aasm/proof_claims.py src/aasm/_runtime_v50_proof.py src/aasm/runtime_v50.py src/aasm/proof_claim_conformance.py tests/test_v50_proof_claims.py tests/test_v50_proof_claim_limits.py
       - name: Run proof-claim tests
-        run: pytest -q tests/test_v50_proof_claims.py
+        run: pytest -q tests/test_v50_proof_claims.py tests/test_v50_proof_claim_limits.py
       - name: Run proof-claim conformance
         run: |
           python - <<'PY'
@@ -45,7 +45,7 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='proof-carrying solver claim contracts and conformance passed'
+            description='proof claims, applicability boundaries, and conformance passed'
           else
             state=failure
             description='proof-carrying solver claim gate failed'
