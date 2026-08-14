@@ -10,10 +10,10 @@ from aasm.reference_domains import (
 
 
 def test_v42_public_and_cli_surfaces_are_active():
-    assert __version__ == "0.48.1"
+    assert __version__ == "0.49.0"
     report = validate_public_api_contract()
     assert report["valid"] is True, report
-    assert report["contract"]["contract_version"] == "0.24.0"
+    assert report["contract"]["contract_version"] == "0.25.0"
     assert report["contract"]["reference_domains"]["contract_id"] == "aasm.reference-domains.v1"
     help_text = build_parser().format_help()
     assert "reference-domain-contract" in help_text
