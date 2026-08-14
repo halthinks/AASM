@@ -1,10 +1,13 @@
-# AASM v0.47.0 — Governed Symbiotic Intelligence & Intelligence Economics
+# AASM v0.47.1 — Governed Symbiotic Intelligence & Apache-2.0 Licensing
 
-AASM v0.47 graduates SII from the experimental preview into an enforceable participation/resource plane over the real v0.46 native solver substrate. The runtime is `SIIGovernanceRuntimeMixin + runtime_v46.AASMEngine`; there is still one scheduler, one event/reducer path, one capability/provider registry, one reuse plane, and one truth boundary.
+AASM v0.47.1 is a licensing/packaging patch over v0.47.0. The runtime and public behavioral contracts remain the governed SII architecture introduced in v0.47.0; the project license is now Apache License 2.0 (`Apache-2.0`). The already-published v0.47.0 artifacts remain historically accurate under their original MIT license.
+
+The runtime is still `SIIGovernanceRuntimeMixin + runtime_v46.AASMEngine`; there is one scheduler, one event/reducer path, one capability/provider registry, one reuse plane, and one truth boundary.
 
 ## Contracts
 
 ```text
+package/public surface: 0.47.1
 aasm.adoption.v1 / 0.23.0
 aasm.certification.v1 / 0.2.0
 aasm.sii.v1 / 0.3.0
@@ -17,17 +20,33 @@ aasm.reuse.certificate.v1 / 0.1.0
 aasm.capability.abi.v1 / 0.1.0
 aasm.formal.verification.v1 / 0.1.0
 aasm.remote.v1 / 0.19.0
+license: Apache-2.0
 ```
 
-## What graduated
+## Licensing patch
+
+v0.47.1 changes the active project/distribution license from MIT to Apache License 2.0 and adds:
+
+- the standard Apache License 2.0 text in `LICENSE`;
+- a distributable `NOTICE` file preserving AASM attribution;
+- `license = "Apache-2.0"` package metadata;
+- the `License :: OSI Approved :: Apache Software License` classifier;
+- `LICENSE` and `NOTICE` in `license-files`;
+- `NOTICE` in the source-distribution manifest;
+- contribution terms aligned to Apache-2.0;
+- release gates that reject an incorrect license expression or missing Apache/NOTICE files.
+
+No solver, authority, SII, memory, reuse, persistence, or verification semantics change in this patch.
+
+## What graduated in v0.47.0
 
 ### Durable principals
 
-SII proposal and measurement actors now require policy-admitted `SIIPrincipalBinding` records. The same stable principal cannot silently rebind to a different authority/role set. Measurement authority is resolved from durable AASM state; callers no longer supply their own authority class at measurement time.
+SII proposal and measurement actors require policy-admitted `SIIPrincipalBinding` records. The same stable principal cannot silently rebind to a different authority/role set. Measurement authority is resolved from durable AASM state; callers do not supply their own authority class at measurement time.
 
 ### Versioned intelligence economics
 
-Resource thresholds and weights are now durable `SIIScoringPolicy` data. The default policy is version `1.0.0` and preserves reliability, calibration, verified utility, reuse contribution, compute efficiency, conflict-learning value, and artifact durability as the measured performance vector.
+Resource thresholds and weights are durable `SIIScoringPolicy` data. The default policy is version `1.0.0` and preserves reliability, calibration, verified utility, reuse contribution, compute efficiency, conflict-learning value, and artifact durability as the measured performance vector.
 
 ### Enforced ResourceLease
 
@@ -62,13 +81,13 @@ A low SII score cannot remove a required verifier, weaken proof strength, shrink
 aasm certify --target sii-preview
 ```
 
-now aliases the governed v0.47 SII graduation fixture and must return `PASS` instead of the v0.43 expected `INCONCLUSIVE`.
+aliases the governed v0.47 SII graduation fixture and must return `PASS` instead of the v0.43 expected `INCONCLUSIVE`.
 
 The fixture checks durable measurement-principal binding, active versioned scoring policy, rejection of unbound meters, no authority reward, native SAT/time budget enforcement, scheduler provenance, mandatory-verification non-reduction, and exact replay.
 
 ## Solver portfolio preserved
 
-v0.47 does not replace the native solver work from v0.44–v0.46:
+v0.47.1 preserves the native solver work from v0.44–v0.47.0:
 
 - Kissat fast SAT;
 - incremental CaDiCaL with assumptions/UNSAT cores/session reuse;
@@ -78,19 +97,18 @@ v0.47 does not replace the native solver work from v0.44–v0.46:
 - PuLP translation-only import;
 - Z3 / cvc5 / Vampire / Lean 4 formal verification.
 
-The new SII layer allocates resources around those existing capabilities rather than becoming a solver itself.
-
 Release identity:
 
 ```text
-package/public surface: 0.47.0
+package/public surface: 0.47.1
 runtime: runtime_v47.AASMEngine
 base advanced solver runtime: runtime_v46.AASMEngine
 base convex runtime: runtime_v45.AASMEngine
 base optimization runtime: runtime_v44.AASMEngine
 base solver/reuse kernel: runtime_v41.AASMEngine
 adoption: aasm.adoption.v1 / 0.23.0
+license: Apache-2.0
 next: v0.48.0 Cross-Run Certified Knowledge & Governed Long-Term Memory
 ```
 
-See `docs/SII_GOVERNED_ECONOMICS.md` and `docs/RELEASE_0.47.md`.
+See `docs/SII_GOVERNED_ECONOMICS.md`, `docs/RELEASE_0.47.md`, and `docs/RELEASE_0.47.1.md`.
