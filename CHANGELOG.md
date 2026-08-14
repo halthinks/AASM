@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.45.0] - 2026-08-14
+
+### Convex Optimization & Modeling Adapters
+
+- added `aasm.optimization.convex.v1 / 0.1.0` and advanced `aasm.adoption.v1` to `0.21.0`;
+- added `solver.convex@0.1.0` as a governed OPERATOR capability that executes CVXPY only through the existing AASM resource/worker/TaskLease boundary;
+- added an AASM-owned convex canonical IR for scalar continuous variables, linear equality/inequality constraints, diagonal convex quadratic minimization, diagonal concave quadratic maximization, and constant-radius second-order-cone constraints;
+- added deterministic CVXPY backend selection across installed OSQP/CLARABEL/SCS-style backends by problem class and included the selected backend in solver identity;
+- independently rechecks bounds, linear constraints, SOC feasibility, request/model/provider identity, and canonical objective evaluation before CVXPY output can become durable Evidence;
+- kept convex solver results explicitly `EVIDENCE_ONLY` and added lease expiry, superseded-attempt, provider-implementation, result-collision, and exact completed-lease replay protections;
+- added `aasm.adapter.pulp.v1 / 0.1.0` as a `TRANSLATION_ONLY` compatibility boundary with solver execution explicitly `NEVER`;
+- added conversion of supported finite-bounded PuLP continuous/integer/binary variables, linear constraints, and linear objectives into the existing v0.44 `OptimizationModel`;
+- rejects unbounded PuLP variables rather than inventing finite big bounds that change model semantics;
+- routes imported PuLP models through ordinary AASM native providers, including real PuLP-to-HiGHS execution in CI;
+- preserved direct PySAT/CaDiCaL, OR-Tools CP-SAT, and HiGHS execution instead of wrapping those native paths through CVXPY or PuLP;
+- preserved Z3, cvc5, Vampire, and Lean 4 on the existing formal-verification pathway;
+- added `modeling` and expanded `optimization` optional dependency extras for CVXPY/PuLP;
+- added real Python 3.13 backend coverage for CVXPY QP, CVXPY SOC, PuLP import, PuLP-to-HiGHS, and the existing native optimization portfolio;
+- added public/CLI surfaces, schemas, release/source gates, documentation, and compatibility regression coverage;
+- moved SII graduation to v0.46 so governed intelligence economics can allocate real SAT/CP-SAT/MILP/convex/formal/reasoning resource budgets.
+
 ## [0.44.0] - 2026-08-14
 
 ### Heterogeneous Optimization Solver Portfolio
