@@ -22,9 +22,17 @@ def _provider(provider_id):
     return next(row for row in default_advanced_providers() if row.provider_id == provider_id)
 
 
+def _backend_failures(report):
+    return {
+        kind: {"status": row.get("status"), "diagnostics": row.get("diagnostics"), "solver": row.get("solver")}
+        for kind, row in report.get("results", {}).items()
+        if row.get("status") == "ERROR"
+    }
+
+
 def test_real_advanced_conformance_executes_kissat_incremental_cadical_scheduling_highs_and_cvxpy():
     report = run_advanced_optimization_conformance(real=True)
-    assert report["status"] == "PASS", report
+    assert report["status"] == "PASS", {"checks": report["checks"], "backend_failures": _backend_failures(report)}
     for check in (
         "fast_sat_real_backend_executes",
         "incremental_sat_real_backend_executes",
@@ -37,7 +45,7 @@ def test_real_advanced_conformance_executes_kissat_incremental_cadical_schedulin
         "milp_warm_start_recorded",
         "convex_advanced_real_backend_executes",
     ):
-        assert report["checks"][check] is True, report
+        assert report["checks"][check] is True, {"failed_check": check, "backend_failures": _backend_failures(report)}
 
 
 def test_every_real_advanced_backend_runs_through_aasm_resource_worker_lease_and_evidence():
@@ -62,7 +70,8 @@ def test_every_real_advanced_backend_runs_through_aasm_resource_worker_lease_and
         worker_id = f"worker-{ADVANCED_PROVIDERS[kind]}"
         lease = engine.claim_next_task(worker_id, lease_seconds=120)
         committed = engine.execute_advanced_optimization_lease(lease["lease_id"])
-        assert committed["result"]["status"] in expected[kind], committed
+        result = committed["result"]
+        assert result["status"] in expected[kind], {"kind": kind, "status": result["status"], "diagnostics": result.get("diagnostics"), "solver": result.get("solver")}
         assert committed["satisfied"] is True
         evidence = next(row for row in engine.snapshot.evidence["records"] if row["evidence_id"] == committed["result_evidence_id"])
         assert evidence["metadata"]["result_authority"] == "EVIDENCE_ONLY"
