@@ -1,3 +1,6 @@
+import pytest
+
+import aasm.runtime_v44 as runtime_v44
 from aasm import __version__, validate_public_api_contract
 from aasm.model import ProblemSpec
 from aasm.optimization import (
@@ -14,6 +17,9 @@ from aasm.runtime_v44 import AASMEngine
 from aasm.solver_types import SolverStepRequest
 
 
+CADICAL_IMPLEMENTATION = "pysat:cadical195"
+
+
 def _provider(provider_id):
     return next(row for row in default_optimization_providers() if row.provider_id == provider_id)
 
@@ -23,6 +29,17 @@ def _engine_with_sat():
     engine.install_default_optimization_capability_contracts(authority_id="policy", authority_class="POLICY")
     engine.register_optimization_provider_runtime(_provider("cadical"), authority_id="policy", authority_class="POLICY")
     return engine
+
+
+def _sat_result(request, model, *, implementation=CADICAL_IMPLEMENTATION, assignment=None):
+    return OptimizationResult(
+        request["request_id"],
+        request["fingerprint"],
+        model.fingerprint,
+        "SAT",
+        OptimizationSolverIdentity("cadical", implementation, "fixture-1"),
+        assignment=assignment or {"x": 0, "y": 1},
+    )
 
 
 def test_v44_public_contract_is_live_and_preserves_formal_portfolio():
@@ -54,12 +71,8 @@ def test_canonical_ir_selects_sat_cp_sat_and_milp_without_guessing():
 def test_solution_validator_rejects_invalid_sat_assignment():
     model = reference_optimization_models()["SAT"]
     validate_optimization_solution(model, {"x": 0, "y": 1})
-    try:
+    with pytest.raises(ValueError, match="violates clause"):
         validate_optimization_solution(model, {"x": 0, "y": 0})
-    except ValueError as exc:
-        assert "violates clause" in str(exc)
-    else:
-        raise AssertionError("invalid assignment was accepted")
 
 
 def test_existing_capability_resource_worker_and_lease_path_is_used():
@@ -79,15 +92,7 @@ def test_result_commit_is_evidence_only_and_replay_safe():
     admitted = engine.admit_optimization_model(model)
     requested = engine.request_optimization(model.model_id, requester_id="agent", required_provider="cadical")
     lease = engine.claim_next_task("worker-cadical", lease_seconds=60)
-    request = requested["request"]
-    result = OptimizationResult(
-        request["request_id"],
-        request["fingerprint"],
-        model.fingerprint,
-        "SAT",
-        OptimizationSolverIdentity("cadical", "fixture", "fixture-1"),
-        assignment={"x": 0, "y": 1},
-    )
+    result = _sat_result(requested["request"], model)
     committed = engine.commit_optimization_result(result, lease_id=lease["lease_id"])
     assert committed["satisfied"] is True
     assert committed["obligation"]["status"] == "VERIFIED"
@@ -98,6 +103,69 @@ def test_result_commit_is_evidence_only_and_replay_safe():
     assert admitted["model"]["fingerprint"] == model.fingerprint
 
 
+def test_forged_provider_implementation_is_rejected_before_result_admission():
+    engine = _engine_with_sat()
+    model = reference_optimization_models()["SAT"]
+    engine.admit_optimization_model(model)
+    requested = engine.request_optimization(model.model_id, requester_id="agent", required_provider="cadical")
+    lease = engine.claim_next_task("worker-cadical", lease_seconds=60)
+    before = len(engine.snapshot.evidence["records"])
+    with pytest.raises(ValueError, match="implementation does not match admitted provider"):
+        engine.commit_optimization_result(
+            _sat_result(requested["request"], model, implementation="forged-backend"),
+            lease_id=lease["lease_id"],
+        )
+    assert len(engine.snapshot.evidence["records"]) == before
+    assert next(row for row in engine.list_leases() if row["lease_id"] == lease["lease_id"])["status"] == "ACTIVE"
+
+
+def test_expired_optimization_lease_is_rejected_before_result_admission(monkeypatch):
+    engine = _engine_with_sat()
+    model = reference_optimization_models()["SAT"]
+    engine.admit_optimization_model(model)
+    requested = engine.request_optimization(model.model_id, requester_id="agent", required_provider="cadical")
+    lease = engine.claim_next_task("worker-cadical", lease_seconds=60)
+    monkeypatch.setattr(runtime_v44, "now", lambda: float(lease["expires_at"]) + 1.0)
+    before = len(engine.snapshot.evidence["records"])
+    with pytest.raises(ValueError, match="expired before result commit"):
+        engine.commit_optimization_result(_sat_result(requested["request"], model), lease_id=lease["lease_id"])
+    assert len(engine.snapshot.evidence["records"]) == before
+
+
+def test_superseded_optimization_lease_attempt_is_rejected(monkeypatch):
+    engine = _engine_with_sat()
+    model = reference_optimization_models()["SAT"]
+    engine.admit_optimization_model(model)
+    requested = engine.request_optimization(model.model_id, requester_id="agent", required_provider="cadical")
+    lease = engine.claim_next_task("worker-cadical", lease_seconds=60)
+    actual_list_leases = engine.list_leases
+    newer = dict(lease)
+    newer["lease_id"] = "lease-newer-attempt"
+    newer["attempt"] = int(lease.get("attempt", 1)) + 1
+    newer["status"] = "ACTIVE"
+    monkeypatch.setattr(engine, "list_leases", lambda: [*actual_list_leases(), newer])
+    with pytest.raises(ValueError, match="superseded by a newer attempt"):
+        engine.commit_optimization_result(_sat_result(requested["request"], model), lease_id=lease["lease_id"])
+
+
+def test_completed_lease_allows_only_exact_idempotent_result_replay():
+    engine = _engine_with_sat()
+    model = reference_optimization_models()["SAT"]
+    engine.admit_optimization_model(model)
+    requested = engine.request_optimization(model.model_id, requester_id="agent", required_provider="cadical")
+    lease = engine.claim_next_task("worker-cadical", lease_seconds=60)
+    result = _sat_result(requested["request"], model)
+    first = engine.commit_optimization_result(result, lease_id=lease["lease_id"])
+    replay = engine.commit_optimization_result(result, lease_id=lease["lease_id"])
+    assert replay["already_committed"] is True
+    assert replay["result_evidence_id"] == first["result_evidence_id"]
+    with pytest.raises(ValueError, match="completed optimization lease cannot commit a new result"):
+        engine.commit_optimization_result(
+            _sat_result(requested["request"], model, assignment={"x": 1, "y": 1}),
+            lease_id=lease["lease_id"],
+        )
+
+
 def test_optimization_result_can_enter_existing_v41_reuse_plane_only_after_policy_admission():
     engine = _engine_with_sat()
     model = reference_optimization_models()["SAT"]
@@ -105,11 +173,7 @@ def test_optimization_result_can_enter_existing_v41_reuse_plane_only_after_polic
     requested = engine.request_optimization(model.model_id, requester_id="agent", required_provider="cadical")
     lease = engine.claim_next_task("worker-cadical", lease_seconds=60)
     request = requested["request"]
-    result = OptimizationResult(
-        request["request_id"], request["fingerprint"], model.fingerprint, "SAT",
-        OptimizationSolverIdentity("cadical", "fixture", "fixture-1"), assignment={"x": 0, "y": 1},
-    )
-    committed = engine.commit_optimization_result(result, lease_id=lease["lease_id"])
+    committed = engine.commit_optimization_result(_sat_result(request, model), lease_id=lease["lease_id"])
     reuse_request = engine.optimization_reuse_request(request["request_id"])
     assert engine.lookup_reuse(reuse_request)["hit"] is False
     candidate = ReuseCandidate(
