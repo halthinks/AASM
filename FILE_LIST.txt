@@ -33,6 +33,7 @@
 ./docs/ARCHITECTURE.md
 ./docs/AUTOMATIC_CHECKPOINTS_FLEET_CONTROL.md
 ./docs/COMPATIBILITY.md
+./docs/CONVEX_AND_MODELING_ADAPTERS.md
 ./docs/CONTROL_CENTER.md
 ./docs/CURRENT_RELEASE.md
 ./docs/DECISION_BACKENDS.md
@@ -80,6 +81,7 @@
 ./docs/RELEASE_0.42.md
 ./docs/RELEASE_0.43.md
 ./docs/RELEASE_0.44.md
+./docs/RELEASE_0.45.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
@@ -196,6 +198,9 @@
 ./schemas/checkpoint-trigger-policy.schema.json
 ./schemas/collaboration-policy.schema.json
 ./schemas/context-projection-request.schema.json
+./schemas/convex-optimization-model.schema.json
+./schemas/convex-optimization-request.schema.json
+./schemas/convex-optimization-result.schema.json
 ./schemas/cursor-page.schema.json
 ./schemas/decision-scope.schema.json
 ./schemas/effect.schema.json
@@ -303,6 +308,7 @@
 ./src/aasm/_runtime_v41_reuse_refs.py
 ./src/aasm/_runtime_v41_solver.py
 ./src/aasm/_runtime_v44_optimization.py
+./src/aasm/_runtime_v45_convex.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -337,6 +343,7 @@
 ./src/aasm/cli_v42.py
 ./src/aasm/cli_v43.py
 ./src/aasm/cli_v44.py
+./src/aasm/cli_v45.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -349,6 +356,7 @@
 ./src/aasm/control_center_v29.py
 ./src/aasm/control_center_v30.py
 ./src/aasm/control_center_v31.py
+./src/aasm/convex_optimization.py
 ./src/aasm/core/__init__.py
 ./src/aasm/core/reducer.py
 ./src/aasm/decision_backends.py
@@ -385,6 +393,7 @@
 ./src/aasm/model.py
 ./src/aasm/model_check.py
 ./src/aasm/model_routing.py
+./src/aasm/modeling_conformance.py
 ./src/aasm/observability.py
 ./src/aasm/openai_executor.py
 ./src/aasm/operator_runbooks.py
@@ -409,6 +418,8 @@
 ./src/aasm/public_v42.py
 ./src/aasm/public_v43.py
 ./src/aasm/public_v44.py
+./src/aasm/public_v45.py
+./src/aasm/pulp_adapter.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
 ./src/aasm/reference_data/research/manifest.json
@@ -463,6 +474,7 @@
 ./src/aasm/runtime_v40.py
 ./src/aasm/runtime_v41.py
 ./src/aasm/runtime_v44.py
+./src/aasm/runtime_v45.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
@@ -546,4 +558,7 @@
 ./tests/test_v43_certification.py
 ./tests/test_v44_optimization.py
 ./tests/test_v44_optimization_real.py
+./tests/test_v45_modeling_adapters.py
+./tests/test_v45_modeling_adapters_real.py
+./tests/test_v45_public.py
 ./tests/test_workers_leases.py

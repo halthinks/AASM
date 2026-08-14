@@ -1,73 +1,59 @@
-# AASM v0.44.0 — Heterogeneous Optimization Solver Portfolio
+# AASM v0.45.0 — Convex Optimization & Modeling Adapters
 
-AASM v0.44 adds executable SAT, CP-SAT, and MILP capabilities through a real `runtime_v44.AASMEngine` composition while preserving the existing AASM authority stack. The new runtime is `runtime_v41.AASMEngine` plus `OptimizationRuntimeMixin`; it does not introduce a second scheduler, reducer, event log, provider registry, or truth store.
+AASM v0.45 extends the working v0.44 heterogeneous solver portfolio with a governed convex optimization capability and a PuLP compatibility boundary. The runtime is a thin `ConvexOptimizationRuntimeMixin + runtime_v44.AASMEngine` composition. It does not create a second scheduler, event log, reducer, provider registry, reuse plane, or truth store.
 
-Contracts:
+## Contracts
 
 ```text
-aasm.adoption.v1 / 0.20.0
+aasm.adoption.v1 / 0.21.0
 aasm.optimization.v1 / 0.1.0
+aasm.optimization.convex.v1 / 0.1.0
+aasm.adapter.pulp.v1 / 0.1.0
 aasm.certification.v1 / 0.1.0
-aasm.sii.v1 / 0.2.0              # experimental v0.45 target
-aasm.reference-domains.v1 / 0.1.0
+aasm.sii.v1 / 0.2.0              # experimental v0.46 target
 aasm.reuse.v1 / 0.1.0
 aasm.reuse.certificate.v1 / 0.1.0
-aasm.solver.loop.v1 / 0.1.0
-aasm.memory.hierarchical.v1 / 0.1.0
 aasm.capability.abi.v1 / 0.1.0
 aasm.formal.verification.v1 / 0.1.0
-aasm.remote.v1 / 0.19.0
 ```
 
-## Native optimization backends
+## Executable portfolio
 
-- `cadical` — SAT through PySAT/CaDiCaL;
-- `ortools-cp-sat` — integer/Boolean constraint programming through OR-Tools CP-SAT;
-- `highs` — LP/MILP through HiGHS/highspy.
+- SAT → PySAT/CaDiCaL
+- CP-SAT → OR-Tools CP-SAT
+- MILP → HiGHS/highspy
+- convex LP/QP/SOC → CVXPY (`solver.convex@0.1.0`)
+- SMT → Z3 / cvc5
+- first-order theorem proving → Vampire
+- proof-kernel checking → Lean 4
 
-The existing formal providers remain active on the v0.39 pathway:
+PuLP is deliberately not listed as a solver provider. `aasm.adapter.pulp.v1` translates supported `LpProblem` objects into the existing AASM optimization IR; native AASM routing then chooses the execution provider.
 
-- Z3;
-- cvc5;
-- Vampire;
-- Lean 4.
+## Convex canonical subset
 
-## Canonical IR and lowering
+The v0.45 convex IR supports scalar continuous variables with optional finite bounds, linear equality/inequality constraints, diagonal positive-semidefinite quadratic minimization, diagonal negative-semidefinite quadratic maximization, and constant-radius second-order-cone constraints. Unsupported/non-convex forms are rejected rather than approximated.
 
-AASM now owns a canonical optimization identity for Boolean/integer/continuous variables, clause/linear/all-different constraints, and linear objectives. Deterministic family selection chooses SAT, CP-SAT, or MILP only when the current canonical subset can represent the model. Unsupported models are rejected rather than guessed.
+CVXPY executes through the ordinary AASM `ResourceRecord → WorkerRecord → TaskDemand → TaskLease` path. Provider output is `EVIDENCE_ONLY`. AASM independently rechecks bounds, linear constraints, SOC feasibility, request/model identity, provider identity, and canonical objective evaluation before durable admission.
 
-## Existing scheduler and authority boundaries
+## PuLP compatibility
 
-Optimization provider admission reuses the v0.39 Capability ABI. Execution reuses ordinary `ResourceRecord`, `WorkerRecord`, `TaskDemand`, and `TaskLease` objects. Results are committed as ordinary Evidence and are explicitly `EVIDENCE_ONLY`.
-
-Successful assignments are independently checked against the canonical model before durable admission. Solver claims of UNSAT/INFEASIBLE remain solver Evidence unless a separate proof/certificate path establishes stronger assurance.
+PuLP is `TRANSLATION_ONLY`; `solver_execution` is `NEVER`. The adapter supports finite-bounded continuous, integer, and binary variables, linear constraints, and linear objectives. A variable unbounded on either side is rejected because v0.45 will not invent a large finite bound and silently change semantics.
 
 ## Reuse
 
-Optimization results enter the v0.41 reuse plane only through explicit POLICY/CONTROLLER candidate admission. A future identical request may skip native execution only after ordinary reuse validation and durable `ReuseCertificate` commit.
+Convex results reuse the existing `OPTIMIZATION_RESULT` kind and v0.41 validation/certificate path. No solver output becomes automatically reusable merely because it was successful.
 
 ## Verification
 
-The standard CI suite checks the dependency-neutral optimization lifecycle along with Python 3.11/3.12/3.13, packaging, PostgreSQL, Compose/replay, scopes, adapters, and LangGraph.
-
-A dedicated `Optimization Backends` workflow installs `python-sat`, `ortools`, and `highspy`, then executes real CaDiCaL, CP-SAT, and HiGHS solves through AASM's provider/resource/worker/lease/result path and requires `aasm optimization-conformance --real` to pass.
-
-Formal Assurance includes `AASMOptimizationPortfolio.tla` and `aasm_optimization_portfolio.pml` to check that result commit requires a lease, solver output becomes Evidence, and solver execution cannot directly authorize knowledge.
-
-## SII ordering
-
-SII remains experimental and moves to v0.45. This is intentional: SII resource economics can now be bound to actual solver budgets and portfolio width rather than abstract compute alone.
+The dedicated Optimization Backends workflow installs the complete optimization extra and runs real CaDiCaL, CP-SAT, HiGHS, CVXPY QP, CVXPY SOC, and PuLP→HiGHS lifecycle tests on Python 3.13. It requires both `aasm optimization-conformance --real` and `aasm modeling-conformance --real` to pass.
 
 Release identity:
 
 ```text
-package/public surface: 0.44.0
-runtime: runtime_v44.AASMEngine
-base solver kernel: runtime_v41.AASMEngine
-adoption: aasm.adoption.v1 / 0.20.0
-optimization: aasm.optimization.v1 / 0.1.0
-certification: aasm.certification.v1 / 0.1.0
-SII preview: aasm.sii.v1 / 0.2.0
-remote: aasm.remote.v1 / 0.19.0
-next: v0.45.0 Symbiotic Intelligence Interface & Governed Intelligence Economics
+package/public surface: 0.45.0
+runtime: runtime_v45.AASMEngine
+base optimization runtime: runtime_v44.AASMEngine
+base solver/reuse kernel: runtime_v41.AASMEngine
+adoption: aasm.adoption.v1 / 0.21.0
+next: v0.46.0 Symbiotic Intelligence Interface & Governed Intelligence Economics
 ```

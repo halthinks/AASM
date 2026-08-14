@@ -34,18 +34,19 @@ jobs:
           import json
           report=json.load(open('/tmp/aasm-optimization.json'))
           assert report['status']=='PASS', report
-          assert report['real_backends'] is True
           for check in ('sat_native_backend_executes','cp_sat_native_backend_executes','milp_native_backend_executes'):
               assert report['checks'][check] is True, report
           PY
-      - name: Execute real modeling conformance module
+      - name: Execute real modeling conformance CLI
         env:
           AASM_REQUIRE_MODELING_BACKENDS: "1"
         run: |
+          aasm modeling-conformance --real > /tmp/aasm-modeling.json
           python - <<'PY'
-          from aasm.modeling_conformance import run_modeling_conformance
-          report=run_modeling_conformance(real=True)
+          import json
+          report=json.load(open('/tmp/aasm-modeling.json'))
           assert report['status']=='PASS', report
+          assert report['real_backends'] is True
           for check in ('cvxpy_qp_executes','cvxpy_soc_executes','pulp_imports_to_native_milp'):
               assert report['checks'][check] is True, report
           PY
