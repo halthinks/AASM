@@ -6,7 +6,7 @@
 
 **Semantic Solver Release Candidate**
 
-**Next release:** v0.50.0 — Post-RC Stabilization
+**Next release:** v0.50.0 — Proof-Carrying Solver Claims
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 
@@ -421,6 +421,16 @@ Third-party material, if any, remains subject to its own applicable terms.
 - v0.47 Governed Symbiotic Intelligence & Intelligence Economics ✅
 - v0.48 Cross-Run Certified Knowledge & Governed Long-Term Memory ✅
 - **v0.49 Semantic Solver Release Candidate — current ✅**
-- **v0.50 Post-RC Stabilization — next, evidence-dependent**
+- **v0.50 Proof-Carrying Solver Claims — next**
+- v0.51 Governed Solution Pools & Complete Enumeration
+- v0.52 Lexicographic Multi-Objective & Pareto Solving
+- v0.53 Durable Cross-Run Solver Learning
+- v0.54 Certified Cross-Solver Exchange & Deterministic Portfolio Racing
+- v0.55 Extended Mathematical IR
+- v0.56 Proof/Enumeration/Optimization Stress Corpus
+- v0.57 Semantic Solver RC2 / Contract Review
+- **Beyond v0.57: open-ended AASM research and capability program; no presumed v1.0.**
+
+The v0.50–v0.57 sequence closes the **currently identified semantic-solver gap cluster**. It does not close AASM and does not imply readiness for a stable-major release.
 
 See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md](docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md), [docs/RELEASE_0.49.md](docs/RELEASE_0.49.md), and [LICENSE_POLICY.md](LICENSE_POLICY.md).
