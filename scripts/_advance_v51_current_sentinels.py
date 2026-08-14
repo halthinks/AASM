@@ -43,11 +43,3 @@ for name in ("tests/test_v47_public.py", "tests/test_v48_public.py"):
         1,
     )
     p.write_text(text)
-
-p = Path(".github/workflows/rc.yml")
-text = p.read_text()
-old = 'if report["freeze_manifest"]["runtime_version"] != "0.50.0":\n              raise SystemExit("RC freeze manifest is not the current v0.50 public contract")'
-new = 'if report["freeze_manifest"]["runtime_version"] != "0.51.0":\n              raise SystemExit("RC freeze manifest is not the current v0.51 public contract")'
-if old not in text:
-    raise SystemExit("rc.yml: expected current v0.50 freeze sentinel")
-p.write_text(text.replace(old, new, 1))
