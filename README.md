@@ -6,19 +6,21 @@
 
 **Governed Solution Pools & Complete Enumeration**
 
-**Next release:** v0.51.0 — Governed Solution Pools & Complete Enumeration
+**Next release:** v0.52.0 — Lexicographic Multi-Objective & Pareto Solving
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 
-v0.50 adds proof-carrying solver claims as a thin layer over the v0.49 release-candidate runtime. Solver status remains Evidence; only an independent passing checker can label an exact-bound claim `PROOF_CERTIFIED`, and that certificate still does not become policy or truth authority.
+v0.51 adds governed solution pools and complete finite enumeration as a thin layer over the v0.50 proof runtime. Partial pools remain Evidence; `COMPLETE` requires durable finite-space exhaustion plus an independent exact-set certificate, and neither a pool nor its certificate becomes policy or truth authority.
 
 AASM's declared project license is **Apache License, Version 2.0 (`Apache-2.0`) across the project**. To the extent AASM has the necessary relicensing rights, prior AASM versions—including versions first distributed under MIT—are **also offered under Apache-2.0**. Previously granted MIT permissions remain valid for their recipients, but prior AASM versions are not designated MIT-only. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`LICENSE_POLICY.md`](LICENSE_POLICY.md).
 
 ### Current release contracts
 
 ```text
-package / public surface: 0.50.0
+package / public surface: 0.51.0
 aasm.adoption.v1 / 0.27.0
+aasm.optimization.solution-pool.v1 / 0.1.0
+aasm.optimization.enumeration.v1 / 0.1.0
 aasm.solver.proof-certificate.v1 / 0.1.0
 aasm.semantic.solver.rc.v1 / 0.1.0
 aasm.remote.v1 / 0.19.0
