@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/certification-report.schema.json",
+  "title": "AASM Certification Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "status", "core_status", "status_counts", "target_count", "targets", "interpretation"],
+  "properties": {
+    "contract": {"type": "object"},
+    "status": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+    "core_status": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+    "status_counts": {
+      "type": "object",
+      "required": ["PASS", "FAIL", "INCONCLUSIVE"],
+      "properties": {
+        "PASS": {"type": "integer", "minimum": 0},
+        "FAIL": {"type": "integer", "minimum": 0},
+        "INCONCLUSIVE": {"type": "integer", "minimum": 0}
+      }
+    },
+    "target_count": {"type": "integer", "minimum": 0},
+    "targets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["target_id", "status", "scope", "checks", "notes"],
+        "properties": {
+          "target_id": {"type": "string", "minLength": 1},
+          "status": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+          "scope": {"type": "string", "minLength": 1},
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["check_id", "status", "statement", "evidence", "detail"],
+              "properties": {
+                "check_id": {"type": "string", "minLength": 1},
+                "status": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+                "statement": {"type": "string", "minLength": 1},
+                "evidence": {"type": "array", "items": {"type": "string"}},
+                "detail": {"type": "object"}
+              }
+            }
+          },
+          "notes": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "interpretation": {"type": "object"}
+  }
+}
