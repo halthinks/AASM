@@ -102,7 +102,7 @@ def main():
     # v0.50 remains the frozen proof-carrying parent contract.
     require(root / "src/aasm/public_v50.py", [
         '__version__ = "0.50.0"', '"contract_version": "0.26.0"', "runtime_v50",
-        "SOLVER_PROOF_CONTRACT_ID", "PROOF_CERTIFIED",
+        "SOLVER_PROOF_CONTRACT_ID",
     ])
     require(root / "src/aasm/runtime_v50.py", ["ProofClaimRuntimeMixin", "V49Engine"])
     require(root / "src/aasm/proof_claims.py", [
