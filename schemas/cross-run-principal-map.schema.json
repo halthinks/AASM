@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/halthinks/AASM/schemas/cross-run-principal-map.schema.json",
+  "title": "AASM Cross-Run Principal Map",
+  "type": "object",
+  "required": ["mapping_id", "source_run_id", "source_principal_id", "local_principal_id", "metadata", "authority_transfer", "resource_entitlement_transfer", "fingerprint"],
+  "properties": {
+    "mapping_id": {"type": "string", "minLength": 1},
+    "source_run_id": {"type": "string", "minLength": 1},
+    "source_principal_id": {"type": "string", "minLength": 1},
+    "local_principal_id": {"type": "string", "minLength": 1},
+    "metadata": {"type": "object"},
+    "authority_transfer": {"const": "NEVER"},
+    "resource_entitlement_transfer": {"const": "NEVER"},
+    "fingerprint": {"type": "string", "minLength": 32}
+  },
+  "additionalProperties": false
+}
