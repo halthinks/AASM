@@ -1,4 +1,4 @@
-include README.md LICENSE NOTICE pyproject.toml
+include README.md LICENSE NOTICE LICENSE_POLICY.md pyproject.toml
 include .gitignore .dockerignore
 include CHANGELOG.md CHANGELOG_0.18_AND_EARLIER.md CHANGELOG_0.27_AND_EARLIER.md
 include CODE_OF_CONDUCT.md CONTRIBUTING.md GOVERNANCE.md MANIFEST.md ROADMAP.md
