@@ -9,15 +9,23 @@ def require(path, tokens):
         raise SystemExit(f"{path}: missing {missing}")
 
 
+def forbid(path, tokens):
+    text = Path(path).read_text()
+    present = [token for token in tokens if token in text]
+    if present:
+        raise SystemExit(f"{path}: forbidden stale policy text {present}")
+
+
 def main():
     root = Path(__file__).resolve().parents[1]
     with (root / "pyproject.toml").open("rb") as handle:
         project = tomllib.load(handle)["project"]
         version = str(project["version"])
-    if version != "0.48.0":
+    if version != "0.48.1":
         raise SystemExit(f"unexpected release version: {version}")
 
-    # Apache-2.0 / PEP 639 packaging is a permanent release invariant.
+    # Apache-2.0 / PEP 639 packaging and the project-wide relicensing declaration
+    # are permanent release invariants.
     if project.get("license") != "Apache-2.0":
         raise SystemExit(f"unexpected active license: {project.get('license')}")
     if set(project.get("license-files", [])) != {"LICENSE", "NOTICE"}:
@@ -27,13 +35,29 @@ def main():
         raise SystemExit(f"PEP 639 license expression must not be paired with legacy license classifiers: {legacy_license_classifiers}")
     require(root / "LICENSE", ["Apache License", "Version 2.0, January 2004", "Grant of Patent License", "END OF TERMS AND CONDITIONS"])
     require(root / "NOTICE", ["AASM", "Copyright 2026 AASM contributors"])
+    require(root / "LICENSE_POLICY.md", [
+        "all AASM source code, documentation, tags, commits, and release versions are offered under Apache-2.0",
+        "including AASM versions that were first distributed under the MIT License",
+        "Earlier MIT grants remain valid",
+        "prior AASM versions are not designated MIT-only",
+    ])
     require(root / "MANIFEST.in", ["LICENSE NOTICE pyproject.toml"])
     require(root / "CONTRIBUTING.md", ["Apache License, Version 2.0", "Apache-2.0", "NOTICE"])
+
+    stale_license_policy = [
+        "v0.47.1 is the first Apache-2.0 AASM release",
+        "v0.47.0 release is not rewritten",
+        "remains the original MIT-licensed distribution",
+        "already-published `v0.47.0` artifact remains historically MIT licensed",
+        "already-published `v0.47.0` release remains under the MIT License",
+    ]
+    for policy_doc in (root / "README.md", root / "ROADMAP.md", root / "CHANGELOG.md", root / "docs/CURRENT_RELEASE.md", root / "docs/RELEASE_0.47.1.md", root / "docs/RELEASE_0.48.1.md"):
+        forbid(policy_doc, stale_license_policy)
 
     require(root / "src/aasm/__init__.py", ["public_v48"])
     require(root / "src/aasm/cli.py", ["cli_v48"])
     require(root / "src/aasm/public_v48.py", [
-        '__version__ = "0.48.0"', '"contract_version": "0.24.0"', "runtime_v48",
+        '__version__ = "0.48.1"', '"contract_version": "0.24.0"', "runtime_v48",
         "CrossRunKnowledgeEnvelope", "CrossRunAdmissionCertificate", "CrossRunPrincipalMap",
         "PROVENANCE_ONLY_NEVER_INHERITED", "LOCAL_AUTHORIZED_REASONING_REQUIRED",
         "EXISTING_V41_REUSE_CERTIFICATE_REQUIRED", "ACCOUNTING_ONLY_NEVER_AUTHORITY_OR_RESOURCE_ENTITLEMENT",
@@ -78,19 +102,22 @@ def main():
     require(root / "src/aasm/reuse_model.py", ["aasm.reuse.v1", "OPTIMIZATION_RESULT"])
 
     require(root / "README.md", [
-        "Current release — v0.48.0", "Cross-Run Certified Knowledge & Governed Long-Term Memory",
+        "Current release — v0.48.1", "Cross-Run Certified Knowledge & Governed Long-Term Memory",
+        "project-wide", "prior AASM versions", "LICENSE_POLICY.md",
         "aasm.adoption.v1 / 0.24.0", "aasm.knowledge.cross-run.v1 / 0.1.0",
         "aasm.certification.v1 / 0.2.0", "aasm.sii.v1 / 0.3.0",
         "Kissat", "CaDiCaL", "CP-SAT scheduling — OR-Tools", "HiGHS", "CVXPY", "PuLP",
         "Z3", "cvc5", "Vampire", "Lean 4", "Required verification is never reduced",
         "Apache License, Version 2.0", "Apache-2.0", "NOTICE", "v0.49.0", "aasm.remote.v1 / 0.19.0",
     ])
-    require(root / "ROADMAP.md", ["v0.48.0", "Cross-Run Certified Knowledge", "v0.49.0", "Semantic Solver Release Candidate"])
-    require(root / "CHANGELOG.md", ["[0.48.0]", "Cross-Run Certified Knowledge", "[0.47.1]", "Apache-2.0"])
-    require(root / "docs/CURRENT_RELEASE.md", ["AASM v0.48.0", "runtime_v48", "0.24.0", "Apache-2.0", "PROVENANCE, NEVER RECEIVING AUTHORITY", "v0.49.0"])
+    require(root / "ROADMAP.md", ["v0.48.1", "Project-Wide Apache-2.0 Policy Correction", "v0.49.0", "Semantic Solver Release Candidate"])
+    require(root / "CHANGELOG.md", ["[0.48.1]", "Project-Wide Apache-2.0 Policy Correction", "[0.48.0]", "Cross-Run Certified Knowledge"])
+    require(root / "docs/CURRENT_RELEASE.md", ["AASM v0.48.1", "runtime_v48", "0.24.0", "Apache-2.0", "project-wide", "v0.49.0"])
     require(root / "docs/CROSS_RUN_CERTIFIED_KNOWLEDGE.md", ["aasm.knowledge.cross-run.v1 / 0.1.0", "A prior run may provide provenance and evidence", "ReuseCertificate", "used_by_sii_resource_lease", "ForeignAuthorityNeverInherited"])
     require(root / "docs/RELEASE_0.48.md", ["AASM v0.48.0", "0.24.0", "Apache-2.0", "FOREIGN AUTHORITY IS PROVENANCE", "v0.49"])
-    require(root / "tests/test_v48_public.py", ["0.48.0", "0.24.0", "cross-run-knowledge-conformance"])
+    require(root / "docs/RELEASE_0.48.1.md", ["AASM v0.48.1", "Project-Wide Apache-2.0 Policy Correction", "LICENSE_POLICY.md", "prior AASM versions", "MIT permissions remain valid"])
+    require(root / "docs/RELEASE_0.47.1.md", ["Project-wide relicensing declaration", "also offered under Apache-2.0", "MIT-only", "LICENSE_POLICY.md"])
+    require(root / "tests/test_v48_public.py", ["0.48.1", "0.24.0", "cross-run-knowledge-conformance"])
     require(root / "tests/test_v48_cross_run_knowledge.py", ["cross_run_source_not_active", "local AUTHORIZED reasoning", "used_by_sii_resource_lease"])
     require(root / "tests/test_v48_cross_run_sii_mapping.py", ["exact_source_principal_mapping", "does not match admitted stable principal mapping"])
     require(root / ".github/workflows/cross-run.yml", ["Cross-Run Knowledge", "test_v48_cross_run_knowledge.py", "test_v48_cross_run_sii_mapping.py"])
@@ -117,7 +144,7 @@ def main():
     ):
         require(root / "schemas" / name, ['"$schema"', "2020-12"])
 
-    print("v0.48 release contracts: PASS")
+    print("v0.48.1 release contracts: PASS")
     return 0
 
 
