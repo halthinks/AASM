@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.47.1 / experimental**.
+AASM is currently **v0.48.0 / experimental**.
 
 ## Released
 
@@ -17,74 +17,71 @@ AASM is currently **v0.47.1 / experimental**.
 - v0.45.0 Convex Optimization & Modeling Adapters
 - v0.46.0 Advanced Solver Control & Search Artifacts
 - v0.47.0 Governed Symbiotic Intelligence & Intelligence Economics
-- **v0.47.1 Apache-2.0 License Transition — Current — implemented**
+- v0.47.1 Apache-2.0 License Transition
+- **v0.48.0 Cross-Run Certified Knowledge & Governed Long-Term Memory — Current — implemented**
 
 ## v0.44.0 — Heterogeneous Optimization Solver Portfolio
 
-Delivered the AASM-owned SAT/CP-SAT/MILP canonical IR, direct native CaDiCaL, OR-Tools CP-SAT, and HiGHS providers, Capability ABI admission, existing resource/worker/TaskLease execution, independent assignment checking, Evidence-only solver results, optimization reuse, exact replay, real-backend CI, and bounded formal assurance. Existing Z3, cvc5, Vampire, and Lean 4 formal workers remained active.
+Delivered the AASM-owned SAT/CP-SAT/MILP canonical IR, direct native CaDiCaL, OR-Tools CP-SAT, and HiGHS providers, existing Capability ABI/resource/worker/TaskLease execution, independent checking, Evidence-only results, certified reuse, real-backend CI, and formal assurance.
 
 ## v0.45.0 — Convex Optimization & Modeling Adapters
 
-Delivered governed CVXPY LP/QP/SOC execution, a translation-only PuLP import boundary, independent result checking, real Python 3.13 backend coverage, and preservation of the direct v0.44 solver paths.
+Delivered governed CVXPY LP/QP/SOC execution and a translation-only PuLP import boundary while preserving the direct native solver paths.
 
 ## v0.46.0 — Advanced Solver Control & Search Artifacts
 
-Delivered Kissat fast SAT, incremental CaDiCaL assumptions/UNSAT cores/session reuse, CP-SAT scheduling primitives and deterministic-time/search-worker controls, HiGHS warm starts and bound/gap/node telemetry, richer factorized PSD/NSD + affine-SOC CVXPY models, and durable advanced result/reuse/lease hardening under `SEARCH_STATE_NEVER_PROMOTES_TRUTH`.
+Delivered Kissat fast SAT, incremental CaDiCaL assumptions/UNSAT cores/session reuse, CP-SAT scheduling, HiGHS warm starts/bound-gap telemetry, richer CVXPY forms, and `SEARCH_STATE_NEVER_PROMOTES_TRUTH`.
 
 ## v0.47.0 — Governed Symbiotic Intelligence & Intelligence Economics
 
-Delivered:
-
-1. `aasm.sii.v1 / 0.3.0` with stability `GOVERNED_ENFORCED`;
-2. `aasm.certification.v1 / 0.2.0` with governed SII included in default certification;
-3. durable `SIIPrincipalBinding` records admitted only by existing POLICY/CONTROLLER authority;
-4. stable-principal rebinding rejection;
-5. measurement authority resolution from durable principal state instead of a caller-supplied authority string;
-6. explicit rejection of self-measurement at principal identity level;
-7. versioned durable `SIIScoringPolicy` objects with active-policy selection;
-8. default/exploration/exploitation/formal scoring profiles preserved as policy data;
-9. bounded performance windows retained so old success cannot grant permanent compute privilege;
-10. durable `GovernedResourceLease` records bound to proposer, principal, policy version, performance window, utility, and tier;
-11. context budgets enforced through the existing v0.40 context projection;
-12. scheduler priority enforced through ordinary `TaskDemand.priority`;
-13. max outstanding discretionary candidate count enforced before queue growth;
-14. incremental CaDiCaL conflict-budget enforcement;
-15. incremental CaDiCaL decision-budget enforcement;
-16. native solver timeout enforcement;
-17. CP-SAT deterministic-time enforcement;
-18. CP-SAT search-worker enforcement;
-19. HiGHS MIP-node enforcement;
-20. advanced convex solve-time enforcement;
-21. discretionary formal-verification timeout enforcement;
-22. discretionary formal provider-width enforcement;
-23. explicit preservation of the ordinary policy-required formal-verification path outside SII caps;
-24. invariant `REQUIRED_VERIFICATION_NEVER_REDUCED_BY_SII`;
-25. durable `ENFORCEMENT` Evidence connecting SII ResourceLease records to solver/formal requests;
-26. SII lease/policy/principal/enforcement provenance copied into the ordinary task and TaskLease metadata;
-27. `authority_reward = NEVER` attached to governed execution provenance;
-28. resource leases permanently fixed to `PROPOSER` authority with direct truth promotion/state mutation/self-verification false;
-29. `request_sii_advanced_optimization()` compiling resource policy into the real v0.46 advanced solver IR/request path;
-30. `request_sii_formal_verification()` as an explicitly discretionary governed formal path;
-31. `sii_context()` compiling resource policy into the real v0.40 context path;
-32. current `sii-contract` reporting the governed v0.47 contract while the v0.43 preview implementation remains importable;
-33. `sii-preview` certification retained as a compatibility alias to the governed graduation fixture;
-34. adversarial certification for unbound measurement actors, authority escalation, native-budget bypass, scheduler-budget bypass, and replay;
-35. public API, CLI, schemas, docs, release/source gates, and regression coverage;
-36. preservation of all v0.44–v0.46 native solver and v0.39 formal-verification pathways rather than routing them through a new SII executor.
+Graduated SII to `aasm.sii.v1 / 0.3.0` / `GOVERNED_ENFORCED`: durable principals, versioned scoring/resource policy, real context/scheduler/native-solver/formal budget enforcement, no self-measurement, `authority_reward = NEVER`, and `REQUIRED_VERIFICATION_NEVER_REDUCED_BY_SII`.
 
 ## v0.47.1 — Apache-2.0 License Transition
 
-Patch release preserving all v0.47 runtime and contract behavior while changing the project license from MIT to Apache License 2.0. It adds the standard Apache 2.0 `LICENSE`, a distributable `NOTICE`, PEP 639/SPDX package metadata (`Apache-2.0`) without legacy `License :: ...` classifiers, contribution-policy alignment, and release gates that verify the active license and packaged NOTICE. The already-published `v0.47.0` release remains historically accurate under its original MIT license.
+Preserved the v0.47 runtime while changing the active project/distribution license to Apache License 2.0 with PEP 639/SPDX metadata, packaged `LICENSE`/`NOTICE`, contribution alignment, and release gates. The already-published v0.47.0 artifact remains historically MIT licensed.
 
-### Deliberate SII limits after v0.47
+## v0.48.0 — Cross-Run Certified Knowledge & Governed Long-Term Memory
 
-The major graduation gaps are closed, but these remain explicit future work rather than hidden claims:
+Delivered:
 
-- model calls are represented in SII resource policy but model execution is not yet a universal first-class TaskLease provider across every adapter;
-- learned SAT clauses, MILP cuts/bases, and solver-specific search state remain performance artifacts unless separately certified/admitted;
-- collusion/easy-problem farming need larger empirical/reference-domain campaigns beyond deterministic contract fixtures;
-- resource policy currently applies to SII-discretionary work and must never intercept correctness-required verification in a way that can weaken it;
-- cross-run performance/resource reputation remains run-local until cross-run identity/knowledge admission is formalized.
+1. `aasm.knowledge.cross-run.v1 / 0.1.0` immutable envelopes with source-run/machine/scope provenance;
+2. `aasm.knowledge.cross-run.admission.v1 / 0.1.0` receiving-run validation certificates;
+3. `aasm.principal.cross-run-map.v1 / 0.1.0` stable source→local principal mapping;
+4. explicit applicability scope, privacy, environment, dependency, freshness, retention, and verification-strength checks;
+5. invariant `source_authority = PROVENANCE_ONLY_NEVER_INHERITED`;
+6. ordinary Decision → POLICY/CONTROLLER authorization → Obligation → Evidence receiving admission;
+7. deterministic envelope/bundle/certificate/principal-map fingerprints;
+8. foreign semantic content remaining Evidence until receiving-run AUTHORIZED reasoning exists;
+9. ordinary v0.40 memory authorization/commit for materialization;
+10. ordinary v0.41 `ReuseCandidate` / `ReuseCertificate` execution reuse rather than a second cache;
+11. exact v0.41 verification-strength semantics preserved across runs;
+12. receiving validator ID/version carried into the ordinary reuse certificate;
+13. receiving POLICY/CONTROLLER admission for source revocation/supersession signals;
+14. revocation blocking already-hot cross-run reuse candidates;
+15. revocation tombstoning already-materialized local memory through the existing FORGET path;
+16. deterministic source-side delta generation when exported source memory ceases to be ACTIVE;
+17. stable cross-run principal rebinding rejection;
+18. exact source-principal matching for SII reputation envelopes;
+19. cross-run SII reputation stored as `CROSS_RUN_REFERENCE_ONLY` accounting;
+20. `truth_authority = NONE` and `resource_entitlement = NONE` for imported reputation;
+21. explicit `used_by_sii_resource_lease = false` so historical reputation cannot buy local compute;
+22. transport boundary documented: untrusted transport still requires authentication/signed provenance outside the envelope format;
+23. dependency-neutral conformance and adversarial regression fixtures;
+24. JSON Schema 2020-12 contracts;
+25. dedicated `Cross-Run Knowledge` GitHub Actions workflow;
+26. bounded TLA+ and Promela/SPIN assurance for authority, admission, privacy, revocation, materialization, reuse, and reputation boundaries;
+27. public API/CLI surfaces and adoption contract `aasm.adoption.v1 / 0.24.0`;
+28. preservation of the entire v0.39 formal, v0.40 memory, v0.41 reuse, v0.44–v0.46 solver, and v0.47 SII pathways;
+29. preservation of Apache-2.0 / PEP 639 / NOTICE packaging from v0.47.1.
+
+### Explicit v0.48 limits
+
+- the cross-run envelope is not itself a network authentication protocol;
+- source-run authority never becomes receiving-run authority;
+- cross-run reputation does not automatically change local SII scoring tiers;
+- v0.48 reuse begins with exact semantic payload equality rather than generalized cross-run subsumption;
+- source revocation must be admitted by receiving policy before changing receiving-run eligibility;
+- the receiving run may retain history/provenance even after active memory/reuse eligibility is revoked.
 
 ### Solver work still worth doing
 
@@ -97,25 +94,8 @@ The major graduation gaps are closed, but these remain explicit future work rath
 - raw matrix-form PSD/NSD quadratic input with deterministic canonicalization;
 - additional conic problem families where independent validation is available.
 
-## v0.48.0 — Cross-Run Certified Knowledge & Governed Long-Term Memory
-
-**Next.** Extend durable knowledge across run boundaries without allowing prior-run authority or stale context to leak into a receiving run.
-
-Planned work:
-
-1. immutable cross-run knowledge envelopes with source-run identity and exact provenance;
-2. explicit applicability scope, environment/dependency compatibility, freshness, privacy, and retention metadata;
-3. receiving-run admission rather than automatic inheritance;
-4. revocation and supersession propagation across retained knowledge;
-5. cross-run reuse certificates with exact validator/version provenance;
-6. stable governed principal identity mapping without making SII reputation an authority credential;
-7. separate cross-run SII performance/resource accounting from truth admission;
-8. provenance-preserving memory compaction and summarized knowledge objects;
-9. certified long-term procedural/semantic memory with invalidation boundaries;
-10. adversarial checks for stale-run poisoning, identity conflation, privacy leakage, revocation loss, and authority inheritance;
-11. deterministic export/import and replay fixtures;
-12. reference-domain tests that demonstrate genuine cross-run savings without truth drift.
-
 ## v0.49.0 — Semantic Solver Release Candidate
 
-Freeze the coherent public solver/control contracts after replay, formal, distributed, adversarial, memory/privacy, reference-domain, certification, native optimization, convex/modeling adapters, advanced solver control, governed SII, packaging, upgrade, and cross-run knowledge gates pass.
+**Next.** Freeze the coherent public solver/control contracts after replay, formal, distributed, adversarial, memory/privacy, reference-domain, certification, native optimization, convex/modeling adapters, advanced solver control, governed SII, Apache packaging, and cross-run knowledge gates all pass.
+
+Release-candidate work should focus on compatibility freeze, benchmark evidence, upgrade/migration guarantees, final cross-backend certification, documentation consolidation, and removal of claims that are not backed by a reproducible gate.
