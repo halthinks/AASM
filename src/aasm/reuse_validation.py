@@ -15,6 +15,7 @@ def validate_reuse_candidate(request: ReuseRequest, candidate: ReuseCandidate, *
     if candidate.source.privacy_level in {"AGENT","USER"} and candidate.source.privacy_principal_id != request.privacy_principal_id: reasons.append("privacy_principal_mismatch")
     if request.environment_fingerprint and request.environment_fingerprint != candidate.environment_fingerprint: reasons.append("environment_mismatch")
     if request.dependency_fingerprints and not set(request.dependency_fingerprints).issubset(set(candidate.dependency_fingerprints)): reasons.append("dependency_fingerprint_mismatch")
+    if request.required_strength and request.required_strength != candidate.verification_strength: reasons.append("verification_strength_mismatch")
     if request.freshness_seconds is not None:
         if request.as_of is None or candidate.created_at is None or request.as_of < candidate.created_at or request.as_of-candidate.created_at > request.freshness_seconds: reasons.append("freshness_requirement_failed")
     if request.effect_class == "NON_IDEMPOTENT_EFFECT" or candidate.effect_class == "NON_IDEMPOTENT_EFFECT": reasons.append("non_idempotent_effect_never_reused")
