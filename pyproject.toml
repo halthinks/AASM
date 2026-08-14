@@ -9,7 +9,7 @@ description = "Algorithmic Agent State Machine: durable deterministic control fo
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
-license-files = ["LICENSE", "NOTICE"]
+license-files = ["LICENSE", "NOTICE", "LICENSE_POLICY.md"]
 authors = [{name = "AASM contributors"}]
 keywords = ["agents", "state-machine", "event-sourcing", "orchestration", "formal-methods"]
 classifiers = [
