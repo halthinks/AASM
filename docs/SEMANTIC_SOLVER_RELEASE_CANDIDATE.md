@@ -15,6 +15,9 @@ aasm.semantic.solver.rc.v1 / 0.1.0
 stability: RELEASE_CANDIDATE
 freeze target: 0.49.x
 compatibility floor exercised by RC migration fixtures: v0.41
+cross_backend_rule: AGREEMENT_OR_INCONCLUSIVE_NEVER_VOTE
+native_solver_claim: AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS
+claim_policy: NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE
 ```
 
 The RC exists to convert remaining architecture claims into reproducible evidence and freeze the coherent public surface before a later stable semantic-solver line.
@@ -83,12 +86,13 @@ x OR y
 
 That result must satisfy the projected feasibility property.
 
-The RC never turns backend agreement into voting authority:
+The RC never turns backend agreement into voting authority. The frozen rule is:
 
 ```text
-agreement   → corroborating Evidence
-conflict    → INCONCLUSIVE / investigate
-majority    → NEVER grants truth
+cross_backend_rule = AGREEMENT_OR_INCONCLUSIVE_NEVER_VOTE
+agreement          → corroborating Evidence
+conflict           → INCONCLUSIVE / investigate
+majority           → NEVER grants truth
 ```
 
 CVXPY, Kissat, advanced CaDiCaL, advanced HiGHS, and scheduling remain covered by their existing real conformance gates rather than being forced into a semantically different overlap problem.
@@ -106,7 +110,8 @@ CVXPY, Kissat, advanced CaDiCaL, advanced HiGHS, and scheduling remain covered b
 Timing values are environment-specific evidence. The RC deliberately does **not** convert them into an unsupported performance claim.
 
 ```text
-inner_solver_claim = NONE
+inner_solver_claim  = NONE
+native_solver_claim = AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS
 ```
 
 AASM does not claim its orchestration layer makes CaDiCaL, OR-Tools, HiGHS, CVXPY, Z3, cvc5, Vampire, or Lean internally faster. Performance claims require an explicit threshold gate and benchmark methodology.
@@ -122,7 +127,11 @@ The RC audits important public claims against repository evidence. Examples:
 - project-wide Apache-2.0 policy → `LICENSE_POLICY.md` + release contract gate;
 - RC readiness → dedicated Semantic Solver RC workflow.
 
-The governing rule is:
+The frozen governing rule is:
+
+```text
+claim_policy = NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE
+```
 
 > **NO PUBLIC CAPABILITY CLAIM WITHOUT A REPRODUCIBLE GATE.**
 
