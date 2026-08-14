@@ -43,7 +43,7 @@ def _sat_result(request, model, *, implementation=CADICAL_IMPLEMENTATION, assign
 
 
 def test_v44_public_contract_is_live_and_preserves_formal_portfolio():
-    assert __version__ == "0.47.0"
+    assert __version__ == "0.47.1"
     report = validate_public_api_contract()
     assert report["valid"], report
     assert report["contract"]["contract_version"] == "0.23.0"
