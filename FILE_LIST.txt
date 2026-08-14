@@ -61,6 +61,7 @@
 ./docs/OBSERVABILITY.md
 ./docs/PROFILE_PACKAGES.md
 ./docs/PROVIDER_ADAPTERS_ARTIFACTS_CONTROLS.md
+./docs/REFERENCE_DOMAIN_STRESS.md
 ./docs/RELEASE_0.19.md
 ./docs/RELEASE_0.21.md
 ./docs/RELEASE_0.22.md
@@ -114,6 +115,7 @@
 ./examples/pbv_cycle.py
 ./examples/provider_artifacts_controls.py
 ./examples/provisioning_telemetry.py
+./examples/reference_domain_stress.py
 ./examples/remote_worker.py
 ./examples/research_synthesis_demo.py
 ./examples/runtime-config.local.json
@@ -224,6 +226,7 @@
 ./schemas/reasoning-artifact.schema.json
 ./schemas/reasoning-commit.schema.json
 ./schemas/reasoning-transition.schema.json
+./schemas/reference-domain-stress-report.schema.json
 ./schemas/resource.schema.json
 ./schemas/reuse-certificate.schema.json
 ./schemas/reuse-request.schema.json
@@ -309,6 +312,7 @@
 ./src/aasm/cli_v39.py
 ./src/aasm/cli_v40.py
 ./src/aasm/cli_v41.py
+./src/aasm/cli_v42.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -376,6 +380,7 @@
 ./src/aasm/provider_adapters.py
 ./src/aasm/provisioning.py
 ./src/aasm/public_v41.py
+./src/aasm/public_v42.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
 ./src/aasm/reference_data/research/manifest.json
@@ -384,6 +389,7 @@
 ./src/aasm/reference_data/research/study_beta.json
 ./src/aasm/reference_data/research/study_delta.json
 ./src/aasm/reference_data/research/study_gamma.json
+./src/aasm/reference_domains.py
 ./src/aasm/remote.py
 ./src/aasm/remote_v19.py
 ./src/aasm/research_demo.py
@@ -506,4 +512,5 @@
 ./tests/test_v39_typed_capabilities.py
 ./tests/test_v40_hierarchical_memory.py
 ./tests/test_v41_reuse_solver.py
+./tests/test_v42_reference_domains.py
 ./tests/test_workers_leases.py
