@@ -2,24 +2,25 @@
 
 **Durable deterministic control for agents, tools, models, humans, formal systems, and high-performance native solvers.**
 
-## Current release — v0.45.0
+## Current release — v0.46.0
 
-**Convex Optimization & Modeling Adapters**
+**Advanced Solver Control & Search Artifacts**
 
-**Next release:** v0.46.0 — Symbiotic Intelligence Interface & Governed Intelligence Economics
+**Next release:** v0.47.0 — Symbiotic Intelligence Interface & Governed Intelligence Economics
 
-AASM is a deterministic, event-sourced agent state machine that separates proposal, execution, verification, authority, memory, solver output, and durable truth. v0.45 extends the executable heterogeneous solver portfolio with governed convex optimization through **CVXPY** and a **PuLP** import boundary, while preserving the direct native paths introduced in v0.44.
+AASM is a deterministic, event-sourced agent state machine that separates proposal, execution, verification, authority, memory, solver output, search state, and durable truth. v0.46 deepens the executable heterogeneous solver portfolio with **Kissat fast SAT**, **incremental CaDiCaL assumptions/UNSAT cores**, **OR-Tools CP-SAT scheduling**, **HiGHS warm-start/bound-gap controls**, and richer **CVXPY factorized quadratic + affine-SOC** optimization, while preserving every released direct and formal solver path.
 
 ### Release contracts
 
 ```text
-aasm.adoption.v1 / 0.21.0
+aasm.adoption.v1 / 0.22.0
 aasm.remote.v1 / 0.19.0
+aasm.optimization.advanced.v1 / 0.1.0
 aasm.optimization.v1 / 0.1.0
 aasm.optimization.convex.v1 / 0.1.0
 aasm.adapter.pulp.v1 / 0.1.0
 aasm.certification.v1 / 0.1.0
-aasm.sii.v1 / 0.2.0              # experimental v0.46 target
+aasm.sii.v1 / 0.2.0              # experimental v0.47 target
 aasm.reference-domains.v1 / 0.1.0
 aasm.reuse.v1 / 0.1.0
 aasm.reuse.certificate.v1 / 0.1.0
@@ -32,63 +33,99 @@ aasm.formal.verification.v1 / 0.1.0
 ## Solver portfolio
 
 ```text
-                         AASM semantic problem
-                                  │
-                     canonical problem identities
-                                  │
-       ┌───────────┬──────────┬───┴────┬──────────────┬─────────┐
-       ▼           ▼          ▼        ▼              ▼         ▼
-      SAT        CP-SAT      MILP    CONVEX         SMT/FOL    PROOF
-       │           │          │        │              │         │
-   CaDiCaL      OR-Tools    HiGHS    CVXPY       Z3 / cvc5   Lean 4
-                                                   Vampire
-       │           │          │        │              │         │
-       └───────────┴──────────┴────────┴──────────────┴─────────┘
-                                  │
-                         normalized Evidence
-                                  │
-                      validation / certification
-                                  │
-                         governed v0.41 reuse
+                              AASM
+                               │
+                    canonical problem identities
+                               │
+       ┌─────────┬─────────────┼────────────┬──────────────┬─────────┐
+       ▼         ▼             ▼            ▼              ▼         ▼
+      SAT     CP-SAT          MILP        CONVEX         SMT/FOL    PROOF
+       │         │             │            │              │         │
+ Kissat /     OR-Tools      HiGHS         CVXPY       Z3 / cvc5   Lean 4
+ CaDiCaL      scheduling   warm starts   QP / SOC       Vampire
+       │         │             │            │              │         │
+       └─────────┴─────────────┴────────────┴──────────────┴─────────┘
+                               │
+                      normalized Evidence
+                               │
+                 validation / certification / reuse
 ```
 
-### SAT — CaDiCaL
+The original direct v0.44 routes remain first-class:
 
-`solver.sat@0.1.0` uses PySAT/CaDiCaL for native Boolean solving. AASM owns the canonical clauses, provider admission, lease, result identity, Evidence, and reuse boundary.
+- `solver.sat@0.1.0` → CaDiCaL;
+- `solver.cp_sat@0.1.0` → OR-Tools CP-SAT;
+- `solver.milp@0.1.0` → HiGHS;
+- `solver.convex@0.1.0` → CVXPY;
+- PuLP → translation-only import into AASM IR.
 
-### CP-SAT — OR-Tools CP-SAT
+v0.46 adds richer search/control capabilities where the problem benefits from them.
 
-`solver.cp_sat@0.1.0` handles Boolean/integer constraints, all-different constraints, clauses, integer linear constraints, and integer linear objectives through OR-Tools CP-SAT.
+## Fast SAT — Kissat
 
-### MILP — HiGHS
+`solver.sat.fast@0.1.0` uses PySAT's dedicated Kissat binding for non-incremental high-performance Boolean solving. AASM owns the clauses, provider admission, TaskLease, result identity, Evidence, and reuse boundary. The current Kissat binding does not expose aggregate statistics; AASM records that as a telemetry limitation rather than misclassifying a successful solve.
 
-`solver.milp@0.1.0` handles continuous/integer/Boolean variables and linear constraints/objectives through HiGHS/highspy.
+## Incremental SAT — CaDiCaL
 
-### Convex optimization — CVXPY
+`solver.sat.incremental@0.1.0` supports:
 
-`solver.convex@0.1.0` is the new v0.45 capability. The AASM-owned convex IR currently supports:
+- exact Boolean assumptions;
+- UNSAT core extraction over assumptions;
+- conflict budget;
+- decision budget;
+- bounded in-process session reuse.
 
-- scalar continuous variables with optional bounds;
-- linear `<=`, `>=`, and equality constraints;
-- diagonal convex quadratic minimization;
-- diagonal concave quadratic maximization;
-- constant-radius second-order-cone constraints `||x||₂ <= r`.
+CaDiCaL can retain learned search state while an in-process session lives, but AASM labels that state **EPHEMERAL_PERFORMANCE_ONLY**. It is not a durable claim, not a reusable truth object, and deleting it cannot change canonical meaning.
 
-The reference worker uses CVXPY and selects an installed numerical backend appropriate to the problem class. The backend name is included in solver identity. AASM independently checks bounds, linear constraints, SOC feasibility, request/model identity, provider identity, and objective evaluation before the result can become durable Evidence.
+## CP-SAT scheduling — OR-Tools
 
-A CVXPY result is **EVIDENCE_ONLY**. It does not promote truth or mutate canonical state by itself.
+`solver.cp_sat.scheduling@0.1.0` extends the existing CP-SAT lowering with:
 
-### PuLP — compatibility, not authority
+- fixed interval variables;
+- optional intervals;
+- `NO_OVERLAP`;
+- `CUMULATIVE` resource constraints;
+- configurable search-worker count;
+- deterministic-time budget;
+- conflict, branch, deterministic-time, and wall-time telemetry.
 
-PuLP is intentionally **not** an AASM solver provider.
+AASM independently rechecks interval equations, overlap, cumulative resource load, base constraints, and objective values before successful solver output becomes durable Evidence.
 
-`aasm.adapter.pulp.v1` is a `TRANSLATION_ONLY` adapter with `solver_execution = NEVER`. It converts supported `LpProblem` models into the existing AASM `OptimizationModel`; AASM then routes the canonical model to its native solver portfolio, such as HiGHS for MILP.
+## Advanced MILP — HiGHS
 
-The v0.45 adapter supports finite-bounded continuous, integer, and binary variables, linear constraints, and linear objectives. It rejects variables that are unbounded on either side instead of inventing a large finite bound and silently changing model semantics.
+`solver.milp.advanced@0.1.0` adds:
 
-### Formal providers remain active
+- warm start submission;
+- MIP relative-gap target;
+- node limit;
+- primal/dual bound telemetry;
+- MIP gap;
+- node and simplex-iteration telemetry.
 
-The v0.39 formal-verification pathway remains unchanged:
+Warm starts and incumbents are search hints only. They do not modify the canonical AASM model or weaken feasibility validation.
+
+## Advanced convex optimization — CVXPY
+
+`solver.convex.advanced@0.1.0` adds a richer AASM-owned convex representation without making arbitrary CVXPY expressions canonical. It supports:
+
+- scalar continuous variables;
+- linear equality/inequality constraints;
+- factorized positive-semidefinite quadratic minimization;
+- factorized negative-semidefinite quadratic maximization;
+- cross terms through weighted squares of linear forms;
+- affine second-order-cone constraints `||A x + b||₂ <= cᵀx + d`.
+
+The factor representation makes convexity structural rather than an unchecked backend assertion. AASM independently re-evaluates bounds, linear constraints, SOC feasibility, request/problem/provider identity, and canonical objective value before result Evidence is accepted.
+
+## PuLP — compatibility, not authority
+
+PuLP remains intentionally **not** an AASM solver provider. `aasm.adapter.pulp.v1` is `TRANSLATION_ONLY` with `solver_execution = NEVER`: supported `LpProblem` models are converted into AASM's canonical optimization IR and then routed to native providers such as HiGHS.
+
+The adapter supports finite-bounded continuous, integer, and binary variables, linear constraints, and linear objectives. It rejects an unbounded side instead of inventing a large finite bound and silently changing problem semantics.
+
+## Formal providers remain active
+
+The v0.39 formal-verification path is unchanged:
 
 - **Z3** — SMT-LIB2;
 - **cvc5** — SMT-LIB2;
@@ -99,10 +136,10 @@ Formal solver output is Evidence and crosses the existing epistemic-admission bo
 
 ## One scheduler, one authority path
 
-Neither v0.44 nor v0.45 creates a parallel execution authority.
+v0.46 does **not** create another execution authority.
 
 ```text
-canonical model
+canonical problem
       ↓
 CapabilityContract
       ↓
@@ -118,7 +155,7 @@ TaskLease
       ↓
 solver execution
       ↓
-result validation
+AASM validation
       ↓
 Evidence
       ↓
@@ -127,9 +164,15 @@ optional policy-gated reuse
 
 Expired leases, superseded attempts, mismatched provider implementations, result-ID collisions, and non-idempotent completed-lease replays are rejected.
 
+The v0.46 law is:
+
+> **SEARCH_STATE_NEVER_PROMOTES_TRUTH.**
+
+UNSAT cores, bounds, gaps, incumbents, warm starts, learned search state, and solver telemetry can improve computation or provide Evidence; none can directly authorize AASM knowledge.
+
 ## Reuse
 
-Optimization does not create an opaque cache. SAT/CP-SAT/MILP and convex work enters the existing v0.41 reuse plane as `OPTIMIZATION_RESULT` only after explicit candidate admission and ordinary scope/privacy/environment/dependency/effect validation.
+Optimization still does not create an opaque truth cache. Advanced solver results use the existing v0.41 `OPTIMIZATION_RESULT` plane only after explicit candidate admission and ordinary scope/privacy/environment/dependency/effect validation.
 
 ```text
 prior solver Evidence
@@ -143,28 +186,36 @@ ReuseCertificate
 solver-loop SKIP_EXECUTION
 ```
 
-Deleting a hot index changes performance only, never truth.
+Ephemeral learned SAT state is not part of durable reuse. Deleting a hot index or incremental solver session changes performance only, never truth.
 
 ## Real-backend verification
 
-The repository has a dedicated **Optimization Backends** workflow on Python 3.13. It installs:
+The dedicated **Optimization Backends** workflow on Python 3.13 installs and executes the real solver stack:
 
-- PySAT/CaDiCaL;
-- OR-Tools;
+- Kissat through PySAT;
+- CaDiCaL through PySAT;
+- OR-Tools CP-SAT;
 - HiGHS/highspy;
 - CVXPY;
 - PuLP.
 
-It executes real solver lifecycle tests through AASM and requires both:
+It preserves the released v0.44/v0.45 real lifecycle tests and adds v0.46 real tests for:
+
+- Kissat execution;
+- incremental CaDiCaL assumptions + UNSAT core + session reuse;
+- CP-SAT interval/no-overlap/cumulative scheduling;
+- HiGHS warm start + bound/gap telemetry;
+- advanced CVXPY factorized quadratic + affine SOC.
+
+The conformance surfaces are:
 
 ```bash
 aasm optimization-conformance --real
 aasm modeling-conformance --real
+aasm advanced-optimization-conformance --real
 ```
 
-to pass.
-
-The ordinary CI matrix separately validates Python 3.11/3.12/3.13, packaging, PostgreSQL, Compose/replay, scopes, adapters, LangGraph, release contracts, and the dependency-neutral tests. Formal Assurance continues to run the bounded TLA+ and Promela/SPIN models.
+The ordinary CI matrix separately validates Python 3.11/3.12/3.13, packaging, PostgreSQL, Compose/replay, scopes, adapters, LangGraph, release contracts, and dependency-neutral tests. Formal Assurance continues the bounded TLA+ and Promela/SPIN models over the shared lease/Evidence authority boundary and source-gates v0.46's non-authoritative search-state rules.
 
 ## Installation
 
@@ -186,82 +237,65 @@ CVXPY + PuLP modeling surfaces only:
 pip install 'aasm-runtime[modeling]'
 ```
 
-## CVXPY example
+## Advanced solver example
 
 ```python
 from aasm import AASMEngine, ProblemSpec
-from aasm.convex_optimization import reference_convex_models
+from aasm.advanced_optimization import (
+    ADVANCED_PROVIDERS,
+    default_advanced_providers,
+    reference_advanced_problems,
+)
 
-engine = AASMEngine(ProblemSpec("convex solve"))
-engine.install_default_convex_capability_contract(
+engine = AASMEngine(ProblemSpec("advanced SAT"))
+engine.install_default_advanced_optimization_capabilities(
     authority_id="policy",
     authority_class="POLICY",
 )
-engine.register_default_cvxpy_provider_runtime(
+
+provider = next(
+    row for row in default_advanced_providers()
+    if row.provider_id == ADVANCED_PROVIDERS["INCREMENTAL_SAT"]
+)
+engine.register_advanced_optimization_provider_runtime(
+    provider,
     authority_id="policy",
     authority_class="POLICY",
 )
 
-model = reference_convex_models()["QP"]
-engine.admit_convex_model(model)
-request = engine.request_convex_optimization(model.model_id, requester_id="agent")
-lease = engine.claim_next_task("worker-cvxpy", lease_seconds=60)
-result = engine.execute_convex_lease(lease["lease_id"])
-assert result["result"]["status"] == "OPTIMAL"
+problem = reference_advanced_problems()["INCREMENTAL_SAT"]
+engine.admit_optimization_model(problem.model)
+request = engine.request_advanced_optimization(problem, requester_id="agent")
+lease = engine.claim_next_task("worker-cadical-incremental", lease_seconds=60)
+result = engine.execute_advanced_optimization_lease(lease["lease_id"])
+assert result["result"]["status"] == "UNSAT"
+assert result["result"]["unsat_core"]
 ```
-
-## PuLP import example
-
-```python
-import pulp
-from aasm import AASMEngine, ProblemSpec
-from aasm.optimization import default_optimization_providers
-
-problem = pulp.LpProblem("allocation", pulp.LpMinimize)
-x = pulp.LpVariable("x", 0, 10, cat=pulp.LpInteger)
-y = pulp.LpVariable("y", 0, 10)
-problem += x + y
-problem += x + y >= 3
-
-engine = AASMEngine(ProblemSpec("PuLP import"))
-engine.install_default_optimization_capability_contracts(
-    authority_id="policy",
-    authority_class="POLICY",
-)
-highs = next(p for p in default_optimization_providers() if p.provider_id == "highs")
-engine.register_optimization_provider_runtime(
-    highs,
-    authority_id="policy",
-    authority_class="POLICY",
-)
-imported = engine.import_pulp_problem(problem, admit=True)
-model_id = imported["admitted"]["model"]["model_id"]
-request = engine.request_optimization(model_id, requester_id="agent", required_provider="highs")
-lease = engine.claim_next_task("worker-highs", lease_seconds=60)
-result = engine.execute_optimization_lease(lease["lease_id"])
-```
-
-PuLP never performs the solve in that flow. Its model is translated into AASM, and HiGHS executes the resulting AASM model.
 
 ## CLI
 
 ```bash
-# v0.45
- aasm convex-optimization-contract
- aasm pulp-adapter-contract
- aasm modeling-conformance
- aasm modeling-conformance --real
+# v0.46 advanced solver control
+aasm advanced-optimization-contract
+aasm advanced-optimization-blueprint
+aasm advanced-optimization-conformance
+aasm advanced-optimization-conformance --real
+
+# v0.45 modeling surfaces
+aasm convex-optimization-contract
+aasm pulp-adapter-contract
+aasm modeling-conformance --real
 
 # v0.44 native portfolio
- aasm optimization-contract
- aasm optimization-blueprint
- aasm optimization-conformance --real
+aasm optimization-contract
+aasm optimization-blueprint
+aasm optimization-conformance --real
 
 # v0.43 certification
- aasm certification-contract
- aasm certify
- aasm certify --target solver-reuse
- aasm certify --target sii-preview
+aasm certification-contract
+aasm certify
+aasm certify --target solver-reuse
+aasm certify --target sii-preview
 ```
 
 ## Roadmap
@@ -276,9 +310,10 @@ PuLP never performs the solve in that flow. Its model is translated into AASM, a
 - v0.42 Reference-Domain Stress Tests ✅
 - v0.43 Semantic/Adversarial Certification ✅
 - v0.44 Heterogeneous Optimization — CaDiCaL / CP-SAT / HiGHS ✅
-- **v0.45 Convex Optimization & Modeling Adapters — CVXPY / PuLP ✅**
-- **v0.46 next — Symbiotic Intelligence Interface & Governed Intelligence Economics**
-- v0.47 Cross-Run Certified Knowledge & Governed Long-Term Memory
-- v0.48 Semantic Solver Release Candidate
+- v0.45 Convex Optimization & Modeling Adapters — CVXPY / PuLP ✅
+- **v0.46 Advanced Solver Control & Search Artifacts — current ✅**
+- **v0.47 next — Symbiotic Intelligence Interface & Governed Intelligence Economics**
+- v0.48 Cross-Run Certified Knowledge & Governed Long-Term Memory
+- v0.49 Semantic Solver Release Candidate
 
-See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/CONVEX_AND_MODELING_ADAPTERS.md](docs/CONVEX_AND_MODELING_ADAPTERS.md), [docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md](docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md), and [docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md](docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md).
+See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/ADVANCED_SOLVER_CONTROL.md](docs/ADVANCED_SOLVER_CONTROL.md), [docs/CONVEX_AND_MODELING_ADAPTERS.md](docs/CONVEX_AND_MODELING_ADAPTERS.md), [docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md](docs/HETEROGENEOUS_SOLVER_PORTFOLIO.md), and [docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md](docs/SYMBIOTIC_INTELLIGENCE_INTERFACE.md).
