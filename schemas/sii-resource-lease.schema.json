@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/sii-resource-lease.schema.json",
+  "title": "AASM SII Resource Lease",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["proposer_id", "resource_tier", "contextual_utility", "weight_profile", "context_budget_tokens", "max_parallel_candidates", "allowed_solver_classes", "may_request_long_lived_memory", "may_propose_schema_change", "scheduler_priority", "authority_class", "direct_truth_promotion", "direct_state_mutation", "self_verification", "enforcement", "message"],
+  "properties": {
+    "proposer_id": {"type": "string", "minLength": 1},
+    "resource_tier": {"type": "integer", "minimum": 1, "maximum": 3},
+    "contextual_utility": {"type": "number", "minimum": 0, "maximum": 1},
+    "weight_profile": {"type": "string", "minLength": 1},
+    "context_budget_tokens": {"type": "integer", "minimum": 0},
+    "max_parallel_candidates": {"type": "integer", "minimum": 1},
+    "allowed_solver_classes": {"type": "array", "items": {"type": "string"}},
+    "may_request_long_lived_memory": {"type": "boolean"},
+    "may_propose_schema_change": {"type": "boolean"},
+    "scheduler_priority": {"type": "number", "minimum": 0, "maximum": 1},
+    "authority_class": {"const": "PROPOSER"},
+    "direct_truth_promotion": {"const": false},
+    "direct_state_mutation": {"const": false},
+    "self_verification": {"const": false},
+    "enforcement": {"const": "POLICY_PROJECTION_ONLY_V043"},
+    "message": {"type": "string"}
+  }
+}
