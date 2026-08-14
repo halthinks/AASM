@@ -7,7 +7,7 @@ def commit(engine,privacy='PUBLIC',principal=None,retention='permanent'):
     d=p['decision']['decision_id']; engine.authorize_memory_operation(d,authority_id='policy',authority_class='POLICY'); r=engine.commit_memory_operation(d,worker_id='worker'); return p['memory']['memory_id'],r
 
 def test_v40_contract_and_public_api():
-    assert __version__=='0.47.0'; assert hierarchical_memory_contract()['contract_id']=='aasm.memory.hierarchical.v1'; report=validate_public_api_contract(); assert report['valid'],report; assert report['contract']['contract_version']=='0.23.0'
+    assert __version__=='0.47.1'; assert hierarchical_memory_contract()['contract_id']=='aasm.memory.hierarchical.v1'; report=validate_public_api_contract(); assert report['valid'],report; assert report['contract']['contract_version']=='0.23.0'
 def test_governed_memory_path_and_legacy_cache():
     e=AASMEngine(ProblemSpec('memory')); p=e.propose_memory_operation('STORE',scope_id='root',proposer_id='agent',content={'x':1},privacy_level='PUBLIC'); d=p['decision']['decision_id']
     with pytest.raises(ValueError): e.commit_memory_operation(d,worker_id='w')
