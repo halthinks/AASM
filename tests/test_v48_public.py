@@ -1,0 +1,49 @@
+from aasm import (
+    AASMEngine,
+    CROSS_RUN_KNOWLEDGE_CONTRACT_VERSION,
+    __version__,
+    cross_run_knowledge_contract,
+    public_api_contract,
+    run_cross_run_knowledge_conformance,
+    validate_public_api_contract,
+)
+from aasm.cli import build_parser
+from aasm.runtime_v47 import AASMEngine as V47Engine
+from aasm.runtime_v48 import AASMEngine as V48Engine
+
+
+def test_v48_public_contract_is_current_and_composes_over_v47():
+    assert __version__ == "0.48.0"
+    assert AASMEngine is V48Engine
+    assert issubclass(V48Engine, V47Engine)
+    report = validate_public_api_contract()
+    assert report["valid"], report
+    contract = report["contract"]
+    assert contract["contract_version"] == "0.24.0"
+    assert contract["runtime_version"] == "0.48.0"
+    assert contract["distribution"]["version"] == "0.48.0"
+    assert contract["sii_governance"]["contract_version"] == "0.3.0"
+    assert contract["certification"]["contract_version"] == "0.2.0"
+    assert contract["cross_run_knowledge"]["contract_version"] == "0.1.0"
+    assert CROSS_RUN_KNOWLEDGE_CONTRACT_VERSION == "0.1.0"
+
+
+def test_cross_run_contract_keeps_receiving_authority_and_reuse_boundaries():
+    contract = cross_run_knowledge_contract()
+    assert contract["source_authority"] == "PROVENANCE_ONLY_NEVER_INHERITED"
+    assert contract["receiving_admission"] == "POLICY_OR_CONTROLLER_REQUIRED"
+    assert contract["semantic_materialization"] == "LOCAL_AUTHORIZED_REASONING_REQUIRED"
+    assert contract["reuse"] == "EXISTING_V41_REUSE_CERTIFICATE_REQUIRED"
+    assert contract["sii_reputation"] == "ACCOUNTING_ONLY_NEVER_AUTHORITY_OR_RESOURCE_ENTITLEMENT"
+
+
+def test_cross_run_conformance_and_cli_are_public():
+    conformance = run_cross_run_knowledge_conformance()
+    assert conformance["status"] == "PASS", conformance
+    assert all(conformance["checks"].values())
+    help_text = build_parser().format_help()
+    assert "cross-run-knowledge-contract" in help_text
+    assert "cross-run-knowledge-conformance" in help_text
+    imports = public_api_contract()["supported_imports"]
+    assert "CrossRunKnowledgeEnvelope" in imports
+    assert "CrossRunAdmissionCertificate" in imports
