@@ -103,6 +103,7 @@
 ./docs/RELEASE_0.50.md
 ./docs/RELEASE_0.51.md
 ./docs/RELEASE_0.52.md
+./docs/RELEASE_0.54.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
