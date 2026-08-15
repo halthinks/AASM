@@ -108,15 +108,18 @@ Required scope:
 7. principal/workspace/scope seams on resource capacity so later hosted isolation does not require replacement identity;
 8. protected reserves and allocatable-capacity semantics;
 9. proposal-side resource-demand estimates with expected amount, upper bound, unit, and confidence;
-10. reservation/release/settlement semantics separating estimated commitment from actual consumption;
-11. at least one conformance fixture representing a weekly external model/subscription allowance without hard-coding a provider into the kernel;
-12. policy examples that jointly reason over correctness/evidence/progress and quota/cost/time/expert scarcity;
-13. explicit re-estimation/replan trigger contract when expected consumption or available capacity materially changes;
-14. compatibility with existing `ResourceRecord`, scheduler, economics, SII, scope, authority, and solver surfaces—no second scheduler or private accounting truth plane.
+10. SII structured proposals carry resource demand, expected outcome/evidence/progress, uncertainty, and alternatives through the existing proposal boundary rather than an intelligence-only accounting path;
+11. reservation/release/settlement semantics separating estimated commitment from actual consumption;
+12. at least one conformance fixture representing a weekly external model/subscription allowance without hard-coding a provider into the kernel;
+13. policy examples that jointly reason over correctness/evidence/progress and quota/cost/time/expert scarcity;
+14. resource-aware candidate selection/routing that can prefer a cheaper/local/native path when it satisfies hard quality/evidence thresholds and can preserve scarce expert capacity when policy requires it;
+15. explicit re-estimation/replan trigger contract when expected consumption or available capacity materially changes;
+16. predicted-versus-actual consumption evidence suitable for later calibration without granting truth or authority;
+17. compatibility with existing `ResourceRecord`, scheduler, economics, SII, scope, authority, and solver surfaces—no second scheduler or private accounting truth plane.
 
 Hard completion criterion:
 
-> On oracle-known finite multi-objective problems AASM reproduces the exact nondominated set and preserves lexicographic priorities; on resource-governance fixtures it must not allocate protected or unknown finite capacity as if freely available, must distinguish observed quota evidence from authoritative capacity, and must reconcile reservation with actual use without granting authority or truth.
+> On oracle-known finite multi-objective problems AASM reproduces the exact nondominated set and preserves lexicographic priorities; on resource-governance fixtures it must not allocate protected or unknown finite capacity as if freely available, must distinguish observed quota evidence from authoritative capacity, must route at least one decision across alternative intelligence/resource paths under hard quality constraints, and must reconcile reservation with actual use without granting authority or truth.
 
 # v0.53 — Scoped Identity/Authority Hardening + Durable Cross-Run Solver Learning
 
@@ -127,11 +130,11 @@ Primary goals:
 - formalize capability delegation, ceilings, expiry, and nondelegable denies;
 - preserve current cross-run knowledge rule that source authority never becomes receiving-run authority;
 - implement compatible cross-run solver learning (canonical no-goods/bounds/cores plus performance-only native accelerator state);
-- make resource capacities, leases, observations, and consumption scope-aware without a retrofit.
+- make resource capacities, leases, observations, consumption, and learned resource-estimation evidence scope-aware without a retrofit.
 
 Hard completion criterion:
 
-> Cross-scope reads/writes and privilege amplification fail closed in adversarial tests, while compatible learned solver state remains reusable without inheriting foreign authority or truth.
+> Cross-scope reads/writes and privilege amplification fail closed in adversarial tests, while compatible learned solver/resource state remains reusable without inheriting foreign authority or truth.
 
 # v0.54 — Effect Ownership & UNKNOWN Recovery + Certified Portfolio Exchange
 
@@ -142,7 +145,7 @@ Primary goals:
 - idempotency/ownership records;
 - `CONFIRMED | FAILED | UNKNOWN` outcomes with explicit reconciliation;
 - resource reservation before governed external execution and settlement after observation;
-- deterministic multi-backend racing under leases/budgets;
+- deterministic multi-backend/model racing under leases/budgets;
 - certified translation of exchanged incumbents, bounds, conflicts/no-goods, cores, and compatible solver state;
 - no winner-by-speed or majority-vote truth shortcut.
 
@@ -174,10 +177,11 @@ Permanent corpora include:
 - lexicographic and Pareto oracle-known problems;
 - weekly/rolling/refilling external-capacity fixtures;
 - protected-reserve exhaustion and replenishment cases;
-- estimated-versus-actual consumption drift;
+- resource-aware SII routing across alternative model/solver/tool paths;
+- estimated-versus-actual consumption drift and replanning;
 - cross-scope leakage and privilege-escalation attacks;
 - effect UNKNOWN/reconciliation and duplicate-effect attacks;
-- cold-vs-learned solver reuse;
+- cold-vs-learned solver/resource reuse;
 - forged proof, stale bound, poisoned incumbent, false completeness, tolerance abuse, and false quota-authority cases.
 
 Hard completion criterion:
@@ -194,29 +198,31 @@ Required review:
 - solution pools/enumeration;
 - multi-objective/Pareto semantics;
 - resource capacity/observation/demand contracts;
+- resource-aware SII routing and estimate/actual reconciliation;
 - scoped identity/authority;
 - effect ownership/recovery;
 - portable replay/export;
-- cross-run solver learning and cross-solver exchange;
+- cross-run solver/resource learning and cross-solver exchange;
 - profile migration and scope-safe inspection;
 - claim-to-gate coverage for every public contract.
 
 Hard completion criterion:
 
-> Hosted AASM could be built as a consumer of public contracts without introducing a second authority, resource, effect, history, or truth system.
+> Hosted AASM could be built as a consumer of public contracts without introducing a second authority, resource, effect, history, decision-routing, or truth system.
 
-# After v0.57 — Resource-Aware SII and Hosted Product Fabric
+# After v0.57 — Private Hosted Product Fabric and Further Public Hardening
 
-The next public work should deepen, not reinvent, the above seams:
+Resource-aware SII is **not** deferred to this phase; its first end-to-end governed routing contract is a v0.52 requirement and is hardened through v0.57. Work after v0.57 should deepen those public semantics while the private hosted product consumes them.
 
-- SII proposals carry expected outcome, evidence quality, progress, resource demand, uncertainty, and alternatives;
-- resource-aware routing selects among models, solvers, tools, humans, and local compute under policy;
-- predicted versus actual consumption calibrates future estimates without becoming truth authority;
-- scarcity uses remaining capacity, reset/refill horizon, protected reserve, consumption velocity, and forecast demand;
-- scope-safe inspection explains why a resource/intelligence was selected and what was protected/consumed;
-- profile binding/migration becomes stable enough for generated operator stacks.
+Public hardening may continue with:
 
-The private Hosted AASM fabric then consumes those public contracts:
+- improved resource-estimate calibration from predicted-versus-actual history;
+- richer scarcity policies using remaining capacity, reset/refill horizon, protected reserve, consumption velocity, and forecast demand;
+- scope-safe explanations of why a resource/intelligence was selected and what was protected/consumed;
+- profile binding/migration maturity for generated operator stacks;
+- additional provider adapters that map external usage telemetry into the generic observation contract without becoming kernel dependencies.
+
+The private Hosted AASM fabric consumes the public contracts:
 
 ```text
 Fabric Root Policy
@@ -231,7 +237,7 @@ Support
 Portal / API gateway / billing / isolation topology
 ```
 
-Private product policy may determine deployment topology and operator content, but it may not replace public scope, authority, resource, effect, replay, or commitment semantics.
+Private product policy may determine deployment topology and operator content, but it may not replace public scope, authority, resource, effect, replay, decision-routing, or commitment semantics.
 
 # No Presumed v1.0
 
