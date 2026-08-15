@@ -40,10 +40,10 @@ jobs:
           print(json.dumps(report, sort_keys=True))
           if report["status"] != "PASS":
               raise SystemExit(1)
-          if report["freeze_manifest"]["runtime_version"] != "0.53.0":
-              raise SystemExit("RC freeze manifest is not the current v0.53 public contract")
-          if report["freeze_manifest"]["adoption_contract_version"] != "0.29.0":
-              raise SystemExit("RC freeze manifest is not the current v0.53 adoption contract")
+          if report["freeze_manifest"]["runtime_version"] != "0.54.0":
+              raise SystemExit("RC freeze manifest is not the current v0.54 public contract")
+          if report["freeze_manifest"]["adoption_contract_version"] != "0.30.0":
+              raise SystemExit("RC freeze manifest is not the current v0.54 adoption contract")
           PY
       - name: Run public RC CLI surfaces
         run: |
