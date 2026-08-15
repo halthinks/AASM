@@ -198,8 +198,3 @@ def validate_public_api_contract():
     if PUBLIC_RELEASE_STABILITY != "PRE_RELEASE":
         errors.append("v0.52 must remain PRE_RELEASE before promotion")
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
-
-
-from . import demo_stack as _demo_stack
-_demo_stack.AASMEngine = AASMEngine
-_demo_stack._runtime_version = lambda: __version__
