@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/discrete-boolean-model.schema.json",
+  "title": "AASM Discrete Boolean Model v1",
+  "type": "object",
+  "required": ["model_id", "contract_id", "contract_version", "name", "variable_ids", "pseudo_boolean_constraints", "cardinality_constraints", "problem_revision_id", "problem_revision_fingerprint", "metadata", "required_feature_ids", "fingerprint"],
+  "properties": {
+    "model_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.optimization.discrete-boolean.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "name": {"type": "string", "minLength": 1},
+    "variable_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "pseudo_boolean_constraints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["constraint_id", "kind", "terms", "sense", "rhs", "source_reference_fingerprints", "metadata", "fingerprint"],
+        "properties": {
+          "constraint_id": {"type": "string", "minLength": 1},
+          "kind": {"const": "PSEUDO_BOOLEAN"},
+          "terms": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["variable_id", "positive", "weight"],
+              "properties": {
+                "variable_id": {"type": "string", "minLength": 1},
+                "positive": {"type": "boolean"},
+                "weight": {"type": "integer"}
+              },
+              "additionalProperties": false
+            }
+          },
+          "sense": {"enum": ["<=", ">=", "=="]},
+          "rhs": {"type": "integer"},
+          "source_reference_fingerprints": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+          "metadata": {"type": "object"},
+          "fingerprint": {"type": "string", "minLength": 16}
+        },
+        "additionalProperties": false
+      }
+    },
+    "cardinality_constraints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["constraint_id", "kind", "literals", "min_count", "max_count", "source_reference_fingerprints", "metadata", "fingerprint"],
+        "properties": {
+          "constraint_id": {"type": "string", "minLength": 1},
+          "kind": {"const": "CARDINALITY"},
+          "literals": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["variable_id", "positive"],
+              "properties": {
+                "variable_id": {"type": "string", "minLength": 1},
+                "positive": {"type": "boolean"}
+              },
+              "additionalProperties": false
+            }
+          },
+          "min_count": {"type": ["integer", "null"], "minimum": 0},
+          "max_count": {"type": ["integer", "null"], "minimum": 0},
+          "source_reference_fingerprints": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+          "metadata": {"type": "object"},
+          "fingerprint": {"type": "string", "minLength": 16}
+        },
+        "additionalProperties": false
+      }
+    },
+    "problem_revision_id": {"type": "string"},
+    "problem_revision_fingerprint": {"type": "string"},
+    "metadata": {"type": "object"},
+    "required_feature_ids": {"type": "array", "uniqueItems": true, "items": {"enum": ["PSEUDO_BOOLEAN", "CARDINALITY"]}},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
