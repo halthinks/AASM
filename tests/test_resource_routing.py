@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+import pytest
+
 from aasm.resource_governance import (
     CapacityWindowKind,
     ResourceCapacity,
@@ -8,6 +10,7 @@ from aasm.resource_governance import (
 from aasm.resource_routing import (
     ResourceAwareCandidate,
     ResourceRoutingPolicy,
+    reserve_candidate_resources,
     select_resource_aware_candidate,
 )
 
@@ -129,3 +132,59 @@ def test_upper_bound_not_mean_estimate_controls_feasibility():
     )
     assert decision.selected_candidate_id is None
     assert decision.reason == "NO_ELIGIBLE_CANDIDATE"
+
+
+def test_selected_candidate_reserves_upper_bound_atomically():
+    capacity = weekly_capacity()
+    candidate = ResourceAwareCandidate(
+        "expert",
+        .95,
+        .95,
+        .95,
+        demands=(ResourceDemandEstimate("EXPERT_MODEL_ALLOWANCE", 5, "credits", resource_id="expert-weekly", upper_bound=8),),
+    )
+    reservation = reserve_candidate_resources(candidate, [capacity])
+    assert reservation.allocations == (("expert-weekly", 8.0),)
+    assert reservation.total_reserved == 8.0
+    assert capacity.committed == 8.0
+
+
+def test_multi_demand_reservation_is_all_or_nothing():
+    expert = weekly_capacity(consumed=80, reserve=10)
+    compute = ResourceCapacity(
+        resource_id="local-cpu",
+        resource_class="CPU_SECONDS",
+        unit="seconds",
+        window_kind=CapacityWindowKind.FIXED,
+        total=100,
+    )
+    candidate = ResourceAwareCandidate(
+        "mixed",
+        .95,
+        .95,
+        .95,
+        demands=(
+            ResourceDemandEstimate("CPU_SECONDS", 20, "seconds", resource_id="local-cpu"),
+            ResourceDemandEstimate("EXPERT_MODEL_ALLOWANCE", 20, "credits", resource_id="expert-weekly"),
+        ),
+    )
+    with pytest.raises(ValueError, match="reservation infeasible"):
+        reserve_candidate_resources(candidate, [compute, expert])
+    assert compute.committed == 0.0
+    assert expert.committed == 0.0
+
+
+def test_resource_class_only_reservation_is_deterministic():
+    a = ResourceCapacity("a", "CPU_SECONDS", "seconds", window_kind=CapacityWindowKind.FIXED, total=50)
+    b = ResourceCapacity("b", "CPU_SECONDS", "seconds", window_kind=CapacityWindowKind.FIXED, total=50)
+    candidate = ResourceAwareCandidate(
+        "local",
+        .9,
+        .9,
+        .9,
+        demands=(ResourceDemandEstimate("CPU_SECONDS", 10, "seconds"),),
+    )
+    reservation = reserve_candidate_resources(candidate, [b, a])
+    assert reservation.allocations == (("a", 10.0),)
+    assert a.committed == 10.0
+    assert b.committed == 0.0
