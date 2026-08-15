@@ -279,6 +279,8 @@
 ./schemas/memory-entry.schema.json
 ./schemas/memory-index-entry.schema.json
 ./schemas/mission-control.schema.json
+./schemas/model-admission-report.schema.json
+./schemas/model-feature-set.schema.json
 ./schemas/model-outcome.schema.json
 ./schemas/model-profile.schema.json
 ./schemas/model-route.schema.json
@@ -300,6 +302,7 @@
 ./schemas/profile-binding.schema.json
 ./schemas/profile-evolution.schema.json
 ./schemas/profile.schema.json
+./schemas/provider-capability-manifest.schema.json
 ./schemas/provisioning-request.schema.json
 ./schemas/quota.schema.json
 ./schemas/reactive-obligation-rule.schema.json
@@ -503,6 +506,7 @@
 ./src/aasm/mission_control.py
 ./src/aasm/model.py
 ./src/aasm/model_check.py
+./src/aasm/model_features.py
 ./src/aasm/model_routing.py
 ./src/aasm/modeling_conformance.py
 ./src/aasm/multi_objective.py
@@ -744,5 +748,6 @@
 ./tests/test_v53_scoped_store.py
 ./tests/test_v53_solver_learning.py
 ./tests/test_v54_public.py
+./tests/test_v55_model_feature_admission.py
 ./tests/test_v55_semantic_evolution_foundation.py
 ./tests/test_workers_leases.py
