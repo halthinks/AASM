@@ -1,15 +1,18 @@
+from threading import Event, Thread
+
 import pytest
 
 from aasm.evidence import EvidenceRecord
 from aasm.model import ProblemSpec
+from aasm.persistence import MemoryStore
 from aasm.resource_governance import CapacityWindowKind, ResourceCapacity, ResourceDemandEstimate
 from aasm.resource_routing import ResourceAwareCandidate, ResourceRoutingPolicy
 from aasm.runtime_v53 import AASMEngine, RESOURCE_AUTHORITY_CAPABILITIES
 from aasm.scoped_authority import Principal, ScopedAuthorityGrant, Workspace
 
 
-def engine_with_workspace_and_root(*capabilities):
-    engine = AASMEngine(ProblemSpec("v0.53 resource authority"))
+def engine_with_workspace_and_root(*capabilities, store=None):
+    engine = AASMEngine(ProblemSpec("v0.53 resource authority"), store=store)
     trust = engine.add_evidence(
         EvidenceRecord(kind="trust_anchor", statement="fixture root", source="fixture"),
         reason="fixture root recorded",
@@ -130,6 +133,75 @@ def test_authorized_reservation_transaction_derives_from_authority_decision():
     assert reservation["status"] == "ACTIVE"
     assert reservation["total_reserved"] == 10.0
     assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
+
+
+def test_two_hosts_cannot_commit_reservations_from_same_stale_resource_snapshot():
+    store = MemoryStore()
+    seed = engine_with_workspace_and_root(
+        RESOURCE_AUTHORITY_CAPABILITIES["capacity_register"],
+        RESOURCE_AUTHORITY_CAPABILITIES["reserve"],
+        store=store,
+    )
+    seed.register_resource_capacity(capacity(), actor_principal_id="root")
+    machine_id = seed.snapshot.machine_id
+
+    host_a = AASMEngine.resume(machine_id, store)
+    host_b = AASMEngine.resume(machine_id, store)
+    reached_commit = Event()
+    release_commit = Event()
+    outcome = {}
+    original_record = host_b._record_resource_document
+
+    def blocked_record(*, record_type, **kwargs):
+        if record_type == "routing_transaction":
+            reached_commit.set()
+            if not release_commit.wait(10):
+                raise TimeoutError("stale reservation test was not released")
+        return original_record(record_type=record_type, **kwargs)
+
+    host_b._record_resource_document = blocked_record
+
+    def run_stale_host():
+        try:
+            outcome["result"] = host_b.select_and_reserve_resource_candidate(
+                [candidate(50)],
+                ResourceRoutingPolicy(),
+                workspace_id="workspace-a",
+                scope_id="root",
+                actor_principal_id="root",
+            )
+        except Exception as exc:
+            outcome["error"] = exc
+
+    thread = Thread(target=run_stale_host, daemon=True)
+    thread.start()
+    try:
+        assert reached_commit.wait(10), "host B never reached the guarded resource commit"
+        first = host_a.select_and_reserve_resource_candidate(
+            [candidate(50)],
+            ResourceRoutingPolicy(),
+            workspace_id="workspace-a",
+            scope_id="root",
+            actor_principal_id="root",
+        )
+        assert first["transaction"]["reservation"]["total_reserved"] == 50.0
+    finally:
+        release_commit.set()
+        thread.join(10)
+
+    assert not thread.is_alive()
+    assert "result" not in outcome
+    assert isinstance(outcome.get("error"), ValueError)
+    assert "Stale machine version" in str(outcome["error"])
+
+    canonical = store.load_snapshot(machine_id)
+    assert host_b.snapshot.canonical_hash() == canonical.canonical_hash()
+    report = host_b.resource_governance_report(workspace_id="workspace-a", scope_id="root")
+    assert len(report["reservations"]) == 1
+    reservation = next(iter(report["reservations"].values()))
+    assert reservation["total_reserved"] == 50.0
+    assert report["capacities"]["expert-weekly"]["committed"] == 50.0
+    assert host_b.replay().canonical_hash() == canonical.canonical_hash()
 
 
 def test_settlement_has_independent_capability_and_preserves_reservation_when_denied():
