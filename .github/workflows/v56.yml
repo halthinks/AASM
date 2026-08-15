@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
   statuses: write
 
 jobs:
@@ -19,6 +19,20 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+      - name: Regenerate canonical tracked-file inventory once
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/release_manifest.py --write-file-list
+          if ! git diff --quiet -- FILE_LIST.txt; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add FILE_LIST.txt
+            git commit -m 'Regenerate canonical file inventory for v0.56'
+            git push origin HEAD:main
+            exit 0
+          fi
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
