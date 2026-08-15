@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/decision-vector.schema.json",
+  "title": "AASM Governed Decision Vector v1",
+  "type": "object",
+  "required": ["vector_id", "contract_id", "contract_version", "model", "hard_floors", "objectives", "metadata", "fingerprint"],
+  "properties": {
+    "vector_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.decision-vector.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "model": {"type": "object"},
+    "hard_floors": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "objectives": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
