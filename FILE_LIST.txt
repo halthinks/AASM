@@ -267,6 +267,7 @@
 ./schemas/formal-statement.schema.json
 ./schemas/formal-verification-request.schema.json
 ./schemas/formal-verification-result.schema.json
+./schemas/formulation-execution-binding.schema.json
 ./schemas/governance-budget.schema.json
 ./schemas/governance-context.schema.json
 ./schemas/governance-decision.schema.json
@@ -412,6 +413,7 @@
 ./src/aasm/_runtime_v53_resource_history.py
 ./src/aasm/_runtime_v53_solver_learning.py
 ./src/aasm/_runtime_v54_effect_resources.py
+./src/aasm/_runtime_v55_formulation.py
 ./src/aasm/_runtime_v55_semantic_evolution.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
@@ -494,6 +496,7 @@
 ./src/aasm/formal_conformance.py
 ./src/aasm/formal_models.py
 ./src/aasm/formal_workers.py
+./src/aasm/formulation_execution.py
 ./src/aasm/governance.py
 ./src/aasm/graph.py
 ./src/aasm/hierarchical_memory.py
@@ -755,6 +758,7 @@
 ./tests/test_v53_scoped_store.py
 ./tests/test_v53_solver_learning.py
 ./tests/test_v54_public.py
+./tests/test_v55_formulation_execution.py
 ./tests/test_v55_model_feature_admission.py
 ./tests/test_v55_semantic_evolution_foundation.py
 ./tests/test_v55_semantic_evolution_runtime.py
