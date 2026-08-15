@@ -1,0 +1,91 @@
+name: Apply v0.53 OR-Tools hint integration once
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Patch existing OR-Tools provider and remove helper
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/aasm/optimization.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''        if request.model.objective:
+              expr = sum(self._integer(coeff) * variables[vid] for vid, coeff in request.model.objective.coefficients.items()) + self._integer(request.model.objective.offset)
+              model.minimize(expr) if request.model.objective.sense == "MINIMIZE" else model.maximize(expr)
+          solver = cp_model.CpSolver()
+          solver.parameters.max_time_in_seconds = request.timeout_ms / 1000.0
+          solver.parameters.num_search_workers = 1
+          solver.parameters.random_seed = 0
+          try:
+              raw = solver.solve(model)
+'''
+          # Source indentation is 8 spaces; keep the replacement exact and guarded.
+          old = old.replace('          ', '        ')
+          new = '''        if request.model.objective:
+              expr = sum(self._integer(coeff) * variables[vid] for vid, coeff in request.model.objective.coefficients.items()) + self._integer(request.model.objective.offset)
+              model.minimize(expr) if request.model.objective.sense == "MINIMIZE" else model.maximize(expr)
+          consumed_learning_applications: list[str] = []
+          hints = request.metadata.get("solver_learning_hints") or []
+          if not isinstance(hints, list):
+              raise ValueError("solver_learning_hints must be a list")
+          for hint in hints:
+              if not isinstance(hint, Mapping):
+                  raise ValueError("solver learning hint must be a mapping")
+              if hint.get("provider_id") != self.provider_id:
+                  raise ValueError("solver learning hint provider does not match OR-Tools worker")
+              if hint.get("hint_kind") != "ASSIGNMENT":
+                  raise ValueError("OR-Tools worker only accepts validated ASSIGNMENT solver learning hints")
+              assignment_hint = hint.get("assignment")
+              if not isinstance(assignment_hint, Mapping) or set(map(str, assignment_hint)) != set(variables):
+                  raise ValueError("validated OR-Tools assignment hint must exactly cover model variables")
+              application_id = str(hint.get("application_id") or "")
+              if not application_id:
+                  raise ValueError("solver learning hint requires application_id")
+              for variable_id, value in sorted(assignment_hint.items()):
+                  model.add_hint(variables[str(variable_id)], self._integer(float(value)))
+              consumed_learning_applications.append(application_id)
+          solver = cp_model.CpSolver()
+          solver.parameters.max_time_in_seconds = request.timeout_ms / 1000.0
+          solver.parameters.num_search_workers = 1
+          solver.parameters.random_seed = 0
+          try:
+              raw = solver.solve(model)
+'''
+          new = new.replace('          ', '        ')
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one OR-Tools insertion point, found {text.count(old)}')
+          text = text.replace(old, new)
+          old_stats = '''            stats = {"conflicts": int(solver.num_conflicts), "branches": int(solver.num_branches), "wall_time_seconds": float(solver.wall_time), "raw_status": raw_name}
+              return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, status, OptimizationSolverIdentity(self.provider_id, "ortools.cp-sat", _package_version("ortools")), assignment=assignment, objective_value=objective, best_bound=best_bound, wall_time_ms=int((time.monotonic() - start) * 1000), statistics=stats)
+'''.replace('              ', '            ')
+          new_stats = '''            stats = {"conflicts": int(solver.num_conflicts), "branches": int(solver.num_branches), "wall_time_seconds": float(solver.wall_time), "raw_status": raw_name, "solver_learning_hint_count": len(consumed_learning_applications), "solver_learning_application_ids": list(consumed_learning_applications)}
+              return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, status, OptimizationSolverIdentity(self.provider_id, "ortools.cp-sat", _package_version("ortools")), assignment=assignment, objective_value=objective, best_bound=best_bound, wall_time_ms=int((time.monotonic() - start) * 1000), statistics=stats, metadata={"solver_learning_application_ids": list(consumed_learning_applications), "solver_learning_hints_consumed": len(consumed_learning_applications)})
+'''.replace('              ', '            ')
+          if text.count(old_stats) != 1:
+              raise SystemExit(f'expected one OR-Tools result point, found {text.count(old_stats)}')
+          path.write_text(text.replace(old_stats, new_stats), encoding='utf-8')
+          PY
+          git rm .github/workflows/apply-v53-ortools-hint-once.yml
+          python scripts/release_manifest.py --write-file-list
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/aasm/optimization.py FILE_LIST.txt
+          git commit -m 'Consume validated solver learning hints in OR-Tools adapter'
+          git push origin HEAD:main
