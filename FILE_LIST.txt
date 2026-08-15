@@ -396,6 +396,7 @@
 ./src/aasm/_runtime_v53_authority.py
 ./src/aasm/_runtime_v53_resource_history.py
 ./src/aasm/_runtime_v53_solver_learning.py
+./src/aasm/_runtime_v54_effect_resources.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -602,6 +603,7 @@
 ./src/aasm/runtime_v53_learning.py
 ./src/aasm/runtime_v54.py
 ./src/aasm/runtime_v54_exchange.py
+./src/aasm/runtime_v54_full.py
 ./src/aasm/runtime_v54_portfolio.py
 ./src/aasm/scheduler.py
 ./src/aasm/scoped_authority.py
@@ -672,6 +674,7 @@
 ./tests/test_runtime_v54_effects.py
 ./tests/test_runtime_v54_exchange.py
 ./tests/test_runtime_v54_portfolio.py
+./tests/test_runtime_v54_settlement.py
 ./tests/test_scheduler.py
 ./tests/test_schemas.py
 ./tests/test_sdist_smoke.py
