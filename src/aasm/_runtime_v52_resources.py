@@ -22,6 +22,7 @@ from .resource_routing import (
     reserve_candidate_resources,
     select_resource_aware_candidate,
 )
+from .scopes import scope_flow_allowed, validate_scope_state
 from .semantic_result import canonical_semantic_json, semantic_fingerprint
 
 
@@ -128,12 +129,21 @@ def _decision_to_dict(decision: ResourceRoutingDecision) -> dict[str, Any]:
     }
 
 
-def _reservation_to_dict(reservation: ResourceReservation, reservation_id: str, *, status: str = "ACTIVE") -> dict[str, Any]:
+def _reservation_to_dict(
+    reservation: ResourceReservation,
+    reservation_id: str,
+    *,
+    workspace_id: str | None,
+    scope_id: str | None,
+    status: str = "ACTIVE",
+) -> dict[str, Any]:
     return {
         "reservation_id": reservation_id,
         "candidate_id": reservation.candidate_id,
         "allocations": [[resource_id, amount] for resource_id, amount in reservation.allocations],
         "total_reserved": reservation.total_reserved,
+        "workspace_id": workspace_id,
+        "scope_id": scope_id,
         "status": status,
         "contract_id": reservation.contract_id,
         "contract_version": reservation.contract_version,
@@ -146,6 +156,7 @@ def _project(snapshot) -> dict[str, Any]:
     decisions: dict[str, dict[str, Any]] = {}
     reservations: dict[str, dict[str, Any]] = {}
     settlements: dict[str, dict[str, Any]] = {}
+    routing_transactions: dict[str, dict[str, Any]] = {}
 
     for row in _records(snapshot):
         if row.get("status", "active") != "active":
@@ -162,6 +173,7 @@ def _project(snapshot) -> dict[str, Any]:
             observations[str(metadata.get("object_id") or row.get("evidence_id"))] = document
         elif record_type == "routing_transaction":
             tx_id = str(document["transaction_id"])
+            routing_transactions[tx_id] = document
             decisions[tx_id] = document["decision"]
             reservation = document.get("reservation")
             if reservation:
@@ -183,7 +195,29 @@ def _project(snapshot) -> dict[str, Any]:
         "decisions": decisions,
         "reservations": reservations,
         "settlements": settlements,
+        "routing_transactions": routing_transactions,
     }
+
+
+def _capacity_accessible(
+    capacity: ResourceCapacity,
+    *,
+    workspace_id: str | None,
+    scope_id: str | None,
+    scope_state: Mapping[str, Any],
+) -> bool:
+    if capacity.workspace_id is not None and workspace_id != capacity.workspace_id:
+        return False
+    if capacity.scope_id is not None:
+        if scope_id is None:
+            return False
+        if not scope_flow_allowed(dict(scope_state), capacity.scope_id, scope_id):
+            return False
+    return True
+
+
+def _context_matches(document: Mapping[str, Any], *, workspace_id: str | None, scope_id: str | None) -> bool:
+    return document.get("workspace_id") == workspace_id and document.get("scope_id") == scope_id
 
 
 class ResourceGovernanceRuntimeMixin:
@@ -200,9 +234,20 @@ class ResourceGovernanceRuntimeMixin:
             "durability": "EXISTING_AASM_EVIDENCE_EVENT_REPLAY",
             "selection_and_reservation": "ONE_DURABLE_TRANSACTION_RECORD",
             "settlement": "ONE_DURABLE_TRANSACTION_RECORD",
+            "scope_access": "WORKSPACE_MATCH_AND_EXISTING_AASM_SCOPE_FLOW",
+            "scope_default": "SCOPED_CAPACITY_FAILS_CLOSED_WITHOUT_CONTEXT",
             "authority": "RESOURCE_STATE_NEVER_GRANTS_AUTHORITY",
             "truth": "RESOURCE_OBSERVATIONS_REMAIN_EVIDENCE",
         }
+
+    def _resource_scope_state(self) -> dict[str, Any]:
+        return validate_scope_state(self._begin_calculus()["scope_state"])
+
+    def _validate_resource_context(self, *, workspace_id: str | None, scope_id: str | None) -> dict[str, Any]:
+        scope_state = self._resource_scope_state()
+        if scope_id is not None and scope_id not in scope_state["records"]:
+            raise KeyError(scope_id)
+        return scope_state
 
     def _record_resource_document(
         self,
@@ -237,6 +282,10 @@ class ResourceGovernanceRuntimeMixin:
         return evidence_id
 
     def register_resource_capacity(self, capacity: ResourceCapacity) -> dict[str, Any]:
+        if capacity.scope_id is not None:
+            scope_state = self._resource_scope_state()
+            if capacity.scope_id not in scope_state["records"]:
+                raise KeyError(capacity.scope_id)
         projection = _project(self.snapshot)
         existing = projection["capacities"].get(capacity.resource_id)
         document = _capacity_to_dict(capacity)
@@ -250,11 +299,23 @@ class ResourceGovernanceRuntimeMixin:
         )
         return {"capacity": document, "evidence_id": evidence_id, "already_exists": existing is not None}
 
-    def record_resource_observation(self, observation: ResourceObservation) -> dict[str, Any]:
+    def record_resource_observation(
+        self,
+        observation: ResourceObservation,
+        *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
+    ) -> dict[str, Any]:
         projection = _project(self.snapshot)
         if observation.resource_id not in projection["capacities"]:
             raise KeyError(observation.resource_id)
+        scope_state = self._validate_resource_context(workspace_id=workspace_id, scope_id=scope_id)
+        capacity = _capacity_from_dict(projection["capacities"][observation.resource_id])
+        if not _capacity_accessible(capacity, workspace_id=workspace_id, scope_id=scope_id, scope_state=scope_state):
+            raise PermissionError("resource observation crosses workspace/scope boundary")
         document = _observation_to_dict(observation)
+        document["workspace_id"] = workspace_id
+        document["scope_id"] = scope_id
         observation_id = f"resource-observation-{semantic_fingerprint(document)[:20]}"
         evidence_id = self._record_resource_document(
             record_type="observation",
@@ -264,22 +325,78 @@ class ResourceGovernanceRuntimeMixin:
         )
         return {"observation_id": observation_id, "observation": document, "evidence_id": evidence_id}
 
-    def resource_governance_report(self) -> dict[str, Any]:
+    def resource_governance_report(
+        self,
+        *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
+    ) -> dict[str, Any]:
         projection = _project(self.snapshot)
-        return {"contract": self.resource_runtime_contract_report(), **projection}
+        scope_state = self._validate_resource_context(workspace_id=workspace_id, scope_id=scope_id)
+        visible_capacities = {
+            resource_id: document
+            for resource_id, document in projection["capacities"].items()
+            if _capacity_accessible(
+                _capacity_from_dict(document),
+                workspace_id=workspace_id,
+                scope_id=scope_id,
+                scope_state=scope_state,
+            )
+        }
+        visible_resource_ids = set(visible_capacities)
+        observations = {
+            key: value for key, value in projection["observations"].items()
+            if value.get("resource_id") in visible_resource_ids
+            and _context_matches(value, workspace_id=workspace_id, scope_id=scope_id)
+        }
+        reservations = {
+            key: value for key, value in projection["reservations"].items()
+            if _context_matches(value, workspace_id=workspace_id, scope_id=scope_id)
+        }
+        routing_transactions = {
+            key: value for key, value in projection["routing_transactions"].items()
+            if _context_matches(value.get("access_context") or {}, workspace_id=workspace_id, scope_id=scope_id)
+        }
+        decisions = {key: value["decision"] for key, value in routing_transactions.items()}
+        settlements = {
+            key: value for key, value in projection["settlements"].items()
+            if value.get("reservation_id") in reservations
+        }
+        return {
+            "contract": self.resource_runtime_contract_report(),
+            "access_context": {"workspace_id": workspace_id, "scope_id": scope_id},
+            "capacities": visible_capacities,
+            "observations": observations,
+            "decisions": decisions,
+            "reservations": reservations,
+            "settlements": settlements,
+            "routing_transactions": routing_transactions,
+        }
 
     def select_and_reserve_resource_candidate(
         self,
         candidates: Iterable[ResourceAwareCandidate],
         policy: ResourceRoutingPolicy,
         *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
         derived_from=(),
     ) -> dict[str, Any]:
         rows = tuple(candidates)
         if not rows:
             raise ValueError("at least one resource-aware candidate is required")
         projection = _project(self.snapshot)
-        capacities = [_capacity_from_dict(value) for _, value in sorted(projection["capacities"].items())]
+        scope_state = self._validate_resource_context(workspace_id=workspace_id, scope_id=scope_id)
+        capacities = [
+            _capacity_from_dict(value)
+            for _, value in sorted(projection["capacities"].items())
+            if _capacity_accessible(
+                _capacity_from_dict(value),
+                workspace_id=workspace_id,
+                scope_id=scope_id,
+                scope_state=scope_state,
+            )
+        ]
         decision = select_resource_aware_candidate(rows, capacities, policy)
         selected = next((row for row in rows if row.candidate_id == decision.selected_candidate_id), None)
 
@@ -290,11 +407,18 @@ class ResourceGovernanceRuntimeMixin:
             reservation_seed = {
                 "candidate_id": reservation.candidate_id,
                 "allocations": [[resource_id, amount] for resource_id, amount in reservation.allocations],
+                "workspace_id": workspace_id,
+                "scope_id": scope_id,
             }
             reservation_id = f"resource-reservation-{semantic_fingerprint(reservation_seed)[:20]}"
             if reservation_id in projection["reservations"] and projection["reservations"][reservation_id].get("status") == "ACTIVE":
                 raise ValueError("resource reservation already active")
-            reservation_document = _reservation_to_dict(reservation, reservation_id)
+            reservation_document = _reservation_to_dict(
+                reservation,
+                reservation_id,
+                workspace_id=workspace_id,
+                scope_id=scope_id,
+            )
             touched = {resource_id for resource_id, _ in reservation.allocations}
             post_capacities = {
                 row.resource_id: _capacity_to_dict(row)
@@ -302,7 +426,9 @@ class ResourceGovernanceRuntimeMixin:
                 if row.resource_id in touched
             }
 
+        access_context = {"workspace_id": workspace_id, "scope_id": scope_id}
         transaction_seed = {
+            "access_context": access_context,
             "candidates": [_candidate_to_dict(row) for row in sorted(rows, key=lambda value: value.candidate_id)],
             "decision": _decision_to_dict(decision),
             "reservation": reservation_document,
@@ -324,6 +450,8 @@ class ResourceGovernanceRuntimeMixin:
         reservation_id: str,
         actual_consumption: Mapping[str, float],
         *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
         evidence_ids=(),
     ) -> dict[str, Any]:
         projection = _project(self.snapshot)
@@ -331,6 +459,9 @@ class ResourceGovernanceRuntimeMixin:
             reservation = projection["reservations"][reservation_id]
         except KeyError:
             raise KeyError(reservation_id) from None
+        self._validate_resource_context(workspace_id=workspace_id, scope_id=scope_id)
+        if not _context_matches(reservation, workspace_id=workspace_id, scope_id=scope_id):
+            raise PermissionError("resource settlement crosses workspace/scope boundary")
         if reservation.get("status") != "ACTIVE":
             raise ValueError("resource reservation is not active")
 
@@ -353,6 +484,8 @@ class ResourceGovernanceRuntimeMixin:
 
         settlement_seed = {
             "reservation_id": reservation_id,
+            "workspace_id": workspace_id,
+            "scope_id": scope_id,
             "actual_consumption": dict(sorted(actual.items())),
             "post_capacities": post_capacities,
         }
