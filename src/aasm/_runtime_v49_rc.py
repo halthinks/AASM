@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .advanced_optimization import clear_incremental_sat_sessions
 from .semantic_solver_rc import (
     build_semantic_solver_rc_freeze_manifest,
     run_claim_gate_audit,
@@ -38,7 +39,14 @@ class SemanticSolverRCRuntimeMixin:
         return run_claim_gate_audit()
 
     def semantic_solver_rc_certify(self, *, real: bool = False, public_contract=None):
-        return run_semantic_solver_rc_certification(real=real, target_engine_cls=self.__class__, public_contract=public_contract)
+        # Certification must be independent of performance-only search state
+        # left behind by earlier native solver runs in the same process.
+        clear_incremental_sat_sessions()
+        return run_semantic_solver_rc_certification(
+            real=real,
+            target_engine_cls=self.__class__,
+            public_contract=public_contract,
+        )
 
 
 __all__ = ["SemanticSolverRCRuntimeMixin"]
