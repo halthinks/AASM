@@ -22,8 +22,9 @@ def main():
     root = Path(__file__).resolve().parents[1]
     with (root / "pyproject.toml").open("rb") as handle:
         project = tomllib.load(handle)["project"]
+
     version = str(project["version"])
-    if version != "0.54.0":
+    if version != "0.55.0":
         raise SystemExit(f"unexpected release version: {version}")
 
     if project.get("license") != "Apache-2.0":
@@ -32,6 +33,7 @@ def main():
         raise SystemExit(f"unexpected license files: {project.get('license-files')}")
     if [value for value in project.get("classifiers", []) if value.startswith("License ::")]:
         raise SystemExit("PEP 639 license expression must not use legacy license classifiers")
+
     require(root / "LICENSE", ["Apache License", "Version 2.0, January 2004", "Grant of Patent License", "END OF TERMS AND CONDITIONS"])
     require(root / "NOTICE", ["AASM", "Copyright 2026 AASM contributors"])
     require(root / "LICENSE_POLICY.md", [
@@ -49,171 +51,129 @@ def main():
     for policy_doc in (root / "README.md", root / "ROADMAP.md", root / "CHANGELOG.md", root / "docs/CURRENT_RELEASE.md"):
         forbid(policy_doc, stale_license_policy)
 
-    require(root / "src/aasm/__init__.py", ["public_v54"])
-    require(root / "src/aasm/cli.py", ["cli_v54"])
+    # Active public release boundary.
+    require(root / "src/aasm/__init__.py", ["public_v55"])
+    require(root / "src/aasm/public_v55.py", [
+        '__version__ = "0.55.0"',
+        '"contract_version": "0.31.0"',
+        'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
+        "EXTERNAL_REFERENCE_CONTRACT_ID",
+        "PROBLEM_REVISION_CONTRACT_ID",
+        "PROBLEM_DELTA_CONTRACT_ID",
+        "MODEL_FEATURE_SET_CONTRACT_ID",
+        "PROVIDER_CAPABILITY_MANIFEST_CONTRACT_ID",
+        "SOLVER_FORMULATION_CONTRACT_ID",
+        "verify_solver_formulation_identity",
+        "DiscreteBooleanModel",
+        "SchedulingModel",
+        "ContinuousModel",
+        "GovernedDecisionVector",
+        "SemanticEvolutionArchive",
+        "_demo_stack.AASMEngine = AASMEngine",
+    ])
+    require(root / "src/aasm/runtime_v55.py", ["AASMEngine"])
+    require(root / "src/aasm/runtime_v55_foundation.py", ["SemanticEvolutionRuntimeMixin", "FormulationRuntimeMixin", "AASMEngine"])
+    require(root / "src/aasm/semantic_evolution.py", [
+        'EXTERNAL_REFERENCE_CONTRACT_ID = "aasm.external.reference.v1"',
+        'PROBLEM_REVISION_CONTRACT_ID = "aasm.problem.revision.v1"',
+        'PROBLEM_DELTA_CONTRACT_ID = "aasm.problem.delta.v1"',
+    ])
+    require(root / "src/aasm/model_features.py", [
+        'MODEL_FEATURE_SET_CONTRACT_ID = "aasm.model.feature-set.v1"',
+        'PROVIDER_CAPABILITY_MANIFEST_CONTRACT_ID = "aasm.provider.capability-manifest.v1"',
+        'MODEL_ADMISSION_CONTRACT_ID = "aasm.model.admission.v1"',
+    ])
+    require(root / "src/aasm/solver_formulation.py", [
+        'SOLVER_FORMULATION_CONTRACT_ID = "aasm.solver.formulation.v1"',
+        '"nontrivial_translation_policy": "NO_PASS_WITHOUT_AN_INDEPENDENT_CHECKER_FOR_THE_REQUESTED_FIDELITY"',
+        "verify_solver_formulation_identity",
+    ])
+    require(root / "src/aasm/discrete_ir.py", [
+        "PseudoBooleanConstraint",
+        "CardinalityConstraint",
+        "verify_discrete_boolean_linearization",
+        '"approximation": "NOT_SUPPORTED_BY_THIS_CONTRACT"',
+    ])
+    require(root / "src/aasm/scheduling_ir.py", [
+        "CumulativeResourceConstraint",
+        "validate_scheduling_assignment",
+        '"execution_adapter": "NOT_CLAIMED_BY_THIS_FOUNDATION"',
+    ])
+    require(root / "src/aasm/continuous_ir.py", [
+        "NumericTolerancePolicy",
+        "QuadraticConstraint",
+        "SecondOrderConeConstraint",
+        '"optimality_proof": "NOT_CLAIMED_BY_ASSIGNMENT_VALIDATION"',
+    ])
+    require(root / "src/aasm/decision_vector_ir.py", [
+        "DecisionHardFloor",
+        "GovernedDecisionVector",
+        '"scalarization": "NONE"',
+    ])
+    require(root / "src/aasm/semantic_archive.py", [
+        "SemanticEvolutionArchive",
+        '"replay": "EXISTING_AASM_REDUCER_OVER_ARCHIVED_EVENTS"',
+        '"event_sequence_semantics": "DURABLE_ORDERING_ONLY_NOT_MACHINE_VERSION"',
+        '"replay_uses_persisted_snapshot": False',
+    ])
+
+    # Released parent surfaces remain intact and independently checked.
     require(root / "src/aasm/public_v54.py", [
         '__version__ = "0.54.0"',
         '"contract_version": "0.30.0"',
-        'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
         "EFFECT_INTENT_CONTRACT_ID",
-        "EFFECT_RESOURCE_SETTLEMENT_CONTRACT_ID",
         "SOLVER_PORTFOLIO_CONTRACT_ID",
         "SOLVER_EXCHANGE_CONTRACT_ID",
-        '"fastest_result"',
-        '"uncertified_negative_majority"',
-        '"cross_solver_agreement_grants_truth"',
-        "_demo_stack.AASMEngine = AASMEngine",
     ])
-    require(root / "src/aasm/runtime_v54_full.py", [
-        "EffectResourceSettlementMixin",
-        "V54ExchangeEngine",
-        "AASMEngine",
-    ])
+    require(root / "src/aasm/public_v53.py", ['__version__ = "0.53.0"', '"contract_version": "0.29.0"'])
+    require(root / "src/aasm/public_v52.py", ['__version__ = "0.52.0"', '"contract_version": "0.28.0"'])
+    require(root / "src/aasm/public_v51.py", ['__version__ = "0.51.0"', '"contract_version": "0.27.0"'])
+
+    # Existing solver/resource/authority boundaries remain present.
     require(root / "src/aasm/runtime_v54.py", [
         'SOLVER_TRANSLATION_CONTRACT_ID = "aasm.solver.translation.v1"',
         'SOLVER_PORTFOLIO_CONTRACT_ID = "aasm.solver.portfolio.v1"',
         '"fastest_result": "NEVER_CORRECTNESS_TIEBREAK"',
-        '"uncertified_negative_majority": "NEVER_DECISIVE"',
-        '"external_boundary": "DURABLE_OWNERSHIP_EVIDENCE_REQUIRED_BEFORE_EXECUTOR_CALL"',
         '"unknown_outcome": "RETRY_BLOCKED_UNTIL_EXPLICIT_RECONCILIATION"',
-    ])
-    require(root / "src/aasm/_runtime_v54_effect_resources.py", [
-        'EFFECT_RESOURCE_SETTLEMENT_CONTRACT_ID = "aasm.effect.resource-settlement.v1"',
-        '"resource_ledger": "EXISTING_AASM_RESOURCE_SETTLEMENT_ONLY"',
-        '"authority": "EXISTING_RESOURCE_SETTLE_SCOPED_AUTHORITY"',
-        '"outcome_gate": "CONFIRMED_OR_FAILED_RECONCILIATION_REQUIRED"',
-        '"unknown_outcome": "SETTLEMENT_BLOCKED"',
-        "settle_effect_resources",
-    ])
-    require(root / "src/aasm/runtime_v54_portfolio.py", [
-        'SOLVER_PORTFOLIO_RUNTIME_CONTRACT_ID = "aasm.solver.portfolio.runtime.v1"',
-        '"execution_lease": "EXISTING_AASM_TASKLEASE"',
-        '"provider_execution": "EXISTING_EXECUTE_OPTIMIZATION_LEASE"',
-        '"parallel_scheduler": "NONE"',
-        "prepare_solver_portfolio",
-        "evaluate_solver_portfolio",
-    ])
-    require(root / "src/aasm/runtime_v54_exchange.py", [
-        'SOLVER_EXCHANGE_CONTRACT_ID = "aasm.solver.exchange.v1"',
-        '"source_learning": "EXACT_LOCAL_PASS_VALIDATION_REQUIRED"',
-        '"target_validation": "EXISTING_V053_LOCAL_REVALIDATION_REQUIRED"',
-        '"native_accelerator_exchange": "FORBIDDEN_ACROSS_SOLVERS"',
-        '"cross_solver_agreement_grants_truth": False',
-        '"truth_authority": "NONE"',
-        '"policy_authority": "NONE"',
-        "exchange_solver_learning",
-    ])
-
-    require(root / "src/aasm/public_v53.py", [
-        '__version__ = "0.53.0"',
-        '"contract_version": "0.29.0"',
-        "SCOPED_AUTHORITY_CONTRACT_ID",
-        "SCOPED_STORE_CONTRACT_ID",
-        "SOLVER_LEARNING_CONTRACT_ID",
-        "SOLVER_LEARNING_APPLICATION_CONTRACT_ID",
-    ])
-    require(root / "src/aasm/runtime_v53.py", [
-        "PrincipalAwareResourceHistoryMixin",
-        "ScopedAuthorityRuntimeMixin",
-        "_guard_resource_evidence_by_version = True",
-        "RESOURCE_AUTHORITY_CAPABILITIES",
-        "EFFECT_AUTHORITY_CAPABILITIES",
-    ])
-    require(root / "src/aasm/runtime_v53_learning.py", [
-        "SolverLearningRuntimeMixin",
-        "SOLVER_LEARNING_APPLY_CAPABILITY",
-        "apply_solver_learning",
     ])
     require(root / "src/aasm/scoped_authority.py", [
         'SCOPED_AUTHORITY_CONTRACT_ID = "aasm.authority.scoped.v1"',
         '"deny_precedence": "ANY_MATCHING_DENY_OVERRIDES_ALLOW"',
-        '"cross_run_authority_transfer": "NEVER"',
         '"default": "DENY"',
-    ])
-    require(root / "src/aasm/scoped_store.py", [
-        'SCOPED_STORE_CONTRACT_ID = "aasm.store.scoped.v1"',
-        '"raw_snapshot_access": "ROOT_SCOPE_SINGLE_WORKSPACE_ONLY"',
-        '"direct_store_write": "FORBIDDEN_USE_GOVERNED_RUNTIME_TRANSITIONS"',
     ])
     require(root / "src/aasm/solver_learning.py", [
         'SOLVER_LEARNING_CONTRACT_ID = "aasm.solver.learning.v1"',
-        'SOLVER_LEARNING_APPLICATION_CONTRACT_ID = "aasm.solver.learning.application.v1"',
-        '"cross_run_authority_transfer": "NEVER"',
-        '"pruning_application": "LOCAL_REVALIDATION_REQUIRED"',
         '"truth_authority": "NONE"',
         '"policy_authority": "NONE"',
-        "build_solver_learning_application",
-        "apply_solver_learning_to_optimization_request",
     ])
-    require(root / "src/aasm/optimization.py", ["cadical", "ortools-cp-sat", "highs", "add_hint"])
-
-    require(root / "src/aasm/public_v52.py", [
-        '__version__ = "0.52.0"',
-        '"contract_version": "0.28.0"',
-        "MULTI_OBJECTIVE_CONTRACT_ID",
-        "RESOURCE_ROUTING_CONTRACT_ID",
-    ])
-    require(root / "src/aasm/public_v51.py", [
-        '__version__ = "0.51.0"',
-        '"contract_version": "0.27.0"',
-        "SOLUTION_POOL_CONTRACT_ID",
-        "ENUMERATION_CONTRACT_ID",
-    ])
-
     require(root / "src/aasm/proof_claims.py", [
         'SOLVER_PROOF_CONTRACT_ID = "aasm.solver.proof-certificate.v1"',
         '"proof_certified_requires_independent_checker": True',
-        '"certificate_authority": "EVIDENCE_ONLY"',
     ])
     require(root / "src/aasm/semantic_solver_rc.py", [
         'SEMANTIC_SOLVER_RC_CONTRACT_ID = "aasm.semantic.solver.rc.v1"',
         "AGREEMENT_OR_INCONCLUSIVE_NEVER_VOTE",
         "NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE",
     ])
-    require(root / "src/aasm/cross_run_knowledge.py", [
-        'CROSS_RUN_KNOWLEDGE_CONTRACT_ID = "aasm.knowledge.cross-run.v1"',
-        '"authority_transfer": "NEVER"',
-        '"authority_inherited": False',
-    ])
-    require(root / "src/aasm/sii_governance.py", [
-        'SII_GOVERNED_CONTRACT_VERSION = "0.3.0"',
-        "REQUIRED_VERIFICATION_NEVER_REDUCED",
-        '"authority_reward": "NEVER"',
-    ])
 
-    require(root / ".github/workflows/release.yml", [
-        "aasm/ci-summary",
-        "aasm/formal-assurance",
-        "aasm/semantic-solver-rc",
-        "aasm/proof-claims",
-        "aasm/solution-pools",
-        "aasm/optimization",
-        "aasm/scoped-authority",
-        "aasm/solver-learning",
-        "aasm/v54",
-        "Require exact main commit and all release gates",
-    ])
-    require(root / ".github/workflows/v54.yml", ["aasm/v54", "ACTIVE_DEVELOPMENT"])
-    require(root / ".github/workflows/scoped-authority.yml", ["aasm/scoped-authority"])
-    require(root / ".github/workflows/solver-learning.yml", ["aasm/solver-learning"])
-    require(root / ".github/workflows/optimization.yml", ["aasm/optimization"])
-
+    # v0.55 schemas and source doctrine are part of the release artifact.
     for name in (
-        "scoped-principal.schema.json",
-        "workspace.schema.json",
-        "scoped-authority-grant.schema.json",
-        "scoped-authority-decision.schema.json",
-        "scoped-store-access.schema.json",
-        "solver-learning-artifact.schema.json",
-        "solver-learning-validation.schema.json",
-        "multi-objective-problem.schema.json",
-        "pareto-frontier.schema.json",
-        "resource-capacity.schema.json",
-        "resource-observation.schema.json",
-        "resource-demand.schema.json",
-        "solution-pool.schema.json",
-        "enumeration-completeness-certificate.schema.json",
-        "solver-claim-certificate.schema.json",
+        "external-reference.schema.json",
+        "problem-revision.schema.json",
+        "problem-delta.schema.json",
+        "model-feature-set.schema.json",
+        "provider-capability-manifest.schema.json",
+        "model-admission-report.schema.json",
+        "solver-formulation.schema.json",
+        "solver-formulation-certificate.schema.json",
+        "discrete-boolean-model.schema.json",
+        "discrete-linearization.schema.json",
+        "scheduling-model.schema.json",
+        "scheduling-validation.schema.json",
+        "continuous-model.schema.json",
+        "continuous-validation.schema.json",
+        "governed-decision-vector.schema.json",
+        "semantic-evolution-archive.schema.json",
     ):
         require(root / "schemas" / name, ['"$schema"', "2020-12"])
 
@@ -227,33 +187,48 @@ def main():
         if token not in modeling:
             raise SystemExit(f"modeling extra missing {token}")
 
+    # Preserve all earlier release-specific contract gates.
     subprocess.check_call([sys.executable, str(root / "scripts" / "check_v52_contracts.py")])
     subprocess.check_call([sys.executable, str(root / "scripts" / "check_v53_contracts.py")])
     subprocess.check_call([sys.executable, str(root / "scripts" / "check_v53_solver_learning_contracts.py")])
     subprocess.check_call([sys.executable, str(root / "scripts" / "check_v54_contracts.py")])
 
+    # v0.55 release-specific contract checkers.
+    for script in (
+        "check_v55_discrete_ir.py",
+        "check_v55_scheduling_ir.py",
+        "check_v55_continuous_ir.py",
+        "check_v55_decision_vector.py",
+        "check_v55_semantic_archive.py",
+    ):
+        subprocess.check_call([sys.executable, str(root / "scripts" / script)])
+
     require(root / "README.md", [
-        "Current release — v0.54.0",
-        "aasm.adoption.v1 / 0.30.0",
-        "v0.55.0 — Extended Mathematical IR + Portable Machine Archive",
+        "Current release — v0.55.0",
+        "aasm.adoption.v1 / 0.31.0",
+        "v0.56.0 — Truthful Solver Outcomes, Runtime Provenance, and Reproducibility",
     ])
     require(root / "docs" / "CURRENT_RELEASE.md", [
-        "AASM v0.54.0",
-        "0.30.0",
-        "aasm.effect.intent.v1",
-        "aasm.effect.resource-settlement.v1",
-        "aasm.solver.portfolio.v1",
-        "aasm.solver.exchange.v1",
-        "aasm/v54",
+        "AASM v0.55.0",
+        "0.31.0",
+        "public_v55",
+        "aasm.solver.formulation.v1",
+        "governed decision",
+        "semantic archive",
     ])
-    require(root / "docs" / "RELEASE_0.54.md", [
-        "AASM v0.54.0",
-        "Certified Cross-Solver Exchange",
-        "Deterministic Portfolio Racing",
-        "Effect Ownership/UNKNOWN Recovery",
+    require(root / "docs" / "RELEASE_0.55.md", [
+        "AASM v0.55.0",
+        "Governed Semantic Evolution",
+        "Exact pseudo-Boolean",
+        "Portable semantic archive",
+    ])
+    require(root / ".github/workflows/v55.yml", [
+        "AASM v0.55 Release",
+        "ACTIVE_DEVELOPMENT",
+        "active public v0.55 release contract: PASS",
     ])
 
-    print("v0.54.0 release contracts: PASS")
+    print("v0.55.0 release contracts: PASS")
     return 0
 
 
