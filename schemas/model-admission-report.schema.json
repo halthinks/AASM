@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/model-admission-report.schema.json",
+  "title": "AASM Model Admission Report v1",
+  "type": "object",
+  "required": ["report_id", "contract_id", "contract_version", "feature_set_id", "feature_set_fingerprint", "provider_manifest_id", "provider_manifest_fingerprint", "admitted", "exact", "exact_features", "approximate_features", "verifier_only_features", "unsupported_features", "reasons", "fingerprint"],
+  "properties": {
+    "report_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.model.admission.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "feature_set_id": {"type": "string", "minLength": 1},
+    "feature_set_fingerprint": {"type": "string", "minLength": 16},
+    "provider_manifest_id": {"type": "string", "minLength": 1},
+    "provider_manifest_fingerprint": {"type": "string", "minLength": 16},
+    "admitted": {"type": "boolean"},
+    "exact": {"type": "boolean"},
+    "exact_features": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "approximate_features": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "verifier_only_features": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "unsupported_features": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "reasons": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
