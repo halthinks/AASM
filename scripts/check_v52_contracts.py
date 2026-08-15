@@ -11,6 +11,13 @@ def require(path: Path, tokens: list[str]) -> None:
         raise SystemExit(f"{path}: missing v0.52 contract tokens {missing}")
 
 
+def forbid(path: Path, tokens: list[str]) -> None:
+    text = path.read_text()
+    present = [token for token in tokens if token in text]
+    if present:
+        raise SystemExit(f"{path}: forbidden v0.52 pre-release side effects {present}")
+
+
 def schema(root: Path, name: str) -> dict:
     path = root / "schemas" / name
     if not path.exists():
@@ -97,7 +104,8 @@ def main() -> None:
 
     # v0.52 public surface is intentionally defined and testable before release
     # promotion. The installed/default package remains on v0.51 until promotion.
-    require(root / "src/aasm/public_v52.py", [
+    public_v52 = root / "src/aasm/public_v52.py"
+    require(public_v52, [
         '__version__ = "0.52.0"',
         'PUBLIC_RELEASE_STABILITY = "PRE_RELEASE"',
         '"contract_version": "0.28.0"',
@@ -112,6 +120,10 @@ def main() -> None:
         '"authority_reward": "NEVER"',
         'if PUBLIC_RELEASE_STABILITY != "PRE_RELEASE"',
     ])
+    forbid(public_v52, [
+        "_demo_stack.AASMEngine = AASMEngine",
+        "_demo_stack._runtime_version = lambda: __version__",
+    ])
     require(root / "src/aasm/cli_v52.py", [
         "multi-objective-contract",
         "pareto-frontier-contract",
@@ -123,10 +135,13 @@ def main() -> None:
     require(root / "tests/test_v52_public.py", [
         "test_v52_pre_release_public_contract_is_additive_and_valid",
         "test_v52_public_surface_preserves_v51_parent_contract_without_promoting_it",
+        "test_v52_pre_release_import_does_not_mutate_active_demo_stack",
         "test_v52_public_surface_exposes_product_backward_resource_objective_vector",
         "test_v52_cli_contract_commands_are_inspection_only_public_commands",
         'assert public_v51.__version__ == "0.51.0"',
         'assert public_v52.PUBLIC_RELEASE_STABILITY == "PRE_RELEASE"',
+        "assert demo_stack.AASMEngine is public_v51.AASMEngine",
+        "assert demo_stack.AASMEngine is not public_v52.AASMEngine",
     ])
 
     required_schemas = {
