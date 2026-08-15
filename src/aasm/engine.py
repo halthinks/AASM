@@ -78,8 +78,19 @@ class AASMEngine:
     def _refresh_runtime_views(self): self.graph=PlanGraph.from_dict(self.snapshot.graph); self.memory=DPMemory(self.snapshot.memory); self.evidence_ledger=EvidenceLedger.from_dict(self.snapshot.evidence)
 
     def _commit(self,event):
-        self.snapshot=reduce_event(self.snapshot,event)
-        stored=self.store.append(self.snapshot.machine_id,event,self.snapshot)
+        machine_id=self.snapshot.machine_id
+        prior=deepcopy(self.snapshot)
+        try:
+            self.snapshot=reduce_event(self.snapshot,event)
+            stored=self.store.append(machine_id,event,self.snapshot)
+        except Exception:
+            try:
+                self.snapshot=self.store.load_snapshot(machine_id)
+                self.events=self.store.load_events(machine_id)
+            except Exception:
+                self.snapshot=prior
+            self._refresh_runtime_views()
+            raise
         self._sync_after_append()
         return stored
 
@@ -129,6 +140,8 @@ class AASMEngine:
         record=self.memory.invalidate(key,reason,invalidated_at=now()); self._commit(Event(new_id('evt'),now(),EventType.MEMORY_INVALIDATED.value,self.state_value,self.state_value,reason,data={'key':key,'record':record},machine_id=self.snapshot.machine_id)); return deepcopy(record)
     def add_evidence(self,record:EvidenceRecord,*,reason='evidence recorded'):
         self.evidence_ledger.add(record); self._commit(Event(new_id('evt'),now(),EventType.EVIDENCE_ADDED.value,self.state_value,self.state_value,reason,evidence=[record.evidence_id],data={'record':asdict(record)},machine_id=self.snapshot.machine_id)); return self.evidence_ledger.get(record.evidence_id)
+    def add_evidence_guarded(self,record:EvidenceRecord,*,expected_machine_version:int,reason='guarded evidence recorded'):
+        self.evidence_ledger.add(record); self._commit(Event(new_id('evt'),now(),EventType.EVIDENCE_ADDED.value,self.state_value,self.state_value,reason,evidence=[record.evidence_id],data={'record':asdict(record),'expected_machine_version':int(expected_machine_version)},machine_id=self.snapshot.machine_id)); return self.evidence_ledger.get(record.evidence_id)
     def add_claim(self,statement,**kwargs): return self.add_evidence(EvidenceRecord('claim',statement,**kwargs),reason='claim recorded')
     def add_observation(self,statement,**kwargs): return self.add_evidence(EvidenceRecord('observation',statement,**kwargs),reason='observation recorded')
     def add_assumption(self,statement,**kwargs): return self.add_evidence(EvidenceRecord('assumption',statement,**kwargs),reason='assumption recorded')

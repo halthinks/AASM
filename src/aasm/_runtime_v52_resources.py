@@ -311,22 +311,23 @@ class ResourceGovernanceRuntimeMixin:
                 if metadata.get(_RESOURCE_RECORD_TYPE) != record_type or metadata.get(_RESOURCE_DOCUMENT) != payload:
                     raise ValueError(f"resource evidence collision: {evidence_id}")
                 return evidence_id
-        self.add_evidence(
-            EvidenceRecord(
-                kind="observation" if record_type == "observation" else "resource_state",
-                statement=canonical_semantic_json(payload),
-                source=source,
-                derived_from=list(derived_from),
-                metadata={
-                    _RESOURCE_RECORD_TYPE: record_type,
-                    "object_id": object_id,
-                    _RESOURCE_DOCUMENT: payload,
-                    "authority": "EVIDENCE_ONLY",
-                },
-                evidence_id=evidence_id,
-            ),
-            reason=f"resource {record_type} recorded",
+        record = EvidenceRecord(
+            kind="observation" if record_type == "observation" else "resource_state",
+            statement=canonical_semantic_json(payload),
+            source=source,
+            derived_from=list(derived_from),
+            metadata={
+                _RESOURCE_RECORD_TYPE: record_type,
+                "object_id": object_id,
+                _RESOURCE_DOCUMENT: payload,
+                "authority": "EVIDENCE_ONLY",
+            },
+            evidence_id=evidence_id,
         )
+        if getattr(self, "_guard_resource_evidence_by_version", False):
+            self.add_evidence_guarded(record, expected_machine_version=self.snapshot.version, reason=f"resource {record_type} recorded")
+        else:
+            self.add_evidence(record, reason=f"resource {record_type} recorded")
         return evidence_id
 
     def register_resource_capacity(self, capacity: ResourceCapacity) -> dict[str, Any]:

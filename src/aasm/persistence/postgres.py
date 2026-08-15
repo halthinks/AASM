@@ -120,6 +120,8 @@ class PostgresStore:
                 cur.execute("SELECT COALESCE(MAX(sequence),0) FROM aasm_events WHERE machine_id=%s",(machine_id,)); last_sequence=int(cur.fetchone()[0])
                 canonical=None if last_sequence==0 else snapshot_from_dict(self._obj(run[0]))
                 event.machine_id=machine_id; event.sequence=last_sequence+1
+                expected_version=event.data.get("expected_machine_version")
+                if canonical is not None and expected_version is not None and canonical.version!=int(expected_version): raise ValueError(f"Stale machine version: event expected {int(expected_version)}, canonical version is {canonical.version}")
                 if canonical is not None and event.event_type==EventType.TRANSITION_COMMITTED.value and event.from_state is not None and canonical.state!=event.from_state:
                     raise ValueError(f"Stale transition: event expected {event.from_state}, canonical state is {canonical.state}")
                 canonical=reduce_event(canonical,event)

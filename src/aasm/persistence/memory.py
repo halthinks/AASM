@@ -48,6 +48,9 @@ class MemoryStore:
             stored.machine_id = machine_id
             stored.sequence = len(events) + 1
             canonical = None if not events else deepcopy(self._snapshots[machine_id])
+            expected_version = stored.data.get("expected_machine_version")
+            if canonical is not None and expected_version is not None and canonical.version != int(expected_version):
+                raise ValueError(f"Stale machine version: event expected {int(expected_version)}, canonical version is {canonical.version}")
             if (
                 canonical is not None
                 and stored.event_type == EventType.TRANSITION_COMMITTED.value

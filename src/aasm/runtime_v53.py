@@ -35,6 +35,8 @@ _AUTHORITY_DOCUMENT = "document"
 class AASMEngine(ScopedAuthorityRuntimeMixin, V52Engine):
     """Experimental v0.53 runtime: scoped identity/authority enforced over v0.52."""
 
+    _guard_resource_evidence_by_version = True
+
     def _authorize_resource_action(
         self,
         *,
