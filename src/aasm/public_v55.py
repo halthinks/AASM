@@ -135,7 +135,7 @@ from .solver_formulation import (
     SolverFormulationCertificate,
     formulation_from_v54_translation,
     solver_formulation_contract,
-    verify_solver_formulation,
+    verify_solver_formulation_identity,
 )
 
 
@@ -187,7 +187,7 @@ _NEW_IMPORTS = [
     "SolverFormulation",
     "SolverFormulationCertificate",
     "formulation_from_v54_translation",
-    "verify_solver_formulation",
+    "verify_solver_formulation_identity",
     "solver_formulation_contract",
     "FORMULATION_EXECUTION_BINDING_CONTRACT_ID",
     "FormulationExecutionBinding",
