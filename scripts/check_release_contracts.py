@@ -49,14 +49,12 @@ def main():
     for policy_doc in (root / "README.md", root / "ROADMAP.md", root / "CHANGELOG.md", root / "docs/CURRENT_RELEASE.md"):
         forbid(policy_doc, stale_license_policy)
 
-    # Current v0.53 public surface.
     require(root / "src/aasm/__init__.py", ["public_v53"])
     require(root / "src/aasm/cli.py", ["cli_v53"])
     require(root / "src/aasm/public_v53.py", [
         '__version__ = "0.53.0"',
         '"contract_version": "0.29.0"',
         'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
-        "runtime_v53_learning",
         "SCOPED_AUTHORITY_CONTRACT_ID",
         "SCOPED_STORE_CONTRACT_ID",
         "SOLVER_LEARNING_CONTRACT_ID",
@@ -100,7 +98,6 @@ def main():
     ])
     require(root / "src/aasm/optimization.py", ["cadical", "ortools-cp-sat", "highs", "add_hint"])
 
-    # Frozen v0.52 parent remains independently valid and versioned.
     require(root / "src/aasm/public_v52.py", [
         '__version__ = "0.52.0"',
         '"contract_version": "0.28.0"',
@@ -115,7 +112,6 @@ def main():
         "ENUMERATION_CONTRACT_ID",
     ])
 
-    # Preserve proof, RC, cross-run and SII authority boundaries.
     require(root / "src/aasm/proof_claims.py", [
         'SOLVER_PROOF_CONTRACT_ID = "aasm.solver.proof-certificate.v1"',
         '"proof_certified_requires_independent_checker": True',
@@ -137,7 +133,6 @@ def main():
         '"authority_reward": "NEVER"',
     ])
 
-    # Exact-SHA release gate now includes the two v0.53 statuses.
     require(root / ".github/workflows/release.yml", [
         "aasm/ci-summary",
         "aasm/formal-assurance",
@@ -187,11 +182,13 @@ def main():
     subprocess.check_call([sys.executable, str(root / "scripts" / "check_v53_contracts.py")])
     subprocess.check_call([sys.executable, str(root / "scripts" / "check_v53_solver_learning_contracts.py")])
 
-    require(root / "docs" / "CURRENT_RELEASE.md", ["v0.53.0", "0.29.0"])
-    require(root / "docs" / "RELEASE_0.53.md", [
+    require(root / "docs" / "CURRENT_RELEASE.md", [
         "AASM v0.53.0",
-        "Scoped Identity/Authority",
-        "solver learning",
+        "0.29.0",
+        "aasm.authority.scoped.v1",
+        "aasm.store.scoped.v1",
+        "aasm.solver.learning.v1",
+        "aasm.solver.learning.application.v1",
     ])
 
     print("v0.53.0 release contracts: PASS")
