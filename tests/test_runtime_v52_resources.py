@@ -270,3 +270,84 @@ def test_durable_resource_proposal_cannot_be_routed_from_wrong_workspace_context
             workspace_id="workspace-b",
             scope_id=SCOPE,
         )
+
+
+def test_reestimate_feasible_growth_updates_reservation_and_committed_capacity():
+    engine = AASMEngine(ProblemSpec("resource reestimate grow"))
+    engine.register_resource_capacity(capacity(consumed=60, reserve=20))
+    engine.record_resource_observation(ResourceObservation(
+        resource_id="expert-weekly",
+        observed_at=datetime(2026, 8, 15, tzinfo=timezone.utc),
+        source="provider_usage_surface",
+        measurement_authority=MeasurementAuthority.OBSERVED,
+        reported_remaining=35.0,
+    ), workspace_id=WORKSPACE, scope_id=SCOPE)
+    result = route(engine, [candidate(amount=4)])
+    reservation_id = result["transaction"]["reservation"]["reservation_id"]
+    changed = engine.reestimate_resource_reservation(
+        reservation_id,
+        {"expert-weekly": 10.0},
+        ResourceRoutingPolicy(),
+        workspace_id=WORKSPACE,
+        scope_id=SCOPE,
+    )
+    assert changed["reestimate"]["outcome"] == "CONTINUE"
+    value = report(engine)
+    assert value["reservations"][reservation_id]["allocations"] == [["expert-weekly", 10.0]]
+    assert value["capacities"]["expert-weekly"]["committed"] == 10.0
+    assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
+
+
+def test_reestimate_beyond_observed_weekly_cap_requires_replan_without_overspend():
+    engine = AASMEngine(ProblemSpec("resource replan"))
+    engine.register_resource_capacity(capacity(consumed=60, reserve=20))
+    engine.record_resource_observation(ResourceObservation(
+        resource_id="expert-weekly",
+        observed_at=datetime(2026, 8, 15, tzinfo=timezone.utc),
+        source="provider_usage_surface",
+        measurement_authority=MeasurementAuthority.OBSERVED,
+        reported_remaining=25.0,
+    ), workspace_id=WORKSPACE, scope_id=SCOPE)
+    result = route(engine, [candidate(amount=4)])
+    reservation_id = result["transaction"]["reservation"]["reservation_id"]
+    changed = engine.reestimate_resource_reservation(
+        reservation_id,
+        {"expert-weekly": 6.0},
+        ResourceRoutingPolicy(),
+        workspace_id=WORKSPACE,
+        scope_id=SCOPE,
+    )
+    assert changed["reestimate"]["outcome"] == "REPLAN_REQUIRED"
+    value = report(engine)
+    assert value["reservations"][reservation_id]["status"] == "REPLAN_REQUIRED"
+    assert value["capacities"]["expert-weekly"]["committed"] == 4.0
+    with pytest.raises(ValueError, match="not active"):
+        engine.settle_resource_reservation(reservation_id, {"expert-weekly": 4.0}, workspace_id=WORKSPACE, scope_id=SCOPE)
+    assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
+
+
+def test_replan_required_reservation_can_be_released_for_rerouting():
+    engine = AASMEngine(ProblemSpec("resource release for reroute"))
+    engine.register_resource_capacity(capacity(consumed=60, reserve=20))
+    engine.record_resource_observation(ResourceObservation(
+        resource_id="expert-weekly",
+        observed_at=datetime(2026, 8, 15, tzinfo=timezone.utc),
+        source="provider_usage_surface",
+        measurement_authority=MeasurementAuthority.OBSERVED,
+        reported_remaining=25.0,
+    ), workspace_id=WORKSPACE, scope_id=SCOPE)
+    result = route(engine, [candidate(amount=4)])
+    reservation_id = result["transaction"]["reservation"]["reservation_id"]
+    engine.reestimate_resource_reservation(
+        reservation_id,
+        {"expert-weekly": 6.0},
+        ResourceRoutingPolicy(),
+        workspace_id=WORKSPACE,
+        scope_id=SCOPE,
+    )
+    released = engine.release_resource_reservation(reservation_id, workspace_id=WORKSPACE, scope_id=SCOPE)
+    assert released["release"]["released_allocations"] == [["expert-weekly", 4.0]]
+    value = report(engine)
+    assert value["reservations"][reservation_id]["status"] == "RELEASED"
+    assert value["capacities"]["expert-weekly"]["committed"] == 0.0
+    assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
