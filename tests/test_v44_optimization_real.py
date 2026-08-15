@@ -5,14 +5,24 @@ import pytest
 
 from aasm.model import ProblemSpec
 from aasm.optimization import (
+    OptimizationConstraint,
+    OptimizationModel,
+    OptimizationObjective,
     OptimizationRequest,
     OptimizationResult,
+    OptimizationVariable,
     default_optimization_providers,
     reference_optimization_models,
+    solve_optimization_request,
     validate_optimization_result,
 )
 from aasm.optimization_conformance import run_optimization_conformance
 from aasm.runtime_v44 import AASMEngine
+from aasm.solver_learning import (
+    SolverLearningArtifact,
+    apply_solver_learning_to_optimization_request,
+    revalidate_finite_solver_learning,
+)
 
 
 def _require_backends():
@@ -68,3 +78,53 @@ def test_real_backends_cross_existing_aasm_lease_and_evidence_boundary():
             OptimizationResult.from_dict(stored[0]["result"]),
         )
     assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
+
+
+def test_real_ortools_consumes_validated_solver_learning_assignment_hint():
+    _require_backends()
+    model = OptimizationModel(
+        "v0.53-real-learning-hint",
+        (
+            OptimizationVariable("x", "BOOL"),
+            OptimizationVariable("y", "BOOL"),
+        ),
+        (
+            OptimizationConstraint(
+                "LINEAR",
+                coefficients={"x": 1, "y": 1},
+                sense=">=",
+                rhs=1,
+            ),
+        ),
+        objective=OptimizationObjective("MINIMIZE", {"x": 1, "y": 1}),
+        family="CP_SAT",
+    )
+    artifact = SolverLearningArtifact(
+        "INCUMBENT",
+        model.fingerprint,
+        model.solver_family,
+        {"assignment": {"x": 1, "y": 0}, "objective": 1},
+    )
+    validation = revalidate_finite_solver_learning(artifact, model)
+    assert validation.status == "PASS"
+    assert validation.application_authority == "PERFORMANCE_HINT_ONLY"
+
+    request = OptimizationRequest(
+        model,
+        "solver.cp_sat",
+        "0.1.0",
+        "v53-real-hint-obligation",
+        required_provider="ortools-cp-sat",
+    )
+    application, learned_request = apply_solver_learning_to_optimization_request(
+        artifact,
+        validation,
+        request,
+    )
+    result = solve_optimization_request(learned_request)
+    assert result.status == "OPTIMAL", result
+    validate_optimization_result(learned_request, result)
+    assert result.statistics["solver_learning_hint_count"] == 1
+    assert result.statistics["solver_learning_application_ids"] == [application.application_id]
+    assert result.metadata["solver_learning_hints_consumed"] == 1
+    assert result.metadata["solver_learning_application_ids"] == [application.application_id]
