@@ -2,11 +2,14 @@
 
 AASM v0.55.0 is the active public package/runtime and advances the adoption contract to `aasm.adoption.v1 / 0.31.0`.
 
+The stable remote wire-protocol compatibility surface remains **`aasm.remote.v1 / 0.19.0`**. That protocol version is intentionally independent of the package/runtime release version.
+
 ```text
 active public surface: public_v55
 active runtime: runtime_v55.AASMEngine
 parent public surface: public_v54
 parent runtime: runtime_v54_full.AASMEngine
+remote wire protocol: aasm.remote.v1 / 0.19.0
 
 semantic evolution:
   aasm.external.reference.v1
