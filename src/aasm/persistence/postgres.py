@@ -6,7 +6,18 @@ import time
 
 from ..checkpoint import Checkpoint
 from ..core.reducer import reduce_event
-from ..effects import EffectExecutionError, EffectRecord, EffectStatus, EffectUnknownOutcome
+from ..effects import (
+    EffectExecutionError,
+    EffectOutcome,
+    EffectOwnership,
+    EffectOwnershipRequest,
+    EffectReconciliation,
+    EffectRecord,
+    EffectStatus,
+    EffectUnknownOutcome,
+    bind_effect_ownership,
+    bind_effect_reconciliation,
+)
 from ..model import Event, EventType, MachineSnapshot, MachineState, new_id
 from .serde import event_from_dict, event_to_dict, snapshot_from_dict, snapshot_to_dict
 from .effect_serde import effect_from_dict, effect_to_dict
@@ -185,7 +196,7 @@ class PostgresStore:
         return [effect_from_dict(self._obj(r[0])) for r in rows]
 
     @staticmethod
-    def _prepare_effect_attempt(record: EffectRecord) -> EffectRecord:
+    def _prepare_effect_attempt(record: EffectRecord,ownership_request:EffectOwnershipRequest|None=None) -> EffectRecord:
         if record.status==EffectStatus.SUCCEEDED.value: return record
         if record.status==EffectStatus.UNKNOWN.value:
             if not record.spec.retry_policy.retry_on_unknown: raise EffectUnknownOutcome(f"Effect {record.spec.effect_id} has an unknown prior outcome; reconcile before retry")
@@ -196,14 +207,16 @@ class PostgresStore:
         if record.status==EffectStatus.RUNNING.value: raise EffectExecutionError(f"Effect {record.spec.effect_id} is already RUNNING on another executor")
         if record.status!=EffectStatus.AUTHORIZED.value: raise ValueError(f"Effect {record.spec.effect_id} is not authorized (status={record.status})")
         if record.attempts>=max(1,record.spec.retry_policy.max_attempts): raise EffectExecutionError(f"Effect {record.spec.effect_id} exhausted retry attempts")
-        record.attempts+=1; record.execution_id=new_id("exec"); record.status=EffectStatus.RUNNING.value; record.updated_at=time.time(); return record
+        record.attempts+=1; record.execution_id=new_id("exec"); record.status=EffectStatus.RUNNING.value; record.updated_at=time.time()
+        if ownership_request is not None: bind_effect_ownership(record,ownership_request)
+        return record
 
-    def claim_effect_attempt(self,machine_id,effect_id):
+    def claim_effect_attempt(self,machine_id,effect_id,ownership_request:EffectOwnershipRequest|None=None):
         with self._conn.transaction():
             with self._conn.cursor() as cur:
                 cur.execute("SELECT effect_json FROM aasm_effects WHERE machine_id=%s AND effect_id=%s FOR UPDATE",(machine_id,effect_id)); row=cur.fetchone()
                 if row is None: raise KeyError(effect_id)
-                record=self._prepare_effect_attempt(effect_from_dict(self._obj(row[0])))
+                record=self._prepare_effect_attempt(effect_from_dict(self._obj(row[0])),ownership_request)
                 if record.status!=EffectStatus.SUCCEEDED.value: cur.execute("UPDATE aasm_effects SET status=%s,effect_json=%s::jsonb,updated_at=%s WHERE machine_id=%s AND effect_id=%s",(record.status,self._j(effect_to_dict(record)),record.updated_at,machine_id,effect_id))
                 return record
 
@@ -223,7 +236,11 @@ class PostgresStore:
         changed=[]
         for record in self.list_effects(machine_id):
             if record.status==EffectStatus.RUNNING.value:
-                record.status=EffectStatus.UNKNOWN.value; record.error="process ended while effect outcome was unresolved"; record.updated_at=time.time(); self.save_effect(record); changed.append(record)
+                record.status=EffectStatus.UNKNOWN.value; record.error="process ended while effect outcome was unresolved"
+                if record.ownership is not None:
+                    ownership=EffectOwnership.from_dict(record.ownership)
+                    bind_effect_reconciliation(record,EffectReconciliation(effect_id=record.spec.effect_id,outcome=EffectOutcome.UNKNOWN.value,ownership_id=ownership.ownership_id,error=record.error,metadata={"source":"process_recovery"}))
+                record.updated_at=time.time(); self.save_effect(record); changed.append(record)
         return changed
 
     @staticmethod
