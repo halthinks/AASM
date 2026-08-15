@@ -24,8 +24,8 @@ def schema(root: Path, name: str) -> dict:
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
 
-    # v0.52 is a frozen versioned parent. The active package/CLI version is
-    # intentionally validated only by the current release checker, not here.
+    # v0.52 is a frozen versioned parent. The active package/CLI version and
+    # active demo-stack owner are validated only by the current release checker.
 
     require(root / "src/aasm/multi_objective.py", [
         'MULTI_OBJECTIVE_CONTRACT_ID = "aasm.optimization.multi-objective.v1"',
@@ -101,12 +101,13 @@ def main() -> None:
     require(root / "tests/test_v52_public.py", [
         "test_v52_versioned_public_contract_is_additive_and_valid",
         "test_v52_public_surface_preserves_v51_parent_contract",
-        "test_v52_parent_no_longer_owns_active_demo_stack_after_v54_promotion",
+        "test_v52_parent_no_longer_owns_active_demo_stack_after_v55_promotion",
         "test_v52_public_surface_exposes_product_backward_resource_objective_vector",
         "test_v52_cli_contract_commands_remain_versioned_commands",
         'assert public_v51.__version__ == "0.51.0"',
         'assert public_v52.__version__ == "0.52.0"',
-        'assert demo_stack.AASMEngine is public_v54.AASMEngine',
+        'assert demo_stack.AASMEngine is public_v55.AASMEngine',
+        'assert demo_stack.AASMEngine is not public_v54.AASMEngine',
     ])
 
     required_schemas = {
