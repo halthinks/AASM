@@ -24,12 +24,13 @@ jobs:
       - name: Validate v0.53 solver learning runtime contracts
         run: |
           python - <<'PY'
-          from aasm.solver_learning import solver_learning_contract
-          from aasm._runtime_v53_solver_learning import solver_learning_runtime_contract
-          from aasm.runtime_v53_learning import AASMEngine
+          from aasm.solver_learning import solver_learning_contract, solver_learning_application_contract
+          from aasm._runtime_v53_solver_learning import SOLVER_LEARNING_AUTHORITY_CAPABILITIES, solver_learning_runtime_contract
+          from aasm.runtime_v53_learning import AASMEngine, SOLVER_LEARNING_APPLY_CAPABILITY
           from aasm.runtime_v53 import AASMEngine as AuthorityEngine
 
           artifact = solver_learning_contract()
+          application = solver_learning_application_contract()
           runtime = solver_learning_runtime_contract()
           assert artifact['contract_id'] == 'aasm.solver.learning.v1', artifact
           assert artifact['cross_run_transport'] == 'EXISTING_AASM_V48_REUSE_RESULT_ENVELOPE', artifact
@@ -37,12 +38,26 @@ jobs:
           assert artifact['cross_run_admission_implies_truth'] is False, artifact
           assert artifact['pruning_application'] == 'LOCAL_REVALIDATION_REQUIRED', artifact
           assert artifact['performance_hint_authority'] == 'NEVER_TRUTH_OR_POLICY', artifact
+          assert artifact['application'] == 'EXPLICIT_VALIDATED_ADAPTER_APPLICATION_ONLY', artifact
+          assert artifact['application_truth_authority'] == 'NONE', artifact
+          assert artifact['application_policy_authority'] == 'NONE', artifact
+          assert application['contract_id'] == 'aasm.solver.learning.application.v1', application
+          assert application['validation_required'] == 'PASS_EXACT_ARTIFACT_AND_MODEL', application
+          assert application['truth_authority'] == 'NONE', application
+          assert application['policy_authority'] == 'NONE', application
           assert runtime['contract_id'] == 'aasm.solver.learning.runtime.v1', runtime
           assert runtime['cross_run_transport'] == 'EXISTING_AASM_V48_REUSE_RESULT_ENVELOPE', runtime
           assert runtime['cross_run_admission'] == 'EXISTING_AASM_V48_ADMISSION_REQUIRED', runtime
           assert runtime['cross_run_authority_transfer'] == 'NEVER', runtime
           assert runtime['imported_pruning_state'] == 'INERT_UNTIL_RECEIVING_RUN_LOCAL_REVALIDATION', runtime
-          assert runtime['application'] == 'NO_AUTOMATIC_APPLICATION_IN_V0.53_FOUNDATION', runtime
+          assert runtime['application'] == 'EXPLICIT_VALIDATED_ADAPTER_APPLICATION_ONLY', runtime
+          assert runtime['apply_authority'] == 'SCOPED_SOLVER_LEARNING_APPLY_REQUIRED', runtime
+          assert runtime['truth_authority'] == 'NONE', runtime
+          assert runtime['policy_authority'] == 'NONE', runtime
+          assert runtime['solver_execution'] == 'EXISTING_AASM_OPTIMIZATION_PROVIDER_PATH_ONLY', runtime
+          assert SOLVER_LEARNING_AUTHORITY_CAPABILITIES['apply'] == 'solver.learning.apply'
+          assert SOLVER_LEARNING_APPLY_CAPABILITY == 'solver.learning.apply'
+          assert callable(getattr(AASMEngine, 'apply_solver_learning', None))
           assert issubclass(AASMEngine, AuthorityEngine)
           PY
       - name: Execute v0.53 solver learning adversarial suite
@@ -60,7 +75,7 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='v0.53 cross-run solver learning transport, revalidation, and safety gates passed'
+            description='v0.53 solver learning transport, revalidation, scoped application, and safety gates passed'
           else
             state=failure
             description='v0.53 solver learning gate failed'
