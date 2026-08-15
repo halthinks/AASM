@@ -671,7 +671,7 @@ def verify_discrete_boolean_linearization(lowering: DiscreteLinearization | Mapp
     mapping_complete = source_ids == mapped_ids
     if not mapping_complete:
         diagnostics.append("SOURCE_CONSTRAINT_MAPPING_MISMATCH")
-    expected_mapping_payload = [row.to_dict() for row in expected_mappings]
+    expected_mapping_payload = [row.to_dict() for row in sorted(expected_mappings, key=lambda row: row.source_constraint_id)]
     actual_mapping_payload = [row.to_dict() for row in item.mappings]
     if actual_mapping_payload != expected_mapping_payload:
         diagnostics.append("DISCRETE_MAPPING_PAYLOAD_MISMATCH")
