@@ -29,7 +29,8 @@ jobs:
             tests/test_v53_scoped_authority.py \
             tests/test_v53_scoped_authority_hardening.py \
             tests/test_runtime_v53_authority.py \
-            tests/test_v53_resource_authority.py
+            tests/test_v53_resource_authority.py \
+            tests/test_v53_scoped_store.py
       - name: Publish scoped authority status
         if: always()
         env:
@@ -40,7 +41,7 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='v0.53 scoped identity, authority, resource, and effect gates passed'
+            description='v0.53 scoped identity, store, authority, resource concurrency, and effect gates passed'
           else
             state=failure
             description='v0.53 scoped authority gate failed'
