@@ -139,8 +139,8 @@ from .solver_formulation import (
 )
 
 
-__version__ = "0.55.0.dev0"
-PUBLIC_RELEASE_STABILITY = "QUALIFICATION_CANDIDATE"
+__version__ = "0.55.0"
+PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"
 REMOTE_PROTOCOL_NAME = _v54.REMOTE_PROTOCOL_NAME
 REMOTE_PROTOCOL_VERSION = _v54.REMOTE_PROTOCOL_VERSION
 
@@ -316,15 +316,15 @@ def validate_public_api_contract():
     missing_imports = [name for name in _NEW_IMPORTS if name not in globals()]
     missing_methods = [name for name in _NEW_ENGINE_METHODS if not callable(getattr(AASMEngine, name, None))]
     if missing_imports:
-        errors.append(f"missing v0.55 candidate imports: {missing_imports}")
+        errors.append(f"missing v0.55 imports: {missing_imports}")
     if missing_methods:
-        errors.append(f"missing v0.55 candidate engine methods: {missing_methods}")
+        errors.append(f"missing v0.55 engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
-        errors.append("v0.55 candidate runtime version mismatch")
+        errors.append("v0.55 runtime version mismatch")
     if PUBLIC_API_CONTRACT.get("contract_version") != "0.31.0":
-        errors.append("v0.55 candidate adoption contract mismatch")
-    if PUBLIC_RELEASE_STABILITY != "QUALIFICATION_CANDIDATE":
-        errors.append("v0.55 candidate stability mismatch")
+        errors.append("v0.55 adoption contract mismatch")
+    if PUBLIC_RELEASE_STABILITY != "ACTIVE_DEVELOPMENT":
+        errors.append("v0.55 active release stability mismatch")
     if PUBLIC_API_CONTRACT.get("semantic_evolution", {}).get("truth_authority") != "EXISTING_AASM_ADMISSION_PATH_ONLY":
         errors.append("semantic evolution authority boundary mismatch")
     if PUBLIC_API_CONTRACT.get("solver_formulation", {}).get("truth_authority") != "NONE":
@@ -340,3 +340,8 @@ def validate_public_api_contract():
     if PUBLIC_API_CONTRACT.get("semantic_archive", {}).get("replay_uses_persisted_snapshot") is not False:
         errors.append("semantic archive replay boundary mismatch")
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
+
+
+from . import demo_stack as _demo_stack
+_demo_stack.AASMEngine = AASMEngine
+_demo_stack._runtime_version = lambda: __version__
