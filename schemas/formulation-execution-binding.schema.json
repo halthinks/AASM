@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/formulation-execution-binding.schema.json",
+  "title": "AASM Formulation Execution Binding v1",
+  "type": "object",
+  "required": ["binding_id", "contract_id", "contract_version", "request_id", "request_fingerprint", "target_model_fingerprint", "target_provider_id", "formulation_id", "formulation_fingerprint", "formulation_certificate_id", "formulation_certificate_fingerprint", "provider_manifest_id", "provider_manifest_fingerprint", "feature_set_id", "feature_set_fingerprint", "admission_report_id", "admission_report_fingerprint", "problem_revision_id", "problem_revision_fingerprint", "environment_fingerprint", "metadata", "fingerprint"],
+  "properties": {
+    "binding_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.solver.formulation-execution.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "request_id": {"type": "string", "minLength": 1},
+    "request_fingerprint": {"type": "string", "minLength": 16},
+    "target_model_fingerprint": {"type": "string", "minLength": 16},
+    "target_provider_id": {"type": "string", "minLength": 1},
+    "formulation_id": {"type": "string", "minLength": 1},
+    "formulation_fingerprint": {"type": "string", "minLength": 16},
+    "formulation_certificate_id": {"type": "string", "minLength": 1},
+    "formulation_certificate_fingerprint": {"type": "string", "minLength": 16},
+    "provider_manifest_id": {"type": "string", "minLength": 1},
+    "provider_manifest_fingerprint": {"type": "string", "minLength": 16},
+    "feature_set_id": {"type": "string", "minLength": 1},
+    "feature_set_fingerprint": {"type": "string", "minLength": 16},
+    "admission_report_id": {"type": "string", "minLength": 1},
+    "admission_report_fingerprint": {"type": "string", "minLength": 16},
+    "problem_revision_id": {"type": "string"},
+    "problem_revision_fingerprint": {"type": "string"},
+    "environment_fingerprint": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
