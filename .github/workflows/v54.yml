@@ -1,4 +1,4 @@
-name: v0.54 Conformance
+name: v0.54 Parent Compatibility
 
 on:
   push:
@@ -21,21 +21,22 @@ jobs:
           cache: pip
       - name: Install AASM test dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Validate v0.54 source/public contracts
+      - name: Validate frozen v0.54 parent contracts under v0.55 root
         run: |
           python scripts/check_v54_contracts.py
           python - <<'PY'
           import aasm
-          from aasm import public_v54
+          from aasm import public_v54, public_v55
           report = public_v54.validate_public_api_contract()
           assert report['valid'], report
-          assert aasm.__version__ == '0.54.0'
-          assert aasm.AASMEngine is public_v54.AASMEngine
           assert public_v54.__version__ == '0.54.0'
           assert public_v54.PUBLIC_RELEASE_STABILITY == 'ACTIVE_DEVELOPMENT'
           assert public_v54.PUBLIC_API_CONTRACT['contract_version'] == '0.30.0'
+          assert aasm.__version__ == '0.55.0'
+          assert public_v55.__version__ == '0.55.0'
+          assert aasm.AASMEngine is public_v55.AASMEngine
           PY
-      - name: Execute v0.54 adversarial and public conformance suite
+      - name: Execute v0.54 adversarial and compatibility suite
         run: |
           pytest -q \
             tests/test_runtime_v54_effects.py \
@@ -43,7 +44,7 @@ jobs:
             tests/test_runtime_v54_portfolio.py \
             tests/test_runtime_v54_exchange.py \
             tests/test_v54_public.py
-      - name: Publish v0.54 status
+      - name: Publish v0.54 parent compatibility status
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
@@ -53,10 +54,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='v0.54 effect ownership/settlement, deterministic portfolio, and solver exchange gates passed'
+            description='v0.54 parent effect/portfolio/exchange compatibility passed under v0.55'
           else
             state=failure
-            description='v0.54 conformance gate failed'
+            description='v0.54 parent compatibility gate failed'
           fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             -f state="$state" \
