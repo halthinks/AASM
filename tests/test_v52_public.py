@@ -1,5 +1,6 @@
 from aasm import public_v51
 from aasm import public_v52
+from aasm import demo_stack
 from aasm.cli_v52 import build_parser
 from aasm.multi_objective import FRONTIER_CONTRACT_ID, MULTI_OBJECTIVE_CONTRACT_ID
 from aasm.resource_routing import RESOURCE_ROUTING_CONTRACT_ID, RESOURCE_ROUTING_OBJECTIVE_IDS
@@ -41,6 +42,15 @@ def test_v52_public_surface_preserves_v51_parent_contract_without_promoting_it()
         assert name in public_v52.SUPPORTED_PUBLIC_IMPORTS
     for name in public_v51.SUPPORTED_ENGINE_METHODS:
         assert name in public_v52.SUPPORTED_ENGINE_METHODS
+
+
+def test_v52_pre_release_import_does_not_mutate_active_demo_stack():
+    # Importing the preview surface must not silently promote the active runtime.
+    # The package/default public surface remains v0.51 until the release commit.
+    assert public_v51.__version__ == "0.51.0"
+    assert demo_stack.AASMEngine is public_v51.AASMEngine
+    assert demo_stack.AASMEngine is not public_v52.AASMEngine
+    assert demo_stack._runtime_version() == public_v51.__version__
 
 
 def test_v52_public_surface_exposes_product_backward_resource_objective_vector():
