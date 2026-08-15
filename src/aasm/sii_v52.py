@@ -30,6 +30,7 @@ class ResourceAwareStructuredProposal:
     expected_progress: float | None = None
     expected_wall_time_seconds: float | None = None
     expected_monetary_cost: float | None = None
+    expected_provider_quota_burn: float | None = None
     expected_scarce_expert_usage: float | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -46,7 +47,12 @@ class ResourceAwareStructuredProposal:
             value = getattr(self, name)
             if value is not None and not 0.0 <= float(value) <= 1.0:
                 raise ValueError(f"{name} must be between 0 and 1")
-        for name in ("expected_wall_time_seconds", "expected_monetary_cost", "expected_scarce_expert_usage"):
+        for name in (
+            "expected_wall_time_seconds",
+            "expected_monetary_cost",
+            "expected_provider_quota_burn",
+            "expected_scarce_expert_usage",
+        ):
             value = getattr(self, name)
             if value is not None and float(value) < 0:
                 raise ValueError(f"{name} must be non-negative")
@@ -86,6 +92,7 @@ class ResourceAwareStructuredProposal:
             "expected_progress": self.expected_progress,
             "expected_wall_time_seconds": self.expected_wall_time_seconds,
             "expected_monetary_cost": self.expected_monetary_cost,
+            "expected_provider_quota_burn": self.expected_provider_quota_burn,
             "expected_scarce_expert_usage": self.expected_scarce_expert_usage,
             "metadata": dict(self.metadata),
         }
@@ -113,6 +120,7 @@ class ResourceAwareStructuredProposal:
             expected_progress=float(self.expected_progress or 0.0),
             wall_time_seconds=float(self.expected_wall_time_seconds or 0.0),
             monetary_cost=float(self.expected_monetary_cost or 0.0),
+            provider_quota_burn=float(self.expected_provider_quota_burn or 0.0),
             scarce_expert_usage=float(self.expected_scarce_expert_usage or 0.0),
             demands=tuple(self.resource_demands),
             metadata={
