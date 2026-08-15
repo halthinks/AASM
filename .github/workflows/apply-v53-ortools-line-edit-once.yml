@@ -1,0 +1,89 @@
+name: Apply v0.53 OR-Tools line edit once
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Guarded line edit of existing OR-Tools worker
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("src/aasm/optimization.py")
+          lines = path.read_text(encoding="utf-8").splitlines()
+          class_hits = [i for i, line in enumerate(lines) if line == "class ORToolsCPSATWorker:"]
+          if len(class_hits) != 1:
+              raise SystemExit(f"expected one ORToolsCPSATWorker, found {len(class_hits)}")
+          start = class_hits[0]
+          end = next(i for i in range(start + 1, len(lines)) if lines[i].startswith("class HighsMILPWorker:"))
+
+          solver_hits = [i for i in range(start, end) if lines[i] == "        solver = cp_model.CpSolver()"]
+          if len(solver_hits) != 1:
+              raise SystemExit(f"expected one CP-SAT solver construction, found {len(solver_hits)}")
+          solver_index = solver_hits[0]
+          insert = [
+              "        consumed_learning_applications: list[str] = []",
+              "        hints = request.metadata.get(\"solver_learning_hints\") or []",
+              "        if not isinstance(hints, list):",
+              "            raise ValueError(\"solver_learning_hints must be a list\")",
+              "        for hint in hints:",
+              "            if not isinstance(hint, Mapping):",
+              "                raise ValueError(\"solver learning hint must be a mapping\")",
+              "            if hint.get(\"provider_id\") != self.provider_id:",
+              "                raise ValueError(\"solver learning hint provider does not match OR-Tools worker\")",
+              "            if hint.get(\"hint_kind\") != \"ASSIGNMENT\":",
+              "                raise ValueError(\"OR-Tools worker only accepts validated ASSIGNMENT solver learning hints\")",
+              "            assignment_hint = hint.get(\"assignment\")",
+              "            if not isinstance(assignment_hint, Mapping) or set(map(str, assignment_hint)) != set(variables):",
+              "                raise ValueError(\"validated OR-Tools assignment hint must exactly cover model variables\")",
+              "            application_id = str(hint.get(\"application_id\") or \"\")",
+              "            if not application_id:",
+              "                raise ValueError(\"solver learning hint requires application_id\")",
+              "            for variable_id, value in sorted(assignment_hint.items()):",
+              "                model.add_hint(variables[str(variable_id)], self._integer(float(value)))",
+              "            consumed_learning_applications.append(application_id)",
+          ]
+          lines[solver_index:solver_index] = insert
+          end += len(insert)
+
+          stats_hits = [i for i in range(start, end) if lines[i].startswith("            stats = {\"conflicts\":")]
+          if len(stats_hits) != 1:
+              raise SystemExit(f"expected one CP-SAT stats line, found {len(stats_hits)}")
+          stats_index = stats_hits[0]
+          lines[stats_index] = "            stats = {\"conflicts\": int(solver.num_conflicts), \"branches\": int(solver.num_branches), \"wall_time_seconds\": float(solver.wall_time), \"raw_status\": raw_name, \"solver_learning_hint_count\": len(consumed_learning_applications), \"solver_learning_application_ids\": list(consumed_learning_applications)}"
+
+          return_hits = [i for i in range(stats_index + 1, min(end, stats_index + 5)) if lines[i].lstrip().startswith("return OptimizationResult(request.request_id")]
+          if len(return_hits) != 1:
+              raise SystemExit(f"expected one CP-SAT result return, found {len(return_hits)}")
+          return_index = return_hits[0]
+          old_return = lines[return_index]
+          if "statistics=stats)" not in old_return:
+              raise SystemExit("CP-SAT result return shape drifted")
+          lines[return_index] = old_return.replace(
+              "statistics=stats)",
+              "statistics=stats, metadata={\"solver_learning_application_ids\": list(consumed_learning_applications), \"solver_learning_hints_consumed\": len(consumed_learning_applications)})",
+          )
+          path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
+          python -m compileall -q src/aasm/optimization.py
+          git rm .github/workflows/apply-v53-ortools-line-edit-once.yml
+          python scripts/release_manifest.py --write-file-list
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/aasm/optimization.py FILE_LIST.txt
+          git commit -m 'Consume validated solver learning hints in existing OR-Tools adapter'
+          git push origin HEAD:main
