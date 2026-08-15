@@ -298,9 +298,6 @@ class FormulationRuntimeMixin:
         manifest = ProviderCapabilityManifest.from_dict(registered["provider_manifest"])
         admission = _admission_from_dict(registered["admission_report"])
         if formulation.problem_revision_id:
-            current = self.require_usable_problem_revision(formulation.source_model.model_id if False else formulation.problem_revision_id)
-            # The semantic-evolution runtime indexes by problem_id, not revision_id.
-            # Resolve the declared revision through the full projection to avoid a side index.
             revision_projection = self._require_valid_semantic_evolution_projection()
             revision_row = revision_projection["revisions"].get(formulation.problem_revision_id)
             if revision_row is None:
