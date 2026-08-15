@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import subprocess
 import sys
 import tomllib
@@ -16,6 +17,13 @@ def forbid(path, tokens):
     present = [token for token in tokens if token in text]
     if present:
         raise SystemExit(f"{path}: forbidden stale policy text {present}")
+
+
+def run_script(root: Path, name: str) -> None:
+    env = os.environ.copy()
+    src = str(root / "src")
+    env["PYTHONPATH"] = src if not env.get("PYTHONPATH") else src + os.pathsep + env["PYTHONPATH"]
+    subprocess.check_call([sys.executable, str(root / "scripts" / name)], cwd=root, env=env)
 
 
 def main():
@@ -187,21 +195,20 @@ def main():
         if token not in modeling:
             raise SystemExit(f"modeling extra missing {token}")
 
-    # Preserve all earlier release-specific contract gates.
-    subprocess.check_call([sys.executable, str(root / "scripts" / "check_v52_contracts.py")])
-    subprocess.check_call([sys.executable, str(root / "scripts" / "check_v53_contracts.py")])
-    subprocess.check_call([sys.executable, str(root / "scripts" / "check_v53_solver_learning_contracts.py")])
-    subprocess.check_call([sys.executable, str(root / "scripts" / "check_v54_contracts.py")])
-
-    # v0.55 release-specific contract checkers.
+    # Preserve all earlier release-specific contract gates, and run import-based
+    # child checks explicitly against this checkout even in pre-install workflows.
     for script in (
+        "check_v52_contracts.py",
+        "check_v53_contracts.py",
+        "check_v53_solver_learning_contracts.py",
+        "check_v54_contracts.py",
         "check_v55_discrete_ir.py",
         "check_v55_scheduling_ir.py",
         "check_v55_continuous_ir.py",
         "check_v55_decision_vector.py",
         "check_v55_semantic_archive.py",
     ):
-        subprocess.check_call([sys.executable, str(root / "scripts" / script)])
+        run_script(root, script)
 
     require(root / "README.md", [
         "Current release — v0.55.0",
