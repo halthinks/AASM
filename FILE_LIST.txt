@@ -103,6 +103,7 @@
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
 ./docs/RESEARCH_SYNTHESIS_DEMO.md
+./docs/RESOURCE_GOVERNED_DECISION_FOUNDATION.md
 ./docs/RESOURCE_SCHEDULER.md
 ./docs/REUSE_AND_SOLVER_LOOP.md
 ./docs/SEMANTIC_CERTIFICATION.md
@@ -290,6 +291,8 @@
 ./schemas/reasoning-commit.schema.json
 ./schemas/reasoning-transition.schema.json
 ./schemas/reference-domain-stress-report.schema.json
+./schemas/resource-capacity.schema.json
+./schemas/resource-observation.schema.json
 ./schemas/resource.schema.json
 ./schemas/reuse-certificate.schema.json
 ./schemas/reuse-request.schema.json
@@ -511,6 +514,7 @@
 ./src/aasm/remote_v19.py
 ./src/aasm/research_demo.py
 ./src/aasm/research_profile.py
+./src/aasm/resource_governance.py
 ./src/aasm/resources.py
 ./src/aasm/reuse_certificate.py
 ./src/aasm/reuse_index.py
@@ -616,6 +620,7 @@
 ./tests/test_postgres_integration.py
 ./tests/test_provisioning_telemetry.py
 ./tests/test_replay_fork.py
+./tests/test_resource_governance.py
 ./tests/test_scheduler.py
 ./tests/test_schemas.py
 ./tests/test_sdist_smoke.py
