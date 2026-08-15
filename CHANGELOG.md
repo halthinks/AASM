@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.53.0] - 2026-08-14
+
+### Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
+
+- advanced package/public surface to `0.53.0` and `aasm.adoption.v1 / 0.29.0`;
+- added `aasm.identity.scoped.v1`, `aasm.authority.scoped.v1`, and durable `aasm.authority.scoped.runtime.v1` with explicit Principal / Workspace / Scope separation;
+- made scoped authority fail closed by default, with DENY precedence, grant expiry, nondelegability, delegation depth/capability/scope ceilings, and delegated-wildcard rejection;
+- preserved `cross_run_authority_transfer = NEVER` and the rule that resource state never grants authority;
+- added durable workspace bootstrap, principal registration, grant admission, allow/deny decisions, and authorization lineage through ordinary AASM Evidence/event replay;
+- required scoped capabilities for resource capacity registration, observation, reservation, re-estimation, release, and settlement;
+- added principal-aware resource-history projection derived from the exact scoped-authority Evidence that authorized the resource mutation;
+- added v0.53 optimistic machine-version guarding for resource Evidence commits so stale concurrent hosts cannot both commit conflicting reservations;
+- verified stale-writer rejection and canonical reload across MemoryStore, SQLite, and PostgreSQL;
+- added `aasm.store.scoped.v1` as a fail-closed read-only persistence facade: cross-workspace, child-scope raw, multi-workspace ambiguous, unfinished-machine leakage, and legacy-unscoped-effect reads fail closed; direct store mutation remains forbidden outside governed runtime transitions;
+- separated scoped effect proposal, `effect.authorize`, `effect.execute`, and `effect.reconcile`; every external execution attempt receives a fresh authority decision so expired/revoked authority cannot be bypassed by retry behavior;
+- added `aasm.solver.learning.v1 / 0.1.0` for correctness-sensitive `NO_GOOD | UNSAT_CORE | BOUND` and performance-only `INCUMBENT | WARM_START | NATIVE_ACCELERATOR` artifacts;
+- reused the existing v0.48 `CrossRunKnowledgeEnvelope(kind="REUSE_RESULT")` and admission path for cross-run solver learning instead of introducing a second transport/admission plane;
+- kept imported correctness-sensitive learning inert until receiving-run exact local revalidation and rejected forged no-goods/bounds that would eliminate feasible solutions;
+- kept incumbents, warm starts, and compatible native accelerator state performance-only with `truth_authority = NONE`;
+- added `aasm.solver.learning.application.v1 / 0.1.0`, requiring exact PASS validation, exact artifact/model binding, and scoped `solver.learning.apply` authority before application;
+- lowered certified pruning into a new canonical optimization model through the existing provider path rather than creating a new solver executor;
+- made the existing OR-Tools CP-SAT adapter explicitly consume validated assignment hints through `CpModel.add_hint(...)` and report consumed solver-learning application IDs;
+- added dedicated exact-SHA `aasm/scoped-authority` and `aasm/solver-learning` status gates;
+- hardened release publication so v0.53 requires `aasm/ci-summary`, `aasm/formal-assurance`, `aasm/semantic-solver-rc`, `aasm/proof-claims`, `aasm/solution-pools`, `aasm/optimization`, `aasm/scoped-authority`, and `aasm/solver-learning` on the same current `main` SHA;
+- preserved v0.52 multi-objective/resource contracts, v0.51 complete enumeration, v0.50 proof certification, v0.49 Semantic Solver RC, v0.48 cross-run admission, and v0.47 governed SII as frozen versioned parents.
+
 ## [0.52.0] - 2026-08-14
 
 ### Resource-Governed Multi-Objective Decisions & Pareto Solving
