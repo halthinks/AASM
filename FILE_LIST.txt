@@ -107,6 +107,7 @@
 ./docs/RELEASE_0.52.md
 ./docs/RELEASE_0.54.md
 ./docs/RELEASE_0.55.md
+./docs/RELEASE_0.56.md
 ./docs/RELEASE_PROCESS.md
 ./docs/REMOTE_EXECUTION.md
 ./docs/REPLAY_FORK.md
@@ -127,6 +128,7 @@
 ./docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md
 ./docs/implementation/V056_SOLVER_OUTCOME_V2_REBASE.md
 ./docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md
+./docs/roadmaps/V056_CUMULATIVE_RELEASE_DISCIPLINE.md
 ./docs/runbooks/README.md
 ./docs/runbooks/history-diagnosis.md
 ./docs/runbooks/human-approval.md
