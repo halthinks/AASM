@@ -1,12 +1,13 @@
-name: AASM v0.56 Solver Evidence
+name: AASM v0.56 Solver Outcome v2
 
 on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 concurrency:
-  group: aasm-v56-${{ github.ref }}
+  group: aasm-v56-status-v2-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -14,17 +15,17 @@ permissions:
   statuses: write
 
 jobs:
-  v56:
-    runs-on: ubuntu-latest
+  status_v2:
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
-      - name: Install
-        run: python -m pip install -e '.[dev]'
-      - name: Check truthful solver outcome contracts
+      - name: Install v0.56 status qualification dependencies
+        run: python -m pip install -e '.[dev,optimization]'
+      - name: Check authoritative solver outcome contracts
         run: python scripts/check_v56_solver_outcome.py
       - name: Run v0.56 solver outcome fixtures
         run: |
@@ -33,7 +34,35 @@ jobs:
             tests/test_v56_provider_status_v2.py \
             tests/test_v56_solver_outcome_runtime.py \
             tests/test_v56_public_candidate.py
-      - name: Guard candidate and released surfaces
+      - name: Qualify real provider raw status identity and v2 mapping
+        run: |
+          python - <<'PY'
+          from aasm.optimization import OptimizationRequest, reference_optimization_models, solve_optimization_request, validate_optimization_result
+          from aasm.provider_status_v2 import default_provider_status_map, map_provider_status
+
+          providers = {'SAT': 'cadical', 'CP_SAT': 'ortools-cp-sat', 'MILP': 'highs'}
+          capabilities = {'SAT': 'solver.sat', 'CP_SAT': 'solver.cp_sat', 'MILP': 'solver.milp'}
+          for family, model in reference_optimization_models().items():
+              request = OptimizationRequest(model, capabilities[family], '0.1.0', f'v56-real-{family.lower()}', required_provider=providers[family])
+              result = solve_optimization_request(request)
+              validate_optimization_result(request, result)
+              raw_status = str(result.statistics.get('raw_status') or '')
+              raw_code = str(result.statistics.get('raw_status_code') or '')
+              assert raw_status, (family, result.to_dict())
+              assert raw_code, (family, result.to_dict())
+              mapping = map_provider_status(
+                  default_provider_status_map(result.solver.provider_id, result.solver.version),
+                  raw_status=raw_status,
+                  raw_status_code=raw_code,
+                  has_incumbent=bool(result.assignment),
+                  objective_present=model.objective is not None,
+              )
+              assert mapping.mapping_status == 'EXACT_RULE', (family, mapping.to_dict())
+              if family == 'SAT': assert mapping.normalized_status == 'SAT'
+              else: assert mapping.normalized_status == 'OPTIMAL'
+          print('real CaDiCaL/PySAT, OR-Tools CP-SAT, and HiGHS status identity qualification: PASS')
+          PY
+      - name: Guard released v0.55 root and additive v0.56 candidate
         run: |
           python - <<'PY'
           import aasm
@@ -42,8 +71,28 @@ jobs:
           assert report['valid'], report
           assert public_v56.__version__ == '0.56.0.dev0'
           assert public_v56.PUBLIC_RELEASE_STABILITY == 'QUALIFICATION_CANDIDATE'
-          assert public_v55.__version__ == '0.55.0.dev0'
-          assert aasm.__version__ == '0.54.0'
-          assert aasm.AASMEngine.__module__ == 'aasm.runtime_v54_full'
-          print('public_v56 candidate valid; public_v55 staged; released root remains v0.54')
+          assert public_v55.__version__ == '0.55.0'
+          assert aasm.__version__ == '0.55.0'
+          assert aasm.AASMEngine is public_v55.AASMEngine
+          assert public_v56.AASMEngine is not aasm.AASMEngine
+          print('public_v56 status candidate valid; released root remains v0.55.0')
           PY
+      - name: Publish v0.56 status-v2 qualification
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='v0.56 solver outcome/status v2 qualification passed'
+          else
+            state=failure
+            description='v0.56 solver outcome/status v2 qualification failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" -f context='aasm/v56-status-v2' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
