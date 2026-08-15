@@ -120,6 +120,9 @@
 ./docs/TRACE_CONFORMANCE.md
 ./docs/TYPED_CAPABILITIES_FORMAL_VERIFICATION.md
 ./docs/USE_CASES.md
+./docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md
+./docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md
+./docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md
 ./docs/runbooks/README.md
 ./docs/runbooks/history-diagnosis.md
 ./docs/runbooks/human-approval.md
@@ -128,6 +131,7 @@
 ./docs/runbooks/replay-fork.md
 ./docs/runbooks/requirement-change.md
 ./docs/runbooks/unknown-effect.md
+./docs/source_material/SOURCE_LOCK_MANIFEST.md
 ./examples/adaptive_routing.py
 ./examples/automatic_checkpoint_fleet.py
 ./examples/certificate_assurance.py
@@ -256,6 +260,7 @@
 ./schemas/execution-contract.schema.json
 ./schemas/execution-telemetry.schema.json
 ./schemas/external-artifact.schema.json
+./schemas/external-reference.schema.json
 ./schemas/fleet-control-policy.schema.json
 ./schemas/fork-request.schema.json
 ./schemas/formal-statement.schema.json
@@ -289,6 +294,8 @@
 ./schemas/pbv-message.schema.json
 ./schemas/plan-edge.schema.json
 ./schemas/plan-node.schema.json
+./schemas/problem-delta.schema.json
+./schemas/problem-revision.schema.json
 ./schemas/problem.schema.json
 ./schemas/profile-binding.schema.json
 ./schemas/profile-evolution.schema.json
@@ -611,6 +618,7 @@
 ./src/aasm/scoped_store.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
+./src/aasm/semantic_evolution.py
 ./src/aasm/semantic_result.py
 ./src/aasm/semantic_solver_rc.py
 ./src/aasm/server.py
@@ -736,4 +744,5 @@
 ./tests/test_v53_scoped_store.py
 ./tests/test_v53_solver_learning.py
 ./tests/test_v54_public.py
+./tests/test_v55_semantic_evolution_foundation.py
 ./tests/test_workers_leases.py
