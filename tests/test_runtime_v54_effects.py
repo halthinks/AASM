@@ -11,12 +11,29 @@ from aasm.effects import (
     RetryPolicy,
 )
 from aasm.model import ProblemSpec
+from aasm.optimization import (
+    OPTIMIZATION_CAPABILITIES,
+    OptimizationConstraint,
+    OptimizationModel,
+    OptimizationObjective,
+    OptimizationRequest,
+    OptimizationResult,
+    OptimizationSolverIdentity,
+    OptimizationVariable,
+)
 from aasm.persistence import SQLiteStore
+from aasm.proof_claims import build_finite_domain_proof, verify_finite_domain_proof
 from aasm.resource_governance import CapacityWindowKind, ResourceCapacity, ResourceDemandEstimate
 from aasm.resource_routing import ResourceAwareCandidate, ResourceRoutingPolicy
 from aasm.resources import ResourceRecord, TaskDemand
 from aasm.runtime_v53 import AASMEngine as V53Engine
-from aasm.runtime_v54 import AASMEngine
+from aasm.runtime_v54 import (
+    AASMEngine,
+    PortfolioRaceEntry,
+    PortfolioRacePolicy,
+    evaluate_portfolio_race,
+    translate_model_for_solver,
+)
 from aasm.scoped_authority import Principal, ScopedAuthorityGrant, Workspace
 from aasm.workers import WorkerRecord
 
@@ -482,3 +499,162 @@ def test_effect_governance_report_is_scope_safe():
     other_report = engine.effect_governance_report(workspace_id=WORKSPACE, scope_id="other-scope")
     assert record.spec.effect_id not in other_report["effects"]
     assert root_report["contract"]["resource_state_grants_authority"] is False
+
+
+def portfolio_source_model():
+    return OptimizationModel(
+        "v0.54 portfolio source",
+        (
+            OptimizationVariable("x", "BOOL"),
+            OptimizationVariable("y", "BOOL"),
+        ),
+        (
+            OptimizationConstraint(
+                "LINEAR",
+                coefficients={"x": 1, "y": 1},
+                sense=">=",
+                rhs=1,
+            ),
+        ),
+        objective=OptimizationObjective("MINIMIZE", {"x": 1, "y": 1}),
+        family="AUTO",
+    )
+
+
+def portfolio_entry(source, family, provider, status, assignment=None, *, wall_time_ms=0, proof=False):
+    translation, translation_certificate = translate_model_for_solver(
+        source,
+        target_family=family,
+        target_provider_id=provider,
+    )
+    request = OptimizationRequest(
+        translation.target_model,
+        OPTIMIZATION_CAPABILITIES[family],
+        "0.1.0",
+        f"obligation-{provider}-{status}-{wall_time_ms}",
+        required_provider=provider,
+        accept_feasible=True,
+    )
+    assignment = dict(assignment or {})
+    objective = None if not assignment else float(assignment.get("x", 0) + assignment.get("y", 0))
+    result = OptimizationResult(
+        request.request_id,
+        request.fingerprint,
+        request.model.fingerprint,
+        status,
+        OptimizationSolverIdentity(provider, f"fixture:{provider}", "fixture-1"),
+        assignment=assignment,
+        objective_value=objective,
+        wall_time_ms=wall_time_ms,
+    )
+    certificate = None
+    if proof:
+        claim, artifact = build_finite_domain_proof(request.model, result)
+        certificate = verify_finite_domain_proof(request.model, result, claim, artifact)
+    return PortfolioRaceEntry(
+        translation,
+        translation_certificate,
+        request,
+        result,
+        proof_certificate=certificate,
+    )
+
+
+def test_solver_translation_certifies_same_canonical_semantics_for_cp_sat_and_milp():
+    source = portfolio_source_model()
+    cp_translation, cp_certificate = translate_model_for_solver(
+        source,
+        target_family="CP_SAT",
+        target_provider_id="ortools-cp-sat",
+    )
+    milp_translation, milp_certificate = translate_model_for_solver(
+        source,
+        target_family="MILP",
+        target_provider_id="highs",
+    )
+    assert cp_certificate.status == "PASS"
+    assert milp_certificate.status == "PASS"
+    assert cp_translation.source_model_fingerprint == source.fingerprint
+    assert milp_translation.source_model_fingerprint == source.fingerprint
+    assert cp_translation.source_semantic_fingerprint == cp_translation.target_semantic_fingerprint
+    assert milp_translation.source_semantic_fingerprint == milp_translation.target_semantic_fingerprint
+    assert cp_translation.target_model.fingerprint != milp_translation.target_model.fingerprint
+    assert cp_translation.target_model.solver_family == "CP_SAT"
+    assert milp_translation.target_model.solver_family == "MILP"
+    with pytest.raises(ValueError):
+        translate_model_for_solver(source, target_family="SAT", target_provider_id="cadical")
+
+
+def test_portfolio_race_is_arrival_order_and_wall_time_invariant():
+    source = portfolio_source_model()
+    fast = portfolio_entry(
+        source,
+        "CP_SAT",
+        "ortools-cp-sat",
+        "FEASIBLE",
+        {"x": 1, "y": 0},
+        wall_time_ms=1,
+    )
+    slow = portfolio_entry(
+        source,
+        "MILP",
+        "highs",
+        "FEASIBLE",
+        {"x": 0, "y": 1},
+        wall_time_ms=9999,
+    )
+    first = evaluate_portfolio_race(source, [fast, slow], PortfolioRacePolicy())
+    second = evaluate_portfolio_race(source, [slow, fast], PortfolioRacePolicy())
+    assert first.status == second.status == "BEST_VALIDATED_FEASIBLE"
+    assert first.selected_provider_id == second.selected_provider_id
+    assert first.selected_assignment == second.selected_assignment
+    assert first.selected_objective == second.selected_objective == 1.0
+    assert first.policy["fastest_wins"] is False
+    assert first.policy["arrival_order_tiebreak"] is False
+
+
+def test_uncertified_negative_majority_cannot_outvote_one_validated_feasible_solution():
+    source = portfolio_source_model()
+    negative_a = portfolio_entry(source, "CP_SAT", "ortools-cp-sat", "INFEASIBLE", wall_time_ms=1)
+    negative_b = portfolio_entry(source, "MILP", "highs", "INFEASIBLE", wall_time_ms=2)
+    feasible = portfolio_entry(
+        source,
+        "CP_SAT",
+        "ortools-cp-sat",
+        "FEASIBLE",
+        {"x": 1, "y": 0},
+        wall_time_ms=1000,
+    )
+    decision = evaluate_portfolio_race(source, [negative_a, negative_b, feasible])
+    assert decision.status == "BEST_VALIDATED_FEASIBLE"
+    assert decision.selected_entry_id == feasible.entry_id
+    assert set(decision.ignored_entry_ids) == {negative_a.entry_id, negative_b.entry_id}
+    assert decision.policy["majority_vote"] is False
+
+
+def test_proof_certified_optimal_result_is_decisive_but_not_because_it_arrived_first():
+    source = portfolio_source_model()
+    certified = portfolio_entry(
+        source,
+        "CP_SAT",
+        "ortools-cp-sat",
+        "OPTIMAL",
+        {"x": 1, "y": 0},
+        wall_time_ms=5000,
+        proof=True,
+    )
+    feasible = portfolio_entry(
+        source,
+        "MILP",
+        "highs",
+        "FEASIBLE",
+        {"x": 0, "y": 1},
+        wall_time_ms=1,
+    )
+    decision = evaluate_portfolio_race(source, [feasible, certified])
+    assert decision.status == "CERTIFIED_OPTIMAL"
+    assert decision.certified is True
+    assert decision.selected_entry_id == certified.entry_id
+    assert decision.selected_provider_id == "ortools-cp-sat"
+    assert decision.selected_objective == 1.0
+    assert decision.decisive_certificate_ids == (certified.proof_certificate.certificate_id,)
