@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.52.0] - 2026-08-14
+
+### Resource-Governed Multi-Objective Decisions & Pareto Solving
+
+- advanced package/public surface to `0.52.0` and `aasm.adoption.v1 / 0.28.0`;
+- added `aasm.optimization.multi-objective.v1 / 0.1.0` with exact finite lexicographic solving over the v0.51 certified complete-enumeration substrate;
+- added `aasm.optimization.frontier.v1 / 0.1.0` with independently reconstructed exact finite Pareto frontiers;
+- hardened exact Pareto certification to require equality of solution IDs, assignments, and objective vectors rather than ID equality alone;
+- froze tolerance-aware lexicographic survivor and Pareto-dominance semantics;
+- added `aasm.resource.capacity.v1`, `aasm.resource.observation.v1`, `aasm.resource.demand.v1`, `aasm.resource.routing.v1`, and `aasm.resource.runtime.v1`;
+- added fixed, rolling, refilling, credit-balance, unbounded, and unknown resource windows plus protected reserves;
+- preserved external quota/usage provenance as `AUTHORITATIVE | OBSERVED | DERIVED | ESTIMATED | DECLARED | UNKNOWN` Evidence;
+- added an additive `aasm.sii.resource-aware-proposal.v1 / 0.1.0` successor bound to an already-durable governed parent SII proposal;
+- made correctness, evidence quality, expected progress, provider quota burn, scarce-expert usage, monetary cost, and wall time explicit governed decision dimensions;
+- replaced the permanent routing tuple with an explicit policy-controlled ordered objective contract;
+- added exact Pareto analysis over the supplied eligible resource-candidate set without reserving resources or claiming global route-discovery completeness;
+- added atomic conservative resource reservation, durable re-estimation with `CONTINUE | REPLAN_REQUIRED`, release, settlement, and predicted-versus-actual calibration Evidence;
+- added replayable routing explanations containing objective policy, candidate vectors, capacity state, reserve, reset horizon, and observation provenance;
+- added workspace/scope-safe resource inspection and fail-closed unknown/cross-workspace resource behavior;
+- added JSON schemas and adversarial tests for false completeness, forged frontier contents, policy inversion, quota-vs-money tradeoffs, reserve violations, unknown capacity, partial reservation, duplicate settlement, and replay;
+- added a dedicated v0.52 contract/adversarial job plus exact-SHA `aasm/optimization` status requiring the real native optimization/modeling suite to pass as well;
+- hardened release publication so v0.52 requires `aasm/ci-summary`, `aasm/formal-assurance`, `aasm/semantic-solver-rc`, `aasm/proof-claims`, `aasm/solution-pools`, and `aasm/optimization` on the exact current `main` SHA;
+- preserved v0.51 solution-pool/enumeration semantics and all earlier proof, semantic-solver RC, cross-run, SII, authority, memory, and formal boundaries.
+
 ## [0.51.0] - 2026-08-14
 
 ### Governed Solution Pools & Complete Enumeration
