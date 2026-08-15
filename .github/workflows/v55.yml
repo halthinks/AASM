@@ -22,7 +22,7 @@ jobs:
           cache: pip
       - name: Install
         run: python -m pip install -e '.[dev]'
-      - name: Enforce integral cumulative scheduling demands
+      - name: Canonically finalize v0.55 IR maintenance
         if: github.event_name == 'push'
         run: |
           python - <<'PY'
@@ -36,6 +36,7 @@ jobs:
           elif new not in text:
               raise SystemExit('scheduling demand precision repair target not found')
           PY
+          python scripts/release_manifest.py --write-file-list
           python - <<'PY'
           from aasm.scheduling_ir import CumulativeResourceConstraint
           try:
@@ -45,11 +46,11 @@ jobs:
           else:
               raise SystemExit('non-integral cumulative demand was silently accepted')
           PY
-          if ! git diff --quiet -- src/aasm/scheduling_ir.py; then
+          if ! git diff --quiet -- src/aasm/scheduling_ir.py FILE_LIST.txt; then
             git config user.name "aasm-ci"
             git config user.email "aasm-ci@users.noreply.github.com"
-            git add src/aasm/scheduling_ir.py
-            git commit -m "Reject non-integral scheduling resource demands"
+            git add src/aasm/scheduling_ir.py FILE_LIST.txt
+            git commit -m "Finalize v0.55 discrete scheduling and continuous IR inventory"
             git push origin HEAD:main
           fi
       - name: Verify tracked file inventory
@@ -59,6 +60,7 @@ jobs:
           python scripts/check_v55_contracts.py
           python scripts/check_v55_discrete_ir.py
           python scripts/check_v55_scheduling_ir.py
+          python scripts/check_v55_continuous_ir.py
       - name: Run v0.55 governed semantic evolution fixtures
         run: |
           pytest -q \
@@ -68,7 +70,8 @@ jobs:
             tests/test_v55_solver_formulation.py \
             tests/test_v55_formulation_execution.py \
             tests/test_v55_discrete_ir.py \
-            tests/test_v55_scheduling_ir.py
+            tests/test_v55_scheduling_ir.py \
+            tests/test_v55_continuous_ir.py
       - name: Guard released public surface
         run: |
           python - <<'PY'
