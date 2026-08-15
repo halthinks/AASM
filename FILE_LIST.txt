@@ -323,6 +323,9 @@
 ./schemas/reuse-certificate.schema.json
 ./schemas/reuse-request.schema.json
 ./schemas/runtime-config.schema.json
+./schemas/scheduling-model.schema.json
+./schemas/scheduling-provider-binding.schema.json
+./schemas/scheduling-validation.schema.json
 ./schemas/scope-dependency.schema.json
 ./schemas/scope-report.schema.json
 ./schemas/scoped-authority-decision.schema.json
@@ -371,6 +374,7 @@
 ./scripts/check_v54_contracts.py
 ./scripts/check_v55_contracts.py
 ./scripts/check_v55_discrete_ir.py
+./scripts/check_v55_scheduling_ir.py
 ./scripts/release_artifacts.py
 ./scripts/release_artifacts_cli.py
 ./scripts/release_artifacts_core.py
@@ -632,6 +636,7 @@
 ./src/aasm/runtime_v54_portfolio.py
 ./src/aasm/runtime_v55_foundation.py
 ./src/aasm/scheduler.py
+./src/aasm/scheduling_ir.py
 ./src/aasm/scoped_authority.py
 ./src/aasm/scoped_store.py
 ./src/aasm/scopes.py
@@ -766,6 +771,7 @@
 ./tests/test_v55_discrete_ir.py
 ./tests/test_v55_formulation_execution.py
 ./tests/test_v55_model_feature_admission.py
+./tests/test_v55_scheduling_ir.py
 ./tests/test_v55_semantic_evolution_foundation.py
 ./tests/test_v55_semantic_evolution_runtime.py
 ./tests/test_v55_solver_formulation.py
