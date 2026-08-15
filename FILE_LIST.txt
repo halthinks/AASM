@@ -264,6 +264,7 @@
 ./schemas/langgraph-binding.schema.json
 ./schemas/langgraph-recovery.schema.json
 ./schemas/lease.schema.json
+./schemas/lexicographic-result.schema.json
 ./schemas/machine-definition.schema.json
 ./schemas/memory-entry.schema.json
 ./schemas/memory-index-entry.schema.json
@@ -277,6 +278,7 @@
 ./schemas/optimization-request.schema.json
 ./schemas/optimization-result.schema.json
 ./schemas/package-manifest.schema.json
+./schemas/pareto-frontier-certificate.schema.json
 ./schemas/pareto-frontier.schema.json
 ./schemas/pattern-machine.schema.json
 ./schemas/pbv-message.schema.json
@@ -296,6 +298,7 @@
 ./schemas/resource-capacity.schema.json
 ./schemas/resource-demand.schema.json
 ./schemas/resource-observation.schema.json
+./schemas/resource-routing-policy.schema.json
 ./schemas/resource.schema.json
 ./schemas/reuse-certificate.schema.json
 ./schemas/reuse-request.schema.json
