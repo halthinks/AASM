@@ -1,0 +1,213 @@
+name: Finalize guarded mechanical v0.53 promotion once
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Apply idempotent mechanical promotion and remove all helpers
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_state(path, old, new, *, count=1):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              if new in text and old not in text:
+                  return
+              if text.count(old) < count:
+                  raise SystemExit(f'{path}: promotion token missing: {old!r}')
+              p.write_text(text.replace(old,new,count),encoding='utf-8')
+
+          replace_state('pyproject.toml','version = "0.52.0"','version = "0.53.0"')
+          replace_state('src/aasm/__init__.py','from .public_v52 import *  # noqa: F401,F403','from .public_v53 import *  # noqa: F401,F403')
+          replace_state('src/aasm/cli.py','from .cli_v52 import main','from .cli_v53 import main')
+
+          release=Path('.github/workflows/release.yml'); r=release.read_text(encoding='utf-8')
+          if 'aasm/scoped-authority' not in r or 'aasm/solver-learning' not in r:
+              old='for context in aasm/ci-summary aasm/formal-assurance aasm/semantic-solver-rc aasm/proof-claims aasm/solution-pools aasm/optimization; do'
+              new='for context in aasm/ci-summary aasm/formal-assurance aasm/semantic-solver-rc aasm/proof-claims aasm/solution-pools aasm/optimization aasm/scoped-authority aasm/solver-learning; do'
+              if r.count(old)!=1: raise SystemExit('release workflow context loop drift')
+              r=r.replace(old,new)
+          release.write_text(r,encoding='utf-8')
+
+          cli=Path('src/aasm/cli_v53.py'); cli.write_text(cli.read_text(encoding='utf-8').replace('pre-release v0.53','v0.53'),encoding='utf-8')
+
+          current='''# AASM v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
+
+## Current public release
+
+- Version: `0.53.0`
+- Adoption contract: `0.29.0`
+- Release date: `2026-08-14`
+- License: `Apache-2.0`
+- Public API stability: `ACTIVE_DEVELOPMENT`
+- Python: `>=3.11`
+- Remote protocol compatibility remains `aasm.remote.v1 / 0.1.0`.
+
+## What is release-complete
+
+v0.53.0 makes scoped identity, authority, persistence access, resource ownership, external-effect authority, and durable cross-run solver learning first-class public AASM semantics.
+
+The release adds explicit Principal/Workspace/Scope authority, fail-closed scoped persistence reads, principal-aware resource provenance, three-store stale resource-commit protection, fresh effect authority, durable cross-run solver learning through the existing v0.48 admission path, receiving-run revalidation, explicit validated solver-learning application, and real OR-Tools hint consumption through the existing optimization provider path.
+
+## Safety boundary
+
+Foreign knowledge is not local truth. Resource availability is not permission. Cross-run admission does not transfer authority. Solver-learning application requires exact local PASS validation plus scoped `solver.learning.apply`. Direct persistence writes are not exposed by the scoped store facade. Stale distributed resource commits fail closed and reload canonical state.
+
+## Release evidence
+
+The release boundary requires exact-SHA success from `aasm/ci-summary`, `aasm/formal-assurance`, `aasm/semantic-solver-rc`, `aasm/proof-claims`, `aasm/solution-pools`, `aasm/optimization`, `aasm/scoped-authority`, `aasm/solver-learning`, and `aasm/release`.
+
+## Next planned release
+
+v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery.
+'''
+          Path('docs/CURRENT_RELEASE.md').write_text(current,encoding='utf-8')
+          notes='''# AASM v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
+
+AASM v0.53.0 hardens the public runtime around scoped authority, safe persistence access, distributed resource ownership, and reusable solver learning.
+
+## Highlights
+
+- `aasm.authority.scoped.v1`: explicit Principal/Workspace/Scope authority, default DENY, DENY precedence, expiry, nondelegability, delegation ceilings, and no cross-run authority inheritance.
+- `aasm.store.scoped.v1`: read-only scope-safe persistence facade; ambiguous or cross-workspace raw reads fail closed and writes remain governed runtime transitions.
+- Resource governance now derives principal provenance from authorization Evidence and rejects stale reservation commits across MemoryStore, SQLite, and PostgreSQL.
+- External effect authorize/execute/reconcile paths require scoped authority; retries require fresh execution authority.
+- `aasm.solver.learning.v1`: durable NO_GOOD, UNSAT_CORE, BOUND, INCUMBENT, WARM_START, and NATIVE_ACCELERATOR artifacts.
+- Cross-run learning reuses the existing v0.48 `REUSE_RESULT` envelope/admission path; foreign authority remains provenance only.
+- Correctness-sensitive learning is inert until receiving-run revalidation succeeds for the exact model.
+- `aasm.solver.learning.application.v1`: exact PASS validation plus scoped `solver.learning.apply`, with truth and policy authority fixed to `NONE`.
+- Certified pruning lowers into the existing OptimizationModel/provider path; the existing OR-Tools CP-SAT provider explicitly consumes validated assignment hints with `CpModel.add_hint(...)`.
+
+## Verification
+
+The v0.53 promotion is gated by broad CI, formal assurance, Semantic Solver RC, proof claims, solution pools, native optimization, scoped authority/store/resource concurrency, solver learning/application, and reproducible release verification on the exact release SHA.
+'''
+          Path('docs/RELEASE_0.53.md').write_text(notes,encoding='utf-8')
+
+          readme=Path('README.md'); text=readme.read_text(encoding='utf-8')
+          replacements=[
+              ('release-v0.52.0','release-v0.53.0'),
+              ('Release%3A%20v0.52.0','Release%3A%20v0.53.0'),
+              ('Current release: **v0.52.0 — Lexicographic Multi-Objective & Pareto Solving — Resource-Governed Decision Foundation**.','Current release: **v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening**.'),
+              ('Next planned release: **v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening**.','Next planned release: **v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery**.'),
+              ('pip install "aasm==0.52.0[formal]"','pip install "aasm==0.53.0[formal]"'),
+              ("pip install 'aasm==0.52.0[formal]'","pip install 'aasm==0.53.0[formal]'"),
+          ]
+          for old,new in replacements:
+              if new not in text:
+                  if old not in text: raise SystemExit(f'README promotion token missing: {old}')
+                  text=text.replace(old,new)
+          if '### v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening (Current)' not in text:
+              marker='### v0.52.0 — Lexicographic Multi-Objective & Pareto Solving — Resource-Governed Decision Foundation\n'
+              section='''### v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening (Current)\n\nv0.53.0 adds fail-closed Principal/Workspace/Scope authority, scope-safe persistence reads, three-store stale resource-commit protection, principal-aware resource provenance, fresh effect authority, durable cross-run solver learning with receiving-run revalidation, and explicit validated solver-learning application through the existing optimization provider path.\n\n'''
+              if marker not in text: raise SystemExit('README v0.52 history marker missing')
+              text=text.replace(marker,section+marker,1)
+          readme.write_text(text,encoding='utf-8')
+
+          changelog=Path('CHANGELOG.md'); text=changelog.read_text(encoding='utf-8')
+          if '## 0.53.0 — 2026-08-14' not in text:
+              marker='## 0.52.0 — 2026-08-14\n'
+              section='''## 0.53.0 — 2026-08-14\n\n### Added\n- Scoped Principal/Workspace/Scope authority with durable ALLOW/DENY decisions, delegation ceilings, expiry, nondelegability, and DENY precedence.\n- `aasm.store.scoped.v1` fail-closed read-only persistence facade.\n- Principal-aware resource provenance and optimistic machine-version resource commit guards across MemoryStore, SQLite, and PostgreSQL.\n- Scoped effect authorize/execute/reconcile with fresh retry authority.\n- Durable cross-run solver learning through the existing v0.48 admission path.\n- Receiving-run validation and explicit `aasm.solver.learning.application.v1` application with truth/policy authority NONE.\n- Existing OR-Tools CP-SAT provider consumption of validated assignment hints.\n- Dedicated `aasm/scoped-authority` and `aasm/solver-learning` release gates.\n\n### Changed\n- Current public adoption contract advances to `0.29.0`.\n- v0.53 becomes the active package/runtime surface; v0.52 remains available as a frozen versioned parent module.\n\n'''
+              if marker not in text: raise SystemExit('CHANGELOG v0.52 marker missing')
+              text=text.replace(marker,section+marker,1)
+          changelog.write_text(text,encoding='utf-8')
+
+          roadmap=Path('ROADMAP.md'); text=roadmap.read_text(encoding='utf-8')
+          old='## v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening'
+          new='## v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening [DONE 2026-08-14]'
+          if new not in text:
+              if text.count(old)!=1: raise SystemExit(f'ROADMAP v0.53 heading drift: {text.count(old)}')
+              text=text.replace(old,new)
+          roadmap.write_text(text,encoding='utf-8')
+
+          checker=Path('scripts/check_release_contracts.py'); c=checker.read_text(encoding='utf-8')
+          replacements=[
+              ('CURRENT_VERSION = "0.52.0"','CURRENT_VERSION = "0.53.0"'),
+              ('CURRENT_RELEASE_HEADING = "AASM v0.52.0 — Lexicographic Multi-Objective & Pareto Solving — Resource-Governed Decision Foundation"','CURRENT_RELEASE_HEADING = "AASM v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening"'),
+              ('CURRENT_RELEASE_NOTES = "docs/RELEASE_0.52.md"','CURRENT_RELEASE_NOTES = "docs/RELEASE_0.53.md"'),
+              ('ADOPTION_CONTRACT_VERSION = "0.28.0"','ADOPTION_CONTRACT_VERSION = "0.29.0"'),
+              ('NEXT_RELEASE_HEADING = "v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening"','NEXT_RELEASE_HEADING = "v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery"'),
+              ('NEXT_RELEASE_TITLE = "Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening"','NEXT_RELEASE_TITLE = "Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery"'),
+              ('RELEASE_VERSION = "0.52.0"','RELEASE_VERSION = "0.53.0"'),
+              ('RELEASE_ADOPTION_CONTRACT_VERSION = "0.28.0"','RELEASE_ADOPTION_CONTRACT_VERSION = "0.29.0"'),
+              ('from .public_v52 import *','from .public_v53 import *'),
+              ('from .cli_v52 import main','from .cli_v53 import main'),
+          ]
+          for old,new in replacements:
+              if new not in c:
+                  if old not in c: raise SystemExit(f'release checker token missing: {old}')
+                  c=c.replace(old,new)
+          if '"src/aasm/public_v53.py"' not in c:
+              anchor='        "scripts/check_v52_contracts.py",\n'
+              addition='''        "scripts/check_v52_contracts.py",\n        "src/aasm/public_v53.py",\n        "src/aasm/cli_v53.py",\n        "src/aasm/runtime_v53.py",\n        "src/aasm/runtime_v53_learning.py",\n        "src/aasm/scoped_authority.py",\n        "src/aasm/scoped_store.py",\n        "src/aasm/solver_learning.py",\n        "scripts/check_v53_contracts.py",\n        "scripts/check_v53_solver_learning_contracts.py",\n        "tests/test_v53_public.py",\n        "docs/RELEASE_0.53.md",\n'''
+              if anchor not in c: raise SystemExit('release checker required-path anchor drift')
+              c=c.replace(anchor,addition,1)
+          c=c.replace('str(ROOT / "docs" / "RELEASE_0.52.md")','str(ROOT / "docs" / "RELEASE_0.53.md")')
+          c=c.replace('"aasm.optimization.multi-objective.v1",','"aasm.authority.scoped.v1",')
+          c=c.replace('"aasm.resource.runtime.v1",','"aasm.store.scoped.v1",')
+          c=c.replace('"aasm.sii.resource-aware.v1",','"aasm.solver.learning.v1",')
+          if 'scripts/check_v53_contracts.py' in c and 'subprocess.check_call([sys.executable, str(ROOT / "scripts" / "check_v53_contracts.py")])' not in c:
+              anchor='subprocess.check_call([sys.executable, str(ROOT / "scripts" / "check_v52_contracts.py")])\n'
+              add=anchor+'    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "check_v53_contracts.py")])\n    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "check_v53_solver_learning_contracts.py")])\n'
+              if anchor not in c: raise SystemExit('release checker subprocess anchor drift')
+              c=c.replace(anchor,add,1)
+          checker.write_text(c,encoding='utf-8')
+
+          current_tests=[
+              'tests/test_v32_trace_conformance.py','tests/test_v37_reasoning.py','tests/test_v38_semantic_dependencies.py',
+              'tests/test_v39_typed_capabilities.py','tests/test_v40_hierarchical_memory.py','tests/test_v42_reference_domains.py',
+              'tests/test_v44_optimization.py','tests/test_v45_modeling_adapters.py','tests/test_v45_public.py',
+              'tests/test_v46_advanced_optimization.py','tests/test_v46_public.py','tests/test_v47_public.py',
+              'tests/test_v48_public.py','tests/test_v49_rc.py','tests/test_v49_rc_real.py',
+          ]
+          for name in current_tests:
+              p=Path(name)
+              if not p.exists(): continue
+              s=p.read_text(encoding='utf-8').replace('0.52.0','0.53.0').replace('0.28.0','0.29.0')
+              p.write_text(s,encoding='utf-8')
+
+          p=Path('tests/test_v52_public.py'); s=p.read_text(encoding='utf-8')
+          if 'from aasm import public_v53\n' not in s:
+              if 'from aasm import public_v52\n' not in s: raise SystemExit('test_v52_public import drift')
+              s=s.replace('from aasm import public_v52\n','from aasm import public_v52\nfrom aasm import public_v53\n',1)
+          old='def test_v52_active_release_binds_demo_stack_to_v52_runtime():\n    assert demo_stack.AASMEngine is public_v52.AASMEngine\n    assert demo_stack._runtime_version() == public_v52.__version__\n'
+          new='def test_v52_versioned_parent_remains_frozen_while_demo_stack_tracks_current_v53():\n    assert demo_stack.AASMEngine is public_v53.AASMEngine\n    assert demo_stack._runtime_version() == public_v53.__version__\n'
+          if new not in s:
+              if old not in s: raise SystemExit('test_v52_public demo binding drift')
+              s=s.replace(old,new)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('tests/test_v53_public.py'); s=p.read_text(encoding='utf-8')
+          s=s.replace('PUBLIC_RELEASE_STABILITY == "PRE_RELEASE"','PUBLIC_RELEASE_STABILITY == "ACTIVE_DEVELOPMENT"')
+          old='def test_pre_release_v53_import_does_not_rebind_active_v52_demo_stack():\n    assert demo_stack.AASMEngine is public_v52.AASMEngine\n    assert demo_stack._runtime_version() == "0.52.0"\n'
+          new='def test_active_v53_release_binds_demo_stack_to_v53_runtime():\n    assert demo_stack.AASMEngine is public_v53.AASMEngine\n    assert demo_stack._runtime_version() == "0.53.0"\n'
+          if new not in s:
+              if old not in s: raise SystemExit('test_v53_public demo binding drift')
+              s=s.replace(old,new)
+          p.write_text(s,encoding='utf-8')
+          PY
+          python -m compileall -q src tests scripts
+          for helper in .github/workflows/promote-v53-mechanical-once.yml .github/workflows/promote-v53-final-once.yml; do
+            if [ -f "$helper" ]; then git rm "$helper"; fi
+          done
+          python scripts/release_manifest.py --write-file-list
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Prepare AASM v0.53.0 release surfaces'
+          git push origin HEAD:main
