@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/numeric-tolerance.schema.json",
+  "title": "AASM Numeric Tolerance v1",
+  "type": "object",
+  "required": ["policy_id", "contract_id", "contract_version", "absolute_tolerance", "relative_tolerance", "precision", "fingerprint"],
+  "properties": {
+    "policy_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.numeric.tolerance.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "absolute_tolerance": {"type": "string", "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$"},
+    "relative_tolerance": {"type": "string", "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$"},
+    "precision": {"type": "integer", "minimum": 28},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
