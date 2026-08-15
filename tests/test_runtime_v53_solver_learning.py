@@ -117,9 +117,12 @@ def test_cross_run_solver_learning_reuses_v48_transport_and_stays_inert_until_lo
     )
     envelope = CrossRunKnowledgeEnvelope.from_dict(exported["envelope"])
     assert envelope.knowledge_kind == "REUSE_RESULT"
-    assert envelope.source_contract_id == "aasm.solver.learning.v1"
+    assert envelope.metadata["solver_learning_contract_id"] == "aasm.solver.learning.v1"
+    assert envelope.metadata["solver_learning_contract_version"] == "0.1.0"
     assert envelope.metadata["authority_inherited"] is False
+    assert envelope.source_authority_provenance["authority_transfer"] == "NEVER"
     assert recorded["evidence_id"] in envelope.source_evidence_ids
+    assert envelope.source_fingerprints[f"SOLVER_LEARNING:{artifact.learning_id}"] == artifact.fingerprint
 
     target = bootstrapped_engine(
         "target",
