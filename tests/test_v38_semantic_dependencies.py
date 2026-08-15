@@ -34,8 +34,8 @@ def commit_reactive_obligation(engine: AASMEngine, obligation_id: str):
 
 
 def test_v38_contract_version_and_public_surface():
-    contract = semantic_dependency_contract(); assert __version__ == "0.51.0"; assert contract["contract_id"] == "aasm.semantic.dependencies.v1"; assert contract["truth_maintenance_contract_id"] == "aasm.truth.maintenance.v1"; assert contract["reactive_obligation_contract_id"] == "aasm.reactive.obligation.v1"; assert contract["causal_decision_contract_id"] == "aasm.causal.decision.v1"; assert contract["truth_change_policy"] == "AFFECTED_DESCENDANTS_ONLY"; assert contract["unrelated_sibling_policy"] == "PRESERVE"; assert contract["reactive_policy"] == "DERIVE_OBLIGATION_NEVER_EXECUTE_HANDLER"
-    report = validate_public_api_contract(); assert report["valid"] is True, report; assert report["contract"]["contract_version"] == "0.27.0"
+    contract = semantic_dependency_contract(); assert __version__ == "0.52.0"; assert contract["contract_id"] == "aasm.semantic.dependencies.v1"; assert contract["truth_maintenance_contract_id"] == "aasm.truth.maintenance.v1"; assert contract["reactive_obligation_contract_id"] == "aasm.reactive.obligation.v1"; assert contract["causal_decision_contract_id"] == "aasm.causal.decision.v1"; assert contract["truth_change_policy"] == "AFFECTED_DESCENDANTS_ONLY"; assert contract["unrelated_sibling_policy"] == "PRESERVE"; assert contract["reactive_policy"] == "DERIVE_OBLIGATION_NEVER_EXECUTE_HANDLER"
+    report = validate_public_api_contract(); assert report["valid"] is True, report; assert report["contract"]["contract_version"] == "0.28.0"
 
 
 def test_derived_graph_connects_artifact_causal_decision_and_reactive_obligation():
