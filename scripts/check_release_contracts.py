@@ -172,7 +172,7 @@ def main():
         "scheduling-validation.schema.json",
         "continuous-model.schema.json",
         "continuous-validation.schema.json",
-        "governed-decision-vector.schema.json",
+        "decision-vector.schema.json",
         "semantic-evolution-archive.schema.json",
     ):
         require(root / "schemas" / name, ['"$schema"', "2020-12"])
@@ -213,8 +213,8 @@ def main():
         "0.31.0",
         "public_v55",
         "aasm.solver.formulation.v1",
-        "governed decision",
-        "semantic archive",
+        "Governed decision vectors",
+        "Portable semantic archive",
     ])
     require(root / "docs" / "RELEASE_0.55.md", [
         "AASM v0.55.0",
@@ -226,6 +226,12 @@ def main():
         "AASM v0.55 Release",
         "ACTIVE_DEVELOPMENT",
         "active public v0.55 release contract: PASS",
+        "context='aasm/v55'",
+    ])
+    require(root / ".github/workflows/release.yml", [
+        "aasm/v54 aasm/v55",
+        "verify-github-release",
+        "--notes-file docs/CURRENT_RELEASE.md",
     ])
 
     print("v0.55.0 release contracts: PASS")
