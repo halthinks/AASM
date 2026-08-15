@@ -6,6 +6,9 @@ from aasm.model import ProblemSpec
 from aasm.resource_governance import CapacityWindowKind, ResourceCapacity, ResourceObservation, MeasurementAuthority, ResourceDemandEstimate
 from aasm.resource_routing import ResourceAwareCandidate, ResourceRoutingPolicy
 from aasm.runtime_v52 import AASMEngine
+from aasm.sii import StructuredProposal
+from aasm.sii_governance import SIIPrincipalBinding
+from aasm.sii_v52 import ResourceAwareStructuredProposal
 
 
 WORKSPACE = "workspace-a"
@@ -41,6 +44,43 @@ def candidate(candidate_id="expert", amount=10.0):
     )
 
 
+def configured_sii_engine():
+    engine = AASMEngine(ProblemSpec("resource-aware SII"))
+    engine.install_default_sii_scoring_policy(authority_id="policy", authority_class="POLICY")
+    engine.bind_sii_principal(
+        SIIPrincipalBinding("reasoner", "PROPOSER", can_propose=True),
+        authority_id="policy",
+        authority_class="POLICY",
+    )
+    registered = engine.register_sii_proposer(
+        principal_id="reasoner",
+        name="reasoner",
+        kind="llm",
+        provider="fixture",
+        model_id="expert",
+    )
+    return engine, registered["identity"]["proposer_id"]
+
+
+def durable_resource_proposal(engine, proposer_id, *, amount=10.0, workspace_id=WORKSPACE):
+    parent = StructuredProposal(proposer_id, "candidate", SCOPE, {"choice": "expert"}, .9)
+    submitted_parent = engine.submit_sii_proposal(parent)
+    successor = ResourceAwareStructuredProposal(
+        parent,
+        resource_demands=(ResourceDemandEstimate("EXPERT_MODEL_ALLOWANCE", amount, "credits", resource_id="expert-weekly", upper_bound=amount),),
+        expected_correctness=.96,
+        expected_evidence_quality=.95,
+        expected_progress=.90,
+        expected_scarce_expert_usage=amount,
+    )
+    submitted = engine.submit_resource_aware_sii_proposal(
+        successor,
+        workspace_id=workspace_id,
+        scope_id=SCOPE,
+    )
+    return parent, submitted_parent, successor, submitted
+
+
 def report(engine):
     return engine.resource_governance_report(workspace_id=WORKSPACE, scope_id=SCOPE)
 
@@ -52,6 +92,10 @@ def route(engine, rows, policy=None):
         workspace_id=WORKSPACE,
         scope_id=SCOPE,
     )
+
+
+def evidence_row(engine, evidence_id):
+    return next(row for row in engine.snapshot.evidence["records"] if row["evidence_id"] == evidence_id)
 
 
 def test_capacity_registration_is_durable_and_replay_exact():
@@ -173,3 +217,56 @@ def test_failed_selection_does_not_create_reservation_or_mutate_capacity():
     value = report(engine)
     assert value["capacities"]["expert-weekly"]["committed"] == 0.0
     assert value["capacities"]["expert-weekly"]["consumed"] == 10.0
+
+
+def test_resource_aware_successor_requires_already_durable_governed_parent():
+    engine, proposer_id = configured_sii_engine()
+    parent = StructuredProposal(proposer_id, "candidate", SCOPE, "expert", .9)
+    successor = ResourceAwareStructuredProposal(parent, expected_correctness=.95, expected_evidence_quality=.95, expected_progress=.9)
+    with pytest.raises(KeyError, match="already durable governed parent"):
+        engine.submit_resource_aware_sii_proposal(successor, workspace_id=WORKSPACE, scope_id=SCOPE)
+
+
+def test_resource_aware_successor_evidence_derives_from_parent_sii_proposal():
+    engine, proposer_id = configured_sii_engine()
+    parent, parent_submission, successor, submitted = durable_resource_proposal(engine, proposer_id)
+    assert submitted["proposal"]["parent_proposal_id"] == parent.proposal_id
+    assert submitted["proposal"]["parent_proposal_evidence_id"] == parent_submission["proposal_evidence_id"]
+    row = evidence_row(engine, submitted["evidence_id"])
+    assert parent_submission["proposal_evidence_id"] in row["derived_from"]
+    report = engine.resource_aware_sii_proposal_report(workspace_id=WORKSPACE, scope_id=SCOPE)
+    assert successor.resource_aware_proposal_id in report["proposals"]
+    assert engine.resource_aware_sii_proposal_report(workspace_id="workspace-b", scope_id=SCOPE)["proposals"] == {}
+    assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
+
+
+def test_routing_from_durable_sii_proposal_carries_proposal_evidence_lineage_and_reserves():
+    engine, proposer_id = configured_sii_engine()
+    engine.register_resource_capacity(capacity())
+    _, _, successor, submitted = durable_resource_proposal(engine, proposer_id)
+    result = engine.route_resource_aware_sii_proposals(
+        [successor.resource_aware_proposal_id],
+        ResourceRoutingPolicy(min_correctness=.9, min_evidence_quality=.9),
+        workspace_id=WORKSPACE,
+        scope_id=SCOPE,
+    )
+    tx = result["transaction"]
+    assert tx["decision"]["selected_candidate_id"] == successor.resource_aware_proposal_id
+    assert tx["reservation"]["allocations"] == [["expert-weekly", 10.0]]
+    route_row = evidence_row(engine, result["evidence_id"])
+    assert submitted["evidence_id"] in route_row["derived_from"]
+    assert report(engine)["capacities"]["expert-weekly"]["committed"] == 10.0
+    assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
+
+
+def test_durable_resource_proposal_cannot_be_routed_from_wrong_workspace_context():
+    engine, proposer_id = configured_sii_engine()
+    engine.register_resource_capacity(capacity())
+    _, _, successor, _ = durable_resource_proposal(engine, proposer_id)
+    with pytest.raises(KeyError, match="unknown resource-aware proposal"):
+        engine.route_resource_aware_sii_proposals(
+            [successor.resource_aware_proposal_id],
+            ResourceRoutingPolicy(),
+            workspace_id="workspace-b",
+            scope_id=SCOPE,
+        )
