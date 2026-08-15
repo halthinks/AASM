@@ -567,6 +567,26 @@ class ORToolsCPSATWorker:
         if request.model.objective:
             expr = sum(self._integer(coeff) * variables[vid] for vid, coeff in request.model.objective.coefficients.items()) + self._integer(request.model.objective.offset)
             model.minimize(expr) if request.model.objective.sense == "MINIMIZE" else model.maximize(expr)
+        consumed_learning_applications: list[str] = []
+        hints = request.metadata.get("solver_learning_hints") or []
+        if not isinstance(hints, list):
+            raise ValueError("solver_learning_hints must be a list")
+        for hint in hints:
+            if not isinstance(hint, Mapping):
+                raise ValueError("solver learning hint must be a mapping")
+            if hint.get("provider_id") != self.provider_id:
+                raise ValueError("solver learning hint provider does not match OR-Tools worker")
+            if hint.get("hint_kind") != "ASSIGNMENT":
+                raise ValueError("OR-Tools worker only accepts validated ASSIGNMENT solver learning hints")
+            assignment_hint = hint.get("assignment")
+            if not isinstance(assignment_hint, Mapping) or set(map(str, assignment_hint)) != set(variables):
+                raise ValueError("validated OR-Tools assignment hint must exactly cover model variables")
+            application_id = str(hint.get("application_id") or "")
+            if not application_id:
+                raise ValueError("solver learning hint requires application_id")
+            for variable_id, value in sorted(assignment_hint.items()):
+                model.add_hint(variables[str(variable_id)], self._integer(float(value)))
+            consumed_learning_applications.append(application_id)
         solver = cp_model.CpSolver()
         solver.parameters.max_time_in_seconds = request.timeout_ms / 1000.0
         solver.parameters.num_search_workers = 1
@@ -587,8 +607,8 @@ class ORToolsCPSATWorker:
             assignment = {vid: float(solver.value(var)) for vid, var in variables.items()} if status in {"SAT", "OPTIMAL", "FEASIBLE"} else {}
             objective = float(solver.objective_value) if request.model.objective and assignment else None
             best_bound = float(solver.best_objective_bound) if request.model.objective else None
-            stats = {"conflicts": int(solver.num_conflicts), "branches": int(solver.num_branches), "wall_time_seconds": float(solver.wall_time), "raw_status": raw_name}
-            return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, status, OptimizationSolverIdentity(self.provider_id, "ortools.cp-sat", _package_version("ortools")), assignment=assignment, objective_value=objective, best_bound=best_bound, wall_time_ms=int((time.monotonic() - start) * 1000), statistics=stats)
+            stats = {"conflicts": int(solver.num_conflicts), "branches": int(solver.num_branches), "wall_time_seconds": float(solver.wall_time), "raw_status": raw_name, "solver_learning_hint_count": len(consumed_learning_applications), "solver_learning_application_ids": list(consumed_learning_applications)}
+            return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, status, OptimizationSolverIdentity(self.provider_id, "ortools.cp-sat", _package_version("ortools")), assignment=assignment, objective_value=objective, best_bound=best_bound, wall_time_ms=int((time.monotonic() - start) * 1000), statistics=stats, metadata={"solver_learning_application_ids": list(consumed_learning_applications), "solver_learning_hints_consumed": len(consumed_learning_applications)})
         except Exception as exc:
             return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, "ERROR", OptimizationSolverIdentity(self.provider_id, "ortools.cp-sat", _package_version("ortools")), wall_time_ms=int((time.monotonic() - start) * 1000), diagnostics=(f"{type(exc).__name__}: {exc}",))
 
