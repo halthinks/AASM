@@ -19,11 +19,13 @@ from aasm.runtime_v52 import AASMEngine as V52Engine
 from aasm.runtime_v53 import AASMEngine as V53AuthorityEngine
 from aasm.runtime_v53_learning import AASMEngine as V53Engine
 from aasm.runtime_v54_full import AASMEngine as V54Engine
+from aasm.runtime_v55 import AASMEngine as V55Engine
 
 
 def test_v47_public_contract_remains_active_under_current_composition():
-    assert __version__ == "0.54.0"
-    assert AASMEngine is V54Engine
+    assert __version__ == "0.55.0"
+    assert AASMEngine is V55Engine
+    assert issubclass(V55Engine, V54Engine)
     assert issubclass(V54Engine, V53Engine)
     assert issubclass(V53Engine, V53AuthorityEngine)
     assert issubclass(V53AuthorityEngine, V52Engine)
@@ -36,9 +38,9 @@ def test_v47_public_contract_remains_active_under_current_composition():
     report = validate_public_api_contract()
     assert report["valid"], report
     contract = report["contract"]
-    assert contract["contract_version"] == "0.30.0"
-    assert contract["runtime_version"] == "0.54.0"
-    assert contract["distribution"]["version"] == "0.54.0"
+    assert contract["contract_version"] == "0.31.0"
+    assert contract["runtime_version"] == "0.55.0"
+    assert contract["distribution"]["version"] == "0.55.0"
     assert contract["certification"]["contract_version"] == "0.2.0"
     assert contract["sii_governance"]["contract_version"] == "0.3.0"
     assert contract["sii_governance"]["authority_reward"] == "NEVER"
