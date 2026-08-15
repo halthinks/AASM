@@ -23,7 +23,7 @@ def main():
     with (root / "pyproject.toml").open("rb") as handle:
         project = tomllib.load(handle)["project"]
     version = str(project["version"])
-    if version != "0.53.0":
+    if version != "0.54.0":
         raise SystemExit(f"unexpected release version: {version}")
 
     if project.get("license") != "Apache-2.0":
@@ -49,19 +49,68 @@ def main():
     for policy_doc in (root / "README.md", root / "ROADMAP.md", root / "CHANGELOG.md", root / "docs/CURRENT_RELEASE.md"):
         forbid(policy_doc, stale_license_policy)
 
-    require(root / "src/aasm/__init__.py", ["public_v53"])
-    require(root / "src/aasm/cli.py", ["cli_v53"])
+    require(root / "src/aasm/__init__.py", ["public_v54"])
+    require(root / "src/aasm/cli.py", ["cli_v54"])
+    require(root / "src/aasm/public_v54.py", [
+        '__version__ = "0.54.0"',
+        '"contract_version": "0.30.0"',
+        'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
+        "EFFECT_INTENT_CONTRACT_ID",
+        "EFFECT_RESOURCE_SETTLEMENT_CONTRACT_ID",
+        "SOLVER_PORTFOLIO_CONTRACT_ID",
+        "SOLVER_EXCHANGE_CONTRACT_ID",
+        '"fastest_result"',
+        '"uncertified_negative_majority"',
+        '"cross_solver_agreement_grants_truth"',
+        "_demo_stack.AASMEngine = AASMEngine",
+    ])
+    require(root / "src/aasm/runtime_v54_full.py", [
+        "EffectResourceSettlementMixin",
+        "PortfolioEngine",
+        "AASMEngine",
+    ])
+    require(root / "src/aasm/runtime_v54.py", [
+        'SOLVER_TRANSLATION_CONTRACT_ID = "aasm.solver.translation.v1"',
+        'SOLVER_PORTFOLIO_CONTRACT_ID = "aasm.solver.portfolio.v1"',
+        '"fastest_result": "NEVER_CORRECTNESS_TIEBREAK"',
+        '"uncertified_negative_majority": "NEVER_DECISIVE"',
+        '"external_boundary": "DURABLE_OWNERSHIP_EVIDENCE_REQUIRED_BEFORE_EXECUTOR_CALL"',
+        '"unknown_outcome": "RETRY_BLOCKED_UNTIL_EXPLICIT_RECONCILIATION"',
+    ])
+    require(root / "src/aasm/_runtime_v54_effect_resources.py", [
+        'EFFECT_RESOURCE_SETTLEMENT_CONTRACT_ID = "aasm.effect.resource-settlement.v1"',
+        '"resource_ledger": "EXISTING_AASM_RESOURCE_SETTLEMENT_ONLY"',
+        '"authority": "EXISTING_RESOURCE_SETTLE_SCOPED_AUTHORITY"',
+        '"outcome_gate": "CONFIRMED_OR_FAILED_RECONCILIATION_REQUIRED"',
+        '"unknown_outcome": "SETTLEMENT_BLOCKED"',
+        "settle_effect_resources",
+    ])
+    require(root / "src/aasm/runtime_v54_portfolio.py", [
+        'SOLVER_PORTFOLIO_RUNTIME_CONTRACT_ID = "aasm.solver.portfolio.runtime.v1"',
+        '"execution_lease": "EXISTING_AASM_TASKLEASE"',
+        '"provider_execution": "EXISTING_EXECUTE_OPTIMIZATION_LEASE"',
+        '"parallel_scheduler": "NONE"',
+        "prepare_solver_portfolio",
+        "evaluate_solver_portfolio",
+    ])
+    require(root / "src/aasm/runtime_v54_exchange.py", [
+        'SOLVER_EXCHANGE_CONTRACT_ID = "aasm.solver.exchange.v1"',
+        '"source_learning": "EXACT_LOCAL_PASS_VALIDATION_REQUIRED"',
+        '"target_validation": "EXISTING_V053_LOCAL_REVALIDATION_REQUIRED"',
+        '"native_accelerator_exchange": "FORBIDDEN_ACROSS_SOLVERS"',
+        '"cross_solver_agreement_grants_truth": False',
+        '"truth_authority": "NONE"',
+        '"policy_authority": "NONE"',
+        "exchange_solver_learning",
+    ])
+
     require(root / "src/aasm/public_v53.py", [
         '__version__ = "0.53.0"',
         '"contract_version": "0.29.0"',
-        'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
         "SCOPED_AUTHORITY_CONTRACT_ID",
         "SCOPED_STORE_CONTRACT_ID",
         "SOLVER_LEARNING_CONTRACT_ID",
         "SOLVER_LEARNING_APPLICATION_CONTRACT_ID",
-        '"cross_run_authority_transfer"',
-        '"application_truth_authority"',
-        '"application_policy_authority"',
     ])
     require(root / "src/aasm/runtime_v53.py", [
         "PrincipalAwareResourceHistoryMixin",
@@ -101,7 +150,6 @@ def main():
     require(root / "src/aasm/public_v52.py", [
         '__version__ = "0.52.0"',
         '"contract_version": "0.28.0"',
-        'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
         "MULTI_OBJECTIVE_CONTRACT_ID",
         "RESOURCE_ROUTING_CONTRACT_ID",
     ])
@@ -142,8 +190,10 @@ def main():
         "aasm/optimization",
         "aasm/scoped-authority",
         "aasm/solver-learning",
+        "aasm/v54",
         "Require exact main commit and all release gates",
     ])
+    require(root / ".github/workflows/v54.yml", ["aasm/v54", "ACTIVE_DEVELOPMENT"])
     require(root / ".github/workflows/scoped-authority.yml", ["aasm/scoped-authority"])
     require(root / ".github/workflows/solver-learning.yml", ["aasm/solver-learning"])
     require(root / ".github/workflows/optimization.yml", ["aasm/optimization"])
@@ -180,17 +230,30 @@ def main():
     subprocess.check_call([sys.executable, str(root / "scripts" / "check_v52_contracts.py")])
     subprocess.check_call([sys.executable, str(root / "scripts" / "check_v53_contracts.py")])
     subprocess.check_call([sys.executable, str(root / "scripts" / "check_v53_solver_learning_contracts.py")])
+    subprocess.check_call([sys.executable, str(root / "scripts" / "check_v54_contracts.py")])
 
+    require(root / "README.md", [
+        "Current release — v0.54.0",
+        "aasm.adoption.v1 / 0.30.0",
+        "v0.55.0 — Extended Mathematical IR + Portable Machine Archive",
+    ])
     require(root / "docs" / "CURRENT_RELEASE.md", [
-        "AASM v0.53.0",
-        "0.29.0",
-        "aasm.authority.scoped.v1",
-        "aasm.store.scoped.v1",
-        "aasm.solver.learning.v1",
-        "aasm.solver.learning.application.v1",
+        "AASM v0.54.0",
+        "0.30.0",
+        "aasm.effect.intent.v1",
+        "aasm.effect.resource-settlement.v1",
+        "aasm.solver.portfolio.v1",
+        "aasm.solver.exchange.v1",
+        "aasm/v54",
+    ])
+    require(root / "docs" / "RELEASE_0.54.md", [
+        "AASM v0.54.0",
+        "Certified Cross-Solver Exchange",
+        "Deterministic Portfolio Racing",
+        "Effect Ownership/UNKNOWN Recovery",
     ])
 
-    print("v0.53.0 release contracts: PASS")
+    print("v0.54.0 release contracts: PASS")
     return 0
 
 
