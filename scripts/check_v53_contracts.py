@@ -167,10 +167,10 @@ def main() -> None:
         "test_scoped_store_view_exposes_no_direct_append_or_mutation_surface",
     ])
     require(root / "tests/test_v53_public.py", [
-        "test_v53_parent_no_longer_owns_active_demo_stack_after_v54_promotion",
+        "test_v53_parent_no_longer_owns_active_demo_stack_after_v56_promotion",
         "test_v53_public_contract_preserves_authority_store_and_solver_learning_safety_boundaries",
         '"scoped-store-contract"',
-        "public_v54",
+        "public_v56",
     ])
 
     print("v0.53 scoped authority contract check: PASS")
