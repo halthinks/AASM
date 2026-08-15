@@ -5,7 +5,7 @@ from .runtime_v55_foundation import AASMEngine as V55FoundationEngine
 
 
 class AASMEngine(SolverOutcomeV2RuntimeMixin, V55FoundationEngine):
-    """Development-only v0.56 truthful solver-evidence foundation over v0.55 candidate semantics."""
+    """Active v0.56 truthful solver-outcome runtime over the released v0.55 semantic-evolution foundation."""
 
 
 __all__ = ["AASMEngine"]
