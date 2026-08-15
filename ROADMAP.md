@@ -1,8 +1,42 @@
 # AASM Roadmap
 
-AASM is currently **v0.54.0 / Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery**.
+AASM is currently **v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery**.
 
-The roadmap is explicitly **product-backward**: known destination properties must shape public contracts before implementation depth makes them expensive to add. A capability may be staged, but it may not be deferred in a way that makes the current architecture structurally incompatible with it.
+The roadmap is explicitly **product-backward**: known destination properties shape public contracts before implementation depth makes them expensive to add. A capability may be staged, but it may not be deferred in a way that makes the current architecture structurally incompatible with it.
+
+## Canonical post-v0.54 direction
+
+AASM is now being built toward **governed semantic evolution**: a public deterministic governance/runtime substrate that can supervise authoritative external state machines, evolve explicit problem revisions from evidence, preserve stable requirement/artifact lineage, reuse applicability-scoped knowledge, choose evidence acquisition under governed resources, and remain replayable without hosted-only truth.
+
+Canonical implementation sources:
+
+- [`docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md`](docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md) — architecture, contracts, invariants, and TextPCB/general engineering boundary;
+- [`docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md`](docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md) — complete work packages, dependencies, release sequence, and acceptance gates;
+- [`docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md`](docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md) — live implementation status;
+- [`docs/source_material/SOURCE_LOCK_MANIFEST.md`](docs/source_material/SOURCE_LOCK_MANIFEST.md) — locked source hashes, baseline commit, source precedence, and no-drift rules.
+
+## Permanent public invariants
+
+1. **Scoped identity:** Principal / Workspace / Scope / Machine remain distinguishable.
+2. **Scoped authority:** cross-scope access fails closed; authority and resource rights are separate.
+3. **Proposal/commit boundary:** models, adapters, humans, solvers, verifiers, imported knowledge, and external machines may propose/observe; legal runtime transitions commit.
+4. **One truth path:** no parallel truth store, hidden hosted state, or direct domain/tool mutation path may bypass AASM admission semantics.
+5. **Resource capacity:** owned, purchased, subscription, rolling, weekly, credit, compute, storage, worker, solver, expert-model, human-review, and custom capacity share governed resource semantics.
+6. **Protected reserve:** remaining capacity may be intentionally unavailable to ordinary work.
+7. **Resource policy cannot weaken hard semantics:** scarcity changes strategy, never hard requirements or required evidence grade.
+8. **Lease/reservation before consumption:** resource availability never grants authority; authority never grants unlimited resources.
+9. **Reconciliation:** estimated and actual consumption remain distinct and durable.
+10. **Effect ownership:** external effects require authorization, idempotency/ownership, and explicit UNKNOWN reconciliation.
+11. **Revision-bound applicability:** solver, verifier, artifact, and external-machine results apply to an exact problem/external revision; superseded results remain historical Evidence only unless independently revalidated.
+12. **Stable external lineage:** external requirements and decisions must remain traceable through generated variables, constraints, objectives, cores, no-goods, bounds, results, certificates, artifacts, and explanations.
+13. **No silent unsupported lowering:** exact, translated, approximate, verifier-only, and unsupported model features must remain distinguishable and fail closed when a required feature cannot be preserved.
+14. **Semantic/performance knowledge firewall:** performance hints cannot change semantic legality; correctness-sensitive knowledge requires applicability-scoped validation and explicit application authority.
+15. **Portable history:** exported public history must be sufficient for deterministic reconstruction without hidden hosted tables.
+16. **Profile identity:** profile/package binding is versioned and migrated explicitly.
+17. **Scope-safe inspection:** observability cannot depend on single-tenant global views.
+18. **No privileged hosted bypass:** hosted operator machines consume public runtime semantics rather than mutate around them.
+19. **Cross-backend agreement never votes truth:** agreement is corroboration; contradiction is a first-class conflict; decisive claims require their documented evidence/proof level.
+20. **Readiness is explainable and deterministic:** unresolved blocking obligations, stale evidence, UNKNOWN effects, conflicts, proof debt, or missing required verification block readiness.
 
 ## Released
 
@@ -27,267 +61,118 @@ The roadmap is explicitly **product-backward**: known destination properties mus
 - v0.51.0 Governed Solution Pools & Complete Enumeration
 - v0.52.0 Resource-Governed Multi-Objective Decisions & Pareto Solving
 - v0.53.0 Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
-- **v0.54.0 Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery — Current Release**
+- **v0.54.0 Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery — current release**
 
-## Product destination that constrains the next releases
+## v0.55 — Extended IR + Portable Semantic Evolution Archive
 
-AASM is being engineered toward a public deterministic governance/runtime substrate that can support both self-hosted use and a private hosted operating fabric without private semantic shortcuts.
-
-A governed machine must ultimately be able to decide:
-
-```text
-what work should happen
-who/what should do it
-what evidence/correctness threshold is required
-what resources may be consumed
-whether scarce capacity should be preserved
-whether a cheaper or stronger alternative dominates
-when to pause, replan, fall back, or request approval/capacity
-what actually happened and what it consumed
-how the run can be exported and replayed without hosted-only state
-```
-
-The decision vector established in v0.52 remains policy-selectable:
-
-```text
-maximize:
-  correctness
-  evidence quality
-  expected progress
-
-minimize:
-  provider quota burn
-  monetary cost
-  wall time
-  scarce expert-model usage
-```
-
-These are not fixed global weights. AASM supports hard thresholds, governed lexicographic priorities, Pareto comparison, and explicit policy.
-
-A weekly model/subscription allowance is a valid governed resource. AASM may reason over provider-controlled external capacity while preserving whether the measurement is authoritative, observed, derived, estimated, declared, or unknown.
-
-## Cross-cutting public invariants
-
-1. **Scoped identity:** Principal / Workspace / Scope / Machine remain distinguishable.
-2. **Scoped authority:** cross-scope access fails closed; authority and resource rights are separate.
-3. **Proposal/commit boundary:** models, adapters, humans, and solvers propose; legal runtime transitions commit.
-4. **Resource capacity:** owned, purchased, subscription, rolling, weekly, credit, compute, storage, worker, solver, and custom capacity share one governed abstraction.
-5. **Resource provenance:** uncertain provider quota observations remain Evidence rather than silently becoming truth.
-6. **Protected reserve:** remaining capacity may be intentionally unavailable to ordinary work.
-7. **Proposal demand:** candidate work can declare expected resource demand, upper bounds, uncertainty, quota/cost/time/scarcity estimates.
-8. **Lease/reservation before consumption:** resource availability never grants authority; authority never grants unlimited resources.
-9. **Reconciliation:** estimated and actual consumption remain distinct and durable.
-10. **Dynamic replanning:** material estimate/capacity changes can invalidate an execution plan before silent overspend.
-11. **Effect ownership:** external effects require authorization, idempotency/ownership, and explicit UNKNOWN reconciliation.
-12. **Portable history:** exported public history must be sufficient for deterministic reconstruction without hidden hosted tables.
-13. **Profile identity:** profile/package binding is versioned and migrated explicitly.
-14. **Scope-safe inspection:** observability cannot depend on single-tenant global views.
-15. **No privileged hosted bypass:** hosted operator machines must consume public runtime semantics rather than mutate around them.
-
-# v0.52.0 — Resource-Governed Multi-Objective Decisions & Pareto Solving
-
-**Status: released / frozen parent of v0.53.**
-
-Public contracts:
-
-```text
-aasm.optimization.multi-objective.v1 / 0.1.0
-aasm.optimization.frontier.v1 / 0.1.0
-aasm.resource.capacity.v1 / 0.1.0
-aasm.resource.observation.v1 / 0.1.0
-aasm.resource.demand.v1 / 0.1.0
-aasm.resource.routing.v1 / 0.1.0
-aasm.resource.runtime.v1 / 0.1.0
-aasm.sii.resource-aware-proposal.v1 / 0.1.0
-```
-
-Delivered:
-
-- exact finite lexicographic optimization over v0.51 certified complete enumeration;
-- exact finite Pareto frontier with independent full-point equality certification;
-- tolerance-aware Pareto dominance and lexicographic survivor semantics;
-- durable `EVIDENCE_ONLY` multi-objective problems/results/certificates;
-- governed capacity windows and observation provenance;
-- protected reserves and fail-closed unknown capacity;
-- resource-aware governed SII successor proposals;
-- explicit correctness/evidence/progress/quota/cost/time/expert-scarcity vector;
-- policy-controlled resource objective ordering;
-- exact Pareto analysis over supplied eligible resource candidates without commitment;
-- atomic selection + reservation before consumption;
-- durable re-estimation with `CONTINUE | REPLAN_REQUIRED`, release, settlement, and calibration evidence;
-- workspace/scope-safe resource inspection;
-- replayable routing explanations;
-- exact-SHA `aasm/optimization` release gate.
-
-Two Pareto claims remain deliberately distinct:
-
-1. **Exact finite optimization frontier** — complete relative to the supported independently exhausted finite model space.
-2. **Resource-candidate frontier** — exact only over the supplied eligible candidate set; it makes no route-discovery completeness claim.
-
-Neither optimality, frontier completeness, resource availability, nor SII utility grants truth or authority.
-
-# v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
-
-**Status: released / frozen parent of v0.54.**
-
-Public contracts and runtime surfaces:
-
-```text
-aasm.identity.scoped.v1 / 0.1.0
-aasm.authority.scoped.v1 / 0.1.0
-aasm.authority.scoped.runtime.v1 / 0.1.0
-aasm.store.scoped.v1 / 0.1.0
-aasm.solver.learning.v1 / 0.1.0
-aasm.solver.learning.runtime.v1 / 0.1.0
-aasm.solver.learning.application.v1 / 0.1.0
-aasm.adoption.v1 / 0.29.0
-```
-
-Delivered:
-
-- durable Principal / Workspace / Scope / Machine identity separation;
-- explicit scoped ALLOW/DENY authority with default deny and DENY precedence;
-- delegation ceilings for capability, scope, depth, expiry, and nondelegable grants;
-- delegated wildcard prohibition and fail-closed malformed/unknown scopes;
-- source/cross-run authority remains provenance only and never becomes receiving authority;
-- `aasm.store.scoped.v1` read-only fail-closed persistence facade for raw machine/effect access;
-- resource capacity/observation/reservation/re-estimate/release/settlement operations require scoped capabilities;
-- principal-aware resource history derived from exact durable authorization Evidence rather than duplicated actor fields;
-- optimistic machine-version guarded resource Evidence commits preventing two stale hosts from committing conflicting reservations;
-- stale-writer canonical reload verified on MemoryStore, SQLite, and PostgreSQL;
-- scope-bound external effect proposals with separate `effect.authorize`, `effect.execute`, and `effect.reconcile` authority;
-- fresh authorization before each external execution attempt, preventing expired/revoked grants from being bypassed by retries;
-- durable solver-learning artifacts for `NO_GOOD`, `UNSAT_CORE`, `BOUND`, `INCUMBENT`, `WARM_START`, and `NATIVE_ACCELERATOR`;
-- cross-run solver learning carried through the existing v0.48 `REUSE_RESULT` envelope/admission pathway;
-- correctness-sensitive imported learning remains inert until receiving-run exact local revalidation;
-- foreign solver learning never imports truth, policy authority, resource entitlement, or source authority;
-- explicit `aasm.solver.learning.application.v1` separating validation from application;
-- scoped `solver.learning.apply` required for application;
-- certified pruning lowered into a new canonical optimization model and routed through the existing provider path;
-- validated incumbent/warm-start hints remain performance-only and are explicitly consumed by the existing OR-Tools CP-SAT adapter via `CpModel.add_hint(...)`;
-- dedicated exact-SHA `aasm/scoped-authority` and `aasm/solver-learning` release gates;
-- release publication hardened to require those gates in addition to CI, formal assurance, RC, proof, solution-pool, and optimization gates.
-
-Hard completion criterion satisfied:
-
-> Cross-scope reads/writes, privilege amplification, cross-principal resource misuse, stale distributed reservations, unscoped effect execution, and unvalidated foreign solver learning fail closed in adversarial tests, while compatible learned solver/resource state remains reusable without inheriting foreign authority or truth.
-
-# v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery
-
-**Status: released / current.**
-
-Public contracts and runtime surfaces:
-
-```text
-aasm.effect.intent.v1 / 0.1.0
-aasm.effect.dispatch-request.v1 / 0.1.0
-aasm.effect.ownership.v1 / 0.1.0
-aasm.effect.reconciliation.v1 / 0.1.0
-aasm.effect.resource-settlement.v1 / 0.1.0
-aasm.solver.translation.v1 / 0.1.0
-aasm.solver.portfolio.v1 / 0.1.0
-aasm.solver.portfolio.runtime.v1 / 0.1.0
-aasm.solver.exchange.v1 / 0.1.0
-aasm.adoption.v1 / 0.30.0
-```
-
-Delivered:
-
-- public durable `EffectIntent`, dispatch request, ownership, and reconciliation lifecycle;
-- durable atomic EffectOwnership recorded before external executor invocation;
-- existing TaskLease, scoped effect authority, and declared resource reservations bound to each external dispatch;
-- crash/restart recovery preserving ownership and converting ambiguous in-flight outcomes to `UNKNOWN`;
-- `UNKNOWN` retry blocking until explicit scoped Evidence-backed reconciliation;
-- append-only dispatch, ownership, and reconciliation history;
-- actual external consumption reconciliation through the existing scoped `resource.settle` path after `CONFIRMED | FAILED` outcomes;
-- idempotent recoverable multi-reservation effect settlement and exact-actual conflict rejection;
-- certified canonical solver-family translation with independent semantic-equality checking;
-- deterministic portfolio racing over ordinary existing optimization requests, TaskDemand, TaskLease, provider execution, validation, and Evidence;
-- no v0.54 parallel scheduler or alternate solver executor;
-- explicit rejection of fastest-result, arrival-order, and majority-vote correctness shortcuts;
-- proof-aware portfolio decisions using the existing v0.50 proof-certificate plane;
-- uncertified negative claims cannot outvote a validated feasible solution;
-- certified/validated contradictions fail closed as `CONFLICT`;
-- native OR-Tools CP-SAT + HiGHS governed portfolio race through the real existing TaskLease/provider path;
-- certified cross-solver exchange of v0.53 solver-learning artifacts with source PASS validation, source/target translation certification, and target-local revalidation;
-- correctness-sensitive no-good/core/bound exchange remains inert until target validation;
-- incumbent/warm-start exchange remains performance-only;
-- native accelerator state is forbidden across different solvers;
-- cross-solver agreement grants no truth or policy authority;
-- dedicated exact-SHA `aasm/v54` release gate, with `aasm/optimization` providing the real native backend race proof;
-- active package/public surface `0.54.0` / adoption contract `0.30.0`.
-
-Hard completion criterion satisfied:
-
-> Crash/retry fixtures cannot silently duplicate or lose effect ownership, UNKNOWN effects remain unresolved until evidenced, actual external consumption settles only through the governed resource ledger, and portfolio execution cannot consume resources or execute solver work outside the existing governed allocation/TaskLease/provider boundaries.
-
-# v0.55.0 — Extended Mathematical IR + Portable Machine Archive
-
-**Next active layer.**
+**Active development layer.**
 
 Primary goals:
 
-- versioned portable machine/workspace archive;
-- events, profiles, decisions, obligations, evidence, certificates, constraints, solution pools, resource history, effect history, memory, fingerprints, and integrity manifest;
-- deterministic replay from export without private hosted state;
-- explicit profile/package binding and migration records;
-- pseudo-Boolean/cardinality, richer scheduling/global constraints, additional conic/quadratic forms, and shared objective-vector IR;
-- independent validation for every nontrivial translation.
+- stable `aasm.external.reference.v1` lineage;
+- first-class `aasm.problem.revision.v1` and `aasm.problem.delta.v1`;
+- model feature declarations and provider capability manifests;
+- generalized solver formulation/translation artifacts preserving variable/constraint/objective/external-reference mappings;
+- shared objective-vector IR without collapsing hard floors into weighted scores;
+- portable archive structurally capable of carrying future machine-binding, artifact-lineage, knowledge-application, refinement, verification-debt, and readiness history;
+- independent validation for every nontrivial lowering.
+
+The active v0.54 package/public export remains frozen until v0.55 has its own contract/gate evidence. Current v0.55 foundation work lives additively underneath the active public surface.
 
 Hard completion criterion:
 
-> A portable archive reconstructs the same canonical observable state under the declared compatibility boundary, and no supported mathematical lowering can silently change semantic identity.
+> A portable archive reconstructs the same canonical observable state under the declared compatibility boundary, external requirement identity survives all supported transformations, and no supported mathematical lowering can silently change semantic identity.
 
-# v0.56.0 — Proof/Enumeration/Optimization/Resource/Scope Stress Corpus
+## v0.56 — Truthful Solver Evidence + Governed Knowledge Application
 
-Permanent Stress Corpus coverage includes:
+Primary goals:
 
-- SAT/UNSAT and proof-grade negative claims;
-- exact enumeration and solution pools;
-- lexicographic and Pareto oracle-known problems;
-- weekly/rolling/refilling external-capacity fixtures;
-- protected-reserve exhaustion/replenishment;
-- resource-aware SII routing across model/solver/tool paths;
-- estimated-versus-actual consumption drift and replanning;
-- cross-scope leakage and privilege-escalation attacks;
-- effect UNKNOWN/reconciliation and duplicate-effect attacks;
-- cold-vs-learned solver/resource reuse;
-- forged proof, stale bound, poisoned incumbent, false completeness, tolerance abuse, false frontier content, and false quota-authority cases.
+- normalized solver outcome v2 with termination/incumbent/bound/proof/evidence-grade separation;
+- named execution profiles;
+- evidence-grade runtime provenance and reproducibility certification;
+- provider-specific status/provenance mappings;
+- generic semantic/performance knowledge applicability and explicit application authority, generalizing v0.53 solver learning without replacing it;
+- integrated raw/normalized/minimized core processing with external-reference projection.
 
 Hard completion criterion:
 
-> Every public capability claim in the tranche maps to reproducible positive, negative, and adversarial evidence; performance measurements remain environment-bound Evidence rather than correctness claims.
+> Solver or imported-knowledge claims cannot exceed their normalized evidence/provenance/applicability state, and ambiguous provider outcomes fail closed rather than being promoted to stronger AASM claims.
 
-# v0.57.0 — Semantic Solver RC2 / Contract Review + Public Hosted-Foundation Review
+## v0.57 — External Machine Supervision + Artifact/Entity Lineage
 
-This is a subsystem and architectural-boundary reassessment, not a v1.0 declaration.
+Primary goals:
 
-Required review:
-
-- proof certificates;
-- solution pools/enumeration;
-- multi-objective/Pareto semantics;
-- resource capacity/observation/demand/routing contracts;
-- resource-aware SII routing and estimate/actual reconciliation;
-- scoped identity/authority;
-- effect ownership/recovery;
-- portable replay/export;
-- cross-run solver/resource learning and cross-solver exchange;
-- profile migration and scope-safe inspection;
-- claim-to-gate coverage for every public contract.
+- `aasm.machine.binding.v1`;
+- revision-safe external transition specifications compiled through existing v0.54 EffectIntent/Ownership/Reconciliation;
+- external post-state observation and out-of-band change handling;
+- immutable artifact revisions;
+- semantic/tool entity evolution including explicit ambiguity;
+- stale-result fencing and cancellation for superseded revisions.
 
 Hard completion criterion:
 
-> Hosted AASM could be built as a consumer of public contracts without introducing a second authority, resource, effect, history, decision-routing, or truth system.
+> AASM can supervise an authoritative external state machine without copying its truth, bypassing effect ownership, or accepting stale/out-of-band state as if it were the requested transition result.
 
-# After v0.57 — Private Hosted Product Fabric and Further Public Hardening
+## v0.58 — Governed Refinement + Problem Deltas + Verification Planning
 
-Resource-aware SII and the product objective vector are public v0.52 semantics; scoped authority/store boundaries and cross-run solver learning are public v0.53 semantics; effect ownership/resource reconciliation and deterministic cross-solver portfolio/exchange are public v0.54 semantics; all are hardened further through v0.57.
+Primary goals:
 
-Public hardening may continue with:
+- typed refinement proposals;
+- solve/verify/diagnose/refine/admit/revise/replan loop;
+- no direct verifier/solver model mutation;
+- existing semantic dependency truth maintenance used for impact/staleness;
+- anti-loop/no-progress/inconclusive semantics;
+- multi-fidelity verifier capability declarations;
+- resource-aware verification planning through existing scheduler/effect/resource paths;
+- deterministic verification-debt projection.
 
-- learned resource-estimate calibration from predicted-versus-actual history;
-- richer scarcity policies using remaining capacity, reset/refill horizon, protected reserve, consumption velocity, and forecast demand;
-- scoped principal-authority delegation and capability-ceiling maturity;
-- profile binding/migration maturity for generated operator stacks;
-- provider adapters mapping external usage telemetry into the generic observation contract without becoming kernel dependencies.
+Hard completion criterion:
+
+> Evidence can drive a new canonical problem revision only through explicit applicability validation and existing authority/admission boundaries, while unaffected verified work is preserved and stale work is fenced.
+
+## v0.59 — Engineering Semantics + Production Alternative Search
+
+Primary goals:
+
+- engineering quantity/unit/tolerance/quantization semantics;
+- scoped rule applicability/precedence/waiver semantics;
+- semantic projection/equivalence;
+- production sequential lexicographic solving;
+- truthful exact/partial/approximate Pareto solving;
+- general integer no-goods, ranked top-K, near-optimal and diverse pools;
+- expanded SAT/LP/MILP proof/checker support only where the provider/toolchain genuinely supports the claim.
+
+Exact finite v0.51/v0.52 engines remain qualification oracles for scalable implementations on tractable fixtures.
+
+## v0.60 — Uncertainty, Scenarios, Temporal Properties, Readiness, and Engineering Conformance
+
+Primary goals:
+
+- exact/interval/scenario/distribution-reference/empirical/unknown uncertainty;
+- operating scenarios and modes;
+- temporal trace properties;
+- deterministic `aasm.readiness.gate.v1`;
+- generic engineering adapter conformance;
+- TextPCB adapter qualification as a consumer of generic AASM semantics, never as kernel logic.
+
+Hard completion criterion:
+
+> TextPCB can use AASM as a supervisory control/reasoning layer with stable lineage, revision-aware verification, governed refinement, truthful solver claims, artifact/effect recovery, and explainable readiness without making AASM a second TextPCB Project Truth.
+
+## v0.61 — Permanent Cross-Capability Stress Corpus
+
+The previous stress-corpus milestone moves here so it tests the architecture now known to be required.
+
+Coverage includes forged lineage/revisions, stale solver/verifier/machine results, poisoned reusable knowledge, performance hints attempting semantic mutation, unsupported/dropped solver lowering, false statuses/proofs/completeness, tolerance abuse, core-minimization overclaim, duplicate/UNKNOWN external effects, out-of-band changes, ambiguous entity evolution, artifact tampering, quantity/rule attacks, refinement self-authorization/no-progress, resource scarcity attempting to weaken hard evidence, and false readiness.
+
+## v0.62 — Semantic Solver RC2 + Hosted-Foundation Review
+
+This is the architectural reassessment previously planned earlier, moved until governed semantic evolution is substantially real.
+
+Hard completion criterion:
+
+> A private hosted AASM fabric could be implemented entirely as a consumer of public contracts without introducing a second truth, authority, resource, effect, history, revision, refinement, decision-routing, or machine-control system.
+
+## After v0.62
+
+Further public hardening may continue around provider telemetry, resource-estimate learning, richer scarcity forecasting, profile migration, formal models for semantic evolution, larger engineering conformance corpora, and hosted-fabric operational concerns. Those additions must preserve the same public authority and replay boundaries.
