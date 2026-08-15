@@ -145,13 +145,15 @@ def verify_semantic_evolution_archive(archive: SemanticEvolutionArchive | Mappin
     replay_hash = replayed.canonical_hash()
     persisted_hash = persisted.canonical_hash()
     final_sequence = int(item.events[-1].get("sequence") or 0)
+    replayed_version = int(replayed.version)
+    persisted_version = int(persisted.version)
     errors: list[str] = []
     if replay_hash != persisted_hash:
         errors.append("EVENT_REPLAY_SNAPSHOT_MISMATCH")
     if replayed.machine_id != item.machine_id:
         errors.append("REPLAY_MACHINE_ID_MISMATCH")
-    if int(replayed.version) != final_sequence:
-        errors.append("REPLAY_FINAL_SEQUENCE_MISMATCH")
+    if replayed_version != persisted_version:
+        errors.append("REPLAY_VERSION_MISMATCH")
     report = {
         "contract_id": SEMANTIC_ARCHIVE_VERIFICATION_CONTRACT_ID,
         "contract_version": SEMANTIC_ARCHIVE_VERIFICATION_CONTRACT_VERSION,
@@ -159,6 +161,8 @@ def verify_semantic_evolution_archive(archive: SemanticEvolutionArchive | Mappin
         "archive_root_fingerprint": item.root_fingerprint,
         "event_count": len(item.events),
         "final_sequence": final_sequence,
+        "persisted_version": persisted_version,
+        "replayed_version": replayed_version,
         "persisted_canonical_hash": persisted_hash,
         "replayed_canonical_hash": replay_hash,
         "valid": not errors,
@@ -182,6 +186,7 @@ def semantic_archive_contract() -> dict[str, Any]:
         "integrity": "SECTION_FINGERPRINTS_PLUS_ROOT_FINGERPRINT",
         "serialization": "CANONICAL_SEMANTIC_JSON_BYTE_STABLE",
         "replay": "EXISTING_AASM_REDUCER_OVER_ARCHIVED_EVENTS",
+        "event_sequence_semantics": "DURABLE_ORDERING_ONLY_NOT_MACHINE_VERSION",
         "replay_uses_persisted_snapshot": False,
         "derived_projections_grant_truth": False,
         "import_mutation_path": "NONE_IN_FOUNDATION",
