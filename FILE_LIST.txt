@@ -292,6 +292,7 @@
 ./schemas/reasoning-transition.schema.json
 ./schemas/reference-domain-stress-report.schema.json
 ./schemas/resource-capacity.schema.json
+./schemas/resource-demand.schema.json
 ./schemas/resource-observation.schema.json
 ./schemas/resource.schema.json
 ./schemas/reuse-certificate.schema.json
