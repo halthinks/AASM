@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/resource-demand.schema.json",
+  "title": "AASM Resource Demand Estimate",
+  "type": "object",
+  "required": ["resource_class", "amount", "unit"],
+  "properties": {
+    "resource_class": {"type": "string", "minLength": 1},
+    "resource_id": {"type": ["string", "null"]},
+    "amount": {"type": "number", "minimum": 0},
+    "upper_bound": {"type": ["number", "null"], "minimum": 0},
+    "unit": {"type": "string", "minLength": 1},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1, "default": 1},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": false
+}
