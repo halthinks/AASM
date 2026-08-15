@@ -24,12 +24,10 @@ def schema(root: Path, name: str) -> dict:
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
 
-    require(root / "pyproject.toml", ['version = "0.52.0"'])
-    require(root / "src/aasm/__init__.py", ["public_v52"])
-    require(root / "src/aasm/cli.py", ["cli_v52"])
+    # v0.52 is a frozen versioned parent after v0.53 promotion. The active
+    # package/CLI version is intentionally validated only by the current
+    # release checker, not by this parent-contract checker.
 
-    # Exact finite multi-objective semantics stay on the v0.51 certified
-    # enumeration substrate and preserve the Evidence-only boundary.
     require(root / "src/aasm/multi_objective.py", [
         'MULTI_OBJECTIVE_CONTRACT_ID = "aasm.optimization.multi-objective.v1"',
         'FRONTIER_CONTRACT_ID = "aasm.optimization.frontier.v1"',
@@ -102,14 +100,14 @@ def main() -> None:
         '"resource_state_authority": "NEVER_GRANTS_AUTHORITY"',
     ])
     require(root / "tests/test_v52_public.py", [
-        "test_v52_active_public_contract_is_additive_and_valid",
+        "test_v52_versioned_public_contract_is_additive_and_valid",
         "test_v52_public_surface_preserves_v51_parent_contract",
-        "test_v52_active_release_binds_demo_stack_to_v52_runtime",
+        "test_v52_parent_no_longer_owns_active_demo_stack_after_v53_promotion",
         "test_v52_public_surface_exposes_product_backward_resource_objective_vector",
-        "test_v52_cli_contract_commands_are_public_commands",
+        "test_v52_cli_contract_commands_remain_versioned_commands",
         'assert public_v51.__version__ == "0.51.0"',
-        'assert public_v52.PUBLIC_RELEASE_STABILITY == "ACTIVE_DEVELOPMENT"',
-        "assert demo_stack.AASMEngine is public_v52.AASMEngine",
+        'assert public_v52.__version__ == "0.52.0"',
+        'assert demo_stack.AASMEngine is public_v53.AASMEngine',
     ])
 
     required_schemas = {
@@ -142,7 +140,7 @@ def main() -> None:
     ])
     require(root / ".github/workflows/release.yml", ["aasm/optimization"])
 
-    print("v0.52 release contract check: PASS")
+    print("v0.52 frozen parent contract check: PASS")
 
 
 if __name__ == "__main__":
