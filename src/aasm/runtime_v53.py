@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import Iterable
 
 from ._runtime_v53_authority import ScopedAuthorityRuntimeMixin
+from ._runtime_v53_resource_history import PrincipalAwareResourceHistoryMixin
 from .effects import EffectStatus
 from .resource_governance import ResourceCapacity, ResourceObservation
 from .resource_routing import ResourceAwareCandidate, ResourceRoutingPolicy
@@ -32,7 +33,7 @@ _AUTHORITY_RECORD_TYPE = "aasm_scoped_authority_record_type"
 _AUTHORITY_DOCUMENT = "document"
 
 
-class AASMEngine(ScopedAuthorityRuntimeMixin, V52Engine):
+class AASMEngine(PrincipalAwareResourceHistoryMixin, ScopedAuthorityRuntimeMixin, V52Engine):
     """Experimental v0.53 runtime: scoped identity/authority enforced over v0.52."""
 
     _guard_resource_evidence_by_version = True

@@ -311,6 +311,7 @@
 ./schemas/scoped-authority-decision.schema.json
 ./schemas/scoped-authority-grant.schema.json
 ./schemas/scoped-principal.schema.json
+./schemas/scoped-store-access.schema.json
 ./schemas/semantic-dependency.schema.json
 ./schemas/semantic-result.schema.json
 ./schemas/semantic-solver-rc-benchmark-report.schema.json
@@ -391,6 +392,7 @@
 ./src/aasm/_runtime_v51_pools.py
 ./src/aasm/_runtime_v52_resources.py
 ./src/aasm/_runtime_v53_authority.py
+./src/aasm/_runtime_v53_resource_history.py
 ./src/aasm/_runtime_v53_solver_learning.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
@@ -596,6 +598,7 @@
 ./src/aasm/runtime_v53_learning.py
 ./src/aasm/scheduler.py
 ./src/aasm/scoped_authority.py
+./src/aasm/scoped_store.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
 ./src/aasm/semantic_result.py
@@ -716,5 +719,6 @@
 ./tests/test_v53_resource_authority.py
 ./tests/test_v53_scoped_authority.py
 ./tests/test_v53_scoped_authority_hardening.py
+./tests/test_v53_scoped_store.py
 ./tests/test_v53_solver_learning.py
 ./tests/test_workers_leases.py
