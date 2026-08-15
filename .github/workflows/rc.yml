@@ -46,10 +46,10 @@ jobs:
           }, sort_keys=True))
           if report["status"] != "PASS":
               raise SystemExit(1)
-          if report["freeze_manifest"]["runtime_version"] != "0.55.0":
-              raise SystemExit("RC freeze manifest is not the current v0.55 public contract")
-          if report["freeze_manifest"]["adoption_contract_version"] != "0.31.0":
-              raise SystemExit("RC freeze manifest is not the current v0.55 adoption contract")
+          if report["freeze_manifest"]["runtime_version"] != "0.56.0":
+              raise SystemExit("RC freeze manifest is not the current v0.56 public contract")
+          if report["freeze_manifest"]["adoption_contract_version"] != "0.32.0":
+              raise SystemExit("RC freeze manifest is not the current v0.56 adoption contract")
           PY
       - name: Run real cross-backend and benchmark certification tests
         run: pytest -q tests/test_v49_rc_real.py
