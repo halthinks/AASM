@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import aasm
-from aasm import public_v54, public_v55
+from aasm import public_v54, public_v55, public_v56
 
 
-def test_v55_surface_is_active_root_package():
+def test_v55_surface_remains_frozen_parent_under_active_v56_root():
     report = public_v55.validate_public_api_contract()
     assert report["valid"] is True, report
     assert public_v55.__version__ == "0.55.0"
@@ -12,11 +12,13 @@ def test_v55_surface_is_active_root_package():
     assert public_v55.PUBLIC_API_CONTRACT["contract_version"] == "0.31.0"
     assert public_v55.PUBLIC_API_CONTRACT["runtime_version"] == "0.55.0"
     assert public_v54.__version__ == "0.54.0"
-    assert aasm.__version__ == "0.55.0"
-    assert aasm.AASMEngine is public_v55.AASMEngine
+    assert public_v56.__version__ == "0.56.0"
+    assert aasm.__version__ == "0.56.0"
+    assert aasm.AASMEngine is public_v56.AASMEngine
+    assert public_v55.AASMEngine is not aasm.AASMEngine
 
 
-def test_v55_active_engine_exposes_revision_and_formulation_runtime():
+def test_active_engine_still_exposes_v55_revision_and_formulation_runtime():
     for method in (
         "semantic_evolution_runtime_contract_report",
         "semantic_evolution_report",
@@ -33,7 +35,7 @@ def test_v55_active_engine_exposes_revision_and_formulation_runtime():
         assert method in aasm.SUPPORTED_ENGINE_METHODS
 
 
-def test_v55_active_surface_preserves_truthful_ir_claim_ceilings():
+def test_active_surface_preserves_v55_truthful_ir_claim_ceilings():
     contract = aasm.public_api_contract()
     assert contract["semantic_evolution"]["truth_authority"] == "EXISTING_AASM_ADMISSION_PATH_ONLY"
     assert contract["solver_formulation"]["truth_authority"] == "NONE"
@@ -44,7 +46,7 @@ def test_v55_active_surface_preserves_truthful_ir_claim_ceilings():
     assert contract["semantic_archive"]["replay_uses_persisted_snapshot"] is False
 
 
-def test_v55_active_import_registry_contains_new_engineering_contracts():
+def test_active_import_registry_preserves_v55_engineering_contracts():
     for name in (
         "ExternalReference",
         "ProblemRevision",
