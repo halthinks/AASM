@@ -30,6 +30,7 @@ jobs:
           tests/test_sii_v52.py
           tests/test_runtime_v52_resources.py
           tests/test_v52_multi_objective.py
+          tests/test_v52_public.py
           tests/test_schemas.py
 
   native_optimization:
@@ -120,3 +121,34 @@ jobs:
           ):
               assert checks[check]=='PASS', report
           PY
+
+  publish_status:
+    name: publish aasm/optimization status
+    if: always() && github.event_name == 'push'
+    needs: [v52_contracts, native_optimization]
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+      contents: read
+    steps:
+      - name: Publish exact-SHA optimization status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V52_RESULT: ${{ needs.v52_contracts.result }}
+          NATIVE_RESULT: ${{ needs.native_optimization.result }}
+          COMMIT_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          state=success
+          description='v0.52 contracts and native optimization passed'
+          if [ "$V52_RESULT" != success ] || [ "$NATIVE_RESULT" != success ]; then
+            state=failure
+            description="optimization gate failed: v52=$V52_RESULT native=$NATIVE_RESULT"
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" \
+            -f state="$state" \
+            -f context='aasm/optimization' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          test "$state" = success
