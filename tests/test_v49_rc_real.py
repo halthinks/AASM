@@ -2,6 +2,7 @@ import os
 import pytest
 
 from aasm import public_api_contract
+from aasm import public_v49 as v49
 from aasm.model import ProblemSpec
 from aasm.runtime_v49 import AASMEngine as V49Engine
 from aasm.semantic_solver_rc import (
@@ -45,16 +46,19 @@ def test_real_semantic_solver_rc_certification_passes_complete_native_portfolio(
     assert report["status"] == "PASS", report
     assert report["real_backends"] is True
     assert all(report["checks"].values())
-    # The RC implementation remains v0.49, but certification freezes the
-    # current public contract supplied by the caller, which is v0.53 here.
+    # The dedicated RC release gate certifies the active public contract.
     assert report["freeze_manifest"]["runtime_version"] == "0.53.0"
     assert report["component_status"]["optimization"] == "PASS"
     assert report["component_status"]["modeling"] == "PASS"
     assert report["component_status"]["advanced_optimization"] == "PASS"
 
 
-def test_real_rc_runtime_facade_preserves_existing_engine_path():
+def test_real_rc_runtime_facade_preserves_existing_versioned_engine_path():
     engine = V49Engine(ProblemSpec("real rc facade"))
-    report = engine.semantic_solver_rc_certify(real=False, public_contract=public_api_contract())
-    assert report["status"] == "PASS"
+    # A versioned v0.49 runtime facade certifies its own frozen public contract.
+    # Current-release v0.53 certification is covered independently above.
+    report = engine.semantic_solver_rc_certify(real=False, public_contract=v49.public_api_contract())
+    assert report["status"] == "PASS", report
+    assert report["freeze_manifest"]["runtime_version"] == "0.49.0"
+    assert report["freeze_manifest"]["adoption_contract_version"] == "0.25.0"
     assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
