@@ -10,7 +10,18 @@ from pathlib import Path
 from ..checkpoint import Checkpoint
 from ..core.reducer import reduce_event
 from ..model import Event, EventType, MachineSnapshot, MachineState, new_id
-from ..effects import EffectExecutionError, EffectRecord, EffectStatus, EffectUnknownOutcome
+from ..effects import (
+    EffectExecutionError,
+    EffectOutcome,
+    EffectOwnership,
+    EffectOwnershipRequest,
+    EffectReconciliation,
+    EffectRecord,
+    EffectStatus,
+    EffectUnknownOutcome,
+    bind_effect_ownership,
+    bind_effect_reconciliation,
+)
 from .serde import event_from_dict, event_to_dict, snapshot_from_dict, snapshot_to_dict
 from .effect_serde import effect_from_dict, effect_to_dict
 
@@ -166,7 +177,7 @@ class SQLiteStore:
         return [effect_from_dict(json.loads(row["effect_json"])) for row in rows]
 
     @staticmethod
-    def _prepare_effect_attempt(record:EffectRecord)->EffectRecord:
+    def _prepare_effect_attempt(record:EffectRecord,ownership_request:EffectOwnershipRequest|None=None)->EffectRecord:
         if record.status==EffectStatus.SUCCEEDED.value: return record
         if record.status==EffectStatus.UNKNOWN.value:
             if not record.spec.retry_policy.retry_on_unknown: raise EffectUnknownOutcome(f"Effect {record.spec.effect_id} has an unknown prior outcome; reconcile before retry")
@@ -177,15 +188,17 @@ class SQLiteStore:
         if record.status==EffectStatus.RUNNING.value: raise EffectExecutionError(f"Effect {record.spec.effect_id} is already RUNNING on another executor")
         if record.status!=EffectStatus.AUTHORIZED.value: raise ValueError(f"Effect {record.spec.effect_id} is not authorized (status={record.status})")
         if record.attempts>=max(1,record.spec.retry_policy.max_attempts): raise EffectExecutionError(f"Effect {record.spec.effect_id} exhausted retry attempts")
-        record.attempts+=1; record.execution_id=new_id("exec"); record.status=EffectStatus.RUNNING.value; record.updated_at=time.time(); return record
+        record.attempts+=1; record.execution_id=new_id("exec"); record.status=EffectStatus.RUNNING.value; record.updated_at=time.time()
+        if ownership_request is not None: bind_effect_ownership(record,ownership_request)
+        return record
 
-    def claim_effect_attempt(self,machine_id:str,effect_id:str)->EffectRecord:
+    def claim_effect_attempt(self,machine_id:str,effect_id:str,ownership_request:EffectOwnershipRequest|None=None)->EffectRecord:
         with self._lock:
             self._conn.execute("BEGIN IMMEDIATE")
             try:
                 row=self._conn.execute("SELECT effect_json FROM effects WHERE machine_id=? AND effect_id=?",(machine_id,effect_id)).fetchone()
                 if row is None: raise KeyError(effect_id)
-                record=self._prepare_effect_attempt(effect_from_dict(json.loads(row["effect_json"])))
+                record=self._prepare_effect_attempt(effect_from_dict(json.loads(row["effect_json"])),ownership_request)
                 if record.status!=EffectStatus.SUCCEEDED.value:
                     self._conn.execute("UPDATE effects SET status=?,effect_json=?,updated_at=? WHERE machine_id=? AND effect_id=?",(record.status,json.dumps(effect_to_dict(record),sort_keys=True),record.updated_at,machine_id,effect_id))
                 self._conn.commit(); return record
@@ -212,7 +225,11 @@ class SQLiteStore:
         changed=[]
         for record in self.list_effects(machine_id):
             if record.status==EffectStatus.RUNNING.value:
-                record.status=EffectStatus.UNKNOWN.value; record.error="process ended while effect outcome was unresolved"; record.updated_at=time.time(); self.save_effect(record); changed.append(record)
+                record.status=EffectStatus.UNKNOWN.value; record.error="process ended while effect outcome was unresolved"
+                if record.ownership is not None:
+                    ownership=EffectOwnership.from_dict(record.ownership)
+                    bind_effect_reconciliation(record,EffectReconciliation(effect_id=record.spec.effect_id,outcome=EffectOutcome.UNKNOWN.value,ownership_id=ownership.ownership_id,error=record.error,metadata={"source":"process_recovery"}))
+                record.updated_at=time.time(); self.save_effect(record); changed.append(record)
         return changed
 
     @staticmethod
