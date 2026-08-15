@@ -1,3 +1,6 @@
+import pytest
+
+from aasm.model import ProblemSpec
 from aasm.multi_objective import (
     MultiObjectiveProblem,
     ObjectivePoint,
@@ -8,6 +11,8 @@ from aasm.multi_objective import (
     verify_exact_finite_pareto_frontier,
 )
 from aasm.optimization import OptimizationConstraint, OptimizationModel, OptimizationVariable
+from aasm.runtime_v52 import AASMEngine
+from aasm.solution_pools import EnumerationUnsupportedError
 
 
 def reference_problem(*, x_priority=0, y_priority=1, x_tolerance=0.0):
@@ -117,3 +122,70 @@ def test_reusing_valid_solution_ids_with_falsified_point_content_fails_exactness
     certificate = verify_exact_finite_pareto_frontier(problem, forged, solved["enumeration_certificate"])
     assert certificate.status == "FAIL"
     assert certificate.exact_solution_set_match is False
+    assert any("assignments/objective vectors" in item for item in certificate.diagnostics)
+
+
+def test_runtime_persists_only_verified_lexicographic_basis_and_replays_exactly():
+    engine = AASMEngine(ProblemSpec("durable lexicographic v0.52"))
+    problem = reference_problem()
+    solved = engine.solve_lexicographic_multi_objective(problem, scope_id="root")
+    assert solved["result"].verification_status == "PASS"
+    assert solved["enumeration_certificate"].status == "PASS"
+    assert solved["authority"] == "EVIDENCE_ONLY"
+
+    report = engine.multi_objective_report(scope_id="root")
+    assert problem.problem_id in report["problems"]
+    assert solved["pool"].pool_id in report["complete_feasible_pools"]
+    assert solved["enumeration_certificate"].certificate_id in report["enumeration_certificates"]
+    assert solved["result"].result_id in report["lexicographic_results"]
+    result_row = report["lexicographic_results"][solved["result"].result_id]
+    assert solved["enumeration_evidence_id"] in result_row["derived_from"]
+    assert result_row["document"]["result"]["verification_status"] == "PASS"
+    assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
+
+
+def test_runtime_persists_exact_pareto_certificate_then_frontier_and_replays_exactly():
+    engine = AASMEngine(ProblemSpec("durable Pareto v0.52"))
+    problem = reference_problem()
+    solved = engine.solve_exact_pareto_multi_objective(problem, scope_id="root")
+    frontier = solved["frontier"]
+    certificate = solved["certificate"]
+    assert frontier.completeness_status == "COMPLETE"
+    assert certificate.status == "PASS"
+    assert certificate.exact_solution_set_match is True
+    assert solved["authority"] == "EVIDENCE_ONLY"
+
+    report = engine.multi_objective_report(scope_id="root")
+    assert certificate.certificate_id in report["pareto_certificates"]
+    assert frontier.frontier_id in report["pareto_frontiers"]
+    certificate_row = report["pareto_certificates"][certificate.certificate_id]
+    frontier_row = report["pareto_frontiers"][frontier.frontier_id]
+    assert solved["enumeration_evidence_id"] in certificate_row["derived_from"]
+    assert solved["certificate_evidence_id"] in frontier_row["derived_from"]
+    assert frontier_row["document"]["frontier"]["completeness_status"] == "COMPLETE"
+    assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
+
+
+def test_runtime_solver_failure_records_no_partial_multi_objective_history():
+    engine = AASMEngine(ProblemSpec("fail closed multi-objective"))
+    problem = reference_problem()
+    before = engine.multi_objective_report(scope_id="root")
+    assert all(not before[key] for key in (
+        "problems",
+        "complete_feasible_pools",
+        "enumeration_certificates",
+        "lexicographic_results",
+        "pareto_certificates",
+        "pareto_frontiers",
+    ))
+    with pytest.raises(EnumerationUnsupportedError):
+        engine.solve_lexicographic_multi_objective(problem, scope_id="root", max_total_states=1)
+    after = engine.multi_objective_report(scope_id="root")
+    assert all(not after[key] for key in (
+        "problems",
+        "complete_feasible_pools",
+        "enumeration_certificates",
+        "lexicographic_results",
+        "pareto_certificates",
+        "pareto_frontiers",
+    ))
