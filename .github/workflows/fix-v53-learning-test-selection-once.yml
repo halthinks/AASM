@@ -1,0 +1,45 @@
+name: Fix v0.53 learned constraint test selection once
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Replace tuple-position assertions with semantic identity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("tests/test_v53_solver_learning.py")
+          text = path.read_text(encoding="utf-8")
+          old = "    constraint = transformed.constraints[-1]\n"
+          new = "    constraint = next(row for row in transformed.constraints if row.metadata.get(\"solver_learning_id\") == learned.learning_id)\n"
+          if text.count(old) != 2:
+              raise SystemExit(f"expected two learned constraint selectors, found {text.count(old)}")
+          text = text.replace(old, new)
+          old_clause = "    learned_clause = transformed.constraints[-1]\n"
+          new_clause = "    learned_clause = next(row for row in transformed.constraints if row.metadata.get(\"solver_learning_id\") == learned.learning_id)\n"
+          if text.count(old_clause) != 1:
+              raise SystemExit(f"expected one learned clause selector, found {text.count(old_clause)}")
+          path.write_text(text.replace(old_clause, new_clause), encoding="utf-8")
+          PY
+          python -m compileall -q tests/test_v53_solver_learning.py
+          git rm .github/workflows/fix-v53-learning-test-selection-once.yml
+          python scripts/release_manifest.py --write-file-list
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/test_v53_solver_learning.py FILE_LIST.txt
+          git commit -m 'Select learned constraints by semantic identity in v0.53 tests'
+          git push origin HEAD:main
