@@ -327,6 +327,8 @@
 ./schemas/solution-record.schema.json
 ./schemas/solver-claim-certificate.schema.json
 ./schemas/solver-claim.schema.json
+./schemas/solver-learning-artifact.schema.json
+./schemas/solver-learning-validation.schema.json
 ./schemas/solver-proof-artifact.schema.json
 ./schemas/solver-step.schema.json
 ./schemas/state.schema.json
@@ -610,6 +612,7 @@
 ./src/aasm/sii_v52.py
 ./src/aasm/solution_pool_conformance.py
 ./src/aasm/solution_pools.py
+./src/aasm/solver_learning.py
 ./src/aasm/solver_loop.py
 ./src/aasm/solver_types.py
 ./src/aasm/supervisor_adapters.py
@@ -705,4 +708,5 @@
 ./tests/test_v53_resource_authority.py
 ./tests/test_v53_scoped_authority.py
 ./tests/test_v53_scoped_authority_hardening.py
+./tests/test_v53_solver_learning.py
 ./tests/test_workers_leases.py
