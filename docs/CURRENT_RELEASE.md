@@ -1,79 +1,86 @@
-# AASM v0.52.0 — Resource-Governed Multi-Objective Decisions & Pareto Solving
+# AASM v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
 
-AASM v0.52.0 advances the public package/runtime to `0.52.0` and `aasm.adoption.v1 / 0.28.0`.
-
-```text
-runtime: runtime_v52.AASMEngine
-parent runtime: runtime_v51.AASMEngine
-
-aasm.optimization.multi-objective.v1 / 0.1.0
-aasm.optimization.frontier.v1 / 0.1.0
-aasm.resource.capacity.v1 / 0.1.0
-aasm.resource.observation.v1 / 0.1.0
-aasm.resource.demand.v1 / 0.1.0
-aasm.resource.routing.v1 / 0.1.0
-aasm.resource.runtime.v1 / 0.1.0
-aasm.sii.resource-aware-proposal.v1 / 0.1.0
-```
-
-v0.52 unifies exact multi-objective decision semantics with governed real-world resource allocation while preserving the existing AASM commitment boundary.
-
-## Exact finite multi-objective semantics
-
-The lexicographic and exact Pareto solvers build on the v0.51 independently certified complete finite enumeration substrate rather than creating a second optimizer kernel.
-
-Lexicographic stages preserve higher-priority optima outside only explicitly declared tolerance. Exact finite Pareto `COMPLETE` requires an independently reconstructed nondominated set over the certified complete feasible space.
-
-The Pareto certificate checks full point identity:
+AASM v0.53.0 advances the public package/runtime to `0.53.0` and `aasm.adoption.v1 / 0.29.0`.
 
 ```text
-solution ID + assignment + objective vector
+active public surface: public_v53
+active runtime: runtime_v53_learning.AASMEngine
+parent public surface: public_v52
+parent runtime: runtime_v52.AASMEngine
+
+aasm.identity.scoped.v1 / 0.1.0
+aasm.authority.scoped.v1 / 0.1.0
+aasm.authority.scoped.runtime.v1 / 0.1.0
+aasm.store.scoped.v1 / 0.1.0
+aasm.solver.learning.v1 / 0.1.0
+aasm.solver.learning.runtime.v1 / 0.1.0
+aasm.solver.learning.application.v1 / 0.1.0
 ```
 
-Reusing a valid solution ID with forged point contents fails certification. Pareto dominance is tolerance-aware: no-worse comparisons honor tolerance and strict improvement must exceed it.
+v0.53 hardens AASM's public control plane around identity, authority, persistence access, distributed resource ownership, external effects, and reusable solver learning without creating a second truth or scheduler plane.
 
-All optimization results and completeness certificates remain `EVIDENCE_ONLY`; they never grant policy or truth authority.
+## Scoped identity and authority
 
-## Resource-governed decisions
-
-A resource-aware SII successor proposal explicitly binds:
+AASM now distinguishes `Principal`, `Workspace`, `Machine`, and `Scope` as separate durable concepts. Authority is explicit, scoped, replayable, and fail-closed:
 
 ```text
-correctness
-evidence quality
-expected progress
-resource demand / upper bound
-provider quota burn
-scarce expert usage
-monetary cost
-wall time
+no grant => DENY
+matching DENY => overrides ALLOW
+authority expiry => denied
+cross-run authority transfer => NEVER
+resource state => never grants authority
 ```
 
-Provider quota burn is its own proposal dimension, not inferred from provider names or another resource field.
+Delegation cannot exceed the issuer's active delegable capability, scope, or remaining delegation depth. Delegated wildcard authority is forbidden.
 
-`ResourceRoutingPolicy` carries an explicit ordered objective vector. Hard quality/capacity gates run before preference ordering.
+## Scope-safe persistence access
 
-Resource capacity supports fixed, rolling, refilling, credit-balance, unbounded, and unknown windows. Provider observations retain `AUTHORITATIVE | OBSERVED | DERIVED | ESTIMATED | DECLARED | UNKNOWN` provenance. Accepted observations may conservatively reduce planning capacity but can never create capacity beyond the declared envelope.
+`aasm.store.scoped.v1` is the public v0.53 persistence seam for raw reads. Cross-workspace access, ambiguous multi-workspace raw snapshots, child-scope raw machine access, and legacy unscoped effect reads fail closed. The facade exposes no direct append or mutation API; writes remain governed runtime transitions.
 
-Protected reserve, atomic multi-resource reservation, re-estimation (`CONTINUE | REPLAN_REQUIRED`), release, settlement, and predicted-versus-actual calibration are durable through the existing Evidence/event history.
+## Resource ownership and distributed commit safety
 
-## Two different Pareto completeness scopes
+v0.53 resource mutations require explicit scoped capabilities for capacity registration, observations, reservation, re-estimation, release, and settlement. Resource history derives actor provenance from the exact durable authority Evidence that authorized the mutation.
 
-1. **Exact finite optimization frontier:** exact and independently certified over the complete supported finite feasible model space.
-2. **Resource-candidate frontier:** exact over the supplied eligible candidate set only; it does not claim undiscovered routes do not exist.
+Resource-state Evidence commits carry an optimistic machine-version precondition. Two hosts planning from the same resource version cannot both commit conflicting reservations: the stale writer fails and reloads canonical state. This behavior is verified on MemoryStore, SQLite, and PostgreSQL.
 
-Resource-candidate Pareto analysis is non-committing Evidence. It reserves no capacity. Selection/reservation is a separate commitment step.
+## External effects
 
-## Authority boundary
+Effect proposal is scope-bound, but proposal does not authorize execution. Authorization, execution, and reconciliation are distinct scoped capabilities. Every external execution attempt receives a fresh authority decision, so expired or revoked authority cannot be bypassed by retry behavior. UNKNOWN reconciliation remains separately governed.
+
+## Durable cross-run solver learning
+
+v0.53 introduces durable learned solver artifacts:
 
 ```text
-RESOURCE STATE NEVER GRANTS AUTHORITY.
-RESOURCE OBSERVATIONS REMAIN EVIDENCE.
-OPTIMALITY / PARETO COMPLETENESS REMAIN EVIDENCE.
-SII UTILITY NEVER BUYS TRUTH OR STATE AUTHORITY.
+correctness-sensitive:
+  NO_GOOD
+  UNSAT_CORE
+  BOUND
+
+performance-only:
+  INCUMBENT
+  WARM_START
+  NATIVE_ACCELERATOR
 ```
+
+Cross-run transfer reuses the existing v0.48 `CrossRunKnowledgeEnvelope(kind="REUSE_RESULT")` and receiving-run admission path. Admission preserves provenance but does not make foreign learning true or authoritative.
+
+Correctness-sensitive artifacts remain inert until the receiving run revalidates them against the exact model. For supported finite models, pruning/bound claims are checked against the independently certified complete feasible solution set.
+
+## Explicit solver-learning application
+
+`aasm.solver.learning.application.v1` separates validation from application. Application requires the exact PASS validation, the exact artifact/model binding, and scoped `solver.learning.apply` authority.
+
+```text
+truth_authority  = NONE
+policy_authority = NONE
+```
+
+Certified pruning is lowered into a new `OptimizationModel` and executed through the existing optimization provider path. Validated incumbent/warm-start hints remain performance-only; the existing OR-Tools CP-SAT adapter consumes supported assignments using `CpModel.add_hint(...)` and reports the consumed application IDs.
 
 ## Exact-SHA release gates
+
+v0.53 publication requires success on the exact current `main` commit from:
 
 ```text
 aasm/ci-summary
@@ -82,10 +89,12 @@ aasm/semantic-solver-rc
 aasm/proof-claims
 aasm/solution-pools
 aasm/optimization
+aasm/scoped-authority
+aasm/solver-learning
 ```
 
-`aasm/optimization` is published only after the dedicated v0.52 contract/adversarial suite and the real native optimization/modeling suite both pass.
+The release workflow then builds two byte-identical distributions, clean-installs the wheel, validates the active public contract, publishes the GitHub release once, and verifies every remote release asset byte.
 
-Next: **v0.53 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening**.
+Next: **v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery**.
 
-AASM remains an `0.x` active-development project with no presumed v1.0. License: Apache-2.0 project-wide under `LICENSE`, `NOTICE`, and `LICENSE_POLICY.md`.
+AASM remains an `0.x` active-development project. License: Apache-2.0 project-wide under `LICENSE`, `NOTICE`, and `LICENSE_POLICY.md`.
