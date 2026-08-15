@@ -1,5 +1,6 @@
 from aasm import public_v51
 from aasm import public_v52
+from aasm import public_v53
 from aasm import demo_stack
 from aasm.cli_v52 import build_parser
 from aasm.multi_objective import FRONTIER_CONTRACT_ID, MULTI_OBJECTIVE_CONTRACT_ID
@@ -7,7 +8,7 @@ from aasm.resource_routing import RESOURCE_ROUTING_CONTRACT_ID, RESOURCE_ROUTING
 from aasm.sii_v52 import SII_RESOURCE_AWARE_PROPOSAL_CONTRACT_ID
 
 
-def test_v52_active_public_contract_is_additive_and_valid():
+def test_v52_versioned_public_contract_is_additive_and_valid():
     report = public_v52.validate_public_api_contract()
     assert report["valid"] is True, report["errors"]
     contract = report["contract"]
@@ -44,9 +45,10 @@ def test_v52_public_surface_preserves_v51_parent_contract():
         assert name in public_v52.SUPPORTED_ENGINE_METHODS
 
 
-def test_v52_active_release_binds_demo_stack_to_v52_runtime():
-    assert demo_stack.AASMEngine is public_v52.AASMEngine
-    assert demo_stack._runtime_version() == public_v52.__version__
+def test_v52_parent_no_longer_owns_active_demo_stack_after_v53_promotion():
+    assert demo_stack.AASMEngine is public_v53.AASMEngine
+    assert demo_stack._runtime_version() == public_v53.__version__
+    assert demo_stack.AASMEngine is not public_v52.AASMEngine
 
 
 def test_v52_public_surface_exposes_product_backward_resource_objective_vector():
@@ -82,7 +84,7 @@ def test_v52_public_surface_exposes_product_backward_resource_objective_vector()
         assert callable(getattr(public_v52.AASMEngine, method, None))
 
 
-def test_v52_cli_contract_commands_are_public_commands():
+def test_v52_cli_contract_commands_remain_versioned_commands():
     parser = build_parser()
     for command in (
         "multi-objective-contract",
