@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/continuous-validation.schema.json",
+  "title": "AASM Continuous Validation v1",
+  "type": "object",
+  "required": ["report_id", "contract_id", "contract_version", "model_fingerprint", "assignment_fingerprint", "tolerance_policy_id", "tolerance_policy_fingerprint", "valid", "violations", "objective_value", "validator_id", "validator_version", "fingerprint"],
+  "properties": {
+    "report_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.optimization.continuous-validation.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "model_fingerprint": {"type": "string", "minLength": 16},
+    "assignment_fingerprint": {"type": "string", "minLength": 16},
+    "tolerance_policy_id": {"type": "string", "minLength": 1},
+    "tolerance_policy_fingerprint": {"type": "string", "minLength": 16},
+    "valid": {"type": "boolean"},
+    "violations": {"type": "array", "items": {"type": "object"}},
+    "objective_value": {"type": ["string", "null"]},
+    "validator_id": {"const": "aasm.checker.continuous-assignment.v1"},
+    "validator_version": {"const": "0.1.0"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
