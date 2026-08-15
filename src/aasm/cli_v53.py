@@ -2,6 +2,7 @@ from . import cli_v52 as _v52
 from ._runtime_v53_authority import scoped_authority_runtime_contract
 from ._runtime_v53_solver_learning import solver_learning_runtime_contract
 from .scoped_authority import scoped_authority_contract
+from .scoped_store import scoped_store_contract
 from .solver_learning import solver_learning_contract
 
 
@@ -15,6 +16,10 @@ def _scoped_authority_contract(args):
 
 def _scoped_authority_runtime_contract(args):
     _json(scoped_authority_runtime_contract())
+
+
+def _scoped_store_contract(args):
+    _json(scoped_store_contract())
 
 
 def _solver_learning_contract(args):
@@ -36,6 +41,10 @@ def build_parser():
         "scoped-authority-runtime-contract",
         help="show the pre-release v0.53 durable authority runtime contract",
     ).set_defaults(func=_scoped_authority_runtime_contract)
+    commands.add_parser(
+        "scoped-store-contract",
+        help="show the pre-release v0.53 scope-safe persistence contract",
+    ).set_defaults(func=_scoped_store_contract)
     commands.add_parser(
         "solver-learning-contract",
         help="show the pre-release v0.53 solver learning contract",
