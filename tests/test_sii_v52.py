@@ -55,3 +55,34 @@ def test_invalid_quality_claims_fail_closed():
         assert "expected_correctness" in str(exc)
     else:
         raise AssertionError("invalid expected_correctness accepted")
+
+
+def test_v52_proposal_compiles_directly_into_resource_routing_candidate():
+    parent = StructuredProposal("p", "decision", "scope-a", "x", .99)
+    wrapped = ResourceAwareStructuredProposal(
+        parent,
+        resource_demands=(ResourceDemandEstimate("EXPERT_MODEL_ALLOWANCE", 4, "credits", resource_id="expert-weekly", upper_bound=6),),
+        expected_correctness=.93,
+        expected_evidence_quality=.94,
+        expected_progress=.88,
+        expected_wall_time_seconds=12,
+        expected_monetary_cost=.5,
+        expected_scarce_expert_usage=4,
+    )
+    candidate = wrapped.to_routing_candidate()
+    assert candidate.candidate_id == wrapped.resource_aware_proposal_id
+    assert candidate.correctness == .93
+    assert candidate.evidence_quality == .94
+    assert candidate.expected_progress == .88
+    assert candidate.demands[0].upper_bound == 6
+    assert candidate.metadata["parent_proposal_id"] == parent.proposal_id
+    assert candidate.metadata["scope_id"] == "scope-a"
+
+
+def test_missing_quality_estimates_do_not_inherit_proposer_confidence():
+    parent = StructuredProposal("p", "decision", "root", "x", 1.0)
+    wrapped = ResourceAwareStructuredProposal(parent)
+    candidate = wrapped.to_routing_candidate()
+    assert candidate.correctness == 0.0
+    assert candidate.evidence_quality == 0.0
+    assert candidate.expected_progress == 0.0
