@@ -30,7 +30,7 @@ RECONCILE / VERIFY / LEARN
 future estimates and routing
 ```
 
-AASM must not create a second hosted-only scheduler or accounting truth system. This work extends the existing resource, scheduler, economics, SII, scope, authority, and optimization surfaces.
+AASM must not create a second hosted-only scheduler or accounting truth system. This work extends the existing resource, scheduler, economics, SII, scope, authority, Evidence/event replay, and optimization surfaces.
 
 ## Capacity is broader than money or tokens
 
@@ -122,7 +122,7 @@ Missing decision-quality estimates fail closed to zero during routing compilatio
 
 ## Deterministic resource-aware routing
 
-`aasm.resource.routing.v1` now provides the first governed candidate-selection slice.
+`aasm.resource.routing.v1` provides the first governed candidate-selection slice.
 
 Hard feasibility gates apply before ranking:
 
@@ -153,7 +153,7 @@ This means cheaper work never defeats a required quality threshold, while equiva
 
 Selection does not itself consume capacity. The selected candidate's conservative demand envelope must be reserved before execution.
 
-The foundation implements atomic reservation planning:
+The foundation implements atomic in-memory reservation planning:
 
 1. use each demand's upper bound when present;
 2. resolve explicit resource IDs directly;
@@ -162,7 +162,72 @@ The foundation implements atomic reservation planning:
 5. if any demand is infeasible, reserve nothing;
 6. only after the whole plan is feasible, commit every reservation.
 
-This prevents partial reservation and immediate oversubscription races in the in-process foundation model. Durable distributed reservation/lease ownership remains a later runtime integration step.
+The experimental v0.52 runtime then persists the **selection and reservation together as one AASM Evidence/event transaction document**. Replay therefore cannot reconstruct a durable state in which the route was committed but its corresponding reservation was absent merely because those two facts were written as separate resource records.
+
+This is durable single-machine transaction semantics over the existing AASM event path. Distributed compare-and-swap/lease ownership across multiple concurrent worker processes remains a separate hardening requirement.
+
+## Durable resource runtime
+
+`aasm.resource.runtime.v1` is composed in experimental `runtime_v52` over the released v0.51 runtime. It does not replace the v0.51 engine, reducer, Evidence ledger, store, scheduler, truth model, or authority layer.
+
+The runtime currently persists:
+
+```text
+capacity registration
+resource observations
+routing decision + reservation transaction
+settlement transaction
+```
+
+All are ordinary AASM Evidence records committed through the existing `EVIDENCE_ADDED` event path. Resource state is reconstructed as a deterministic projection over replayed Evidence.
+
+The runtime contract explicitly preserves:
+
+```text
+RESOURCE_STATE_NEVER_GRANTS_AUTHORITY
+RESOURCE_OBSERVATIONS_REMAIN_EVIDENCE
+```
+
+A reported weekly allowance therefore remains an observation with its measurement authority; recording it does not silently rewrite declared capacity or grant permission to spend it.
+
+### Durable selection/reservation
+
+`select_and_reserve_resource_candidate()`:
+
+1. reconstructs current capacity from durable Evidence;
+2. runs deterministic resource-aware selection;
+3. reserves the selected candidate's conservative demand envelope;
+4. records the decision, reservation, and post-capacity state in one durable transaction document;
+5. returns no reservation when no candidate is eligible.
+
+### Durable settlement
+
+`settle_resource_reservation()`:
+
+1. requires an ACTIVE durable reservation;
+2. requires actual-consumption keys to match the reserved resource set exactly;
+3. reconciles committed capacity against actual measured consumption;
+4. records post-settlement capacity in one durable settlement transaction;
+5. marks the reservation SETTLED in projection;
+6. rejects a second settlement of the same reservation.
+
+This provides the replayable path:
+
+```text
+proposal/candidate
+    ↓
+select
+    ↓
+reserve
+    ↓
+execute externally under ordinary AASM authority/effect rules
+    ↓
+settle actual consumption
+    ↓
+Evidence/event history
+    ↓
+deterministic replay
+```
 
 ## Authority and resource rights are distinct
 
@@ -173,15 +238,15 @@ Capacity/lease: may this work consume these resources?
 
 Both may be required. Resource availability never grants authority; authority never implies unlimited resource rights.
 
+The experimental durable runtime deliberately does not invent an authority shortcut. Effect authorization remains on the existing AASM effect/authority path; the resource runtime only governs capacity state and selection/reservation evidence.
+
 ## Reconciliation and replanning
 
-Reservations are estimates, not final consumption. `ResourceCapacity.settle()` separates committed capacity from actual consumption and releases reservation slack during reconciliation.
+Reservations are estimates, not final consumption. Durable settlement now separates committed capacity from actual consumption and releases reservation slack during reconciliation.
 
-The broader runtime still needs the durable transition family:
+Still-required transition behavior includes:
 
 ```text
-RESERVE
-SETTLE
 RELEASE
 REESTIMATE
 REPLAN
@@ -191,7 +256,7 @@ FALLBACK
 FREEZE
 ```
 
-When expected consumption materially changes, the runtime must be able to pause and re-evaluate the plan before silently exceeding a lease or protected reserve.
+When expected consumption materially changes before execution completes, the runtime must be able to pause and re-evaluate the plan before silently exceeding a lease or protected reserve.
 
 ## Multi-objective target
 
@@ -218,7 +283,7 @@ The deterministic routing implementation is the first concrete lexicographic pol
 
 All new resource objects include principal/workspace/scope seams now so hosted multi-tenancy does not require replacing resource identity later. Resource-aware SII routing also preserves proposer and scope identifiers in its routing IR.
 
-Scope enforcement remains a public-runtime concern; hosted routing/isolation topology may remain private.
+Full scope enforcement for capacity visibility/mutation remains a public-runtime requirement; hosted routing/isolation topology may remain private.
 
 ## Delivered foundation slices
 
@@ -234,14 +299,20 @@ The implementation now includes:
 - `ResourceRoutingPolicy`;
 - `ResourceRoutingDecision`;
 - `ResourceReservation`;
+- `ResourceGovernanceRuntimeMixin`;
+- experimental `runtime_v52` composition over `runtime_v51`;
 - protected-reserve accounting;
 - explicit reset horizon;
 - reservation/release/settlement primitives;
 - fail-closed unknown finite capacity;
 - conservative upper-bound feasibility;
 - deterministic resource-aware selection;
-- atomic multi-resource reservation;
+- atomic multi-resource reservation planning;
+- durable decision+reservation transaction records;
+- durable settlement transaction records;
 - SII proposal → routing-candidate compilation;
+- exact canonical replay tests for capacity, observation, reservation, and settlement;
+- duplicate-settlement rejection;
 - JSON schemas and focused/adversarial tests.
 
 ## Still required for v0.52 completion
@@ -249,9 +320,9 @@ The implementation now includes:
 This foundation intentionally does **not** yet claim:
 
 - integration with every provider meter;
-- durable resource capacity/observation persistence through the main event reducer;
 - distributed reservation/lease ownership and race safety across workers/processes;
-- full runtime submission/commit APIs for resource-aware SII proposals;
+- full scope/principal/workspace enforcement on resource reads and mutations;
+- full runtime submission/commit APIs for resource-aware SII proposal Evidence itself;
 - automatic re-estimation/replan transitions;
 - predicted-versus-actual calibration history;
 - generic Pareto-frontier solving over resource-aware decision vectors;
