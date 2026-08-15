@@ -340,7 +340,7 @@
 ./schemas/trace-projection.schema.json
 ./schemas/transition.schema.json
 ./schemas/truth-maintenance-plan.schema.json
-./schemas/typed-event-schema.schema.json
+./schemas/typed-event-schema.json
 ./schemas/worker-control.schema.json
 ./schemas/worker.schema.json
 ./schemas/workspace.schema.json
@@ -596,6 +596,7 @@
 ./src/aasm/runtime_v52.py
 ./src/aasm/runtime_v53.py
 ./src/aasm/runtime_v53_learning.py
+./src/aasm/runtime_v54.py
 ./src/aasm/scheduler.py
 ./src/aasm/scoped_authority.py
 ./src/aasm/scoped_store.py
@@ -662,6 +663,7 @@
 ./tests/test_runtime_v52_resources.py
 ./tests/test_runtime_v53_authority.py
 ./tests/test_runtime_v53_solver_learning.py
+./tests/test_runtime_v54_effects.py
 ./tests/test_scheduler.py
 ./tests/test_schemas.py
 ./tests/test_sdist_smoke.py
