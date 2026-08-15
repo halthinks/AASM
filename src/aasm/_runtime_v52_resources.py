@@ -323,7 +323,20 @@ class ResourceGovernanceRuntimeMixin:
             document=document,
             source=RESOURCE_OBSERVATION_CONTRACT_ID,
         )
-        return {"observation_id": observation_id, "observation": document, "evidence_id": evidence_id}
+        capacity.latest_observation = observation
+        capacity_evidence_id = self._record_resource_document(
+            record_type="capacity",
+            object_id=capacity.resource_id,
+            document=_capacity_to_dict(capacity),
+            source=RESOURCE_CAPACITY_CONTRACT_ID,
+            derived_from=[evidence_id],
+        )
+        return {
+            "observation_id": observation_id,
+            "observation": document,
+            "evidence_id": evidence_id,
+            "capacity_evidence_id": capacity_evidence_id,
+        }
 
     def resource_governance_report(
         self,
@@ -403,7 +416,7 @@ class ResourceGovernanceRuntimeMixin:
         reservation_document = None
         post_capacities: dict[str, dict[str, Any]] = {}
         if selected is not None:
-            reservation = reserve_candidate_resources(selected, capacities)
+            reservation = reserve_candidate_resources(selected, capacities, policy)
             reservation_seed = {
                 "candidate_id": reservation.candidate_id,
                 "allocations": [[resource_id, amount] for resource_id, amount in reservation.allocations],
