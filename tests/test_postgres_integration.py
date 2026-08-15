@@ -131,11 +131,37 @@ def test_postgres_stale_hosts_do_not_overwrite_canonical_state():
 def test_postgres_effect_execution_has_single_owner_across_hosts():
     from threading import Event, Thread
     from aasm import AASMEngine, EffectExecutionError, EffectSpec, EffectStatus
+    from aasm.evidence import EvidenceRecord
     from aasm.persistence.postgres import PostgresStore
+    from aasm.runtime_v53 import EFFECT_AUTHORITY_CAPABILITIES
+    from aasm.scoped_authority import Principal, ScopedAuthorityGrant, Workspace
 
     a,e=_engine("effect-owner",capacity=1)
-    rec=e.propose_effect(EffectSpec("external-write",idempotency_key="shared-effect"))
-    e.authorize_effect(rec.spec.effect_id)
+    trust=e.add_evidence(
+        EvidenceRecord(kind="trust_anchor",statement="postgres effect root",source="fixture"),
+        reason="postgres effect trust root",
+    )
+    e.bootstrap_scoped_workspace(
+        Principal("root","SYSTEM"),
+        Workspace("workspace-a","root"),
+        trust_anchor_evidence_id=trust.evidence_id,
+    )
+    e.admit_scoped_authority_grant(ScopedAuthorityGrant(
+        "root","root","workspace-a","root",
+        (EFFECT_AUTHORITY_CAPABILITIES["authorize"],EFFECT_AUTHORITY_CAPABILITIES["execute"]),
+    ))
+    rec=e.propose_effect(
+        EffectSpec("external-write",idempotency_key="shared-effect"),
+        workspace_id="workspace-a",
+        scope_id="root",
+        proposer_principal_id="root",
+    )
+    e.authorize_effect(
+        rec.spec.effect_id,
+        workspace_id="workspace-a",
+        scope_id="root",
+        actor_principal_id="root",
+    )
     mid=e.snapshot.machine_id
     b=PostgresStore(DSN)
     other=AASMEngine.resume(mid,b)
@@ -155,7 +181,13 @@ def test_postgres_effect_execution_has_single_owner_across_hosts():
 
     def run_first():
         try:
-            result_box["record"]=e.execute_effect(rec.spec.effect_id,first_executor)
+            result_box["record"]=e.execute_effect(
+                rec.spec.effect_id,
+                first_executor,
+                workspace_id="workspace-a",
+                scope_id="root",
+                actor_principal_id="root",
+            )
         except Exception as exc:  # surfaced in the main test thread below
             error_box["error"]=exc
 
@@ -169,7 +201,13 @@ def test_postgres_effect_execution_has_single_owner_across_hosts():
             return {"owner":"second"}
 
         with pytest.raises(EffectExecutionError,match="already RUNNING"):
-            other.execute_effect(rec.spec.effect_id,forbidden_second_executor)
+            other.execute_effect(
+                rec.spec.effect_id,
+                forbidden_second_executor,
+                workspace_id="workspace-a",
+                scope_id="root",
+                actor_principal_id="root",
+            )
         assert calls == ["first"]
     finally:
         release.set()
