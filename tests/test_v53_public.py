@@ -5,19 +5,19 @@ from aasm.cli_v53 import build_parser
 from aasm.runtime_v53_learning import AASMEngine, SOLVER_LEARNING_APPLY_CAPABILITY
 
 
-def test_v53_public_surface_is_additive_and_pre_release():
+def test_v53_public_surface_is_additive_and_active():
     report = public_v53.validate_public_api_contract()
     assert report["valid"] is True, report
     assert public_v53.__version__ == "0.53.0"
-    assert public_v53.PUBLIC_RELEASE_STABILITY == "PRE_RELEASE"
+    assert public_v53.PUBLIC_RELEASE_STABILITY == "ACTIVE_DEVELOPMENT"
     assert public_v53.PUBLIC_API_CONTRACT["contract_version"] == "0.29.0"
     assert public_v53.PUBLIC_API_CONTRACT["runtime_version"] == "0.53.0"
     assert public_v52.__version__ == "0.52.0"
 
 
-def test_pre_release_v53_import_does_not_rebind_active_v52_demo_stack():
-    assert demo_stack.AASMEngine is public_v52.AASMEngine
-    assert demo_stack._runtime_version() == "0.52.0"
+def test_v53_active_public_surface_binds_demo_stack_to_v53_runtime():
+    assert demo_stack.AASMEngine is public_v53.AASMEngine
+    assert demo_stack._runtime_version() == "0.53.0"
 
 
 def test_v53_public_contract_preserves_authority_store_and_solver_learning_safety_boundaries():
@@ -59,7 +59,7 @@ def test_v53_public_contract_preserves_authority_store_and_solver_learning_safet
     assert runtime["solver_execution"] == "EXISTING_AASM_OPTIMIZATION_PROVIDER_PATH_ONLY"
 
 
-def test_v53_engine_and_imports_are_present_without_promoting_default_package():
+def test_v53_engine_and_imports_are_present_on_active_versioned_surface():
     for method in (
         "bootstrap_scoped_workspace",
         "authorize_scoped_request",
@@ -102,7 +102,7 @@ def test_v53_engine_and_imports_are_present_without_promoting_default_package():
     assert public_v53.SOLVER_LEARNING_AUTHORITY_CAPABILITIES["apply"] == SOLVER_LEARNING_APPLY_CAPABILITY
 
 
-def test_v53_cli_exposes_contract_inspection_commands_without_switching_default_cli():
+def test_v53_cli_exposes_contract_inspection_commands():
     parser = build_parser()
     commands = parser._subparsers._group_actions[0].choices
     for command in (
