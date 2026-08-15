@@ -5,7 +5,18 @@ import threading
 import time
 
 from ..checkpoint import Checkpoint
-from ..effects import EffectExecutionError, EffectRecord, EffectStatus, EffectUnknownOutcome
+from ..effects import (
+    EffectExecutionError,
+    EffectOutcome,
+    EffectOwnership,
+    EffectOwnershipRequest,
+    EffectReconciliation,
+    EffectRecord,
+    EffectStatus,
+    EffectUnknownOutcome,
+    bind_effect_ownership,
+    bind_effect_reconciliation,
+)
 from ..model import Event, EventType, MachineSnapshot, MachineState, new_id
 
 
@@ -144,7 +155,10 @@ class MemoryStore:
             return sorted(rows, key=lambda row: (row.created_at, row.spec.effect_id))
 
     @staticmethod
-    def _prepare_effect_attempt(record: EffectRecord) -> EffectRecord:
+    def _prepare_effect_attempt(
+        record: EffectRecord,
+        ownership_request: EffectOwnershipRequest | None = None,
+    ) -> EffectRecord:
         if record.status == EffectStatus.SUCCEEDED.value:
             return record
         if record.status == EffectStatus.UNKNOWN.value:
@@ -175,12 +189,19 @@ class MemoryStore:
         record.execution_id = new_id("exec")
         record.status = EffectStatus.RUNNING.value
         record.updated_at = time.time()
+        if ownership_request is not None:
+            bind_effect_ownership(record, ownership_request)
         return record
 
-    def claim_effect_attempt(self, machine_id: str, effect_id: str) -> EffectRecord:
+    def claim_effect_attempt(
+        self,
+        machine_id: str,
+        effect_id: str,
+        ownership_request: EffectOwnershipRequest | None = None,
+    ) -> EffectRecord:
         with self._lock:
             record = self.load_effect(machine_id, effect_id)
-            record = self._prepare_effect_attempt(record)
+            record = self._prepare_effect_attempt(record, ownership_request)
             if record.status != EffectStatus.SUCCEEDED.value:
                 self._effects[(machine_id, effect_id)] = deepcopy(record)
             return deepcopy(record)
@@ -213,6 +234,18 @@ class MemoryStore:
                 if record.status == EffectStatus.RUNNING.value:
                     record.status = EffectStatus.UNKNOWN.value
                     record.error = "process ended while effect outcome was unresolved"
+                    if record.ownership is not None:
+                        ownership = EffectOwnership.from_dict(record.ownership)
+                        bind_effect_reconciliation(
+                            record,
+                            EffectReconciliation(
+                                effect_id=record.spec.effect_id,
+                                outcome=EffectOutcome.UNKNOWN.value,
+                                ownership_id=ownership.ownership_id,
+                                error=record.error,
+                                metadata={"source": "process_recovery"},
+                            ),
+                        )
                     record.updated_at = time.time()
                     self._effects[(machine_id, record.spec.effect_id)] = deepcopy(record)
                     changed.append(deepcopy(record))
