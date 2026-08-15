@@ -30,6 +30,7 @@ SOLVER_LEARNING_AUTHORITY_CAPABILITIES = {
     "export": "solver.learning.export",
     "import": "solver.learning.import",
     "validate": "solver.learning.validate",
+    "apply": "solver.learning.apply",
 }
 
 _SOLVER_LEARNING_RECORD_TYPE = "aasm_solver_learning_record_type"
@@ -47,7 +48,11 @@ def solver_learning_runtime_contract() -> dict[str, Any]:
         "cross_run_authority_transfer": "NEVER",
         "imported_pruning_state": "INERT_UNTIL_RECEIVING_RUN_LOCAL_REVALIDATION",
         "performance_hint_authority": "NEVER_TRUTH_OR_POLICY",
-        "application": "NO_AUTOMATIC_APPLICATION_IN_V0.53_FOUNDATION",
+        "application": "EXPLICIT_VALIDATED_ADAPTER_APPLICATION_ONLY",
+        "apply_authority": "SCOPED_SOLVER_LEARNING_APPLY_REQUIRED",
+        "truth_authority": "NONE",
+        "policy_authority": "NONE",
+        "solver_execution": "EXISTING_AASM_OPTIMIZATION_PROVIDER_PATH_ONLY",
     }
 
 
