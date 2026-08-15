@@ -45,6 +45,30 @@ def test_highs_enum_codes_cover_distinct_negative_limit_and_interrupt_states():
     assert map_provider_status(mapping, raw_status="kInterrupt", raw_status_code="17", objective_present=True).normalized_status == "USER_INTERRUPT_NO_SOLUTION"
 
 
+def test_generic_exact_rules_cover_memory_provider_and_unsupported_classes_without_guessing():
+    mapping = ProviderStatusMap(
+        "qualified-fixture",
+        "1.0",
+        "aasm.fixture",
+        "1.0",
+        (
+            ProviderStatusRule("MEMORY_LIMIT", "MEMORY_LIMIT_DYNAMIC", raw_status="MEMORY", raw_status_code="21", incumbent_eligibility="VALIDATED_IF_PRESENT", limit_unit="bytes", provider_version_range="==1.0"),
+            ProviderStatusRule("PROVIDER_UNAVAILABLE", "PROVIDER_UNAVAILABLE", raw_status="UNAVAILABLE", raw_status_code="22", provider_version_range="==1.0"),
+            ProviderStatusRule("UNSUPPORTED_FEATURE", "UNSUPPORTED_FEATURE", raw_status="UNSUPPORTED", raw_status_code="23", provider_version_range="==1.0"),
+        ),
+    )
+    memory = map_provider_status(mapping, raw_status="MEMORY", raw_status_code="21", has_incumbent=True, objective_present=True)
+    unavailable = map_provider_status(mapping, raw_status="UNAVAILABLE", raw_status_code="22")
+    unsupported = map_provider_status(mapping, raw_status="UNSUPPORTED", raw_status_code="23")
+    assert memory.normalized_status == "MEMORY_LIMIT_WITH_INCUMBENT"
+    assert memory.termination.reason == "MEMORY_LIMIT"
+    assert memory.termination.limit_unit == "bytes"
+    assert unavailable.normalized_status == "PROVIDER_UNAVAILABLE"
+    assert unavailable.termination.reason == "PROVIDER_UNAVAILABLE"
+    assert unsupported.normalized_status == "UNSUPPORTED_FEATURE"
+    assert unsupported.termination.reason == "UNSUPPORTED_FEATURE"
+
+
 def test_highs_model_error_is_model_invalid_not_infeasible():
     mapped = map_provider_status(highs_status_map("1.14.0"), raw_status="kModelError", raw_status_code="2", objective_present=True)
     assert mapped.normalized_status == "MODEL_INVALID"
