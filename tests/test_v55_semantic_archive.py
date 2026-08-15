@@ -45,6 +45,7 @@ def _engine() -> AASMEngine:
 def test_archive_contract_has_no_parallel_truth_or_import_mutation_path():
     contract = semantic_archive_contract()
     assert contract["replay"] == "EXISTING_AASM_REDUCER_OVER_ARCHIVED_EVENTS"
+    assert contract["event_sequence_semantics"] == "DURABLE_ORDERING_ONLY_NOT_MACHINE_VERSION"
     assert contract["replay_uses_persisted_snapshot"] is False
     assert contract["derived_projections_grant_truth"] is False
     assert contract["import_mutation_path"] == "NONE_IN_FOUNDATION"
@@ -62,6 +63,7 @@ def test_archive_round_trip_is_byte_stable_and_replays_from_events():
     assert report["valid"] is True
     assert report["persisted_snapshot_used_as_replay_input"] is False
     assert report["replay_source"] == "ARCHIVED_EVENT_SEQUENCE_ONLY"
+    assert report["persisted_version"] == report["replayed_version"] == engine.snapshot.version
     assert report["persisted_canonical_hash"] == report["replayed_canonical_hash"]
     assert report["replayed_canonical_hash"] == engine.snapshot.canonical_hash()
 
