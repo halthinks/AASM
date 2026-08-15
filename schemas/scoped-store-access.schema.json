@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/scoped-store-access.schema.json",
+  "title": "AASM Scoped Store Access",
+  "type": "object",
+  "required": ["principal_id", "workspace_id", "scope_id", "at_time"],
+  "properties": {
+    "principal_id": {"type": "string", "minLength": 1},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "at_time": {"type": "number", "minimum": 0}
+  },
+  "additionalProperties": false
+}
