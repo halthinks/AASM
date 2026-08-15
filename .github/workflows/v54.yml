@@ -25,11 +25,14 @@ jobs:
         run: |
           python scripts/check_v54_contracts.py
           python - <<'PY'
+          import aasm
           from aasm import public_v54
           report = public_v54.validate_public_api_contract()
           assert report['valid'], report
+          assert aasm.__version__ == '0.54.0'
+          assert aasm.AASMEngine is public_v54.AASMEngine
           assert public_v54.__version__ == '0.54.0'
-          assert public_v54.PUBLIC_RELEASE_STABILITY == 'PRE_RELEASE'
+          assert public_v54.PUBLIC_RELEASE_STABILITY == 'ACTIVE_DEVELOPMENT'
           assert public_v54.PUBLIC_API_CONTRACT['contract_version'] == '0.30.0'
           PY
       - name: Execute v0.54 adversarial and public conformance suite
