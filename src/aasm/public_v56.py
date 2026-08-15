@@ -18,21 +18,34 @@ from .provider_status_v2 import (
     PROVIDER_STATUS_MAP_CONTRACT_ID,
     PROVIDER_STATUS_MAP_CONTRACT_VERSION,
     ProviderStatusMap,
+    ProviderStatusMapping,
     ProviderStatusRule,
+    default_provider_status_map,
+    highs_status_map,
+    map_provider_status,
     map_provider_termination,
+    ortools_cp_sat_status_map,
     provider_status_map_contract,
+    pysat_cadical_status_map,
 )
 from .runtime_v56 import AASMEngine
 from .solver_outcome_v2 import (
     SOLVER_EVIDENCE_GRADE_CONTRACT_ID,
+    SOLVER_LEGACY_PROJECTION_CONTRACT_ID,
     SOLVER_OUTCOME_V2_CONTRACT_ID,
     SOLVER_OUTCOME_V2_CONTRACT_VERSION,
+    SOLVER_STATUS_V2_CONTRACT_ID,
+    SOLVER_STATUS_V2_CONTRACT_VERSION,
     SOLVER_TERMINATION_V2_CONTRACT_ID,
+    INCUMBENT_VALIDATION_STATUSES,
+    NORMALIZED_STATUSES,
+    LegacyStatusProjection,
     ProviderTermination,
     SolverEvidenceGrade,
     SolverOutcomeV2,
     legacy_termination,
     normalize_optimization_result_v2,
+    project_v2_to_legacy_status,
     solver_outcome_v2_contract,
 )
 
@@ -49,26 +62,18 @@ _NEW_ENGINE_METHODS = [
 ]
 
 _NEW_IMPORTS = [
-    "SOLVER_OUTCOME_V2_CONTRACT_ID",
-    "SOLVER_OUTCOME_V2_CONTRACT_VERSION",
-    "SOLVER_TERMINATION_V2_CONTRACT_ID",
-    "SOLVER_EVIDENCE_GRADE_CONTRACT_ID",
-    "ProviderTermination",
-    "SolverEvidenceGrade",
-    "SolverOutcomeV2",
-    "legacy_termination",
-    "normalize_optimization_result_v2",
-    "solver_outcome_v2_contract",
-    "PROVIDER_STATUS_MAP_CONTRACT_ID",
-    "PROVIDER_STATUS_MAP_CONTRACT_VERSION",
-    "ProviderStatusRule",
-    "ProviderStatusMap",
-    "map_provider_termination",
-    "provider_status_map_contract",
-    "SOLVER_OUTCOME_V2_RUNTIME_CONTRACT_ID",
-    "SOLVER_OUTCOME_V2_RUNTIME_CONTRACT_VERSION",
-    "SOLVER_OUTCOME_V2_RUNTIME_STABILITY",
-    "solver_outcome_v2_runtime_contract",
+    "SOLVER_OUTCOME_V2_CONTRACT_ID", "SOLVER_OUTCOME_V2_CONTRACT_VERSION",
+    "SOLVER_STATUS_V2_CONTRACT_ID", "SOLVER_STATUS_V2_CONTRACT_VERSION",
+    "SOLVER_TERMINATION_V2_CONTRACT_ID", "SOLVER_EVIDENCE_GRADE_CONTRACT_ID",
+    "SOLVER_LEGACY_PROJECTION_CONTRACT_ID", "NORMALIZED_STATUSES", "INCUMBENT_VALIDATION_STATUSES",
+    "ProviderTermination", "SolverEvidenceGrade", "LegacyStatusProjection", "SolverOutcomeV2",
+    "legacy_termination", "project_v2_to_legacy_status", "normalize_optimization_result_v2",
+    "solver_outcome_v2_contract", "PROVIDER_STATUS_MAP_CONTRACT_ID", "PROVIDER_STATUS_MAP_CONTRACT_VERSION",
+    "ProviderStatusRule", "ProviderStatusMap", "ProviderStatusMapping", "map_provider_status",
+    "map_provider_termination", "ortools_cp_sat_status_map", "highs_status_map",
+    "pysat_cadical_status_map", "default_provider_status_map", "provider_status_map_contract",
+    "SOLVER_OUTCOME_V2_RUNTIME_CONTRACT_ID", "SOLVER_OUTCOME_V2_RUNTIME_CONTRACT_VERSION",
+    "SOLVER_OUTCOME_V2_RUNTIME_STABILITY", "solver_outcome_v2_runtime_contract",
 ]
 
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_ENGINE_METHODS", []), *_NEW_ENGINE_METHODS]))
@@ -115,10 +120,12 @@ def validate_public_api_contract():
     if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.0":
         errors.append("v0.56 candidate adoption contract mismatch")
     outcome = PUBLIC_API_CONTRACT.get("solver_outcome_v2", {})
-    if outcome.get("provider_optimal_status") != "CLAIMED_OPTIMAL_NOT_PROVEN_OPTIMAL_WITHOUT_CHECKED_CERTIFICATE":
-        errors.append("solver outcome optimality claim boundary mismatch")
-    if outcome.get("provider_status_map", {}).get("fuzzy_matching") != "FORBIDDEN":
-        errors.append("provider status mapping fuzzy-match boundary mismatch")
+    if outcome.get("authoritative_detailed_status") != "normalized_status":
+        errors.append("solver outcome v2 authoritative status boundary mismatch")
+    if outcome.get("legacy_projection") != "V2_TO_V1_ONE_WAY_EXPLICITLY_LOSSY_WHERE_REQUIRED":
+        errors.append("solver outcome v2 legacy compatibility projection mismatch")
+    if outcome.get("provider_status_map", {}).get("substring_inference") != "FORBIDDEN":
+        errors.append("provider status mapping substring-inference boundary mismatch")
     if outcome.get("runtime", {}).get("parallel_result_table") != "NONE":
         errors.append("solver outcome runtime parallel-result boundary mismatch")
     if outcome.get("truth_authority") != "NONE":
