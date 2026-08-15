@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/scoped-principal.schema.json",
+  "title": "AASM Scoped Principal",
+  "type": "object",
+  "required": ["principal_id", "kind", "active"],
+  "properties": {
+    "principal_id": {"type": "string", "minLength": 1},
+    "kind": {"enum": ["HUMAN", "SERVICE", "MACHINE", "OPERATOR", "SYSTEM"]},
+    "active": {"type": "boolean"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
