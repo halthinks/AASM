@@ -1,0 +1,52 @@
+name: Scoped Authority
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  scoped_authority:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install AASM test dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Validate v0.53 scoped authority source and schema contracts
+        run: python scripts/check_v53_contracts.py
+      - name: Execute v0.53 scoped authority adversarial suite
+        run: |
+          pytest -q \
+            tests/test_v53_scoped_authority.py \
+            tests/test_v53_scoped_authority_hardening.py \
+            tests/test_runtime_v53_authority.py \
+            tests/test_v53_resource_authority.py
+      - name: Publish scoped authority status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='v0.53 scoped identity, authority, resource, and effect gates passed'
+          else
+            state=failure
+            description='v0.53 scoped authority gate failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" \
+            -f context='aasm/scoped-authority' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
