@@ -16,15 +16,25 @@ from aasm.model_features import (
     evaluate_model_admission,
     model_feature_contract,
 )
+from aasm.optimization import OptimizationConstraint, OptimizationModel, OptimizationObjective, OptimizationVariable
+from aasm.runtime_v54 import translate_model_for_solver
 from aasm.runtime_v55_foundation import AASMEngine
 from aasm.semantic_evolution import (
     EXTERNAL_REFERENCE_CONTRACT_ID,
     PROBLEM_DELTA_CONTRACT_ID,
     PROBLEM_REVISION_CONTRACT_ID,
+    ExternalReference,
     ProblemDelta,
     ProblemRevision,
     semantic_evolution_contract,
     validate_revision_transition,
+)
+from aasm.solver_formulation import (
+    SOLVER_FORMULATION_CERTIFICATE_CONTRACT_ID,
+    SOLVER_FORMULATION_CONTRACT_ID,
+    FormulationExternalReferenceBinding,
+    formulation_from_v54_translation,
+    solver_formulation_contract,
 )
 from aasm._runtime_v55_semantic_evolution import (
     SEMANTIC_EVOLUTION_RUNTIME_CONTRACT_ID,
@@ -70,6 +80,7 @@ def check_contracts_and_schemas() -> None:
     semantic = semantic_evolution_contract()
     runtime = semantic_evolution_runtime_contract()
     features = model_feature_contract()
+    formulation = solver_formulation_contract()
     require(semantic["external_reference_contract_id"] == EXTERNAL_REFERENCE_CONTRACT_ID, "external reference contract drift")
     require(semantic["problem_revision_contract_id"] == PROBLEM_REVISION_CONTRACT_ID, "problem revision contract drift")
     require(semantic["problem_delta_contract_id"] == PROBLEM_DELTA_CONTRACT_ID, "problem delta contract drift")
@@ -83,6 +94,11 @@ def check_contracts_and_schemas() -> None:
     require(features["admission_contract_id"] == MODEL_ADMISSION_CONTRACT_ID, "model admission contract drift")
     require(features["unsupported_feature_policy"] == "FAIL_CLOSED_BEFORE_PROVIDER_EXECUTION", "unsupported features must fail before provider execution")
     require(features["truth_authority"] == "NONE", "provider capability evidence may not create truth authority")
+    require(formulation["formulation_contract_id"] == SOLVER_FORMULATION_CONTRACT_ID, "solver formulation contract drift")
+    require(formulation["certificate_contract_id"] == SOLVER_FORMULATION_CERTIFICATE_CONTRACT_ID, "solver formulation certificate drift")
+    require(formulation["builtin_checker_scope"] == "EXACT_IDENTITY_ONLY", "built-in formulation checker must not overclaim nontrivial translations")
+    require(formulation["nontrivial_translation_policy"] == "NO_PASS_WITHOUT_AN_INDEPENDENT_CHECKER_FOR_THE_REQUESTED_FIDELITY", "nontrivial formulation checking must fail closed")
+    require(formulation["truth_authority"] == "NONE", "solver formulation evidence may not create truth authority")
 
     schema_contracts = {
         "external-reference.schema.json": EXTERNAL_REFERENCE_CONTRACT_ID,
@@ -91,6 +107,8 @@ def check_contracts_and_schemas() -> None:
         "model-feature-set.schema.json": MODEL_FEATURE_SET_CONTRACT_ID,
         "provider-capability-manifest.schema.json": PROVIDER_CAPABILITY_MANIFEST_CONTRACT_ID,
         "model-admission-report.schema.json": MODEL_ADMISSION_CONTRACT_ID,
+        "solver-formulation.schema.json": SOLVER_FORMULATION_CONTRACT_ID,
+        "solver-formulation-certificate.schema.json": SOLVER_FORMULATION_CERTIFICATE_CONTRACT_ID,
     }
     for schema_name, contract_id in schema_contracts.items():
         schema = load_schema(schema_name)
@@ -168,12 +186,65 @@ def check_model_admission() -> None:
     require(not rejected.admitted, "approximate provider support must fail closed when exact semantics are required")
 
 
+def check_formulation_bridge() -> None:
+    model = OptimizationModel(
+        "v55-formulation-fixture",
+        (OptimizationVariable("x", "BOOL"), OptimizationVariable("y", "BOOL")),
+        (
+            OptimizationConstraint(
+                "LINEAR",
+                coefficients={"x": 1, "y": 1},
+                sense="<=",
+                rhs=1,
+                constraint_id="requirement-capacity",
+            ),
+        ),
+        objective=OptimizationObjective("MINIMIZE", {"x": 1, "y": 2}),
+    )
+    translation, translation_certificate = translate_model_for_solver(
+        model,
+        target_family="MILP",
+        target_provider_id="v55-highs",
+    )
+    features = ModelFeatureSet(model.fingerprint, (ModelFeatureRequirement("BOOLEAN", "EXACT_ONLY"),))
+    manifest = ProviderCapabilityManifest(
+        "v55-highs",
+        "1",
+        "aasm.highs",
+        "1",
+        (ProviderFeatureSupport("BOOLEAN", "EXACT_NATIVE"),),
+        solver_families=("MILP",),
+    )
+    admission = evaluate_model_admission(features, manifest)
+    reference = ExternalReference("textpcb.requirement", "REQ-CAP-1", "HARD_REQUIREMENT", revision="1")
+    binding = FormulationExternalReferenceBinding(
+        reference,
+        "CONSTRAINT",
+        "requirement-capacity",
+        "CONSTRAINT",
+        ("requirement-capacity",),
+    )
+    formulation, certificate = formulation_from_v54_translation(
+        model,
+        translation,
+        translation_certificate,
+        feature_set=features,
+        provider_manifest=manifest,
+        admission_report=admission,
+        external_reference_bindings=(binding,),
+    )
+    require(certificate.status == "PASS" and certificate.verified_fidelity == "EXACT", "v0.54 exact translation must bridge to an independently checked exact formulation")
+    require(certificate.mapping_complete and certificate.external_references_resolved, "formulation bridge must preserve complete object and external-reference lineage")
+    require(formulation.predecessor_translation_id == translation.translation_id, "formulation must preserve v0.54 translation ancestry")
+
+
 def main() -> None:
     check_source_doctrine()
     check_active_release_boundary()
     check_contracts_and_schemas()
     check_reference_transition()
     check_model_admission()
+    check_formulation_bridge()
     print("v0.55 governed semantic evolution foundation contracts: PASS")
 
 
