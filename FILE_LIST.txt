@@ -310,6 +310,7 @@
 ./schemas/sii-outcome.schema.json
 ./schemas/sii-principal-binding.schema.json
 ./schemas/sii-proposal.schema.json
+./schemas/sii-resource-aware-proposal.schema.json
 ./schemas/sii-resource-lease.schema.json
 ./schemas/sii-scoring-policy.schema.json
 ./schemas/solution-pool.schema.json
@@ -516,6 +517,7 @@
 ./src/aasm/research_demo.py
 ./src/aasm/research_profile.py
 ./src/aasm/resource_governance.py
+./src/aasm/resource_routing.py
 ./src/aasm/resources.py
 ./src/aasm/reuse_certificate.py
 ./src/aasm/reuse_index.py
@@ -584,6 +586,7 @@
 ./src/aasm/server_v41.py
 ./src/aasm/sii.py
 ./src/aasm/sii_governance.py
+./src/aasm/sii_v52.py
 ./src/aasm/solution_pool_conformance.py
 ./src/aasm/solution_pools.py
 ./src/aasm/solver_loop.py
@@ -622,9 +625,11 @@
 ./tests/test_provisioning_telemetry.py
 ./tests/test_replay_fork.py
 ./tests/test_resource_governance.py
+./tests/test_resource_routing.py
 ./tests/test_scheduler.py
 ./tests/test_schemas.py
 ./tests/test_sdist_smoke.py
+./tests/test_sii_v52.py
 ./tests/test_team_protocol.py
 ./tests/test_v18_provider_artifacts_controls.py
 ./tests/test_v19_mission_observability_supervisors.py
