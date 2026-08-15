@@ -1,12 +1,12 @@
 import aasm
-from aasm import demo_stack
 from aasm import public_v53
 from aasm import public_v54
+from aasm import public_v55
 from aasm.cli_v54 import build_parser
-from aasm.runtime_v54_full import AASMEngine
+from aasm.runtime_v54_full import AASMEngine as V54Engine
 
 
-def test_v54_public_surface_is_additive_and_active_default():
+def test_v54_public_surface_remains_valid_versioned_parent():
     report = public_v54.validate_public_api_contract()
     assert report["valid"] is True, report
     assert public_v54.__version__ == "0.54.0"
@@ -14,13 +14,10 @@ def test_v54_public_surface_is_additive_and_active_default():
     assert public_v54.PUBLIC_API_CONTRACT["contract_version"] == "0.30.0"
     assert public_v54.PUBLIC_API_CONTRACT["runtime_version"] == "0.54.0"
     assert public_v53.__version__ == "0.53.0"
-    assert aasm.__version__ == "0.54.0"
-    assert aasm.AASMEngine is public_v54.AASMEngine
-
-
-def test_v54_active_public_surface_binds_demo_stack_to_v54_runtime():
-    assert demo_stack.AASMEngine is public_v54.AASMEngine
-    assert demo_stack._runtime_version() == "0.54.0"
+    assert public_v55.__version__ == "0.55.0"
+    assert aasm.__version__ == "0.55.0"
+    assert aasm.AASMEngine is public_v55.AASMEngine
+    assert public_v54.AASMEngine is V54Engine
 
 
 def test_v54_public_contract_freezes_effect_settlement_portfolio_and_exchange_boundaries():
@@ -45,7 +42,7 @@ def test_v54_public_contract_freezes_effect_settlement_portfolio_and_exchange_bo
     assert exchange["policy_authority"] == "NONE"
 
 
-def test_v54_full_engine_and_public_imports_are_exposed_on_default_surface():
+def test_v54_full_engine_and_imports_remain_available_through_v55():
     for method in (
         "effect_governance_report",
         "effect_resource_settlement_contract_report",
@@ -59,7 +56,7 @@ def test_v54_full_engine_and_public_imports_are_exposed_on_default_surface():
         "solver_exchange_report",
         "exchange_solver_learning",
     ):
-        assert callable(getattr(AASMEngine, method))
+        assert callable(getattr(V54Engine, method))
         assert method in public_v54.SUPPORTED_ENGINE_METHODS
         assert callable(getattr(aasm.AASMEngine, method))
     for name in (
@@ -78,7 +75,7 @@ def test_v54_full_engine_and_public_imports_are_exposed_on_default_surface():
         assert hasattr(aasm, name)
 
 
-def test_v54_cli_exposes_contract_commands():
+def test_v54_cli_contract_commands_remain_supported_parent_surface():
     parser = build_parser()
     commands = next(action for action in parser._actions if action.__class__.__name__ == "_SubParsersAction").choices
     for command in (
