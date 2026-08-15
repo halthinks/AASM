@@ -27,7 +27,6 @@ def test_resource_aware_successor_preserves_parent_identity_and_adds_resource_id
         expected_provider_quota_burn=6,
         expected_scarce_expert_usage=5,
     )
-
     assert wrapped.parent_proposal_id == parent.proposal_id
     assert wrapped.proposal.fingerprint == parent.fingerprint
     assert wrapped.resource_aware_proposal_id.startswith("sii-v52-proposal-")
@@ -36,21 +35,9 @@ def test_resource_aware_successor_preserves_parent_identity_and_adds_resource_id
 
 def test_resource_demands_and_provider_quota_burn_participate_in_v52_fingerprint():
     parent = StructuredProposal("p", "decision", "root", "x", .8)
-    cheap = ResourceAwareStructuredProposal(
-        parent,
-        resource_demands=(ResourceDemandEstimate("MODEL_ALLOWANCE", 1, "credits"),),
-        expected_provider_quota_burn=1,
-    )
-    expensive_demand = ResourceAwareStructuredProposal(
-        parent,
-        resource_demands=(ResourceDemandEstimate("MODEL_ALLOWANCE", 2, "credits"),),
-        expected_provider_quota_burn=1,
-    )
-    expensive_quota = ResourceAwareStructuredProposal(
-        parent,
-        resource_demands=(ResourceDemandEstimate("MODEL_ALLOWANCE", 1, "credits"),),
-        expected_provider_quota_burn=2,
-    )
+    cheap = ResourceAwareStructuredProposal(parent, resource_demands=(ResourceDemandEstimate("MODEL_ALLOWANCE", 1, "credits"),), expected_provider_quota_burn=1)
+    expensive_demand = ResourceAwareStructuredProposal(parent, resource_demands=(ResourceDemandEstimate("MODEL_ALLOWANCE", 2, "credits"),), expected_provider_quota_burn=1)
+    expensive_quota = ResourceAwareStructuredProposal(parent, resource_demands=(ResourceDemandEstimate("MODEL_ALLOWANCE", 1, "credits"),), expected_provider_quota_burn=2)
     assert cheap.fingerprint != expensive_demand.fingerprint
     assert cheap.fingerprint != expensive_quota.fingerprint
     assert cheap.parent_proposal_id == expensive_demand.parent_proposal_id == expensive_quota.parent_proposal_id
@@ -58,12 +45,7 @@ def test_resource_demands_and_provider_quota_burn_participate_in_v52_fingerprint
 
 def test_round_trip_keeps_parent_and_resource_contract():
     parent = StructuredProposal("p", "decision", "root", {"choice": 1}, .7)
-    original = ResourceAwareStructuredProposal(
-        parent,
-        resource_demands=(ResourceDemandEstimate("SOLVER", 3, "seconds", confidence=.8),),
-        expected_correctness=.9,
-        expected_provider_quota_burn=2.5,
-    )
+    original = ResourceAwareStructuredProposal(parent, resource_demands=(ResourceDemandEstimate("SOLVER", 3, "seconds", confidence=.8),), expected_correctness=.9, expected_provider_quota_burn=2.5)
     restored = ResourceAwareStructuredProposal.from_dict(original.to_dict())
     assert restored.to_dict() == original.to_dict()
 
@@ -130,10 +112,7 @@ def _weekly_capacity(*, consumed=0.0, reserve=20.0):
 
 def _expert_candidate(amount=4.0):
     return ResourceAwareCandidate(
-        "expert",
-        .96,
-        .95,
-        .90,
+        "expert", .96, .95, .90,
         provider_quota_burn=amount,
         scarce_expert_usage=amount,
         demands=(ResourceDemandEstimate("EXPERT_MODEL_ALLOWANCE", amount, "credits", resource_id="expert-weekly", upper_bound=amount),),
@@ -163,13 +142,41 @@ def test_routing_explanation_persists_policy_and_pre_reservation_weekly_capacity
     )
     tx_id = result["transaction"]["transaction_id"]
     explanation = engine.resource_routing_explanation_report(workspace_id="workspace-a", scope_id="root")["explanations"][tx_id]
-    snapshot = explanation["document"]["capacity_snapshot"]["expert-weekly"]
+    doc = explanation["document"]
+    snapshot = doc["capacity_snapshot"]["expert-weekly"]
     assert snapshot["declared_allocatable"] == 20.0
     assert snapshot["planning_allocatable"] == 5.0
     assert snapshot["protected_reserve"] == 20.0
     assert snapshot["latest_observation"]["measurement_authority"] == "OBSERVED"
+    assert doc["policy"]["prefer_lower_provider_quota_burn"] is True
+    assert any(row["objective_id"] == "provider_quota_burn" for row in doc["policy"]["objectives"])
+    assert doc["candidate_objectives"]["expert"]["provider_quota_burn"] == 4.0
     assert result["evidence_id"] in explanation["derived_from"]
     assert engine.resource_routing_explanation_report(workspace_id="workspace-b", scope_id="root")["explanations"] == {}
+    assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
+
+
+def test_resource_candidate_pareto_evidence_is_non_mutating_scope_safe_and_replayable():
+    engine = AASMEngine(ProblemSpec("resource Pareto evidence"))
+    engine.register_resource_capacity(_weekly_capacity(consumed=0, reserve=20))
+    quota_route = ResourceAwareCandidate("quota-route", .95, .95, .90, provider_quota_burn=1, monetary_cost=5, wall_time_seconds=10, scarce_expert_usage=2)
+    money_route = ResourceAwareCandidate("money-route", .95, .95, .90, provider_quota_burn=5, monetary_cost=1, wall_time_seconds=10, scarce_expert_usage=2)
+    dominated = ResourceAwareCandidate("dominated", .95, .95, .90, provider_quota_burn=7, monetary_cost=7, wall_time_seconds=12, scarce_expert_usage=3)
+    before = engine.resource_governance_report(workspace_id="workspace-a", scope_id="root")["capacities"]["expert-weekly"]["committed"]
+    result = engine.record_resource_candidate_pareto_frontier(
+        [dominated, money_route, quota_route],
+        ResourceRoutingPolicy(),
+        workspace_id="workspace-a",
+        scope_id="root",
+    )
+    frontier = result["frontier"]
+    assert set(frontier["frontier"]["frontier_candidate_ids"]) == {"quota-route", "money-route"}
+    assert result["authority"] == "EVIDENCE_ONLY"
+    after = engine.resource_governance_report(workspace_id="workspace-a", scope_id="root")["capacities"]["expert-weekly"]["committed"]
+    assert before == after == 0.0
+    report = engine.resource_candidate_pareto_report(workspace_id="workspace-a", scope_id="root")
+    assert frontier["frontier_id"] in report["frontiers"]
+    assert engine.resource_candidate_pareto_report(workspace_id="workspace-b", scope_id="root")["frontiers"] == {}
     assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
 
 
@@ -183,12 +190,7 @@ def test_settlement_history_projects_resource_estimation_calibration_as_performa
         scope_id="root",
     )
     reservation_id = result["transaction"]["reservation"]["reservation_id"]
-    engine.settle_resource_reservation(
-        reservation_id,
-        {"expert-weekly": 7.0},
-        workspace_id="workspace-a",
-        scope_id="root",
-    )
+    engine.settle_resource_reservation(reservation_id, {"expert-weekly": 7.0}, workspace_id="workspace-a", scope_id="root")
     calibration = engine.resource_consumption_calibration_report(workspace_id="workspace-a", scope_id="root")
     row = calibration["resources"]["expert-weekly"]
     assert row["samples"] == 1
