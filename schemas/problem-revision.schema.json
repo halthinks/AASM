@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/problem-revision.schema.json",
+  "title": "AASM Problem Revision v1",
+  "type": "object",
+  "required": ["revision_id", "contract_id", "contract_version", "problem_id", "problem_fingerprint", "semantic_projection_fingerprint", "parent_revision_ids", "external_references", "environment_fingerprint", "dependency_fingerprints", "created_by", "created_from_delta_id", "metadata", "fingerprint"],
+  "properties": {
+    "revision_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.problem.revision.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "problem_id": {"type": "string", "minLength": 1},
+    "problem_fingerprint": {"type": "string", "minLength": 1},
+    "semantic_projection_fingerprint": {"type": "string", "minLength": 1},
+    "parent_revision_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "external_references": {"type": "array", "items": {"$ref": "external-reference.schema.json"}},
+    "environment_fingerprint": {"type": "string"},
+    "dependency_fingerprints": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "created_by": {"type": "string"},
+    "created_from_delta_id": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
