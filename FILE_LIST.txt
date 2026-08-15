@@ -654,7 +654,7 @@
 ./tests/test_team_protocol.py
 ./tests/test_v18_provider_artifacts_controls.py
 ./tests/test_v19_mission_observability_supervisors.py
-./tests/test_v21_calculus.py
+./tests/test_v21_calus.py
 ./tests/test_v22_profiles.py
 ./tests/test_v23_decision_backends.py
 ./tests/test_v24_assurance.py
@@ -700,6 +700,7 @@
 ./tests/test_v51_solution_pools_real.py
 ./tests/test_v52_multi_objective.py
 ./tests/test_v52_public.py
+./tests/test_v53_resource_authority.py
 ./tests/test_v53_scoped_authority.py
 ./tests/test_v53_scoped_authority_hardening.py
 ./tests/test_workers_leases.py
