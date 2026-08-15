@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 from .optimization import (
     BooleanLiteral,
+    OptimizationConstraint,
     OptimizationModel,
+    OptimizationRequest,
     objective_value,
     validate_optimization_solution,
 )
@@ -26,6 +29,8 @@ SOLVER_LEARNING_CONTRACT_VERSION = "0.1.0"
 SOLVER_LEARNING_STABILITY = "FOUNDATION_EXPERIMENTAL"
 SOLVER_LEARNING_CHECKER_ID = "aasm.checker.solver-learning-finite.v1"
 SOLVER_LEARNING_CHECKER_VERSION = "0.1.0"
+SOLVER_LEARNING_APPLICATION_CONTRACT_ID = "aasm.solver.learning.application.v1"
+SOLVER_LEARNING_APPLICATION_CONTRACT_VERSION = "0.1.0"
 
 SOLVER_LEARNING_KINDS = (
     "NO_GOOD",
@@ -38,6 +43,7 @@ SOLVER_LEARNING_KINDS = (
 CORRECTNESS_SENSITIVE_KINDS = ("NO_GOOD", "UNSAT_CORE", "BOUND")
 PERFORMANCE_HINT_KINDS = ("INCUMBENT", "WARM_START", "NATIVE_ACCELERATOR")
 VALIDATION_STATUSES = ("PASS", "FAIL", "INCONCLUSIVE", "UNSUPPORTED")
+SOLVER_LEARNING_APPLICATION_CLASSES = ("PRUNING_CONSTRAINTS", "PERFORMANCE_HINT")
 
 
 def solver_learning_contract() -> dict[str, Any]:
@@ -45,6 +51,8 @@ def solver_learning_contract() -> dict[str, Any]:
         "contract_id": SOLVER_LEARNING_CONTRACT_ID,
         "contract_version": SOLVER_LEARNING_CONTRACT_VERSION,
         "stability": SOLVER_LEARNING_STABILITY,
+        "application_contract_id": SOLVER_LEARNING_APPLICATION_CONTRACT_ID,
+        "application_contract_version": SOLVER_LEARNING_APPLICATION_CONTRACT_VERSION,
         "kinds": list(SOLVER_LEARNING_KINDS),
         "correctness_sensitive": list(CORRECTNESS_SENSITIVE_KINDS),
         "performance_hints": list(PERFORMANCE_HINT_KINDS),
@@ -55,6 +63,27 @@ def solver_learning_contract() -> dict[str, Any]:
         "performance_hint_authority": "NEVER_TRUTH_OR_POLICY",
         "model_compatibility": "EXACT_MODEL_FINGERPRINT",
         "native_accelerator_compatibility": "EXACT_BACKEND_VERSION_AND_ENVIRONMENT",
+        "application": "EXPLICIT_VALIDATED_ADAPTER_APPLICATION_ONLY",
+        "application_truth_authority": "NONE",
+        "application_policy_authority": "NONE",
+        "solver_execution": "EXISTING_AASM_OPTIMIZATION_PROVIDER_PATH_ONLY",
+    }
+
+
+def solver_learning_application_contract() -> dict[str, Any]:
+    return {
+        "contract_id": SOLVER_LEARNING_APPLICATION_CONTRACT_ID,
+        "contract_version": SOLVER_LEARNING_APPLICATION_CONTRACT_VERSION,
+        "application_classes": list(SOLVER_LEARNING_APPLICATION_CLASSES),
+        "validation_required": "PASS_EXACT_ARTIFACT_AND_MODEL",
+        "pruning_authority_required": "PRUNING_CERTIFIED_FOR_EXACT_MODEL",
+        "performance_authority_required": "PERFORMANCE_HINT_ONLY",
+        "truth_authority": "NONE",
+        "policy_authority": "NONE",
+        "pruning_lowering": "NEW_OPTIMIZATION_MODEL_EXISTING_PROVIDER_PATH",
+        "performance_lowering": "EXPLICIT_PROVIDER_CONSUMED_HINT_ONLY",
+        "current_assignment_hint_provider": "ortools-cp-sat",
+        "native_accelerator_application": "UNSUPPORTED_UNTIL_EXPLICIT_PUBLIC_ADAPTER",
     }
 
 
@@ -229,6 +258,72 @@ class SolverLearningValidation:
     def to_dict(self) -> dict[str, Any]:
         return {"validation_id": self.validation_id, **self.identity_payload(), "fingerprint": self.fingerprint}
 
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "SolverLearningValidation":
+        payload = dict(value)
+        payload.pop("fingerprint", None)
+        payload["diagnostics"] = tuple(payload.get("diagnostics") or ())
+        return cls(**payload)
+
+
+@dataclass(frozen=True)
+class SolverLearningApplication:
+    learning_id: str
+    learning_fingerprint: str
+    validation_id: str
+    validation_fingerprint: str
+    original_model_fingerprint: str
+    application_class: str
+    application_payload: Mapping[str, Any]
+    transformed_model_fingerprint: str = ""
+    provider_id: str = ""
+    truth_authority: str = "NONE"
+    policy_authority: str = "NONE"
+    application_id: str = ""
+
+    def __post_init__(self) -> None:
+        if self.application_class not in SOLVER_LEARNING_APPLICATION_CLASSES:
+            raise ValueError(f"unsupported solver learning application class: {self.application_class}")
+        if not all((self.learning_id, self.learning_fingerprint, self.validation_id, self.validation_fingerprint, self.original_model_fingerprint)):
+            raise ValueError("solver learning application requires artifact, validation, and model identity")
+        if self.truth_authority != "NONE" or self.policy_authority != "NONE":
+            raise ValueError("solver learning application never carries truth or policy authority")
+        object.__setattr__(self, "application_payload", deepcopy(dict(self.application_payload)))
+        if not self.application_id:
+            object.__setattr__(self, "application_id", f"solver-learning-application-{semantic_fingerprint(self.identity_payload())[:24]}")
+
+    def identity_payload(self) -> dict[str, Any]:
+        return {
+            "contract_id": SOLVER_LEARNING_APPLICATION_CONTRACT_ID,
+            "contract_version": SOLVER_LEARNING_APPLICATION_CONTRACT_VERSION,
+            "learning_id": self.learning_id,
+            "learning_fingerprint": self.learning_fingerprint,
+            "validation_id": self.validation_id,
+            "validation_fingerprint": self.validation_fingerprint,
+            "original_model_fingerprint": self.original_model_fingerprint,
+            "application_class": self.application_class,
+            "application_payload": deepcopy(dict(self.application_payload)),
+            "transformed_model_fingerprint": self.transformed_model_fingerprint,
+            "provider_id": self.provider_id,
+            "truth_authority": self.truth_authority,
+            "policy_authority": self.policy_authority,
+        }
+
+    @property
+    def fingerprint(self) -> str:
+        return semantic_fingerprint({"application_id": self.application_id, **self.identity_payload()})
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"application_id": self.application_id, **self.identity_payload(), "fingerprint": self.fingerprint}
+
+    @classmethod
+    def from_dict(cls, value: Mapping[str, Any]) -> "SolverLearningApplication":
+        payload = dict(value)
+        payload.pop("fingerprint", None)
+        payload.pop("contract_id", None)
+        payload.pop("contract_version", None)
+        return cls(**payload)
+
 
 def _complete_finite_pool(
     model: OptimizationModel,
@@ -303,6 +398,21 @@ def _assignment_matches_literals(assignment: Mapping[str, float], literals: list
     return True
 
 
+def _validate_learning_literal_domain(artifact: SolverLearningArtifact, model: OptimizationModel) -> tuple[str, ...]:
+    if artifact.learning_kind not in {"NO_GOOD", "UNSAT_CORE"}:
+        return ()
+    variables = {row.variable_id: row for row in model.variables}
+    diagnostics: list[str] = []
+    for literal in artifact.payload["literals"]:
+        variable_id = str(literal["variable_id"])
+        variable = variables.get(variable_id)
+        if variable is None:
+            diagnostics.append(f"UNKNOWN_LITERAL_VARIABLE:{variable_id}")
+        elif variable.domain != "BOOL":
+            diagnostics.append(f"NON_BOOLEAN_LITERAL_VARIABLE:{variable_id}")
+    return tuple(sorted(set(diagnostics)))
+
+
 def revalidate_finite_solver_learning(
     artifact: SolverLearningArtifact,
     model: OptimizationModel,
@@ -325,6 +435,16 @@ def revalidate_finite_solver_learning(
             "FAIL",
             "NONE",
             diagnostics=("SOLVER_FAMILY_MISMATCH",),
+        )
+
+    literal_diagnostics = _validate_learning_literal_domain(artifact, model)
+    if literal_diagnostics:
+        return SolverLearningValidation(
+            artifact.learning_id,
+            model.fingerprint,
+            "FAIL",
+            "NONE",
+            diagnostics=literal_diagnostics,
         )
 
     if artifact.learning_kind in {"INCUMBENT", "WARM_START"}:
@@ -485,18 +605,210 @@ def validate_native_accelerator_hint(
     )
 
 
+def _require_application_validation(
+    artifact: SolverLearningArtifact,
+    validation: SolverLearningValidation,
+    model: OptimizationModel,
+) -> None:
+    if artifact.model_fingerprint != model.fingerprint or validation.model_fingerprint != model.fingerprint:
+        raise ValueError("solver learning application requires exact original model fingerprint")
+    if artifact.solver_family != model.solver_family:
+        raise ValueError("solver learning application solver family mismatch")
+    if validation.learning_id != artifact.learning_id:
+        raise ValueError("solver learning validation does not bind the artifact")
+    if validation.status != "PASS":
+        raise ValueError("solver learning application requires PASS local validation")
+    required = (
+        "PRUNING_CERTIFIED_FOR_EXACT_MODEL"
+        if artifact.learning_kind in CORRECTNESS_SENSITIVE_KINDS
+        else "PERFORMANCE_HINT_ONLY"
+    )
+    if validation.application_authority != required:
+        raise ValueError(f"solver learning application requires validation authority {required}")
+
+
+def _no_good_constraint(artifact: SolverLearningArtifact, model: OptimizationModel) -> OptimizationConstraint:
+    diagnostics = _validate_learning_literal_domain(artifact, model)
+    if diagnostics:
+        raise ValueError(f"invalid learned Boolean conjunction: {list(diagnostics)}")
+    literals = [BooleanLiteral.from_dict(row) for row in artifact.payload["literals"]]
+    metadata = {
+        "solver_learning_id": artifact.learning_id,
+        "solver_learning_kind": artifact.learning_kind,
+        "truth_authority": "NONE",
+    }
+    if model.solver_family == "SAT":
+        return OptimizationConstraint(
+            "CLAUSE",
+            literals=tuple(BooleanLiteral(row.variable_id, not row.positive) for row in literals),
+            metadata=metadata,
+        )
+    coefficients: dict[str, float] = {}
+    positive_count = 0
+    for literal in literals:
+        if literal.positive:
+            coefficients[literal.variable_id] = coefficients.get(literal.variable_id, 0.0) - 1.0
+            positive_count += 1
+        else:
+            coefficients[literal.variable_id] = coefficients.get(literal.variable_id, 0.0) + 1.0
+    return OptimizationConstraint(
+        "LINEAR",
+        coefficients=coefficients,
+        sense=">=",
+        rhs=float(1 - positive_count),
+        metadata=metadata,
+    )
+
+
+def _bound_constraint(artifact: SolverLearningArtifact, model: OptimizationModel) -> OptimizationConstraint:
+    if model.objective is None:
+        raise ValueError("BOUND application requires model objective")
+    bound = float(artifact.payload["value"])
+    tolerance = float(artifact.payload.get("tolerance", 0.0))
+    lower = artifact.payload["bound_type"] == "LOWER"
+    effective = bound - tolerance if lower else bound + tolerance
+    return OptimizationConstraint(
+        "LINEAR",
+        coefficients=dict(model.objective.coefficients),
+        sense=">=" if lower else "<=",
+        rhs=float(effective - model.objective.offset),
+        metadata={
+            "solver_learning_id": artifact.learning_id,
+            "solver_learning_kind": "BOUND",
+            "bound_type": artifact.payload["bound_type"],
+            "validated_tolerance": tolerance,
+            "truth_authority": "NONE",
+        },
+    )
+
+
+def build_solver_learning_application(
+    artifact: SolverLearningArtifact,
+    validation: SolverLearningValidation,
+    model: OptimizationModel,
+    *,
+    provider_id: str = "",
+) -> tuple[SolverLearningApplication, OptimizationModel | None]:
+    _require_application_validation(artifact, validation, model)
+    if artifact.learning_kind in CORRECTNESS_SENSITIVE_KINDS:
+        constraint = (
+            _no_good_constraint(artifact, model)
+            if artifact.learning_kind in {"NO_GOOD", "UNSAT_CORE"}
+            else _bound_constraint(artifact, model)
+        )
+        transformed = OptimizationModel(
+            f"{model.name}-validated-learning",
+            model.variables,
+            tuple((*model.constraints, constraint)),
+            objective=model.objective,
+            family=model.family,
+            metadata={
+                **deepcopy(model.metadata),
+                "solver_learning_original_model_fingerprint": model.fingerprint,
+                "solver_learning_id": artifact.learning_id,
+                "solver_learning_validation_id": validation.validation_id,
+                "truth_authority": "NONE",
+            },
+        )
+        application = SolverLearningApplication(
+            artifact.learning_id,
+            artifact.fingerprint,
+            validation.validation_id,
+            validation.fingerprint,
+            model.fingerprint,
+            "PRUNING_CONSTRAINTS",
+            {"constraint": constraint.to_dict()},
+            transformed_model_fingerprint=transformed.fingerprint,
+        )
+        return application, transformed
+
+    if artifact.learning_kind in {"INCUMBENT", "WARM_START"}:
+        if model.solver_family != "CP_SAT" or provider_id != "ortools-cp-sat":
+            raise ValueError(
+                "validated assignment hints currently require the explicit ortools-cp-sat adapter"
+            )
+        application = SolverLearningApplication(
+            artifact.learning_id,
+            artifact.fingerprint,
+            validation.validation_id,
+            validation.fingerprint,
+            model.fingerprint,
+            "PERFORMANCE_HINT",
+            {
+                "hint_kind": "ASSIGNMENT",
+                "source_kind": artifact.learning_kind,
+                "assignment": deepcopy(dict(artifact.payload["assignment"])),
+            },
+            transformed_model_fingerprint=model.fingerprint,
+            provider_id=provider_id,
+        )
+        return application, None
+
+    raise ValueError(
+        "validated native accelerator state has no explicit public adapter application in v0.53"
+    )
+
+
+def apply_solver_learning_to_optimization_request(
+    artifact: SolverLearningArtifact,
+    validation: SolverLearningValidation,
+    request: OptimizationRequest,
+) -> tuple[SolverLearningApplication, OptimizationRequest]:
+    application, transformed = build_solver_learning_application(
+        artifact,
+        validation,
+        request.model,
+        provider_id=request.required_provider,
+    )
+    metadata = deepcopy(request.metadata)
+    application_ids = list(metadata.get("solver_learning_application_ids") or [])
+    if application.application_id not in application_ids:
+        application_ids.append(application.application_id)
+    metadata["solver_learning_application_ids"] = sorted(set(map(str, application_ids)))
+    metadata["solver_learning_original_model_fingerprint"] = request.model.fingerprint
+    metadata["solver_learning_truth_authority"] = "NONE"
+    if application.application_class == "PERFORMANCE_HINT":
+        hints = list(metadata.get("solver_learning_hints") or [])
+        hints.append({
+            "application_id": application.application_id,
+            "provider_id": application.provider_id,
+            **deepcopy(dict(application.application_payload)),
+        })
+        metadata["solver_learning_hints"] = hints
+    updated = OptimizationRequest(
+        transformed or request.model,
+        request.capability_id,
+        request.capability_version,
+        request.obligation_id,
+        timeout_ms=request.timeout_ms,
+        required_provider=request.required_provider,
+        accept_feasible=request.accept_feasible,
+        environment_fingerprint=request.environment_fingerprint,
+        dependency_fingerprints=request.dependency_fingerprints,
+        metadata=metadata,
+    )
+    return application, updated
+
+
 __all__ = [
     "SOLVER_LEARNING_CONTRACT_ID",
     "SOLVER_LEARNING_CONTRACT_VERSION",
     "SOLVER_LEARNING_STABILITY",
     "SOLVER_LEARNING_CHECKER_ID",
     "SOLVER_LEARNING_CHECKER_VERSION",
+    "SOLVER_LEARNING_APPLICATION_CONTRACT_ID",
+    "SOLVER_LEARNING_APPLICATION_CONTRACT_VERSION",
     "SOLVER_LEARNING_KINDS",
     "CORRECTNESS_SENSITIVE_KINDS",
     "PERFORMANCE_HINT_KINDS",
+    "SOLVER_LEARNING_APPLICATION_CLASSES",
     "SolverLearningArtifact",
     "SolverLearningValidation",
+    "SolverLearningApplication",
     "solver_learning_contract",
+    "solver_learning_application_contract",
     "revalidate_finite_solver_learning",
     "validate_native_accelerator_hint",
+    "build_solver_learning_application",
+    "apply_solver_learning_to_optimization_request",
 ]
