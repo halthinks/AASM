@@ -271,11 +271,13 @@
 ./schemas/model-outcome.schema.json
 ./schemas/model-profile.schema.json
 ./schemas/model-route.schema.json
+./schemas/multi-objective-problem.schema.json
 ./schemas/observability-report.schema.json
 ./schemas/optimization-model.schema.json
 ./schemas/optimization-request.schema.json
 ./schemas/optimization-result.schema.json
 ./schemas/package-manifest.schema.json
+./schemas/pareto-frontier.schema.json
 ./schemas/pattern-machine.schema.json
 ./schemas/pbv-message.schema.json
 ./schemas/plan-edge.schema.json
@@ -326,7 +328,7 @@
 ./schemas/trace-projection.schema.json
 ./schemas/transition.schema.json
 ./schemas/truth-maintenance-plan.schema.json
-./schemas/typed-event-schema.schema.json
+./schemas/typed-event-schema.json
 ./schemas/worker-control.schema.json
 ./schemas/worker.schema.json
 ./scripts/check_formal_models.py
@@ -470,6 +472,7 @@
 ./src/aasm/model_check.py
 ./src/aasm/model_routing.py
 ./src/aasm/modeling_conformance.py
+./src/aasm/multi_objective.py
 ./src/aasm/observability.py
 ./src/aasm/openai_executor.py
 ./src/aasm/operator_runbooks.py
@@ -680,4 +683,5 @@
 ./tests/test_v51_public.py
 ./tests/test_v51_solution_pools.py
 ./tests/test_v51_solution_pools_real.py
+./tests/test_v52_multi_objective.py
 ./tests/test_workers_leases.py
