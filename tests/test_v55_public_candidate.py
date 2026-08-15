@@ -4,20 +4,19 @@ import aasm
 from aasm import public_v54, public_v55
 
 
-def test_v55_candidate_surface_is_additive_but_not_active_root_package():
+def test_v55_surface_is_active_root_package():
     report = public_v55.validate_public_api_contract()
     assert report["valid"] is True, report
-    assert public_v55.__version__ == "0.55.0.dev0"
-    assert public_v55.PUBLIC_RELEASE_STABILITY == "QUALIFICATION_CANDIDATE"
+    assert public_v55.__version__ == "0.55.0"
+    assert public_v55.PUBLIC_RELEASE_STABILITY == "ACTIVE_DEVELOPMENT"
     assert public_v55.PUBLIC_API_CONTRACT["contract_version"] == "0.31.0"
-    assert public_v55.PUBLIC_API_CONTRACT["runtime_version"] == "0.55.0.dev0"
+    assert public_v55.PUBLIC_API_CONTRACT["runtime_version"] == "0.55.0"
     assert public_v54.__version__ == "0.54.0"
-    assert aasm.__version__ == "0.54.0"
-    assert aasm.AASMEngine is public_v54.AASMEngine
-    assert public_v55.AASMEngine is not aasm.AASMEngine
+    assert aasm.__version__ == "0.55.0"
+    assert aasm.AASMEngine is public_v55.AASMEngine
 
 
-def test_v55_candidate_engine_exposes_revision_and_formulation_runtime():
+def test_v55_active_engine_exposes_revision_and_formulation_runtime():
     for method in (
         "semantic_evolution_runtime_contract_report",
         "semantic_evolution_report",
@@ -30,12 +29,12 @@ def test_v55_candidate_engine_exposes_revision_and_formulation_runtime():
         "prepare_registered_formulation_request",
         "formulation_report",
     ):
-        assert callable(getattr(public_v55.AASMEngine, method))
-        assert method in public_v55.SUPPORTED_ENGINE_METHODS
+        assert callable(getattr(aasm.AASMEngine, method))
+        assert method in aasm.SUPPORTED_ENGINE_METHODS
 
 
-def test_v55_candidate_exposes_truthful_ir_claim_ceilings():
-    contract = public_v55.public_api_contract()
+def test_v55_active_surface_preserves_truthful_ir_claim_ceilings():
+    contract = aasm.public_api_contract()
     assert contract["semantic_evolution"]["truth_authority"] == "EXISTING_AASM_ADMISSION_PATH_ONLY"
     assert contract["solver_formulation"]["truth_authority"] == "NONE"
     assert contract["discrete_ir"]["approximation"] == "NOT_SUPPORTED_BY_THIS_CONTRACT"
@@ -45,7 +44,7 @@ def test_v55_candidate_exposes_truthful_ir_claim_ceilings():
     assert contract["semantic_archive"]["replay_uses_persisted_snapshot"] is False
 
 
-def test_v55_candidate_import_registry_contains_new_engineering_contracts():
+def test_v55_active_import_registry_contains_new_engineering_contracts():
     for name in (
         "ExternalReference",
         "ProblemRevision",
@@ -59,6 +58,5 @@ def test_v55_candidate_import_registry_contains_new_engineering_contracts():
         "GovernedDecisionVector",
         "SemanticEvolutionArchive",
     ):
-        assert hasattr(public_v55, name)
-        assert name in public_v55.SUPPORTED_PUBLIC_IMPORTS
-        assert not hasattr(aasm, name) or name in public_v54.SUPPORTED_PUBLIC_IMPORTS
+        assert hasattr(aasm, name)
+        assert name in aasm.SUPPORTED_PUBLIC_IMPORTS
