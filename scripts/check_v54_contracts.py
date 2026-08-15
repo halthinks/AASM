@@ -62,11 +62,14 @@ def main() -> None:
     ))
     require(root / "src/aasm/public_v54.py", (
         '__version__ = "0.54.0"',
-        'PUBLIC_RELEASE_STABILITY = "PRE_RELEASE"',
+        'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
         '"contract_version": "0.30.0"',
         "settle_effect_resources",
         "validate_public_api_contract",
+        "_demo_stack.AASMEngine = AASMEngine",
     ))
+    require(root / "src/aasm/__init__.py", ("public_v54",))
+    require(root / "src/aasm/cli.py", ("cli_v54",))
     require(root / "tests/test_runtime_v54_effects.py", (
         "test_executor_cannot_cross_external_boundary_before_atomic_ownership_and_evidence",
         "test_sqlite_recovery_retains_ownership_marks_unknown_and_requires_scoped_reconciliation",
@@ -89,7 +92,11 @@ def main() -> None:
         "test_exchange_requires_source_local_pass_validation_before_target_materialization",
         "test_native_accelerator_state_is_not_cross_solver_portable",
     ))
-    print("v0.54 effect, resource settlement, portfolio, exchange, and public contracts: PASS")
+    require(root / "tests/test_v54_public.py", (
+        "test_v54_public_surface_is_additive_and_active_default",
+        "test_v54_active_public_surface_binds_demo_stack_to_v54_runtime",
+    ))
+    print("v0.54 active effect, resource settlement, portfolio, exchange, and public contracts: PASS")
 
 
 if __name__ == "__main__":
