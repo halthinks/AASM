@@ -83,9 +83,9 @@ The following are architectural requirements now, not a post-solver afterthought
 14. **Scope-safe inspection:** observability cannot depend on single-tenant global views.
 15. **No privileged hosted bypass:** hosted operator machines must consume public runtime semantics rather than mutate around them.
 
-# v0.52 — Resource-Governed Multi-Objective Decisions & Pareto Solving
+# v0.52.0 — Lexicographic Multi-Objective & Pareto Solving — Resource-Governed Decision Foundation
 
-v0.52 remains the multi-objective/Pareto release, but its purpose is broadened to establish the decision machinery required by real AASM resource allocation rather than treating optimization as solver-only functionality.
+v0.52 remains the lexicographic multi-objective and Pareto release, but its purpose is broadened to establish the decision machinery required by real AASM resource allocation rather than treating optimization as solver-only functionality.
 
 Primary contract targets:
 
@@ -121,7 +121,7 @@ Hard completion criterion:
 
 > On oracle-known finite multi-objective problems AASM reproduces the exact nondominated set and preserves lexicographic priorities; on resource-governance fixtures it must not allocate protected or unknown finite capacity as if freely available, must distinguish observed quota evidence from authoritative capacity, must route at least one decision across alternative intelligence/resource paths under hard quality constraints, and must reconcile reservation with actual use without granting authority or truth.
 
-# v0.53 — Scoped Identity/Authority Hardening + Durable Cross-Run Solver Learning
+# v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
 
 Primary goals:
 
@@ -129,14 +129,14 @@ Primary goals:
 - make store/query APIs scope-safe by construction;
 - formalize capability delegation, ceilings, expiry, and nondelegable denies;
 - preserve current cross-run knowledge rule that source authority never becomes receiving-run authority;
-- implement compatible cross-run solver learning (canonical no-goods/bounds/cores plus performance-only native accelerator state);
+- implement compatible durable cross-run solver learning (canonical no-goods/bounds/cores plus performance-only native accelerator state);
 - make resource capacities, leases, observations, consumption, and learned resource-estimation evidence scope-aware without a retrofit.
 
 Hard completion criterion:
 
 > Cross-scope reads/writes and privilege amplification fail closed in adversarial tests, while compatible learned solver/resource state remains reusable without inheriting foreign authority or truth.
 
-# v0.54 — Effect Ownership & UNKNOWN Recovery + Certified Portfolio Exchange
+# v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery
 
 Primary goals:
 
@@ -153,7 +153,7 @@ Hard completion criterion:
 
 > Crash/retry fixtures cannot silently duplicate or lose effect ownership, UNKNOWN effects remain unresolved until evidenced, and portfolio execution cannot consume resources outside its governed allocation.
 
-# v0.55 — Portable Machine Archive + Extended Mathematical IR
+# v0.55.0 — Extended Mathematical IR + Portable Machine Archive
 
 Primary goals:
 
@@ -168,9 +168,9 @@ Hard completion criterion:
 
 > A portable archive reconstructs the same canonical observable state under the declared compatibility boundary, and no supported mathematical lowering can silently change semantic identity.
 
-# v0.56 — Resource/Scope/Proof/Optimization Stress Corpus
+# v0.56.0 — Proof/Enumeration/Optimization/Resource/Scope Stress Corpus
 
-Permanent corpora include:
+Permanent Stress Corpus coverage includes:
 
 - SAT/UNSAT and proof-grade negative claims;
 - exact enumeration and solution pools;
@@ -188,7 +188,7 @@ Hard completion criterion:
 
 > Every public capability claim in the tranche maps to reproducible positive, negative, and adversarial evidence; performance measurements remain environment-bound evidence rather than correctness claims.
 
-# v0.57 — Semantic Solver RC2 + Public Hosted-Foundation Review
+# v0.57.0 — Semantic Solver RC2 / Contract Review + Public Hosted-Foundation Review
 
 This is a subsystem and architectural-boundary reassessment, not a v1.0 declaration.
 
