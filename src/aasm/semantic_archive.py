@@ -83,7 +83,10 @@ class SemanticEvolutionArchive:
         object.__setattr__(self, "events_fingerprint", expected_events)
         object.__setattr__(self, "projections_fingerprint", expected_projections)
         object.__setattr__(self, "root_fingerprint", expected_root)
-        object.__setattr__(self, "archive_id", self.archive_id or f"semantic-archive-{expected_root[:24]}")
+        expected_archive_id = f"semantic-archive-{expected_root[:24]}"
+        if self.archive_id and self.archive_id != expected_archive_id:
+            raise ValueError("semantic archive archive_id does not match root fingerprint")
+        object.__setattr__(self, "archive_id", expected_archive_id)
 
     def to_dict(self) -> dict[str, Any]:
         return {
