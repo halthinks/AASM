@@ -11,7 +11,7 @@ def _engine(goal="pg", *, capacity=2):
 
     store=PostgresStore(DSN)
     engine=AASMEngine(ProblemSpec(goal),store=store)
-    engine.register_resource(ResourceRecord("cpu","worker",["code"],capacity=capacity))
+    engine.register_resource(ResourceRecord("cpu","worker",["code","effect.execute"],capacity=capacity))
     engine.register_worker(WorkerRecord("w1","cpu"))
     return store,engine
 
@@ -130,7 +130,7 @@ def test_postgres_stale_hosts_do_not_overwrite_canonical_state():
 
 def test_postgres_effect_execution_has_single_owner_across_hosts():
     from threading import Event, Thread
-    from aasm import AASMEngine, EffectExecutionError, EffectSpec, EffectStatus
+    from aasm import AASMEngine, EffectSpec, EffectStatus, TaskDemand
     from aasm.evidence import EvidenceRecord
     from aasm.persistence.postgres import PostgresStore
     from aasm.runtime_v53 import EFFECT_AUTHORITY_CAPABILITIES
@@ -162,6 +162,11 @@ def test_postgres_effect_execution_has_single_owner_across_hosts():
         scope_id="root",
         actor_principal_id="root",
     )
+    lease=e.claim_task(
+        TaskDemand("effect-task",["effect.execute"],metadata={"effect_id":rec.spec.effect_id}),
+        "w1",
+        lease_seconds=60,
+    )
     mid=e.snapshot.machine_id
     b=PostgresStore(DSN)
     other=AASMEngine.resume(mid,b)
@@ -187,6 +192,8 @@ def test_postgres_effect_execution_has_single_owner_across_hosts():
                 workspace_id="workspace-a",
                 scope_id="root",
                 actor_principal_id="root",
+                owner_worker_id="w1",
+                task_lease_id=lease["lease_id"],
             )
         except Exception as exc:  # surfaced in the main test thread below
             error_box["error"]=exc
@@ -200,13 +207,15 @@ def test_postgres_effect_execution_has_single_owner_across_hosts():
             calls.append("second")
             return {"owner":"second"}
 
-        with pytest.raises(EffectExecutionError,match="already RUNNING"):
+        with pytest.raises(ValueError,match="cannot accept a new dispatch request from status RUNNING"):
             other.execute_effect(
                 rec.spec.effect_id,
                 forbidden_second_executor,
                 workspace_id="workspace-a",
                 scope_id="root",
                 actor_principal_id="root",
+                owner_worker_id="w1",
+                task_lease_id=lease["lease_id"],
             )
         assert calls == ["first"]
     finally:
