@@ -7,7 +7,7 @@ def require(path: Path, tokens: tuple[str, ...]) -> None:
     text = path.read_text(encoding="utf-8")
     missing = [token for token in tokens if token not in text]
     if missing:
-        raise SystemExit(f"{path}: missing v0.54 contract tokens {missing}")
+        raise SystemExit(f"{path}: missing v0.54 parent contract tokens {missing}")
 
 
 def main() -> None:
@@ -66,9 +66,8 @@ def main() -> None:
         '"contract_version": "0.30.0"',
         "settle_effect_resources",
         "validate_public_api_contract",
-        "_demo_stack.AASMEngine = AASMEngine",
     ))
-    require(root / "src/aasm/__init__.py", ("public_v54",))
+    require(root / "src/aasm/__init__.py", ("public_v55",))
     require(root / "src/aasm/cli.py", ("cli_v54",))
     require(root / "tests/test_runtime_v54_effects.py", (
         "test_executor_cannot_cross_external_boundary_before_atomic_ownership_and_evidence",
@@ -93,10 +92,10 @@ def main() -> None:
         "test_native_accelerator_state_is_not_cross_solver_portable",
     ))
     require(root / "tests/test_v54_public.py", (
-        "test_v54_public_surface_is_additive_and_active_default",
-        "test_v54_active_public_surface_binds_demo_stack_to_v54_runtime",
+        "test_v54_public_surface_remains_valid_versioned_parent",
+        "test_v54_full_engine_and_imports_remain_available_through_v55",
     ))
-    print("v0.54 active effect, resource settlement, portfolio, exchange, and public contracts: PASS")
+    print("v0.54 parent effect, resource settlement, portfolio, exchange, and public contracts: PASS")
 
 
 if __name__ == "__main__":
