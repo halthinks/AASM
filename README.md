@@ -2,23 +2,30 @@
 
 **Durable deterministic control for agents, tools, models, humans, formal systems, native solvers, governed memory, and cross-run knowledge.**
 
-## Current release — v0.52.0
+## Current release — v0.53.0
 
-**Resource-Governed Multi-Objective Decisions & Pareto Solving**
+**Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening**
 
-**Next release:** v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
+**Next release:** v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 
-v0.52 unifies exact finite multi-objective solving with governed real-world resource allocation. AASM can compare legal alternatives across correctness, evidence quality, expected progress, provider quota burn, monetary cost, wall time, and scarce expert usage; inspect Pareto alternatives; reserve capacity before execution; replan when estimates drift; and reconcile actual consumption afterward. Optimization, resource state, and SII utility remain Evidence—not truth or authority.
+v0.53 hardens the public control plane around Principal / Workspace / Scope authority, scope-safe persistence access, distributed resource ownership, external-effect authorization, and reusable cross-run solver learning. Foreign knowledge, resource availability, learned solver state, model confidence, and validated performance hints remain Evidence; none can silently become truth, policy authority, or permission to act.
 
 AASM's declared project license is **Apache License, Version 2.0 (`Apache-2.0`) across the project**. To the extent AASM has the necessary relicensing rights, prior AASM versions—including versions first distributed under MIT—are **also offered under Apache-2.0**. Previously granted MIT permissions remain valid for their recipients, but prior AASM versions are not designated MIT-only. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`LICENSE_POLICY.md`](LICENSE_POLICY.md).
 
 ### Current release contracts
 
 ```text
-package / public surface: 0.52.0
-aasm.adoption.v1 / 0.28.0
+package / public surface: 0.53.0
+aasm.adoption.v1 / 0.29.0
+aasm.identity.scoped.v1 / 0.1.0
+aasm.authority.scoped.v1 / 0.1.0
+aasm.authority.scoped.runtime.v1 / 0.1.0
+aasm.store.scoped.v1 / 0.1.0
+aasm.solver.learning.v1 / 0.1.0
+aasm.solver.learning.runtime.v1 / 0.1.0
+aasm.solver.learning.application.v1 / 0.1.0
 aasm.optimization.multi-objective.v1 / 0.1.0
 aasm.optimization.frontier.v1 / 0.1.0
 aasm.resource.capacity.v1 / 0.1.0
@@ -71,6 +78,119 @@ proposal / observation / solver output
 ```
 
 Performance state is allowed to improve performance. It is not allowed to redefine correctness.
+
+## v0.53 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
+
+v0.53 makes identity, authority, persistence access, distributed resource ownership, external-effect execution, and learned solver state explicit governed public semantics.
+
+### Scoped identity and authority
+
+```text
+Principal
+  ↓ acts within
+Workspace
+  ↓ addresses
+Scope
+  ↓ governs
+Machine / resource / effect / solver-learning action
+```
+
+Authority is explicit and fail-closed:
+
+```text
+no applicable grant      -> DENY
+matching DENY            -> overrides ALLOW
+expired grant            -> DENY
+delegation beyond parent -> DENY
+foreign/cross-run grant  -> never inherited
+resource availability    -> never authority
+```
+
+Delegation cannot exceed the issuer's active capability, scope, or remaining delegation depth. Delegated wildcard authority is forbidden. Denied decisions are themselves durable Evidence so attempted privilege use remains inspectable.
+
+### Scope-safe persistence
+
+`aasm.store.scoped.v1` is the v0.53 public read seam over existing stores. It does not create a second database or tenant truth plane.
+
+Raw machine access requires root scope and an unambiguous single workspace. Cross-workspace access, child-scope raw access, multi-workspace ambiguity, unfinished-machine enumeration leakage, and legacy unscoped effect access fail closed. The facade exposes no direct append/mutation API; writes still go through governed AASM runtime transitions.
+
+### Resource authority and stale-writer protection
+
+The v0.52 resource plane remains the underlying resource semantics, but v0.53 requires scoped authority for:
+
+```text
+resource.capacity.register
+resource.observe
+resource.reserve
+resource.reestimate
+resource.release
+resource.settle
+```
+
+Actor provenance is derived from the exact durable scoped-authority Evidence that permitted the mutation rather than duplicated into an independent resource ACL.
+
+Resource Evidence commits in v0.53 use an optimistic machine-version precondition. If two hosts plan from the same resource snapshot, only the first matching-version commit can succeed; the stale writer fails and reloads canonical state. The same behavior is exercised on MemoryStore, SQLite, and PostgreSQL.
+
+### Scoped external effects
+
+Effect proposal, authorization, execution, and reconciliation are separated:
+
+```text
+proposal
+   ↓
+effect.authorize
+   ↓
+effect.execute
+   ↓
+CONFIRMED | FAILED | UNKNOWN
+   ↓
+effect.reconcile
+```
+
+Each external execution attempt receives a fresh scoped authority decision. Expired or revoked execution authority therefore cannot be bypassed by retry behavior. Legacy unscoped effects are not silently adopted into a v0.53 workspace.
+
+### Durable cross-run solver learning
+
+Solver learning distinguishes correctness-sensitive artifacts from performance-only hints:
+
+```text
+correctness-sensitive:
+  NO_GOOD
+  UNSAT_CORE
+  BOUND
+
+performance-only:
+  INCUMBENT
+  WARM_START
+  NATIVE_ACCELERATOR
+```
+
+Cross-run transport reuses the existing v0.48 `CrossRunKnowledgeEnvelope(kind="REUSE_RESULT")` and receiving-run admission path. Admission preserves provenance; it does not make the imported artifact true or authoritative.
+
+Correctness-sensitive imported learning remains inert until the receiving run revalidates it against the exact model. Supported finite pruning/bound claims are checked against the independently certified complete feasible solution space.
+
+### Explicit solver-learning application
+
+Validation and application remain separate. `solver.learning.apply` requires the exact PASS validation, exact artifact/model binding, and scoped apply authority.
+
+```text
+truth_authority  = NONE
+policy_authority = NONE
+```
+
+Certified pruning lowers into a new canonical `OptimizationModel` and follows the existing optimization provider path. Validated assignment hints remain performance-only. The existing OR-Tools CP-SAT adapter explicitly consumes supported hints through `CpModel.add_hint(...)` and reports the solver-learning application IDs it consumed.
+
+Public CLI includes:
+
+```bash
+aasm scoped-authority-contract
+aasm scoped-authority-runtime-contract
+aasm scoped-store-contract
+aasm solver-learning-contract
+aasm solver-learning-runtime-contract
+```
+
+Dedicated exact-head release gates: `aasm/scoped-authority` and `aasm/solver-learning`.
 
 ## v0.52 — Resource-Governed Multi-Objective Decisions & Pareto Solving
 
@@ -502,9 +622,14 @@ pip install 'aasm-runtime[postgres]'
 
 ## CLI
 
-v0.52 contract inspection:
+v0.53 contract inspection:
 
 ```bash
+aasm scoped-authority-contract
+aasm scoped-authority-runtime-contract
+aasm scoped-store-contract
+aasm solver-learning-contract
+aasm solver-learning-runtime-contract
 aasm multi-objective-contract
 aasm pareto-frontier-contract
 aasm resource-routing-contract
@@ -544,6 +669,8 @@ AASM's current release gates include:
 - byte-reproducible wheel/sdist builds and clean installation;
 - LangGraph and framework-neutral adapter conformance;
 - **Optimization Backends** with real native solvers plus the dedicated v0.52 contract/adversarial suite; publishes exact-head `aasm/optimization`;
+- **Scoped Authority** with identity/delegation/resource/effect/store adversarial coverage and three-backend stale-resource protection; publishes exact-head `aasm/scoped-authority`;
+- **Solver Learning** with cross-run transport/admission, receiving-run revalidation, explicit application, and negative poisoning fixtures; publishes exact-head `aasm/solver-learning`;
 - **Cross-Run Knowledge** governance/adversarial tests;
 - **Formal Assurance** with bounded TLA+ and Promela/SPIN; publishes `aasm/formal-assurance`;
 - **Semantic Solver RC** upgrade, cross-backend, benchmark, claim-audit, public CLI, and full real certification; publishes `aasm/semantic-solver-rc`;
@@ -561,6 +688,8 @@ aasm/semantic-solver-rc
 aasm/proof-claims
 aasm/solution-pools
 aasm/optimization
+aasm/scoped-authority
+aasm/solver-learning
 ```
 
 ## License
@@ -590,9 +719,9 @@ Third-party material, if any, remains subject to its own applicable terms.
 - v0.49 Semantic Solver Release Candidate ✅
 - v0.50 Proof-Carrying Solver Claims ✅
 - v0.51 Governed Solution Pools & Complete Enumeration ✅
-- **v0.52 Resource-Governed Multi-Objective Decisions & Pareto Solving — current ✅**
-- **v0.53 Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening — next**
-- v0.54 Certified Cross-Solver Exchange & Deterministic Portfolio Racing
+- v0.52 Resource-Governed Multi-Objective Decisions & Pareto Solving ✅
+- **v0.53 Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening — current ✅**
+- **v0.54 Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery — next**
 - v0.55 Extended Mathematical IR + Portable Machine Archive
 - v0.56 Proof/Enumeration/Optimization/Resource/Scope Stress Corpus
 - v0.57 Semantic Solver RC2 / Contract Review + Public Hosted-Foundation Review
