@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/reproducibility-run.schema.json",
+  "title": "AASM Solver Reproducibility Run v1",
+  "type": "object",
+  "required": ["run_id", "contract_id", "contract_version", "result_id", "result_fingerprint", "outcome_id", "outcome_fingerprint", "provenance_id", "provenance_fingerprint", "profile_evaluation_id", "profile_evaluation_fingerprint", "configuration_fingerprint", "semantic_projection_fingerprint", "proof_fingerprint", "artifact_fingerprint", "metadata", "fingerprint"],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.solver.reproducibility-run.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "result_id": {"type": "string", "minLength": 1},
+    "result_fingerprint": {"type": "string", "minLength": 16},
+    "outcome_id": {"type": "string", "minLength": 1},
+    "outcome_fingerprint": {"type": "string", "minLength": 16},
+    "provenance_id": {"type": "string", "minLength": 1},
+    "provenance_fingerprint": {"type": "string", "minLength": 16},
+    "profile_evaluation_id": {"type": "string", "minLength": 1},
+    "profile_evaluation_fingerprint": {"type": "string", "minLength": 16},
+    "configuration_fingerprint": {"type": "string", "minLength": 16},
+    "semantic_projection_fingerprint": {"type": "string"},
+    "proof_fingerprint": {"type": "string"},
+    "artifact_fingerprint": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
