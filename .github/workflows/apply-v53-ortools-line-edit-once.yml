@@ -67,9 +67,10 @@ jobs:
           lines[stats_index] = "            stats = {\"conflicts\": int(solver.num_conflicts), \"branches\": int(solver.num_branches), \"wall_time_seconds\": float(solver.wall_time), \"raw_status\": raw_name, \"solver_learning_hint_count\": len(consumed_learning_applications), \"solver_learning_application_ids\": list(consumed_learning_applications)}"
 
           return_hits = [i for i in range(stats_index + 1, min(end, stats_index + 5)) if lines[i].lstrip().startswith("return OptimizationResult(request.request_id")]
-          if len(return_hits) != 2:
-              raise SystemExit(f"expected CP-SAT error and success returns, found {len(return_hits)}")
-          return_index = return_hits[-1]
+          success_hits = [i for i in return_hits if "statistics=stats" in lines[i]]
+          if len(return_hits) != 2 or len(success_hits) != 1:
+              raise SystemExit(f"expected CP-SAT error+success returns with one statistics result, found returns={len(return_hits)} success={len(success_hits)}")
+          return_index = success_hits[0]
           old_return = lines[return_index]
           if "statistics=stats)" not in old_return:
               raise SystemExit("CP-SAT success return shape drifted")
