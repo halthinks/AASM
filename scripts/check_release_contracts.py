@@ -66,7 +66,7 @@ def main():
     ])
     require(root / "src/aasm/runtime_v54_full.py", [
         "EffectResourceSettlementMixin",
-        "PortfolioEngine",
+        "V54ExchangeEngine",
         "AASMEngine",
     ])
     require(root / "src/aasm/runtime_v54.py", [
