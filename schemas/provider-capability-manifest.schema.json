@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/provider-capability-manifest.schema.json",
+  "title": "AASM Provider Capability Manifest v1",
+  "type": "object",
+  "required": ["manifest_id", "contract_id", "contract_version", "provider_id", "provider_version", "adapter_id", "adapter_version", "feature_support", "solver_families", "deterministic_profiles", "proof_capabilities", "solution_pool_capabilities", "incremental_capabilities", "status_capabilities", "environment_fingerprint", "metadata", "fingerprint"],
+  "properties": {
+    "manifest_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.provider.capability-manifest.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "provider_id": {"type": "string", "minLength": 1},
+    "provider_version": {"type": "string", "minLength": 1},
+    "adapter_id": {"type": "string", "minLength": 1},
+    "adapter_version": {"type": "string", "minLength": 1},
+    "feature_support": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["feature_id", "support_level", "transformation_id", "tolerance_policy_id", "limitations", "metadata", "fingerprint"],
+        "properties": {
+          "feature_id": {"type": "string", "minLength": 1},
+          "support_level": {"enum": ["EXACT_NATIVE", "EXACT_TRANSLATED", "APPROXIMATE_TRANSLATED", "VERIFIER_ONLY", "UNSUPPORTED"]},
+          "transformation_id": {"type": "string"},
+          "tolerance_policy_id": {"type": "string"},
+          "limitations": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+          "metadata": {"type": "object"},
+          "fingerprint": {"type": "string", "minLength": 16}
+        },
+        "additionalProperties": false
+      }
+    },
+    "solver_families": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "deterministic_profiles": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "proof_capabilities": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "solution_pool_capabilities": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "incremental_capabilities": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "status_capabilities": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "environment_fingerprint": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
