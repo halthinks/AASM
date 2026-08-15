@@ -531,6 +531,7 @@ class PySATCadicalWorker:
                         assignment[variable_id] = 1.0 if index in model_values else 0.0
                 stats = dict(solver.accum_stats() or {})
                 status = "SAT" if solved else "UNSAT"
+                stats.update({"raw_status": status, "raw_status_code": "1" if solved else "0"})
         except Exception as exc:
             return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, "ERROR", OptimizationSolverIdentity(self.provider_id, f"pysat:{self.solver_name}", _package_version("python-sat"), metadata={"solver_name": self.solver_name}), wall_time_ms=int((time.monotonic() - start) * 1000), diagnostics=(f"{type(exc).__name__}: {exc}",))
         return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, status, OptimizationSolverIdentity(self.provider_id, f"pysat:{self.solver_name}", _package_version("python-sat"), metadata={"solver_name": self.solver_name}), assignment=assignment, wall_time_ms=int((time.monotonic() - start) * 1000), statistics=stats)
@@ -594,6 +595,7 @@ class ORToolsCPSATWorker:
         try:
             raw = solver.solve(model)
             raw_name = solver.status_name(raw)
+            raw_code = str(int(raw))
             if raw == cp_model.INFEASIBLE:
                 status = "UNSAT" if request.model.objective is None else "INFEASIBLE"
             elif raw == cp_model.OPTIMAL:
@@ -602,12 +604,14 @@ class ORToolsCPSATWorker:
                 status = "SAT" if request.model.objective is None else "FEASIBLE"
             elif raw == cp_model.UNKNOWN:
                 status = "UNKNOWN"
+            elif raw == cp_model.MODEL_INVALID:
+                status = "ERROR"
             else:
                 status = "ERROR"
             assignment = {vid: float(solver.value(var)) for vid, var in variables.items()} if status in {"SAT", "OPTIMAL", "FEASIBLE"} else {}
             objective = float(solver.objective_value) if request.model.objective and assignment else None
             best_bound = float(solver.best_objective_bound) if request.model.objective else None
-            stats = {"conflicts": int(solver.num_conflicts), "branches": int(solver.num_branches), "wall_time_seconds": float(solver.wall_time), "raw_status": raw_name, "solver_learning_hint_count": len(consumed_learning_applications), "solver_learning_application_ids": list(consumed_learning_applications)}
+            stats = {"conflicts": int(solver.num_conflicts), "branches": int(solver.num_branches), "wall_time_seconds": float(solver.wall_time), "raw_status": raw_name, "raw_status_code": raw_code, "solver_learning_hint_count": len(consumed_learning_applications), "solver_learning_application_ids": list(consumed_learning_applications)}
             return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, status, OptimizationSolverIdentity(self.provider_id, "ortools.cp-sat", _package_version("ortools")), assignment=assignment, objective_value=objective, best_bound=best_bound, wall_time_ms=int((time.monotonic() - start) * 1000), statistics=stats, metadata={"solver_learning_application_ids": list(consumed_learning_applications), "solver_learning_hints_consumed": len(consumed_learning_applications)})
         except Exception as exc:
             return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, "ERROR", OptimizationSolverIdentity(self.provider_id, "ortools.cp-sat", _package_version("ortools")), wall_time_ms=int((time.monotonic() - start) * 1000), diagnostics=(f"{type(exc).__name__}: {exc}",))
@@ -637,23 +641,55 @@ class HighsMILPWorker:
                 h.minimize(expr) if request.model.objective.sense == "MINIMIZE" else h.maximize(expr)
             else:
                 h.run()
-            raw_name = h.modelStatusToString(h.getModelStatus())
-            lower = raw_name.lower()
-            if "optimal" in lower:
+            raw = h.getModelStatus()
+            raw_name = str(getattr(raw, "name", str(raw).rsplit(".", 1)[-1]))
+            raw_code = str(int(raw))
+            info = h.getInfo()
+            has_primal = info.primal_solution_status == highspy.SolutionStatus.kSolutionStatusFeasible
+            error_statuses = {
+                highspy.HighsModelStatus.kLoadError,
+                highspy.HighsModelStatus.kModelError,
+                highspy.HighsModelStatus.kPresolveError,
+                highspy.HighsModelStatus.kSolveError,
+                highspy.HighsModelStatus.kPostsolveError,
+            }
+            early_statuses = {
+                highspy.HighsModelStatus.kObjectiveBound,
+                highspy.HighsModelStatus.kObjectiveTarget,
+                highspy.HighsModelStatus.kIterationLimit,
+                highspy.HighsModelStatus.kSolutionLimit,
+                highspy.HighsModelStatus.kInterrupt,
+                highspy.HighsModelStatus.kUnknown,
+            }
+            if raw == highspy.HighsModelStatus.kOptimal:
                 status = "OPTIMAL" if request.model.objective else "SAT"
-            elif "infeasible" in lower:
+            elif raw == highspy.HighsModelStatus.kInfeasible:
                 status = "INFEASIBLE" if request.model.objective else "UNSAT"
-            elif "time" in lower:
+            elif raw == highspy.HighsModelStatus.kTimeLimit:
                 status = "TIMEOUT"
-            elif "feasible" in lower:
-                status = "FEASIBLE" if request.model.objective else "SAT"
+            elif raw in error_statuses:
+                status = "ERROR"
+            elif raw in early_statuses:
+                status = "FEASIBLE" if has_primal and request.model.objective else ("SAT" if has_primal else "UNKNOWN")
             else:
                 status = "UNKNOWN"
-            assignment = {vid: float(h.val(var)) for vid, var in variables.items()} if status in {"SAT", "OPTIMAL", "FEASIBLE"} else {}
+            assignment_allowed = status in {"SAT", "OPTIMAL", "FEASIBLE", "TIMEOUT"} and has_primal
+            assignment = {vid: float(h.val(var)) for vid, var in variables.items()} if assignment_allowed else {}
             objective = objective_value(request.model, assignment) if assignment else None
-            info = h.getInfo()
-            stats = {"raw_status": raw_name, "simplex_iterations": int(getattr(info, "simplex_iteration_count", 0)), "mip_nodes": int(getattr(info, "mip_node_count", 0))}
-            return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, status, OptimizationSolverIdentity(self.provider_id, "highspy", _package_version("highspy")), assignment=assignment, objective_value=objective, wall_time_ms=int((time.monotonic() - start) * 1000), statistics=stats)
+            best_bound_raw = getattr(info, "mip_dual_bound", None) if request.model.objective else None
+            relative_gap_raw = getattr(info, "mip_gap", None) if request.model.objective else None
+            best_bound = None if best_bound_raw is None else float(best_bound_raw)
+            relative_gap = None if relative_gap_raw is None else float(relative_gap_raw)
+            stats = {
+                "raw_status": raw_name,
+                "raw_status_code": raw_code,
+                "primal_solution_status": h.solutionStatusToString(info.primal_solution_status),
+                "simplex_iterations": int(getattr(info, "simplex_iteration_count", 0)),
+                "mip_nodes": int(getattr(info, "mip_node_count", 0)),
+                "mip_gap": relative_gap,
+                "mip_dual_bound": best_bound,
+            }
+            return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, status, OptimizationSolverIdentity(self.provider_id, "highspy", _package_version("highspy")), assignment=assignment, objective_value=objective, best_bound=best_bound, relative_gap=relative_gap, wall_time_ms=int((time.monotonic() - start) * 1000), statistics=stats)
         except Exception as exc:
             return OptimizationResult(request.request_id, request.fingerprint, request.model.fingerprint, "ERROR", OptimizationSolverIdentity(self.provider_id, "highspy", _package_version("highspy")), wall_time_ms=int((time.monotonic() - start) * 1000), diagnostics=(f"{type(exc).__name__}: {exc}",))
 
