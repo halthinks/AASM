@@ -167,7 +167,7 @@ PUBLIC_API_CONTRACT["scoped_identity_authority"] = {
 }
 PUBLIC_API_CONTRACT["solver_learning"] = {
     **solver_learning_contract(),
-    "application": solver_learning_application_contract(),
+    "application_contract": solver_learning_application_contract(),
     "runtime": solver_learning_runtime_contract(),
 }
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
@@ -196,7 +196,7 @@ def validate_public_api_contract():
     authority = PUBLIC_API_CONTRACT.get("scoped_identity_authority") or {}
     authority_runtime = authority.get("runtime") or {}
     solver_learning = PUBLIC_API_CONTRACT.get("solver_learning") or {}
-    solver_application = solver_learning.get("application") or {}
+    solver_application = solver_learning.get("application_contract") or {}
     solver_runtime = solver_learning.get("runtime") or {}
     if authority.get("contract_id") != SCOPED_AUTHORITY_CONTRACT_ID:
         errors.append("scoped authority contract identity mismatch")
