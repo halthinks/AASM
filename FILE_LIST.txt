@@ -11,7 +11,6 @@
 ./.github/workflows/optimization.yml
 ./.github/workflows/proof-claims.yml
 ./.github/workflows/rc.yml
-./.github/workflows/refresh-v53-inventory.yml
 ./.github/workflows/release.yml
 ./.github/workflows/scoped-authority.yml
 ./.github/workflows/solution-pools.yml
