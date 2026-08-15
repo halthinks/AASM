@@ -1,12 +1,14 @@
 # AASM Governed Semantic Evolution — Execution Ledger
 
 **Status projection date:** 2026-08-15  
-**Baseline:** released v0.54.0; v0.55 foundation active on `main`  
+**Baseline:** released v0.55.0 at tag `v0.55.0` / commit `dd9360858be8755a5639162a7d388d867c1b01e6`  
 **Doctrine:** `docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md`  
 **Roadmap:** `docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md`  
 **Source lock:** `docs/source_material/SOURCE_LOCK_MANIFEST.md`
 
 This is the canonical mutable progress ledger. It may advance or refine work items, but locked requirements may not disappear. When an item is split, the parent row remains and points to its children.
+
+Dormant or interrupted source code for a future release does **not** advance a ledger row by itself. A future row advances only when that release is resumed in sequence and its contract/runtime/test/gate evidence is deliberately qualified. This rule applies to the interrupted v0.56 files that existed before v0.55 was actually released.
 
 ## Status vocabulary
 
@@ -16,22 +18,25 @@ This is the canonical mutable progress ledger. It may advance or refine work ite
 
 | ID | Release | Capability | Status | Primary source requirement | Current code/contracts | Dependencies | Acceptance / adversarial evidence | Claim ceiling | Gate / next action |
 |---|---:|---|---|---|---|---|---|---|---|
-| SRC-001 | cross | Source lock and doctrine | SOURCE_LOCKED | Preserve supplied TextPCB/AASM sources; prevent implementation drift | Whitepaper, canonical roadmap, source-lock manifest; exact source bundle retained separately | v0.54 baseline | immutable hashes + baseline commit + precedence/no-overwrite rules | architecture doctrine only | add new source revisions; never silently rewrite locked sources |
-| 55.1-A | 0.55 | ExternalReference | TESTED | stable external requirement/decision identity through generated solver objects | `src/aasm/semantic_evolution.py`; `aasm.external.reference.v1`; schema | semantic fingerprinting | full exact-head CI; deterministic round-trip + missing-identity rejection | foundation experimental; not active package API | include in dedicated v0.55 gate |
-| 55.1-B | 0.55 | ProblemRevision | TESTED | revision-bound evidence/solver/verifier/external-machine semantics | `aasm.problem.revision.v1`; Evidence projection + dev runtime | ExternalReference | full exact-head CI; SQLite replay/restart; single durable head reconstruction | foundation experimental; linear single-parent v0.55 foundation | formalize broader graph semantics only when needed; do not overclaim merges |
-| 55.1-C | 0.55 | ProblemDelta | TESTED | deterministic change impact and refinement materialization | `aasm.problem.delta.v1`; typed semantic truth-change roots; schema | ProblemRevision; semantic dependencies | full exact-head CI; evidence-overlap rejection; exact stale-base fencing; target semantic fingerprint checks | foundation experimental | add formulation/artifact impact mappings as later objects land |
-| 55.1-D | 0.55 | Revision transition + durable runtime | TESTED | stale-result rejection; exact base/target binding; crash-safe change application | `validate_revision_transition`; `aasm.semantic-evolution.runtime.v1`; `runtime_v55_foundation.py` | ProblemRevision/Delta; v0.38 truth maintenance; v0.54 runtime | exact-head CI `053e1082…`: SQLite restart with pending impact, idempotent resume, replay equality, two-host stale writer rejection and canonical reload | development foundation only; active package remains v0.54 | create dedicated exact-head `aasm/v55` gate |
-| 55.2-A | 0.55 | Model feature set | TESTED | fail-closed provider/model admission | `src/aasm/model_features.py`; `aasm.model.feature-set.v1`; schema | 55.1 revision binding | exact-head CI; duplicate/revision-pair validation; exact vs approximate requirement fixtures | feature declaration/admission foundation | include in v0.55 gate; connect to formulation/provider path in 55.3 |
-| 55.2-B | 0.55 | Provider capability manifest | TESTED | provider feature/status/proof/provenance negotiation | `aasm.provider.capability-manifest.v1`; schema | 55.2-A | exact-head CI; transformation/tolerance-policy requirements; missing feature fail-closed | capability evidence only; no provider truth authority | connect manifest fingerprint to formulations |
-| 55.2-C | 0.55 | Model admission report | TESTED | prevent unsupported/approximate semantics from silently entering provider execution | `aasm.model.admission.v1`; schema; `evaluate_model_admission` | 55.2-A/B | exact-head CI: exact native/translated pass; exact-required approximation fails; verifier-only must be explicit | pre-provider semantic admission decision only | make mandatory input to 55.3 formulation execution seam |
-| 55.3 | 0.55 | Generalized formulation artifact | SOURCE_LOCKED | preserve variable/constraint/objective/external-reference mappings | planned `aasm.solver.formulation.v1`; reuse v0.54 translation | 55.1, 55.2 | dropped/mutated mapping must fail; v0.54 identity translation remains valid | none yet | **next implementation tranche** |
-| 55.4 | 0.55 | Shared objective-vector IR | SOURCE_LOCKED | semantic objectives ↔ optimization objectives; true lexicographic priorities | extend v0.52 multi-objective | 55.1, 55.2, 55.3 | higher-priority compliance beats lower-priority gain | exact finite semantics already released; shared IR not yet | implement after formulation seam |
-| 55.5 | 0.55 | Portable semantic-evolution archive | SOURCE_LOCKED | portable replay/export without hosted-only state | extend current persistence/export work | 55.1-55.4 | round-trip + tamper detection + replay equality | none yet | design archive around all known future object families |
-| 56.1 | 0.56 | Solver outcome v2 | SOURCE_LOCKED | normalized fine-grained statuses | planned | 55.2/55.3 | provider-specific termination/incumbent/bound/proof fixtures | old coarse status remains current | implement after v0.55 formulation identity |
-| 56.2 | 0.56 | Execution profile + runtime provenance | SOURCE_LOCKED | evidence-grade deterministic execution | planned | 55.3, 56.1 | effective-option/env/provider identity fixtures | current fingerprints/solver identity only | implement provider-neutral contract then adapters |
-| 56.3 | 0.56 | Reproducibility certification | SOURCE_LOCKED | truthful reproducibility claim levels | planned | 56.2 | semantic/assignment/objective/proof equivalence reruns | none yet | follow provenance |
+| SRC-001 | cross | Source lock and doctrine | SOURCE_LOCKED | Preserve supplied TextPCB/AASM sources; prevent implementation drift | Whitepaper, canonical roadmap, source-lock manifest; exact source bundle retained separately | v0.55 baseline | immutable hashes + baseline commit + precedence/no-overwrite rules | architecture doctrine only | add new source revisions; never silently rewrite locked sources |
+| 55.1-A | 0.55 | ExternalReference | RELEASED | stable external requirement/decision identity through generated solver objects | `src/aasm/semantic_evolution.py`; `aasm.external.reference.v1`; schema; public v0.55 | semantic fingerprinting | exact-head v0.55 + full CI; deterministic round-trip + missing-identity rejection | stable v0.55 identity contract; no truth authority by identity alone | released in `v0.55.0` |
+| 55.1-B | 0.55 | ProblemRevision | RELEASED | revision-bound evidence/solver/verifier/external-machine semantics | `aasm.problem.revision.v1`; Evidence projection + v0.55 runtime | ExternalReference | SQLite replay/restart; single durable head reconstruction; stale revision rejection | linear single-parent v0.55 transition foundation; no merge claim | released in `v0.55.0` |
+| 55.1-C | 0.55 | ProblemDelta | RELEASED | deterministic change impact and refinement materialization | `aasm.problem.delta.v1`; typed semantic truth-change roots; schema | ProblemRevision; semantic dependencies | evidence-overlap rejection; exact stale-base fencing; target semantic fingerprint checks | deterministic declared delta; no universal domain-change inference | released in `v0.55.0` |
+| 55.1-D | 0.55 | Revision transition + durable runtime | RELEASED | stale-result rejection; exact base/target binding; crash-safe change application | `validate_revision_transition`; `aasm.semantic-evolution.runtime.v1`; `runtime_v55_foundation.py` | ProblemRevision/Delta; v0.38 truth maintenance; v0.54 runtime | SQLite restart with pending impact; idempotent resume; replay equality; two-host stale writer rejection | existing Evidence/reducer authority only; no parallel truth table | released in `v0.55.0`; exact-head `aasm/v55` required |
+| 55.2-A | 0.55 | Model feature set | RELEASED | fail-closed provider/model admission | `src/aasm/model_features.py`; `aasm.model.feature-set.v1`; schema | 55.1 revision binding | duplicate/revision-pair validation; exact vs approximate requirement fixtures | feature declaration/admission only | released in `v0.55.0` |
+| 55.2-B | 0.55 | Provider capability manifest | RELEASED | provider feature/status/proof/provenance negotiation | `aasm.provider.capability-manifest.v1`; schema | 55.2-A | transformation/tolerance-policy requirements; missing feature fail-closed | capability evidence only; no provider truth authority | released in `v0.55.0` |
+| 55.2-C | 0.55 | Model admission report | RELEASED | prevent unsupported/approximate semantics from silently entering provider execution | `aasm.model.admission.v1`; schema; `evaluate_model_admission` | 55.2-A/B | exact native/translated pass; exact-required approximation fails; verifier-only explicit | pre-provider semantic admission decision only | released in `v0.55.0` |
+| 55.3 | 0.55 | Generalized formulation artifact | RELEASED | preserve variable/constraint/objective/external-reference mappings | `aasm.solver.formulation.v1`; certificate; execution binding; durable formulation runtime | 55.1, 55.2 | mapping completeness; reference resolution; revision fencing; identity checker; v0.54 bridge | built-in checker certifies exact identity only; nontrivial translation requires independent checker | released in `v0.55.0`; children 55.3-A–C extend model families |
+| 55.3-A | 0.55 | Exact pseudo-Boolean/cardinality IR | RELEASED | richer exact discrete engineering constraints with formulation lineage | `src/aasm/discrete_ir.py`; typed PB/cardinality contracts; exact linearization certificate/schemas | 55.2, 55.3 | sampled semantic equivalence; tamper/wrong-transform rejection; constant contradiction handling | exact lowering only; approximation not supported by this contract | released in `v0.55.0` |
+| 55.3-B | 0.55 | Portable scheduling IR | RELEASED | precedence/no-overlap/cumulative scheduling semantics without provider lock-in | `src/aasm/scheduling_ir.py`; scheduling model/assignment/validation/provider-binding schemas | 55.2, 55.3 | precedence/no-overlap/cumulative validation; fractional resource demand rejected; provider admission | portable semantics + independent assignment validation; complete scheduling execution adapter not claimed | released in `v0.55.0` |
+| 55.3-C | 0.55 | Deterministic quadratic/conic IR | RELEASED | continuous engineering representation with explicit numerical policy | `src/aasm/continuous_ir.py`; canonical decimals; quadratic/SOC; tolerance/provider-binding schemas | 55.2, 55.3 | deterministic serialization; quadratic + SOC feasibility checks; tolerance binding | structural representation and assignment validation only; convexity/global optimality proof not claimed | released in `v0.55.0` |
+| 55.4 | 0.55 | Shared objective-vector IR | RELEASED | semantic objectives ↔ optimization objectives; true lexicographic priorities | `src/aasm/decision_vector_ir.py`; hard floors + explicit objective priority; exact-linear compiler to v0.52 finite engine | 55.1, 55.2, 55.3 | hard-floor exclusion before objectives; priority-order fixtures; unsupported named/nonlinear compilation fails closed | `scalarization = NONE`; only exactly representable linear objectives compile | released in `v0.55.0` |
+| 55.5 | 0.55 | Portable semantic-evolution archive | RELEASED | portable replay/export without hosted-only state | `aasm.semantic-evolution.archive.v1`; event history + canonical snapshot + derived projections + root hash | 55.1-55.4 | byte-stable round trip; section/root tamper rejection; existing-reducer replay equality; root-derived archive ID | archived events are replay input; snapshot is comparison evidence; sequence is ordering, not machine version | released in `v0.55.0` |
+| 56.1 | 0.56 | Solver outcome v2 | SOURCE_LOCKED | normalized fine-grained statuses | **future release row intentionally not advanced by interrupted/dormant source files** | released 55.2/55.3 | provider-specific termination/incumbent/bound/proof fixtures required when v0.56 resumes | v0.55 coarse result semantics remain active release authority | next implementation release after explicit v0.56 resume |
+| 56.2 | 0.56 | Execution profile + runtime provenance | SOURCE_LOCKED | evidence-grade deterministic execution | future release requirement; interrupted provenance files are dormant and excluded from v0.55 qualification | 55.3, 56.1 | effective-option/env/provider/adapter identity fixtures required | no v0.56 reproducibility claim yet | resume only after v0.56 plan is re-established |
+| 56.3 | 0.56 | Reproducibility certification | SOURCE_LOCKED | truthful reproducibility claim levels | future release requirement; dormant interrupted tests do not count as qualification | 56.2 | semantic/assignment/objective/proof equivalence reruns required | none released | follow provenance after deliberate v0.56 restart |
 | 56.4 | 0.56 | Generic knowledge applicability/application | SOURCE_LOCKED | durable applicability-scoped learned constraints beyond solver learning | generalize v0.48/v0.53 mechanisms | 55.1, 56.1 | poisoned/cross-revision/cross-scope reuse attacks | solver-learning subset already real | design without second knowledge store |
-| 56.5 | 0.56 | Integrated core/conflict pipeline | SOURCE_LOCKED | raw → normalized → minimized → independently rechecked external requirement core | reuse `conflict_minimization.py` | 55.1, 55.3, 56.1 | irrelevant-assumption/core oracle fixtures | generic minimizer exists; real pipeline incomplete | integrate after formulation lineage |
+| 56.5 | 0.56 | Integrated core/conflict pipeline | SOURCE_LOCKED | raw → normalized → minimized → independently rechecked external requirement core | reuse `conflict_minimization.py` | 55.1, 55.3, 56.1 | irrelevant-assumption/core oracle fixtures | generic minimizer exists; real pipeline incomplete | integrate after truthful outcome/formulation lineage |
 | 57.1 | 0.57 | External machine binding | SOURCE_LOCKED | AASM supervises TextPCB state machine without mirroring truth | planned `aasm.machine.binding.v1` | 55.1, v0.54 effects | stale observed revision, out-of-band change | none yet | build over EffectIntent |
 | 57.2 | 0.57 | Revision-safe machine transition | SOURCE_LOCKED | transition intent/receipt/expected state | planned `aasm.machine.transition.v1` -> v0.54 EffectIntent | 57.1, v0.54 ownership | no call before ownership; stale prestate rejects; UNKNOWN blocks retry | effect ownership already real | no second effect lifecycle |
 | 57.3 | 0.57 | Artifact revision lineage | SOURCE_LOCKED | CAD/PCB/CAE artifacts are immutable revisioned outputs | planned | 55.1, 57.1 | tamper/parent lineage/stale artifact tests | existing artifact backend only | add canonical lineage |
@@ -50,19 +55,50 @@ This is the canonical mutable progress ledger. It may advance or refine work ite
 | 61.1 | 0.61 | Permanent stress corpus | SOURCE_LOCKED | adversarial proof of public claims | planned | all | cross-capability attack corpus | none yet | moved from old v0.56 milestone |
 | 62.1 | 0.62 | Semantic Solver RC2 + hosted-foundation review | SOURCE_LOCKED | public engine can support hosted fabric without private semantic bypass | planned | all | claim-to-gate audit + architecture boundary review | none yet | moved from old v0.57 review |
 
-## Verified exact-head evidence so far
+## Verified exact-head v0.55 release evidence
 
-- CI run `31906265347` passed at `45ef002a600d0e208c1c5ffb476415de48a820c5`, covering the initial 55.1 contract and 55.2 admission foundations.
-- CI run `31906790298` passed at `053e10824f0ea9f685f529974c368af938b1d35b`, covering the durable 55.1 runtime, SQLite restart/resume, truth-maintenance integration, and stale two-host commit fencing in the full repository matrix.
-- These are development claims only. The active package/public export remains released v0.54 until v0.55 receives its own exact-head gate and complete release-contract evidence.
+Release commit: `dd9360858be8755a5639162a7d388d867c1b01e6`  
+Tag: `v0.55.0`  
+GitHub release workflow: `31912974049` — **SUCCESS**
+
+Exact-SHA required statuses all passed on the release commit:
+
+- `aasm/ci-summary`
+- `aasm/formal-assurance`
+- `aasm/semantic-solver-rc`
+- `aasm/proof-claims`
+- `aasm/solution-pools`
+- `aasm/optimization`
+- `aasm/scoped-authority`
+- `aasm/solver-learning`
+- `aasm/v54` parent compatibility
+- `aasm/v55` active release qualification
+- `aasm/release`
+
+Release publication additionally passed:
+
+- two byte-identical wheel/sdist builds;
+- historical release audit + immutable release manifests;
+- clean wheel installation and public-contract exercise;
+- immutable tag target verification;
+- remote GitHub release asset byte verification;
+- SHA-256 manifest publication.
+
+Earlier foundation evidence remains useful history:
+
+- CI run `31906265347` at `45ef002a600d0e208c1c5ffb476415de48a820c5` covered initial 55.1 contract and 55.2 admission foundations.
+- CI run `31906790298` at `053e10824f0ea9f685f529974c368af938b1d35b` covered durable 55.1 runtime, SQLite restart/resume, truth-maintenance integration, and stale two-host commit fencing.
 
 ## Immediate builder queue
 
-1. Establish dedicated `aasm/v55` exact-head contract workflow now and require the already-landed 55.1/55.2 foundations there.
-2. Generalize v0.54 solver translation into 55.3 `FormulationArtifact`, preserving exact v0.54 behavior and adding explicit variable/constraint/objective/external-reference mapping plus admission/manifest binding.
-3. Build 55.4 shared objective-vector IR only after the formulation seam can carry stable lineage.
-4. Build 55.5 archive around the now-known future object families, not a narrow v0.54 snapshot.
+1. **Do not reopen v0.55.** Treat `v0.55.0` as the released parent boundary.
+2. Reconcile the v0.56 plan against the released v0.55 interfaces before resuming implementation; dormant interrupted files do not define the plan.
+3. Resume 56.1 Solver Outcome v2 first, then 56.2 execution provenance, then 56.3 reproducibility certification.
+4. Only after 56.1–56.3 are deliberately gated should 56.4 generic knowledge applicability and 56.5 integrated core/conflict pipeline advance.
+5. Keep TextPCB as a demanding consumer/conformance target; do not move TextPCB-specific types into the kernel.
 
 ## Completion discipline
 
 A row advances to `TESTED` only with reproducible tests. It advances to `GATED` only when the declared release gate executes those claims on exact head. It advances to `RELEASED` only when the active package/public surface and release documentation expose the capability without exceeding the evidence.
+
+Dormant source, interrupted work, local experiments, or unqualified future-version files never count as `RELEASED` and do not permit skipping the declared sequence.
