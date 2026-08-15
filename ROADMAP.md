@@ -1,8 +1,8 @@
 # AASM Roadmap
 
-AASM is currently **v0.51.0 / Governed Solution Pools & Complete Enumeration**.
+AASM is currently **v0.51.0 / Governed Solution Pools & Complete Enumeration** with **v0.52 under active implementation and freeze review**.
 
-The roadmap is now explicitly **product-backward**: known destination properties must shape public contracts before implementation depth makes them expensive to add. A capability may be staged, but it may not be deferred in a way that makes the current architecture structurally incompatible with it.
+The roadmap is explicitly **product-backward**: known destination properties must shape public contracts before implementation depth makes them expensive to add. A capability may be staged, but it may not be deferred in a way that makes the current architecture structurally incompatible with it.
 
 ## Released
 
@@ -24,7 +24,7 @@ The roadmap is now explicitly **product-backward**: known destination properties
 - v0.48.1 Project-Wide Apache-2.0 Policy Correction
 - v0.49.0 Semantic Solver Release Candidate
 - v0.50.0 Proof-Carrying Solver Claims
-- **v0.51.0 Governed Solution Pools & Complete Enumeration — Current**
+- **v0.51.0 Governed Solution Pools & Complete Enumeration — Current Release**
 
 ## Product destination that constrains the next releases
 
@@ -59,7 +59,7 @@ minimize:
   scarce expert-model usage
 ```
 
-These are not fixed global weights. AASM must support hard thresholds, lexicographic priorities, Pareto comparison, and explicit policy.
+These are not fixed global weights. AASM supports hard thresholds, governed lexicographic priorities, Pareto comparison, and explicit policy.
 
 A weekly model/subscription allowance is a valid governed resource. AASM may reason over provider-controlled external capacity while preserving whether the measurement is authoritative, observed, derived, estimated, declared, or unknown.
 
@@ -73,7 +73,7 @@ The following are architectural requirements now, not a post-solver afterthought
 4. **Resource capacity:** owned, purchased, subscription, rolling, weekly, credit, compute, storage, worker, solver, and custom capacity share one governed abstraction.
 5. **Resource provenance:** uncertain provider quota observations remain Evidence rather than silently becoming truth.
 6. **Protected reserve:** remaining capacity may be intentionally unavailable to ordinary work.
-7. **Proposal demand:** candidate work can declare expected resource demand, upper bounds, and uncertainty.
+7. **Proposal demand:** candidate work can declare expected resource demand, upper bounds, uncertainty, and explicit quota/cost/time/scarcity estimates.
 8. **Lease/reservation before consumption:** resource availability never grants authority; authority never grants unlimited resources.
 9. **Reconciliation:** estimated and actual consumption remain distinct and durable.
 10. **Dynamic replanning:** material estimate/capacity changes can invalidate an execution plan before silent overspend.
@@ -85,9 +85,11 @@ The following are architectural requirements now, not a post-solver afterthought
 
 # v0.52.0 — Lexicographic Multi-Objective & Pareto Solving — Resource-Governed Decision Foundation
 
-v0.52 remains the lexicographic multi-objective and Pareto release, but its purpose is broadened to establish the decision machinery required by real AASM resource allocation rather than treating optimization as solver-only functionality.
+**Status: active implementation; semantic core delivered; freeze/conformance work remains.**
 
-Primary contract targets:
+v0.52 establishes the multi-objective decision machinery required by real AASM resource allocation rather than treating optimization as solver-only functionality.
+
+Primary public contracts now implemented on the experimental path:
 
 ```text
 aasm.optimization.multi-objective.v1
@@ -95,31 +97,134 @@ aasm.optimization.frontier.v1
 aasm.resource.capacity.v1
 aasm.resource.observation.v1
 aasm.resource.demand.v1
+aasm.resource.routing.v1
+aasm.resource.runtime.v1
+aasm.sii.resource-aware-proposal.v1
 ```
 
-Required scope:
+## Delivered v0.52 semantic core
 
-1. ordered objective vectors with explicit priority, sense, expression, tolerance, and hard thresholds;
-2. full lexicographic solving where higher-priority optima cannot be degraded outside declared tolerances;
-3. exact finite Pareto-frontier enumeration built on v0.51 solution enumeration;
-4. nondominance and exact-frontier exhaustion evidence for supported finite models;
-5. governed `ResourceCapacity` with finite/rolling/refilling/credit/unbounded/unknown windows;
-6. explicit resource-observation authority: `AUTHORITATIVE | OBSERVED | DERIVED | ESTIMATED | DECLARED | UNKNOWN`;
-7. principal/workspace/scope seams on resource capacity so later hosted isolation does not require replacement identity;
-8. protected reserves and allocatable-capacity semantics;
-9. proposal-side resource-demand estimates with expected amount, upper bound, unit, and confidence;
-10. SII structured proposals carry resource demand, expected outcome/evidence/progress, uncertainty, and alternatives through the existing proposal boundary rather than an intelligence-only accounting path;
-11. reservation/release/settlement semantics separating estimated commitment from actual consumption;
-12. at least one conformance fixture representing a weekly external model/subscription allowance without hard-coding a provider into the kernel;
-13. policy examples that jointly reason over correctness/evidence/progress and quota/cost/time/expert scarcity;
-14. resource-aware candidate selection/routing that can prefer a cheaper/local/native path when it satisfies hard quality/evidence thresholds and can preserve scarce expert capacity when policy requires it;
-15. explicit re-estimation/replan trigger contract when expected consumption or available capacity materially changes;
-16. predicted-versus-actual consumption evidence suitable for later calibration without granting truth or authority;
-17. compatibility with existing `ResourceRecord`, scheduler, economics, SII, scope, authority, and solver surfaces—no second scheduler or private accounting truth plane.
+### Exact finite multi-objective solving
+
+Implemented:
+
+1. ordered objectives with explicit identity, priority, sense, coefficients, offset, and tolerance;
+2. exact finite lexicographic solving over the v0.51 complete-enumeration substrate;
+3. independent replay/reconstruction of lexicographic stage optima and survivor sets;
+4. exact finite Pareto-frontier construction over an independently certified complete feasible set;
+5. independent frontier verification requiring exact equality of solution IDs, assignments, and objective vectors;
+6. fail-closed rejection of dominated, missing, or forged frontier content;
+7. durable `EVIDENCE_ONLY` persistence of problems, complete feasible pools, enumeration certificates, lexicographic results, Pareto certificates, and complete frontiers;
+8. no partial accepted multi-objective history when enumeration/certification fails.
+
+### Resource capacity and external quota evidence
+
+Implemented:
+
+1. finite / rolling / refilling / credit / unbounded / unknown capacity windows;
+2. resource-observation authority classes `AUTHORITATIVE | OBSERVED | DERIVED | ESTIMATED | DECLARED | UNKNOWN`;
+3. protected reserves and declared allocatable capacity;
+4. policy-controlled observation-backed planning capacity that may reduce but never create capacity;
+5. confidence/freshness/measurement-authority gates;
+6. workspace/scope-safe resource visibility and mutation through the existing AASM scope-flow model;
+7. fail-closed unknown finite capacity.
+
+### Resource-aware governed proposals
+
+Implemented:
+
+1. additive v0.52 SII successor over the frozen parent proposal contract;
+2. exact binding to an already-durable governed parent proposal;
+3. identity/fingerprint coverage for resource demands and expected correctness/evidence/progress;
+4. explicit expected wall time, monetary cost, **provider quota burn**, and scarce-expert usage;
+5. durable successor → routing/frontier Evidence lineage;
+6. proposer confidence never substituted for correctness/evidence quality.
+
+### Governed objective policy
+
+Resource routing no longer owns one permanent ranking tuple.
+
+The default objective policy is:
+
+```text
+0 correctness            MAXIMIZE
+1 evidence_quality       MAXIMIZE
+2 expected_progress      MAXIMIZE
+3 provider_quota_burn    MINIMIZE
+4 scarce_expert_usage    MINIMIZE
+5 monetary_cost          MINIMIZE
+6 wall_time_seconds      MINIMIZE
+```
+
+Policy can reorder or omit economic dimensions while hard quality/capacity gates remain separate.
+
+Adversarial fixtures now demonstrate that:
+
+- a quota-preserving route can beat a cheaper-money route under default policy;
+- a money-first policy deterministically reverses that result;
+- lower price never bypasses a hard correctness/evidence threshold.
+
+### Resource Pareto semantics
+
+Implemented two deliberately different frontier claims:
+
+1. **Certified exact finite optimization frontier** — complete relative to the supported independently exhausted finite model space.
+2. **Resource-candidate frontier** — exact only over the supplied eligible candidate set after hard quality/capacity gates; it does not claim that no undiscovered route exists.
+
+Resource-candidate Pareto analysis is durable but non-committing: it records objective vectors, policy, capacity-visible context, and nondominated candidate IDs without reserving capacity.
+
+### Resource commitment lifecycle
+
+Implemented:
+
+```text
+proposal
+  ↓
+select + reserve atomically
+  ↓
+execute under ordinary authority/effect rules
+  ↓
+reestimate
+  ├─ CONTINUE
+  └─ REPLAN_REQUIRED
+        ↓
+      RELEASE → reroute
+  ↓
+settle actual use
+  ↓
+calibration Evidence
+```
+
+Selection + reservation is persisted as one durable transaction. Re-estimation preserves existing capacity when a larger request becomes infeasible instead of silently overspending. Settlement reconciles committed versus actual use. Predicted-versus-actual calibration is exposed as performance Evidence only.
+
+### Replayable decision explanation
+
+Routing explanations now persist:
+
+- exact ordered objective policy;
+- candidate objective vectors;
+- declared/planning allocatable capacity;
+- protected reserve;
+- reset horizon;
+- latest capacity observation/provenance;
+- selected candidate and reservation.
+
+This is the support/operator inspection seam needed later by Hosted AASM without adding a private explanation truth table.
+
+## v0.52 freeze blockers
+
+v0.52 is **not released yet**. Remaining work before promotion:
+
+1. complete exact-head CI after the final contract/schema/document changes;
+2. add a dedicated v0.52 conformance/release-contract gate that checks the new contracts together rather than relying only on broad pytest;
+3. freeze tolerance-aware Pareto dominance semantics explicitly;
+4. decide before freeze whether `exact_solution_set_match` should be renamed to `exact_point_set_match` because the implemented check is stronger than ID-set equality;
+5. validate public packaging/exports for the intended v0.52 surface;
+6. update README, CURRENT_RELEASE, CHANGELOG, package metadata, release history, and release notes only after the above gates pass.
 
 Hard completion criterion:
 
-> On oracle-known finite multi-objective problems AASM reproduces the exact nondominated set and preserves lexicographic priorities; on resource-governance fixtures it must not allocate protected or unknown finite capacity as if freely available, must distinguish observed quota evidence from authoritative capacity, must route at least one decision across alternative intelligence/resource paths under hard quality constraints, and must reconcile reservation with actual use without granting authority or truth.
+> On oracle-known finite multi-objective problems AASM reproduces and independently certifies the exact nondominated point set and preserves lexicographic priorities; on resource-governance fixtures it does not allocate protected or unknown finite capacity as freely available, preserves observation provenance, can compare alternative routes using policy-selected quality/quota/cost/time/scarcity dimensions, keeps Pareto analysis non-committing, atomically reserves the selected route, and reconciles reservation with actual use without granting authority or truth.
 
 # v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
 
@@ -130,7 +235,7 @@ Primary goals:
 - formalize capability delegation, ceilings, expiry, and nondelegable denies;
 - preserve current cross-run knowledge rule that source authority never becomes receiving-run authority;
 - implement compatible durable cross-run solver learning (canonical no-goods/bounds/cores plus performance-only native accelerator state);
-- make resource capacities, leases, observations, consumption, and learned resource-estimation evidence scope-aware without a retrofit.
+- make resource capacities, leases, observations, consumption, and learned resource-estimation evidence principal-aware without a retrofit.
 
 Hard completion criterion:
 
@@ -182,7 +287,7 @@ Permanent Stress Corpus coverage includes:
 - cross-scope leakage and privilege-escalation attacks;
 - effect UNKNOWN/reconciliation and duplicate-effect attacks;
 - cold-vs-learned solver/resource reuse;
-- forged proof, stale bound, poisoned incumbent, false completeness, tolerance abuse, and false quota-authority cases.
+- forged proof, stale bound, poisoned incumbent, false completeness, tolerance abuse, false frontier content, and false quota-authority cases.
 
 Hard completion criterion:
 
@@ -197,7 +302,7 @@ Required review:
 - proof certificates;
 - solution pools/enumeration;
 - multi-objective/Pareto semantics;
-- resource capacity/observation/demand contracts;
+- resource capacity/observation/demand/routing contracts;
 - resource-aware SII routing and estimate/actual reconciliation;
 - scoped identity/authority;
 - effect ownership/recovery;
@@ -212,13 +317,13 @@ Hard completion criterion:
 
 # After v0.57 — Private Hosted Product Fabric and Further Public Hardening
 
-Resource-aware SII is **not** deferred to this phase; its first end-to-end governed routing contract is a v0.52 requirement and is hardened through v0.57. Work after v0.57 should deepen those public semantics while the private hosted product consumes them.
+Resource-aware SII and the full product objective vector are **not** deferred to this phase; their first governed implementation is a v0.52 requirement and is hardened through v0.57.
 
 Public hardening may continue with:
 
-- improved resource-estimate calibration from predicted-versus-actual history;
+- learned resource-estimate calibration from predicted-versus-actual history;
 - richer scarcity policies using remaining capacity, reset/refill horizon, protected reserve, consumption velocity, and forecast demand;
-- scope-safe explanations of why a resource/intelligence was selected and what was protected/consumed;
+- central principal-authority delegation and capability ceilings;
 - profile binding/migration maturity for generated operator stacks;
 - additional provider adapters that map external usage telemetry into the generic observation contract without becoming kernel dependencies.
 
