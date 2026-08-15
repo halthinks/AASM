@@ -53,9 +53,9 @@ def main() -> None:
         '"imported_pruning_state": "INERT_UNTIL_RECEIVING_RUN_LOCAL_REVALIDATION"',
         '"application": "NO_AUTOMATIC_APPLICATION_IN_V0.53_FOUNDATION"',
         'knowledge_kind="REUSE_RESULT"',
-        "propose_cross_run_admission",
-        "cross_run_knowledge_report",
-        "admit_cross_run_solver_learning",
+        '"solver_learning_contract_id": SOLVER_LEARNING_CONTRACT_ID',
+        '"solver_learning_contract_version": SOLVER_LEARNING_CONTRACT_VERSION',
+        '"authority_transfer": "NEVER"',
         "revalidate_solver_learning",
         '"authority_inherited": False',
         '"truth_authority": "NONE"',
@@ -64,6 +64,13 @@ def main() -> None:
 
     require(root / "src/aasm/runtime_v53_learning.py", [
         "class AASMEngine(SolverLearningRuntimeMixin, V53AuthorityEngine)",
+        'report.get("envelopes", {}).get(envelope_id)',
+        'admission.get("status") != "ACTIVE"',
+        "cross_run_knowledge_report()",
+        "admit_cross_run_solver_learning",
+        '"cross_run_admission_evidence_id": admission_evidence_id',
+        '"authority_inherited": False',
+        '"truth_authority": "NONE"',
     ])
 
     artifact_schema = schema(root, "solver-learning-artifact.schema.json")
@@ -76,6 +83,9 @@ def main() -> None:
         raise SystemExit("solver-learning validation checker identity drift")
 
     require(root / "src/aasm/cross_run_knowledge.py", [
+        "def propose_cross_run_admission(self, envelope, *, proposer_id: str",
+        "def commit_cross_run_admission(self, decision_id: str, *, worker_id: str)",
+        '"envelopes": deepcopy(dict(sorted(envelopes.items())))',
         '"authority_transfer": "NEVER"',
         '"authority_inherited": False',
     ])
@@ -87,6 +97,8 @@ def main() -> None:
         "test_native_accelerator_requires_exact_backend_version_and_environment_and_stays_performance_only",
     ])
     require(root / "tests/test_runtime_v53_solver_learning.py", [
+        'proposer_id="solver-learning-importer"',
+        'worker_id="solver-learning-admission-worker"',
         "test_cross_run_solver_learning_reuses_v48_transport_and_stays_inert_until_local_validation",
         "test_cross_run_solver_learning_cannot_materialize_before_v48_admission_commits",
         "test_cross_run_import_requires_local_scoped_import_authority_after_v48_admission",
