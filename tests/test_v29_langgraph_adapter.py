@@ -7,6 +7,7 @@ import inspect
 import pytest
 
 from aasm import AASMEngine, DecisionRecord, MemoryStore
+from aasm.runtime_v52 import AASMEngine as V52Engine
 from aasm.integrations.langgraph import (
     LANGGRAPH_ADAPTER_ID,
     LANGGRAPH_ADAPTER_VERSION,
@@ -190,7 +191,10 @@ def test_decision_mapping_conflict_learning_backjump_and_reuse_preserve_unrelate
 
 
 def test_pre_effect_authorization_uses_existing_aasm_effect_ledger():
-    adapter = LangGraphAdapter(namespace="tests")
+    # This is a v0.29 historical compatibility fixture for the pre-scoped
+    # effect API.  Keep it on the latest compatible parent runtime; v0.53
+    # scoped effect semantics are independently covered by v0.53 tests/gates.
+    adapter = LangGraphAdapter(namespace="tests", engine_class=V52Engine)
     engine, _ = adapter.bind(config("effect-thread"))
     first = adapter.authorize_effect(
         engine,
