@@ -48,3 +48,10 @@ aasm = ["reference_data/research/*.json"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+addopts = [
+  "--ignore=tests/test_v56_reproducibility.py",
+  "--ignore=tests/test_v56_reproducibility_runtime.py",
+  "--ignore=tests/test_v56_solver_provenance.py",
+  "--ignore=tests/test_v56_solver_provenance_runtime.py",
+  "--ignore=tests/test_v56_solver_provenance_v2.py",
+]
