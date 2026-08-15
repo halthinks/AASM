@@ -19,6 +19,7 @@ from .resource_routing import (
     ResourceReservation,
     ResourceRoutingDecision,
     ResourceRoutingPolicy,
+    planning_allocatable,
     reserve_candidate_resources,
     select_resource_aware_candidate,
 )
@@ -156,6 +157,8 @@ def _project(snapshot) -> dict[str, Any]:
     decisions: dict[str, dict[str, Any]] = {}
     reservations: dict[str, dict[str, Any]] = {}
     settlements: dict[str, dict[str, Any]] = {}
+    reestimates: dict[str, dict[str, Any]] = {}
+    releases: dict[str, dict[str, Any]] = {}
     routing_transactions: dict[str, dict[str, Any]] = {}
 
     for row in _records(snapshot):
@@ -185,7 +188,45 @@ def _project(snapshot) -> dict[str, Any]:
             settlements[settlement_id] = document
             reservation_id = str(document["reservation_id"])
             if reservation_id in reservations:
-                reservations[reservation_id] = {**reservations[reservation_id], "status": "SETTLED", "settlement_id": settlement_id}
+                reservations[reservation_id] = {
+                    **reservations[reservation_id],
+                    "status": "SETTLED",
+                    "settlement_id": settlement_id,
+                }
+            for resource_id, capacity_document in (document.get("post_capacities") or {}).items():
+                capacities[str(resource_id)] = deepcopy(capacity_document)
+        elif record_type == "reservation_reestimate":
+            reestimate_id = str(document["reestimate_id"])
+            reestimates[reestimate_id] = document
+            reservation_id = str(document["reservation_id"])
+            if reservation_id in reservations:
+                if document.get("outcome") == "CONTINUE":
+                    revised = deepcopy(document.get("revised_allocations") or [])
+                    reservations[reservation_id] = {
+                        **reservations[reservation_id],
+                        "allocations": revised,
+                        "total_reserved": sum(float(amount) for _, amount in revised),
+                        "status": "ACTIVE",
+                        "reestimate_id": reestimate_id,
+                    }
+                else:
+                    reservations[reservation_id] = {
+                        **reservations[reservation_id],
+                        "status": "REPLAN_REQUIRED",
+                        "reestimate_id": reestimate_id,
+                    }
+            for resource_id, capacity_document in (document.get("post_capacities") or {}).items():
+                capacities[str(resource_id)] = deepcopy(capacity_document)
+        elif record_type == "reservation_release":
+            release_id = str(document["release_id"])
+            releases[release_id] = document
+            reservation_id = str(document["reservation_id"])
+            if reservation_id in reservations:
+                reservations[reservation_id] = {
+                    **reservations[reservation_id],
+                    "status": "RELEASED",
+                    "release_id": release_id,
+                }
             for resource_id, capacity_document in (document.get("post_capacities") or {}).items():
                 capacities[str(resource_id)] = deepcopy(capacity_document)
 
@@ -195,6 +236,8 @@ def _project(snapshot) -> dict[str, Any]:
         "decisions": decisions,
         "reservations": reservations,
         "settlements": settlements,
+        "reestimates": reestimates,
+        "releases": releases,
         "routing_transactions": routing_transactions,
     }
 
@@ -234,6 +277,8 @@ class ResourceGovernanceRuntimeMixin:
             "durability": "EXISTING_AASM_EVIDENCE_EVENT_REPLAY",
             "selection_and_reservation": "ONE_DURABLE_TRANSACTION_RECORD",
             "settlement": "ONE_DURABLE_TRANSACTION_RECORD",
+            "reestimate": "CONTINUE_OR_REPLAN_REQUIRED",
+            "release": "ACTIVE_OR_REPLAN_REQUIRED_TO_RELEASED",
             "scope_access": "WORKSPACE_MATCH_AND_EXISTING_AASM_SCOPE_FLOW",
             "scope_default": "SCOPED_CAPACITY_FAILS_CLOSED_WITHOUT_CONTEXT",
             "authority": "RESOURCE_STATE_NEVER_GRANTS_AUTHORITY",
@@ -266,19 +311,22 @@ class ResourceGovernanceRuntimeMixin:
                 if metadata.get(_RESOURCE_RECORD_TYPE) != record_type or metadata.get(_RESOURCE_DOCUMENT) != payload:
                     raise ValueError(f"resource evidence collision: {evidence_id}")
                 return evidence_id
-        self.add_evidence(EvidenceRecord(
-            kind="observation" if record_type == "observation" else "resource_state",
-            statement=canonical_semantic_json(payload),
-            source=source,
-            derived_from=list(derived_from),
-            metadata={
-                _RESOURCE_RECORD_TYPE: record_type,
-                "object_id": object_id,
-                _RESOURCE_DOCUMENT: payload,
-                "authority": "EVIDENCE_ONLY",
-            },
-            evidence_id=evidence_id,
-        ), reason=f"resource {record_type} recorded")
+        self.add_evidence(
+            EvidenceRecord(
+                kind="observation" if record_type == "observation" else "resource_state",
+                statement=canonical_semantic_json(payload),
+                source=source,
+                derived_from=list(derived_from),
+                metadata={
+                    _RESOURCE_RECORD_TYPE: record_type,
+                    "object_id": object_id,
+                    _RESOURCE_DOCUMENT: payload,
+                    "authority": "EVIDENCE_ONLY",
+                },
+                evidence_id=evidence_id,
+            ),
+            reason=f"resource {record_type} recorded",
+        )
         return evidence_id
 
     def register_resource_capacity(self, capacity: ResourceCapacity) -> dict[str, Any]:
@@ -358,21 +406,35 @@ class ResourceGovernanceRuntimeMixin:
         }
         visible_resource_ids = set(visible_capacities)
         observations = {
-            key: value for key, value in projection["observations"].items()
+            key: value
+            for key, value in projection["observations"].items()
             if value.get("resource_id") in visible_resource_ids
             and _context_matches(value, workspace_id=workspace_id, scope_id=scope_id)
         }
         reservations = {
-            key: value for key, value in projection["reservations"].items()
+            key: value
+            for key, value in projection["reservations"].items()
             if _context_matches(value, workspace_id=workspace_id, scope_id=scope_id)
         }
         routing_transactions = {
-            key: value for key, value in projection["routing_transactions"].items()
+            key: value
+            for key, value in projection["routing_transactions"].items()
             if _context_matches(value.get("access_context") or {}, workspace_id=workspace_id, scope_id=scope_id)
         }
         decisions = {key: value["decision"] for key, value in routing_transactions.items()}
         settlements = {
-            key: value for key, value in projection["settlements"].items()
+            key: value
+            for key, value in projection["settlements"].items()
+            if value.get("reservation_id") in reservations
+        }
+        reestimates = {
+            key: value
+            for key, value in projection["reestimates"].items()
+            if value.get("reservation_id") in reservations
+        }
+        releases = {
+            key: value
+            for key, value in projection["releases"].items()
             if value.get("reservation_id") in reservations
         }
         return {
@@ -383,6 +445,8 @@ class ResourceGovernanceRuntimeMixin:
             "decisions": decisions,
             "reservations": reservations,
             "settlements": settlements,
+            "reestimates": reestimates,
+            "releases": releases,
             "routing_transactions": routing_transactions,
         }
 
@@ -485,10 +549,7 @@ class ResourceGovernanceRuntimeMixin:
         if any(value < 0 for value in actual.values()):
             raise ValueError("actual consumption must be non-negative")
 
-        capacities = {
-            key: _capacity_from_dict(value)
-            for key, value in projection["capacities"].items()
-        }
+        capacities = {key: _capacity_from_dict(value) for key, value in projection["capacities"].items()}
         post_capacities: dict[str, dict[str, Any]] = {}
         for resource_id in sorted(expected):
             capacity = capacities[resource_id]
@@ -512,6 +573,121 @@ class ResourceGovernanceRuntimeMixin:
             derived_from=evidence_ids,
         )
         return {"settlement": document, "evidence_id": evidence_id}
+
+    def reestimate_resource_reservation(
+        self,
+        reservation_id: str,
+        revised_allocations: Mapping[str, float],
+        policy: ResourceRoutingPolicy,
+        *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
+        evidence_ids=(),
+    ) -> dict[str, Any]:
+        projection = _project(self.snapshot)
+        try:
+            reservation = projection["reservations"][reservation_id]
+        except KeyError:
+            raise KeyError(reservation_id) from None
+        self._validate_resource_context(workspace_id=workspace_id, scope_id=scope_id)
+        if not _context_matches(reservation, workspace_id=workspace_id, scope_id=scope_id):
+            raise PermissionError("resource reestimate crosses workspace/scope boundary")
+        if reservation.get("status") != "ACTIVE":
+            raise ValueError("resource reservation is not active")
+
+        current = {str(resource_id): float(amount) for resource_id, amount in reservation.get("allocations", [])}
+        revised = {str(key): float(value) for key, value in revised_allocations.items()}
+        if set(revised) != set(current):
+            raise ValueError("reestimate resource keys must exactly match reserved resources")
+        if any(value < 0 for value in revised.values()):
+            raise ValueError("reestimated resource demand must be non-negative")
+
+        trial = {key: _capacity_from_dict(value) for key, value in projection["capacities"].items()}
+        for resource_id, amount in current.items():
+            trial[resource_id].release(amount)
+
+        infeasible: list[str] = []
+        for resource_id, amount in sorted(revised.items()):
+            available = planning_allocatable(trial[resource_id], policy)
+            if available is None or amount > available:
+                infeasible.append(resource_id)
+
+        post_capacities: dict[str, dict[str, Any]] = {}
+        if infeasible:
+            outcome = "REPLAN_REQUIRED"
+            revised_rows = [[resource_id, amount] for resource_id, amount in sorted(current.items())]
+        else:
+            outcome = "CONTINUE"
+            for resource_id, amount in sorted(revised.items()):
+                trial[resource_id].reserve(amount)
+                post_capacities[resource_id] = _capacity_to_dict(trial[resource_id])
+            revised_rows = [[resource_id, amount] for resource_id, amount in sorted(revised.items())]
+
+        reestimate_seed = {
+            "reservation_id": reservation_id,
+            "workspace_id": workspace_id,
+            "scope_id": scope_id,
+            "previous_allocations": [[key, value] for key, value in sorted(current.items())],
+            "revised_allocations": revised_rows,
+            "requested_allocations": [[key, value] for key, value in sorted(revised.items())],
+            "outcome": outcome,
+            "infeasible_resources": infeasible,
+            "post_capacities": post_capacities,
+        }
+        reestimate_id = f"resource-reestimate-{semantic_fingerprint(reestimate_seed)[:20]}"
+        document = {"reestimate_id": reestimate_id, **reestimate_seed}
+        evidence_id = self._record_resource_document(
+            record_type="reservation_reestimate",
+            object_id=reestimate_id,
+            document=document,
+            source=RESOURCE_RUNTIME_CONTRACT_ID,
+            derived_from=evidence_ids,
+        )
+        return {"reestimate": document, "evidence_id": evidence_id}
+
+    def release_resource_reservation(
+        self,
+        reservation_id: str,
+        *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
+        evidence_ids=(),
+    ) -> dict[str, Any]:
+        projection = _project(self.snapshot)
+        try:
+            reservation = projection["reservations"][reservation_id]
+        except KeyError:
+            raise KeyError(reservation_id) from None
+        self._validate_resource_context(workspace_id=workspace_id, scope_id=scope_id)
+        if not _context_matches(reservation, workspace_id=workspace_id, scope_id=scope_id):
+            raise PermissionError("resource release crosses workspace/scope boundary")
+        if reservation.get("status") not in {"ACTIVE", "REPLAN_REQUIRED"}:
+            raise ValueError("resource reservation cannot be released from current status")
+
+        allocations = {str(resource_id): float(amount) for resource_id, amount in reservation.get("allocations", [])}
+        capacities = {key: _capacity_from_dict(value) for key, value in projection["capacities"].items()}
+        post_capacities: dict[str, dict[str, Any]] = {}
+        for resource_id, amount in sorted(allocations.items()):
+            capacities[resource_id].release(amount)
+            post_capacities[resource_id] = _capacity_to_dict(capacities[resource_id])
+
+        release_seed = {
+            "reservation_id": reservation_id,
+            "workspace_id": workspace_id,
+            "scope_id": scope_id,
+            "released_allocations": [[key, value] for key, value in sorted(allocations.items())],
+            "post_capacities": post_capacities,
+        }
+        release_id = f"resource-release-{semantic_fingerprint(release_seed)[:20]}"
+        document = {"release_id": release_id, **release_seed}
+        evidence_id = self._record_resource_document(
+            record_type="reservation_release",
+            object_id=release_id,
+            document=document,
+            source=RESOURCE_RUNTIME_CONTRACT_ID,
+            derived_from=evidence_ids,
+        )
+        return {"release": document, "evidence_id": evidence_id}
 
 
 __all__ = [
