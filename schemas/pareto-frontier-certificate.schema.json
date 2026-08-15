@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/pareto-frontier-certificate.schema.json",
+  "title": "AASM v0.52 Pareto Frontier Certificate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["certificate_id", "problem_fingerprint", "frontier_fingerprint", "enumeration_certificate_id", "feasible_count", "frontier_count", "dominated_count", "pairwise_nondominant", "exact_solution_set_match", "status", "diagnostics", "fingerprint"],
+  "properties": {
+    "certificate_id": {"type": "string", "minLength": 1},
+    "problem_fingerprint": {"type": "string", "minLength": 1},
+    "frontier_fingerprint": {"type": "string", "minLength": 1},
+    "enumeration_certificate_id": {"type": "string", "minLength": 1},
+    "feasible_count": {"type": "integer", "minimum": 0},
+    "frontier_count": {"type": "integer", "minimum": 0},
+    "dominated_count": {"type": "integer", "minimum": 0},
+    "pairwise_nondominant": {"type": "boolean"},
+    "exact_solution_set_match": {
+      "type": "boolean",
+      "description": "True only when solution IDs, assignments, and objective vectors exactly match the independently reconstructed frontier."
+    },
+    "status": {"enum": ["PASS", "FAIL"]},
+    "diagnostics": {"type": "array", "items": {"type": "string"}},
+    "fingerprint": {"type": "string", "minLength": 1}
+  }
+}
