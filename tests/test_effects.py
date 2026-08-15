@@ -6,7 +6,6 @@ import sys
 import pytest
 
 from aasm import (
-    AASMEngine,
     EffectExecutionError,
     EffectSpec,
     EffectStatus,
@@ -15,6 +14,7 @@ from aasm import (
     RetryPolicy,
     SQLiteStore,
 )
+from aasm.runtime_v52 import AASMEngine
 
 
 def test_successful_effect_is_not_executed_twice():
@@ -164,7 +164,8 @@ def test_running_effect_becomes_unknown_after_unclean_exit(tmp_path:Path):
     root=Path(__file__).resolve().parents[1]
     code=f'''
 import os
-from aasm import AASMEngine, EffectSpec, ProblemSpec, SQLiteStore
+from aasm import EffectSpec, ProblemSpec, SQLiteStore
+from aasm.runtime_v52 import AASMEngine
 store=SQLiteStore(r"{db}")
 e=AASMEngine(ProblemSpec("effect crash"),store=store)
 r=e.propose_effect(EffectSpec("external-write",{{"path":r"{external}"}},idempotency_key="external-op"))
