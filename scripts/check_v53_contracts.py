@@ -69,7 +69,6 @@ def main() -> None:
         '"reconcile": "effect.reconcile"',
         "authority_decision_evidence_id",
         "effect is not bound to a v0.53 workspace/scope; explicit migration is required",
-        "fresh",
         "effect_execution_authority",
         "effect_reconcile_authority",
         "resource_state_granted_authority",
