@@ -39,6 +39,10 @@ def main() -> None:
         "actual_by_id = {row.solution_id: row.to_dict() for row in frontier.points}",
         "exact_points_match = actual_by_id == expected_by_id",
         "enumeration_certificate.certificate_id != independent_certificate.certificate_id",
+        "left <= right + objective.tolerance",
+        "left >= right - objective.tolerance",
+        "left < right - objective.tolerance",
+        "left > right + objective.tolerance",
     ])
 
     # Resource routing must expose the complete known product vector explicitly,
@@ -122,8 +126,14 @@ def main() -> None:
         raise SystemExit(f"resource-routing objective schema drift: {policy_objectives}")
 
     exact_match = parsed["pareto-frontier-certificate.schema.json"]["properties"]["exact_solution_set_match"]
-    if "assignments" not in exact_match.get("description", "") or "objective vectors" not in exact_match.get("description", ""):
-        raise SystemExit("Pareto certificate schema no longer documents full-point equality")
+    description = exact_match.get("description", "")
+    if "solution IDs" not in description or "assignments" not in description or "objective vectors" not in description:
+        raise SystemExit("Pareto certificate schema no longer defines exact_solution_set_match as full-point equality")
+
+    problem_schema = parsed["multi-objective-problem.schema.json"]
+    tolerance_description = problem_schema["properties"]["objectives"]["items"]["properties"]["tolerance"].get("description", "")
+    if "Pareto dominance" not in tolerance_description or "strict improvement beyond tolerance" not in tolerance_description:
+        raise SystemExit("multi-objective schema no longer freezes tolerance-aware Pareto dominance")
 
     require(root / "docs/RESOURCE_GOVERNED_DECISION_FOUNDATION.md", [
         "provider quota burn",
