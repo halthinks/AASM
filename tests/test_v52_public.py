@@ -2,6 +2,7 @@ from aasm import public_v51
 from aasm import public_v52
 from aasm import public_v53
 from aasm import public_v54
+from aasm import public_v55
 from aasm import demo_stack
 from aasm.cli_v52 import build_parser
 from aasm.multi_objective import FRONTIER_CONTRACT_ID, MULTI_OBJECTIVE_CONTRACT_ID
@@ -46,11 +47,12 @@ def test_v52_public_surface_preserves_v51_parent_contract():
         assert name in public_v52.SUPPORTED_ENGINE_METHODS
 
 
-def test_v52_parent_no_longer_owns_active_demo_stack_after_v54_promotion():
-    assert demo_stack.AASMEngine is public_v54.AASMEngine
-    assert demo_stack._runtime_version() == public_v54.__version__
+def test_v52_parent_no_longer_owns_active_demo_stack_after_v55_promotion():
+    assert demo_stack.AASMEngine is public_v55.AASMEngine
+    assert demo_stack._runtime_version() == public_v55.__version__
     assert demo_stack.AASMEngine is not public_v52.AASMEngine
     assert demo_stack.AASMEngine is not public_v53.AASMEngine
+    assert demo_stack.AASMEngine is not public_v54.AASMEngine
 
 
 def test_v52_public_surface_exposes_product_backward_resource_objective_vector():
