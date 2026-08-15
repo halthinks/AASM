@@ -253,6 +253,9 @@
 ./schemas/cross-run-principal-map.schema.json
 ./schemas/cursor-page.schema.json
 ./schemas/decision-scope.schema.json
+./schemas/discrete-boolean-model.schema.json
+./schemas/discrete-linearization.schema.json
+./schemas/discrete-lowering-certificate.schema.json
 ./schemas/effect.schema.json
 ./schemas/enumeration-completeness-certificate.schema.json
 ./schemas/enumeration-cursor.schema.json
@@ -367,6 +370,7 @@
 ./scripts/check_v53_solver_learning_contracts.py
 ./scripts/check_v54_contracts.py
 ./scripts/check_v55_contracts.py
+./scripts/check_v55_discrete_ir.py
 ./scripts/release_artifacts.py
 ./scripts/release_artifacts_cli.py
 ./scripts/release_artifacts_core.py
@@ -483,6 +487,7 @@
 ./src/aasm/decision_backends.py
 ./src/aasm/definitions.py
 ./src/aasm/demo_stack.py
+./src/aasm/discrete_ir.py
 ./src/aasm/domain_adapters.py
 ./src/aasm/economics.py
 ./src/aasm/effects.py
@@ -758,6 +763,7 @@
 ./tests/test_v53_scoped_store.py
 ./tests/test_v53_solver_learning.py
 ./tests/test_v54_public.py
+./tests/test_v55_discrete_ir.py
 ./tests/test_v55_formulation_execution.py
 ./tests/test_v55_model_feature_admission.py
 ./tests/test_v55_semantic_evolution_foundation.py
