@@ -13,11 +13,13 @@ from aasm.runtime_v48 import AASMEngine as V48Engine
 from aasm.runtime_v49 import AASMEngine as V49Engine
 from aasm.runtime_v50 import AASMEngine as V50Engine
 from aasm.runtime_v51 import AASMEngine as V51Engine
+from aasm.runtime_v52 import AASMEngine as V52Engine
 
 
-def test_v48_public_contract_remains_active_under_v51_composition():
-    assert __version__ == "0.51.0"
-    assert AASMEngine is V51Engine
+def test_v48_public_contract_remains_active_under_v52_composition():
+    assert __version__ == "0.52.0"
+    assert AASMEngine is V52Engine
+    assert issubclass(V52Engine, V51Engine)
     assert issubclass(V51Engine, V50Engine)
     assert issubclass(V50Engine, V49Engine)
     assert issubclass(V49Engine, V48Engine)
@@ -25,9 +27,9 @@ def test_v48_public_contract_remains_active_under_v51_composition():
     report = validate_public_api_contract()
     assert report["valid"], report
     contract = report["contract"]
-    assert contract["contract_version"] == "0.27.0"
-    assert contract["runtime_version"] == "0.51.0"
-    assert contract["distribution"]["version"] == "0.51.0"
+    assert contract["contract_version"] == "0.28.0"
+    assert contract["runtime_version"] == "0.52.0"
+    assert contract["distribution"]["version"] == "0.52.0"
     assert contract["sii_governance"]["contract_version"] == "0.3.0"
     assert contract["certification"]["contract_version"] == "0.2.0"
     assert contract["cross_run_knowledge"]["contract_version"] == "0.1.0"
