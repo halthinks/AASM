@@ -1,4 +1,4 @@
-name: AASM v0.55 Foundation
+name: AASM v0.55 Release
 
 on:
   push:
@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
   statuses: write
 
 jobs:
@@ -26,52 +26,10 @@ jobs:
           cache: pip
       - name: Install
         run: python -m pip install -e '.[dev]'
-      - name: Canonically finalize v0.55 candidate
-        if: github.event_name == 'push'
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          scheduling = Path('src/aasm/scheduling_ir.py')
-          text = scheduling.read_text(encoding='utf-8')
-          old = '''        demands = {str(task_id): int(amount) for task_id, amount in sorted(self.demands.items())}\n        if not demands or any(amount <= 0 for amount in demands.values()):\n            raise ValueError("cumulative demands must be positive integers")\n'''
-          new = '''        demands = {}\n        for task_id, amount in sorted(self.demands.items()):\n            if isinstance(amount, bool) or int(amount) != amount or int(amount) <= 0:\n                raise ValueError("cumulative demands must be positive integers")\n            demands[str(task_id)] = int(amount)\n        if not demands:\n            raise ValueError("cumulative demands must be positive integers")\n'''
-          if old in text:
-              scheduling.write_text(text.replace(old, new, 1), encoding='utf-8')
-          elif new not in text:
-              raise SystemExit('scheduling demand precision repair target not found')
-
-          archive = Path('src/aasm/semantic_archive.py')
-          archive_text = archive.read_text(encoding='utf-8')
-          old_archive = '''        object.__setattr__(self, "root_fingerprint", expected_root)\n        object.__setattr__(self, "archive_id", self.archive_id or f"semantic-archive-{expected_root[:24]}")\n'''
-          new_archive = '''        object.__setattr__(self, "root_fingerprint", expected_root)\n        expected_archive_id = f"semantic-archive-{expected_root[:24]}"\n        if self.archive_id and self.archive_id != expected_archive_id:\n            raise ValueError("semantic archive archive_id does not match root fingerprint")\n        object.__setattr__(self, "archive_id", expected_archive_id)\n'''
-          if old_archive in archive_text:
-              archive.write_text(archive_text.replace(old_archive, new_archive, 1), encoding='utf-8')
-          elif new_archive not in archive_text:
-              raise SystemExit('semantic archive identity repair target not found')
-          PY
-          python scripts/release_manifest.py --write-file-list
-          python - <<'PY'
-          from aasm.scheduling_ir import CumulativeResourceConstraint
-          try:
-              CumulativeResourceConstraint('expert', 2, {'route': 1.5})
-          except ValueError as exc:
-              assert 'positive integers' in str(exc)
-          else:
-              raise SystemExit('non-integral cumulative demand was silently accepted')
-          PY
-          if ! git diff --quiet -- src/aasm/scheduling_ir.py src/aasm/semantic_archive.py FILE_LIST.txt; then
-            git config user.name "aasm-ci"
-            git config user.email "aasm-ci@users.noreply.github.com"
-            git add src/aasm/scheduling_ir.py src/aasm/semantic_archive.py FILE_LIST.txt
-            git commit -m "Finalize v0.55 governed semantic evolution candidate"
-            git push origin HEAD:main
-          fi
       - name: Verify tracked file inventory
         run: python scripts/release_manifest.py --check-file-list
-      - name: Check complete v0.55 foundation doctrine
+      - name: Check v0.55 engineering contracts
         run: |
-          python scripts/check_v55_contracts.py
           python scripts/check_v55_discrete_ir.py
           python scripts/check_v55_scheduling_ir.py
           python scripts/check_v55_continuous_ir.py
@@ -91,16 +49,17 @@ jobs:
             tests/test_v55_decision_vector_ir.py \
             tests/test_v55_semantic_archive.py \
             tests/test_v55_public_candidate.py
-      - name: Validate staged public v0.55 candidate
+      - name: Validate active public v0.55 release
         run: |
           python - <<'PY'
           import aasm
           from aasm import public_v55
-          report = public_v55.validate_public_api_contract()
+          report = aasm.validate_public_api_contract()
           assert report['valid'], report
-          assert public_v55.__version__ == '0.55.0.dev0'
-          assert public_v55.PUBLIC_RELEASE_STABILITY == 'QUALIFICATION_CANDIDATE'
-          assert aasm.__version__ == '0.54.0'
-          assert aasm.AASMEngine.__module__ == 'aasm.runtime_v54_full'
-          print('staged public_v55 candidate valid; released root remains v0.54')
+          assert aasm.__version__ == '0.55.0'
+          assert public_v55.__version__ == '0.55.0'
+          assert public_v55.PUBLIC_RELEASE_STABILITY == 'ACTIVE_DEVELOPMENT'
+          assert aasm.AASMEngine is public_v55.AASMEngine
+          assert aasm.PUBLIC_API_CONTRACT['contract_version'] == '0.31.0'
+          print('active public v0.55 release contract: PASS')
           PY
