@@ -11,8 +11,10 @@ from aasm.resource_governance import (
 )
 from aasm.resource_routing import (
     ResourceAwareCandidate,
+    ResourceRoutingObjective,
     ResourceRoutingPolicy,
     planning_allocatable,
+    resource_candidate_pareto_frontier,
     reserve_candidate_resources,
     select_resource_aware_candidate,
 )
@@ -64,27 +66,17 @@ def test_equivalent_quality_preserves_scarce_expert_capacity():
     )
     decision = select_resource_aware_candidate([expert, local], [weekly_capacity()], ResourceRoutingPolicy(min_correctness=.9, min_evidence_quality=.9))
     assert decision.selected_candidate_id == "local"
-    assert decision.reason == "LEXICOGRAPHIC_QUALITY_THEN_RESOURCE_ECONOMY"
+    assert decision.reason == "LEXICOGRAPHIC_GOVERNED_OBJECTIVE_POLICY"
 
 
 def test_provider_quota_burn_is_independent_and_precedes_other_economic_tiebreakers():
     quota_efficient = ResourceAwareCandidate(
-        "quota-efficient",
-        .95,
-        .95,
-        .90,
-        monetary_cost=5,
-        provider_quota_burn=1,
-        scarce_expert_usage=10,
+        "quota-efficient", .95, .95, .90,
+        monetary_cost=5, provider_quota_burn=1, scarce_expert_usage=10,
     )
     quota_hungry = ResourceAwareCandidate(
-        "quota-hungry",
-        .95,
-        .95,
-        .90,
-        monetary_cost=0,
-        provider_quota_burn=8,
-        scarce_expert_usage=0,
+        "quota-hungry", .95, .95, .90,
+        monetary_cost=0, provider_quota_burn=8, scarce_expert_usage=0,
     )
     decision = select_resource_aware_candidate([quota_hungry, quota_efficient], [], ResourceRoutingPolicy())
     assert decision.selected_candidate_id == "quota-efficient"
@@ -94,6 +86,50 @@ def test_provider_quota_burn_is_independent_and_precedes_other_economic_tiebreak
         ResourceRoutingPolicy(prefer_lower_provider_quota_burn=False),
     )
     assert ignored.selected_candidate_id == "quota-hungry"
+
+
+def test_objective_order_is_policy_not_kernel_constant():
+    quota_efficient = ResourceAwareCandidate(
+        "quota-efficient", .95, .95, .90,
+        monetary_cost=5, provider_quota_burn=1, scarce_expert_usage=0,
+    )
+    cash_efficient = ResourceAwareCandidate(
+        "cash-efficient", .95, .95, .90,
+        monetary_cost=1, provider_quota_burn=8, scarce_expert_usage=0,
+    )
+    default = select_resource_aware_candidate([quota_efficient, cash_efficient], [], ResourceRoutingPolicy())
+    assert default.selected_candidate_id == "quota-efficient"
+
+    money_first = ResourceRoutingPolicy(objectives=(
+        ResourceRoutingObjective("correctness", 0, "MAXIMIZE"),
+        ResourceRoutingObjective("evidence_quality", 1, "MAXIMIZE"),
+        ResourceRoutingObjective("expected_progress", 2, "MAXIMIZE"),
+        ResourceRoutingObjective("monetary_cost", 3, "MINIMIZE"),
+        ResourceRoutingObjective("provider_quota_burn", 4, "MINIMIZE"),
+    ))
+    changed = select_resource_aware_candidate([quota_efficient, cash_efficient], [], money_first)
+    assert changed.selected_candidate_id == "cash-efficient"
+
+
+def test_resource_candidate_pareto_frontier_retains_tradeoffs_and_removes_dominated_routes():
+    quota_route = ResourceAwareCandidate(
+        "quota-route", .95, .95, .90,
+        provider_quota_burn=1, monetary_cost=5, wall_time_seconds=10, scarce_expert_usage=2,
+    )
+    money_route = ResourceAwareCandidate(
+        "money-route", .95, .95, .90,
+        provider_quota_burn=5, monetary_cost=1, wall_time_seconds=10, scarce_expert_usage=2,
+    )
+    dominated = ResourceAwareCandidate(
+        "dominated", .95, .95, .90,
+        provider_quota_burn=7, monetary_cost=7, wall_time_seconds=12, scarce_expert_usage=3,
+    )
+    frontier = resource_candidate_pareto_frontier([dominated, money_route, quota_route], [], ResourceRoutingPolicy())
+    assert frontier["mode"] == "EXACT_OVER_ELIGIBLE_CANDIDATE_SET"
+    assert set(frontier["frontier_candidate_ids"]) == {"quota-route", "money-route"}
+    assert "dominated" not in frontier["frontier_candidate_ids"]
+    assert frontier["frontier_vectors"]["quota-route"]["provider_quota_burn"] == 1.0
+    assert frontier["authority"] == "EVIDENCE_ONLY"
 
 
 def test_protected_reserve_can_make_expert_path_ineligible():
