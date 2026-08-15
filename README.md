@@ -2,23 +2,32 @@
 
 **Durable deterministic control for agents, tools, models, humans, formal systems, native solvers, governed memory, and cross-run knowledge.**
 
-## Current release — v0.53.0
+## Current release — v0.54.0
 
-**Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening**
+**Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery**
 
-**Next release:** v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery
+**Next release:** v0.55.0 — Extended Mathematical IR + Portable Machine Archive
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 
-v0.53 hardens the public control plane around Principal / Workspace / Scope authority, scope-safe persistence access, distributed resource ownership, external-effect authorization, and reusable cross-run solver learning. Foreign knowledge, resource availability, learned solver state, model confidence, and validated performance hints remain Evidence; none can silently become truth, policy authority, or permission to act.
+v0.54 strengthens AASM's public execution boundary around durable effect ownership, UNKNOWN-outcome recovery, actual resource settlement, deterministic heterogeneous-solver racing, and certified cross-solver learning exchange. It reuses the existing TaskLease, resource, solver, proof, Evidence, and scoped-authority planes rather than introducing parallel control systems.
 
 AASM's declared project license is **Apache License, Version 2.0 (`Apache-2.0`) across the project**. To the extent AASM has the necessary relicensing rights, prior AASM versions—including versions first distributed under MIT—are **also offered under Apache-2.0**. Previously granted MIT permissions remain valid for their recipients, but prior AASM versions are not designated MIT-only. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`LICENSE_POLICY.md`](LICENSE_POLICY.md).
 
 ### Current release contracts
 
 ```text
-package / public surface: 0.53.0
-aasm.adoption.v1 / 0.29.0
+package / public surface: 0.54.0
+aasm.adoption.v1 / 0.30.0
+aasm.effect.intent.v1 / 0.1.0
+aasm.effect.dispatch-request.v1 / 0.1.0
+aasm.effect.ownership.v1 / 0.1.0
+aasm.effect.reconciliation.v1 / 0.1.0
+aasm.effect.resource-settlement.v1 / 0.1.0
+aasm.solver.translation.v1 / 0.1.0
+aasm.solver.portfolio.v1 / 0.1.0
+aasm.solver.portfolio.runtime.v1 / 0.1.0
+aasm.solver.exchange.v1 / 0.1.0
 aasm.identity.scoped.v1 / 0.1.0
 aasm.authority.scoped.v1 / 0.1.0
 aasm.authority.scoped.runtime.v1 / 0.1.0
@@ -78,6 +87,127 @@ proposal / observation / solver output
 ```
 
 Performance state is allowed to improve performance. It is not allowed to redefine correctness.
+
+## v0.54 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery
+
+v0.54 makes external execution ownership, actual resource reconciliation, cross-family solver racing, and cross-solver learned-state exchange explicit governed public semantics.
+
+### Effect ownership before the external boundary
+
+```text
+EffectIntent
+    ↓
+effect.authorize
+    ↓
+EffectDispatchRequest
+    ↓
+TaskLease + active resource reservations
+    ↓
+atomic EffectOwnership Evidence
+    ↓
+external executor
+    ↓
+CONFIRMED | FAILED | UNKNOWN
+    ↓
+EffectReconciliation
+```
+
+The executor cannot cross the external boundary before durable ownership exists. The ownership record binds the exact effect intent, dispatch request, execution ID, worker, TaskLease, workspace/scope, scoped authority decision, and declared resource reservations.
+
+If execution ownership survives but the terminal external outcome does not, restart marks the effect `UNKNOWN`. A new dispatch is blocked until explicit scoped reconciliation establishes the observed outcome with local Evidence. Dispatch, ownership, and reconciliation histories are append-only.
+
+### Actual resource settlement after observation
+
+`aasm.effect.resource-settlement.v1` binds observed external usage back into the existing resource ledger:
+
+```text
+reservation
+   ↓
+external effect
+   ↓
+CONFIRMED | FAILED reconciliation
+   ↓
+actual-consumption observation
+   ↓
+existing resource.settle authority
+   ↓
+existing resource settlement transaction
+   ↓
+effect-resource settlement Evidence
+```
+
+`UNKNOWN` effects cannot settle resource consumption. Actual resource keys must exactly match each bound reservation. Multi-reservation settlement is recoverable and idempotent per reservation; retries cannot rewrite already-durable actual usage.
+
+### Certified solver translation
+
+AASM can bind one canonical optimization model to compatible target solver families through `aasm.solver.translation.v1`. The target representation is independently checked for semantic equality rather than being trusted because it came from another adapter.
+
+This is the foundation for genuine CP-SAT/MILP portfolio execution over the same canonical problem rather than silently racing unrelated cloned models.
+
+### Deterministic portfolio racing
+
+Every race leg remains an ordinary AASM optimization task:
+
+```text
+certified translation
+      ↓
+optimization request
+      ↓
+TaskDemand
+      ↓
+TaskLease
+      ↓
+existing provider execution
+      ↓
+normalized + independently validated result
+      ↓
+existing proof certificate when required
+      ↓
+deterministic portfolio decision Evidence
+```
+
+v0.54 introduces **no parallel scheduler** and no new solver executor. Correctness selection explicitly excludes fastest-result wins, arrival-order wins, and majority voting. Uncertified negative claims cannot outvote a validated feasible assignment; incompatible certified facts fail closed as `CONFLICT`.
+
+A real release-gate fixture executes OR-Tools CP-SAT and HiGHS through the existing provider/TaskLease path and requires the deterministic proof-aware portfolio result.
+
+### Certified cross-solver learned-state exchange
+
+Cross-solver exchange reuses the v0.53 `SolverLearningArtifact`, validation, and application contracts. A source artifact must already have exact local PASS validation. Both source and target solver representations must have reproducible translation certificates. The exchanged target artifact is then independently revalidated against the target model before existing `solver.learning.apply` may use it.
+
+```text
+correctness-sensitive exchange:
+  NO_GOOD
+  UNSAT_CORE
+  BOUND
+
+performance-only exchange:
+  INCUMBENT
+  WARM_START
+
+not cross-solver portable:
+  NATIVE_ACCELERATOR
+```
+
+Cross-solver agreement is corroborating Evidence only:
+
+```text
+cross_solver_agreement_grants_truth = false
+truth_authority  = NONE
+policy_authority = NONE
+```
+
+Public v0.54 CLI includes:
+
+```bash
+aasm effect-governance-contract
+aasm effect-governance-runtime-contract
+aasm effect-resource-settlement-contract
+aasm solver-portfolio-contract
+aasm solver-portfolio-runtime-contract
+aasm solver-exchange-contract
+```
+
+Dedicated exact-head release gate: `aasm/v54`.
 
 ## v0.53 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
 
@@ -622,9 +752,15 @@ pip install 'aasm-runtime[postgres]'
 
 ## CLI
 
-v0.53 contract inspection:
+v0.54 contract inspection:
 
 ```bash
+aasm effect-governance-contract
+aasm effect-governance-runtime-contract
+aasm effect-resource-settlement-contract
+aasm solver-portfolio-contract
+aasm solver-portfolio-runtime-contract
+aasm solver-exchange-contract
 aasm scoped-authority-contract
 aasm scoped-authority-runtime-contract
 aasm scoped-store-contract
@@ -668,9 +804,10 @@ AASM's current release gates include:
 - Compose full-stack smoke testing;
 - byte-reproducible wheel/sdist builds and clean installation;
 - LangGraph and framework-neutral adapter conformance;
-- **Optimization Backends** with real native solvers plus the dedicated v0.52 contract/adversarial suite; publishes exact-head `aasm/optimization`;
+- **Optimization Backends** with real native solvers plus the dedicated v0.52 contract/adversarial suite and real v0.54 OR-Tools + HiGHS governed portfolio race; publishes exact-head `aasm/optimization`;
 - **Scoped Authority** with identity/delegation/resource/effect/store adversarial coverage and three-backend stale-resource protection; publishes exact-head `aasm/scoped-authority`;
 - **Solver Learning** with cross-run transport/admission, receiving-run revalidation, explicit application, and negative poisoning fixtures; publishes exact-head `aasm/solver-learning`;
+- **v0.54 Conformance** with effect ownership/UNKNOWN recovery, actual resource settlement, deterministic portfolio semantics/execution, certified cross-solver exchange, replay, and active public-surface checks; publishes exact-head `aasm/v54`;
 - **Cross-Run Knowledge** governance/adversarial tests;
 - **Formal Assurance** with bounded TLA+ and Promela/SPIN; publishes `aasm/formal-assurance`;
 - **Semantic Solver RC** upgrade, cross-backend, benchmark, claim-audit, public CLI, and full real certification; publishes `aasm/semantic-solver-rc`;
@@ -690,6 +827,7 @@ aasm/solution-pools
 aasm/optimization
 aasm/scoped-authority
 aasm/solver-learning
+aasm/v54
 ```
 
 ## License
@@ -720,13 +858,13 @@ Third-party material, if any, remains subject to its own applicable terms.
 - v0.50 Proof-Carrying Solver Claims ✅
 - v0.51 Governed Solution Pools & Complete Enumeration ✅
 - v0.52 Resource-Governed Multi-Objective Decisions & Pareto Solving ✅
-- **v0.53 Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening — current ✅**
-- **v0.54 Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery — next**
-- v0.55 Extended Mathematical IR + Portable Machine Archive
+- v0.53 Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening ✅
+- **v0.54 Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery — current ✅**
+- **v0.55.0 — Extended Mathematical IR + Portable Machine Archive — next**
 - v0.56 Proof/Enumeration/Optimization/Resource/Scope Stress Corpus
 - v0.57 Semantic Solver RC2 / Contract Review + Public Hosted-Foundation Review
 - **Beyond v0.57: open-ended AASM research and capability program; no presumed v1.0.**
 
 The v0.50–v0.57 sequence closes the **currently identified semantic-solver and hosted-foundation gap cluster**. It does not close AASM and does not imply readiness for a stable-major release.
 
-See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/RELEASE_0.52.md](docs/RELEASE_0.52.md), [docs/RESOURCE_GOVERNED_DECISION_FOUNDATION.md](docs/RESOURCE_GOVERNED_DECISION_FOUNDATION.md), and [LICENSE_POLICY.md](LICENSE_POLICY.md).
+See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/RELEASE_0.54.md](docs/RELEASE_0.54.md), [docs/RESOURCE_GOVERNED_DECISION_FOUNDATION.md](docs/RESOURCE_GOVERNED_DECISION_FOUNDATION.md), and [LICENSE_POLICY.md](LICENSE_POLICY.md).
