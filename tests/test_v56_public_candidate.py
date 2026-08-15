@@ -4,16 +4,17 @@ import aasm
 from aasm import public_v55, public_v56
 
 
-def test_v56_candidate_is_additive_and_root_package_remains_released_v54():
+def test_v56_candidate_is_additive_and_root_package_remains_released_v55():
     report = public_v56.validate_public_api_contract()
     assert report["valid"] is True, report
     assert public_v56.__version__ == "0.56.0.dev0"
     assert public_v56.PUBLIC_RELEASE_STABILITY == "QUALIFICATION_CANDIDATE"
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.0"
     assert public_v56.PUBLIC_API_CONTRACT["runtime_version"] == "0.56.0.dev0"
-    assert public_v55.__version__ == "0.55.0.dev0"
-    assert aasm.__version__ == "0.54.0"
-    assert aasm.AASMEngine.__module__ == "aasm.runtime_v54_full"
+    assert public_v55.__version__ == "0.55.0"
+    assert public_v55.PUBLIC_RELEASE_STABILITY == "ACTIVE_DEVELOPMENT"
+    assert aasm.__version__ == "0.55.0"
+    assert aasm.AASMEngine is public_v55.AASMEngine
     assert public_v56.AASMEngine is not aasm.AASMEngine
 
 
