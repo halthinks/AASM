@@ -597,6 +597,7 @@
 ./src/aasm/runtime_v53.py
 ./src/aasm/runtime_v53_learning.py
 ./src/aasm/runtime_v54.py
+./src/aasm/runtime_v54_exchange.py
 ./src/aasm/runtime_v54_portfolio.py
 ./src/aasm/scheduler.py
 ./src/aasm/scoped_authority.py
@@ -665,6 +666,7 @@
 ./tests/test_runtime_v53_authority.py
 ./tests/test_runtime_v53_solver_learning.py
 ./tests/test_runtime_v54_effects.py
+./tests/test_runtime_v54_exchange.py
 ./tests/test_runtime_v54_portfolio.py
 ./tests/test_scheduler.py
 ./tests/test_schemas.py
