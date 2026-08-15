@@ -6,6 +6,13 @@ from enum import Enum
 from typing import Any
 
 
+RESOURCE_CAPACITY_CONTRACT_ID = "aasm.resource.capacity.v1"
+RESOURCE_OBSERVATION_CONTRACT_ID = "aasm.resource.observation.v1"
+RESOURCE_DEMAND_CONTRACT_ID = "aasm.resource.demand.v1"
+RESOURCE_GOVERNANCE_CONTRACT_VERSION = "0.1.0"
+RESOURCE_GOVERNANCE_STABILITY = "FOUNDATION_EXPERIMENTAL"
+
+
 class CapacityWindowKind(str, Enum):
     """How a resource's usable capacity changes over time."""
 
