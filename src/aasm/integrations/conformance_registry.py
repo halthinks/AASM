@@ -57,6 +57,14 @@ def run_adapter_conformance(
     scenarios: Sequence[str] | None = None,
     engine_class: type[Any] | None = None,
 ) -> AdapterConformanceReport:
+    # The built-in LangGraph conformance driver is a v0.30 compatibility
+    # fixture whose unknown-effect scenario predates v0.53 scoped effect
+    # authority.  Keep that historical conformance suite pinned to the latest
+    # compatible parent runtime unless a caller explicitly supplies a runtime.
+    # v0.53 scoped effect semantics are covered independently by the dedicated
+    # scoped-authority gate and must not be weakened to satisfy this old fixture.
+    if engine_class is None:
+        from ..runtime_v52 import AASMEngine as engine_class
     kit = AdapterConformanceKit(engine_class=engine_class)
     return kit.run(get_conformance_driver(adapter_id), scenarios=scenarios)
 
