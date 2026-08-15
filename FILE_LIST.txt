@@ -654,7 +654,7 @@
 ./tests/test_team_protocol.py
 ./tests/test_v18_provider_artifacts_controls.py
 ./tests/test_v19_mission_observability_supervisors.py
-./tests/test_v21_calus.py
+./tests/test_v21_calculus.py
 ./tests/test_v22_profiles.py
 ./tests/test_v23_decision_backends.py
 ./tests/test_v24_assurance.py
