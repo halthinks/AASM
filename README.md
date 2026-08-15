@@ -2,31 +2,40 @@
 
 **Durable deterministic control for agents, tools, models, humans, formal systems, native solvers, engineering workflows, governed memory, and cross-run knowledge.**
 
-## Current release — v0.55.0
+## Current release — v0.56.0
 
-**Governed Semantic Evolution + Engineering Mathematical IR + Portable Machine Archive**
+**Truthful Solver Outcomes + Governed Semantic Evolution + Engineering Mathematical IR**
 
-**Next release:** v0.56.0 — Truthful Solver Outcomes, Runtime Provenance, and Reproducibility
+**Next cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, external engineering tools, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 
-v0.55 extends the released v0.54 effect/solver/resource boundary with stable engineering identity, problem revisions and deltas, governed solver formulations, exact pseudo-Boolean/cardinality representation, portable scheduling semantics, deterministic quadratic/conic representation, non-scalarized decision vectors, and a reducer-verifiable portable semantic archive.
+v0.56.0 makes solver outcome semantics truthful enough for later refinement and knowledge application: detailed status, termination, incumbent validation, bounds/gaps, evidence grade, raw provider status/code, and explicit lossy compatibility projection are governed separately. It preserves and extends all released v0.55 semantic-evolution, formulation, engineering-IR, and archive capabilities.
 
 AASM's declared project license is **Apache License, Version 2.0 (`Apache-2.0`) across the project**. Previously granted MIT permissions remain valid for their recipients. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`LICENSE_POLICY.md`](LICENSE_POLICY.md).
 
 ## Current release contracts
 
 ```text
-package / public surface: 0.55.0
-aasm.adoption.v1 / 0.31.0
+package / public surface: 0.56.0
+aasm.adoption.v1 / 0.32.0
 
-v0.55 semantic evolution:
+v0.56 truthful solver evidence:
+  aasm.solver.outcome.v2
+  aasm.solver.status.v2
+  aasm.solver.termination.v2
+  aasm.solver.evidence-grade.v1
+  aasm.solver.status-v1-projection.v1
+  aasm.solver.provider-status-map.v1
+  aasm.solver.outcome-v2.runtime.v1
+
+parent v0.55 semantic evolution:
   aasm.external.reference.v1
   aasm.problem.revision.v1
   aasm.problem.delta.v1
   aasm.semantic-evolution.runtime.v1
 
-v0.55 formulation governance:
+parent v0.55 formulation governance:
   aasm.model.feature-set.v1
   aasm.provider.capability-manifest.v1
   aasm.model.admission.v1
@@ -35,7 +44,7 @@ v0.55 formulation governance:
   aasm.solver.formulation-execution-binding.v1
   aasm.solver.formulation-runtime.v1
 
-v0.55 engineering IR:
+parent v0.55 engineering IR:
   exact pseudo-Boolean/cardinality IR
   portable scheduling IR
   deterministic quadratic/conic IR
@@ -75,6 +84,111 @@ proposal / observation / solver output / external receipt
 ```
 
 Performance state may improve performance. Evidence may support a decision. Neither silently becomes truth or authority.
+
+## v0.56 — Truthful Solver Outcomes
+
+### Detailed status is no longer one overloaded enum
+
+The released v0.55 optimization result remains preserved for compatibility, but new v0.56 solver-facing features use `SolverOutcomeV2.normalized_status` as the authoritative detailed outcome.
+
+A v0.56 outcome separates:
+
+```text
+termination cause
+solution / feasibility state
+incumbent presence
+incumbent validation
+optimality claim
+bounds / relative gap
+proof status
+evidence grade
+raw provider status + code
+provider mapping rule/version
+legacy projection
+```
+
+Representative statuses include:
+
+```text
+OPTIMAL
+FEASIBLE_NOT_PROVEN_OPTIMAL
+INFEASIBLE
+UNBOUNDED
+INFEASIBLE_OR_UNBOUNDED
+TIME_LIMIT_WITH_INCUMBENT
+TIME_LIMIT_NO_SOLUTION
+NODE_LIMIT_WITH_INCUMBENT
+NODE_LIMIT_NO_SOLUTION
+ITERATION_LIMIT_WITH_INCUMBENT
+ITERATION_LIMIT_NO_SOLUTION
+SOLUTION_LIMIT_WITH_INCUMBENT
+SOLUTION_LIMIT_NO_SOLUTION
+MEMORY_LIMIT_WITH_INCUMBENT
+MEMORY_LIMIT_NO_SOLUTION
+USER_INTERRUPT_WITH_INCUMBENT
+USER_INTERRUPT_NO_SOLUTION
+NUMERICAL_FAILURE
+MODEL_INVALID
+PROVIDER_UNAVAILABLE
+UNSUPPORTED_FEATURE
+STALE_RESULT
+UNKNOWN_WITH_INCUMBENT
+UNKNOWN_NO_SOLUTION
+```
+
+The old status vocabulary is available only through an explicit v2→v1 projection. That projection is marked lossy whenever v1 cannot preserve the detailed distinction.
+
+### Incumbents are independently checked
+
+A provider-returned assignment does not automatically become an accepted incumbent.
+
+```text
+provider assignment
+      |
+      v
+exact OptimizationRequest + model
+      |
+      v
+AASM independent assignment/objective validation
+      |
+      +--> FAIL: no accepted incumbent
+      |
+      v
+validated incumbent Evidence
+      |
+      v
+v0.56 *_WITH_INCUMBENT / SAT / OPTIMAL / FEASIBLE status
+```
+
+AASM records this validation through the existing Evidence/event path. No parallel solver-result truth table is introduced.
+
+### Provider statuses are exact, not guessed
+
+The provider-status-map contract forbids substring and fuzzy status inference.
+
+Current qualified native status identities include:
+
+- CaDiCaL through PySAT Boolean solve results;
+- OR-Tools `CpSolverStatus` names/codes;
+- HiGHS `HighsModelStatus` names/codes.
+
+Unknown provider statuses remain unknown. A future string that happens to contain `time`, `optimal`, or `feasible` cannot silently acquire those semantics.
+
+### Provider optimality is not proof certification
+
+`OPTIMAL` means the provider made an optimal-completion claim and the returned incumbent passed independent source-model validation. It does **not** mean AASM independently proved global optimality.
+
+```text
+provider OPTIMAL + validated incumbent
+              !=
+independently checked proof certificate
+```
+
+The stronger proof boundary remains the released proof/checker subsystem.
+
+### Full terminal-class coverage
+
+The v0.56 release gate exercises the roadmap-mandated termination/failure classes, including time, node, iteration, solution, memory, user interrupt, numerical failure, invalid model, unavailable provider, unsupported feature, stale result, and unknown future provider states.
 
 ## v0.55 — Governed Semantic Evolution
 
@@ -264,11 +378,23 @@ derived projections grant truth    = false
 
 Durable event sequence numbers are ordering provenance. They are **not** machine-state version counters; replayed machine version is checked against the persisted canonical snapshot version.
 
-## v0.55 claim ceilings
+## v0.56 claim ceilings
 
 AASM is explicit about what this release does not prove:
 
 ```text
+solver outcome normalization truth authority
+  = NONE
+
+provider OPTIMAL
+  != independent optimality proof
+
+provider negative status
+  != independent infeasibility proof
+
+provider status text inference
+  = FORBIDDEN
+
 semantic-evolution truth authority
   = EXISTING_AASM_ADMISSION_PATH_ONLY
 
@@ -286,9 +412,6 @@ continuous optimality proof
 
 decision-vector scalarization
   = NONE
-
-semantic archive import mutation path
-  = NONE_IN_FOUNDATION
 ```
 
 ## Core architecture
@@ -321,9 +444,9 @@ AASM's AVATAR/CDCL-inspired architecture uses conditional activation, durable co
 
 ## Engineering / TextPCB direction
 
-v0.55 was shaped to support demanding external engineering state machines without baking PCB or CAD types into the kernel.
+v0.56 continues to shape AASM for demanding external engineering state machines without baking PCB or CAD types into the kernel.
 
-The public seams now support the prerequisites for a supervisory engineering control layer:
+The public seams now support:
 
 ```text
 external requirement identity
@@ -335,6 +458,8 @@ feature + provider admission
 governed formulation
         ↓
 discrete / scheduling / continuous IR
+        ↓
+truthful solver outcome
         ↓
 external verification / execution evidence
         ↓
@@ -381,7 +506,7 @@ import aasm
 
 report = aasm.validate_public_api_contract()
 assert report["valid"]
-assert aasm.__version__ == "0.55.0"
+assert aasm.__version__ == "0.56.0"
 print(aasm.public_api_contract()["contract_version"])
 ```
 
@@ -389,19 +514,18 @@ print(aasm.public_api_contract()["contract_version"])
 
 AASM uses independent, exact-head gates rather than treating documentation as evidence of implementation.
 
-The v0.55-specific gate verifies:
+The v0.56-specific gate verifies:
 
 ```text
 tracked file inventory
-semantic evolution/runtime fixtures
-model feature/provider admission
-solver formulation + revision fencing
-exact pseudo-Boolean/cardinality IR
-portable scheduling IR
-deterministic quadratic/conic IR
-governed decision vectors
-portable event-replay archive
-active public v0.55 surface
+Solver Outcome v2 contracts and schemas
+all roadmap-mandated terminal classes
+independent incumbent validation
+lossy v2→v1 compatibility projection
+exact provider status mapping
+real CaDiCaL / OR-Tools / HiGHS status identity
+active public v0.56 surface
+released v0.55 parent compatibility
 ```
 
 ### Reproducible release evidence
@@ -438,6 +562,7 @@ v0.52  resource-governed multi-objective / Pareto decisions
 v0.53  scoped authority and durable solver learning
 v0.54  effect ownership + deterministic solver portfolio/exchange
 v0.55  governed semantic evolution + engineering IR + portable archive
+v0.56  truthful solver outcomes + exact provider status mapping
 ```
 
 Historical release documentation remains under `docs/RELEASE_*.md` and the architecture/roadmap documents.
@@ -446,8 +571,9 @@ Historical release documentation remains under `docs/RELEASE_*.md` and the archi
 
 Start with:
 
-- [`docs/CURRENT_RELEASE.md`](docs/CURRENT_RELEASE.md) — active v0.55 contract and boundaries;
-- [`docs/RELEASE_0.55.md`](docs/RELEASE_0.55.md) — v0.55 release summary;
+- [`docs/CURRENT_RELEASE.md`](docs/CURRENT_RELEASE.md) — active v0.56 contract and boundaries;
+- [`docs/RELEASE_0.56.md`](docs/RELEASE_0.56.md) — v0.56 release summary;
+- [`docs/RELEASE_0.55.md`](docs/RELEASE_0.55.md) — parent v0.55 release summary;
 - [`docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md`](docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md) — semantic-evolution architecture;
 - [`docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md`](docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md) — implementation sequence;
 - [`docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md`](docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md) — canonical execution ledger;
@@ -461,7 +587,7 @@ Start with:
 
 AASM is an experimental `0.x` project. Public contracts are versioned and aggressively tested, but interfaces may still evolve between minor releases. Claims in the README are intended to stay below the evidence available from code, tests, and release gates.
 
-**Current release:** `0.55.0`  
-**Adoption contract:** `aasm.adoption.v1 / 0.31.0`  
+**Current release:** `0.56.0`  
+**Adoption contract:** `aasm.adoption.v1 / 0.32.0`  
 **License:** Apache-2.0  
 **Repository:** https://github.com/halthinks/AASM
