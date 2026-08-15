@@ -24,7 +24,7 @@ def test_v53_public_contract_preserves_authority_and_solver_learning_safety_boun
     contract = public_v53.public_api_contract()
     authority = contract["scoped_identity_authority"]
     learning = contract["solver_learning"]
-    application = learning["application"]
+    application = learning["application_contract"]
     runtime = learning["runtime"]
     assert authority["contract_id"] == "aasm.authority.scoped.v1"
     assert authority["default"] == "DENY"
