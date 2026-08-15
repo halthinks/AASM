@@ -3,11 +3,12 @@ from aasm import public_v52
 from aasm import public_v53
 from aasm import public_v54
 from aasm import public_v55
+from aasm import public_v56
 from aasm.cli_v53 import build_parser
 from aasm.runtime_v53_learning import AASMEngine, SOLVER_LEARNING_APPLY_CAPABILITY
 
 
-def test_v53_public_surface_is_additive_and_active():
+def test_v53_public_surface_is_additive_and_versioned():
     report = public_v53.validate_public_api_contract()
     assert report["valid"] is True, report
     assert public_v53.__version__ == "0.53.0"
@@ -17,12 +18,15 @@ def test_v53_public_surface_is_additive_and_active():
     assert public_v52.__version__ == "0.52.0"
 
 
-def test_v53_parent_no_longer_owns_active_demo_stack_after_v54_promotion():
+def test_v53_parent_no_longer_owns_active_demo_stack_after_v56_promotion():
     assert public_v54.__version__ == "0.54.0"
-    assert demo_stack.AASMEngine is public_v55.AASMEngine
-    assert demo_stack._runtime_version() == "0.55.0"
+    assert public_v55.__version__ == "0.55.0"
+    assert public_v56.__version__ == "0.56.0"
+    assert demo_stack.AASMEngine is public_v56.AASMEngine
+    assert demo_stack._runtime_version() == "0.56.0"
     assert demo_stack.AASMEngine is not public_v53.AASMEngine
     assert demo_stack.AASMEngine is not public_v54.AASMEngine
+    assert demo_stack.AASMEngine is not public_v55.AASMEngine
 
 
 def test_v53_public_contract_preserves_authority_store_and_solver_learning_safety_boundaries():
@@ -64,7 +68,7 @@ def test_v53_public_contract_preserves_authority_store_and_solver_learning_safet
     assert runtime["solver_execution"] == "EXISTING_AASM_OPTIMIZATION_PROVIDER_PATH_ONLY"
 
 
-def test_v53_engine_and_imports_are_present_on_active_versioned_surface():
+def test_v53_engine_and_imports_are_present_on_versioned_surface():
     for method in (
         "bootstrap_scoped_workspace",
         "authorize_scoped_request",
