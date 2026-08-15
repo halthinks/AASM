@@ -4,7 +4,6 @@ from http.server import ThreadingHTTPServer
 import pytest
 
 from aasm import (
-    AASMEngine,
     ExecutionTelemetryRecord,
     FleetControlPolicy,
     FunctionProvisioningAdapter,
@@ -21,6 +20,7 @@ from aasm import (
     TelemetryPolicy,
     WorkerRecord,
 )
+from aasm.runtime_v52 import AASMEngine
 from aasm.remote import AASMRemoteClient
 from aasm.server import make_handler
 
