@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/scheduling-model.schema.json",
+  "title": "AASM Scheduling Model v1",
+  "type": "object",
+  "required": ["model_id", "contract_id", "contract_version", "name", "horizon", "tasks", "precedences", "no_overlaps", "cumulative_resources", "problem_revision_id", "problem_revision_fingerprint", "metadata", "fingerprint"],
+  "properties": {
+    "model_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.optimization.scheduling.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "name": {"type": "string", "minLength": 1},
+    "horizon": {"type": "integer", "minimum": 1},
+    "tasks": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "precedences": {"type": "array", "items": {"type": "object"}},
+    "no_overlaps": {"type": "array", "items": {"type": "object"}},
+    "cumulative_resources": {"type": "array", "items": {"type": "object"}},
+    "problem_revision_id": {"type": "string"},
+    "problem_revision_fingerprint": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
