@@ -167,7 +167,7 @@ def main() -> None:
         "test_scoped_store_view_exposes_no_direct_append_or_mutation_surface",
     ])
     require(root / "tests/test_v53_public.py", [
-        "test_pre_release_v53_import_does_not_rebind_active_v52_demo_stack",
+        "test_v53_active_public_surface_binds_demo_stack_to_v53_runtime",
         "test_v53_public_contract_preserves_authority_store_and_solver_learning_safety_boundaries",
         '"scoped-store-contract"',
     ])
