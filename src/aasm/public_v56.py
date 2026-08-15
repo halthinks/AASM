@@ -50,8 +50,8 @@ from .solver_outcome_v2 import (
 )
 
 
-__version__ = "0.56.0.dev0"
-PUBLIC_RELEASE_STABILITY = "QUALIFICATION_CANDIDATE"
+__version__ = "0.56.0"
+PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"
 REMOTE_PROTOCOL_NAME = _v55.REMOTE_PROTOCOL_NAME
 REMOTE_PROTOCOL_VERSION = _v55.REMOTE_PROTOCOL_VERSION
 
@@ -112,13 +112,15 @@ def validate_public_api_contract():
     missing_imports = [name for name in _NEW_IMPORTS if name not in globals()]
     missing_methods = [name for name in _NEW_ENGINE_METHODS if not callable(getattr(AASMEngine, name, None))]
     if missing_imports:
-        errors.append(f"missing v0.56 candidate imports: {missing_imports}")
+        errors.append(f"missing v0.56 imports: {missing_imports}")
     if missing_methods:
-        errors.append(f"missing v0.56 candidate engine methods: {missing_methods}")
+        errors.append(f"missing v0.56 engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
-        errors.append("v0.56 candidate runtime version mismatch")
+        errors.append("v0.56 runtime version mismatch")
     if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.0":
-        errors.append("v0.56 candidate adoption contract mismatch")
+        errors.append("v0.56 adoption contract mismatch")
+    if PUBLIC_RELEASE_STABILITY != "ACTIVE_DEVELOPMENT":
+        errors.append("v0.56 active release stability mismatch")
     outcome = PUBLIC_API_CONTRACT.get("solver_outcome_v2", {})
     if outcome.get("authoritative_detailed_status") != "normalized_status":
         errors.append("solver outcome v2 authoritative status boundary mismatch")
@@ -131,3 +133,8 @@ def validate_public_api_contract():
     if outcome.get("truth_authority") != "NONE":
         errors.append("solver outcome v2 authority boundary mismatch")
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
+
+
+from . import demo_stack as _demo_stack
+_demo_stack.AASMEngine = AASMEngine
+_demo_stack._runtime_version = lambda: __version__
