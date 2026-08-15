@@ -8,8 +8,9 @@ from aasm.optimization import (
     OptimizationResult, OptimizationSolverIdentity, OptimizationVariable,
 )
 from aasm.provider_status_v2 import (
-    PROVIDER_STATUS_MAP_CONTRACT_ID, highs_status_map, map_provider_status,
-    ortools_cp_sat_status_map, provider_status_map_contract,
+    PROVIDER_STATUS_MAP_CONTRACT_ID, ProviderStatusMap, ProviderStatusRule,
+    highs_status_map, map_provider_status, ortools_cp_sat_status_map,
+    provider_status_map_contract,
 )
 from aasm.solver_outcome_v2 import (
     SOLVER_OUTCOME_V2_CONTRACT_ID, ProviderTermination, normalize_optimization_result_v2,
@@ -71,13 +72,29 @@ def main() -> None:
     require(timeout.incumbent_validation == "VALIDATED", "incumbent not independently validated")
     require(timeout.legacy_projection.status == "TIMEOUT" and timeout.legacy_projection.lossy, "timeout legacy projection incorrect")
 
-    invalid = normalize_optimization_result_v2(
-        result(request, "ERROR"), request=request,
-        termination=ProviderTermination("MODEL_INVALID", raw_status="MODEL_INVALID", raw_status_code="1"),
-        normalized_status="MODEL_INVALID",
+    required_terminal_classes = (
+        ("NODE_LIMIT", "NODE_LIMIT_NO_SOLUTION", "UNKNOWN"),
+        ("MEMORY_LIMIT", "MEMORY_LIMIT_NO_SOLUTION", "UNKNOWN"),
+        ("USER_INTERRUPT", "USER_INTERRUPT_NO_SOLUTION", "UNKNOWN"),
+        ("NUMERICAL_FAILURE", "NUMERICAL_FAILURE", "ERROR"),
+        ("MODEL_INVALID", "MODEL_INVALID", "ERROR"),
+        ("PROVIDER_UNAVAILABLE", "PROVIDER_UNAVAILABLE", "ERROR"),
+        ("UNSUPPORTED_FEATURE", "UNSUPPORTED_FEATURE", "ERROR"),
+        ("STALE_RESULT", "STALE_RESULT", "UNKNOWN"),
     )
-    require(invalid.normalized_status == "MODEL_INVALID", "model-invalid collapsed into another status")
-    require(project_v2_to_legacy_status("NUMERICAL_FAILURE").status == "ERROR", "numerical failure v1 projection drift")
+    for termination_reason, normalized_status, legacy_status in required_terminal_classes:
+        source_status = "ERROR" if legacy_status == "ERROR" else "UNKNOWN"
+        outcome = normalize_optimization_result_v2(
+            result(request, source_status), request=request,
+            termination=ProviderTermination(termination_reason, raw_status=termination_reason),
+            normalized_status=normalized_status,
+        )
+        require(outcome.normalized_status == normalized_status, f"terminal class drift: {normalized_status}")
+        require(outcome.termination.reason == termination_reason, f"termination reason drift: {termination_reason}")
+        require(outcome.legacy_projection.status == legacy_status, f"legacy projection drift: {normalized_status}")
+
+    require(project_v2_to_legacy_status("FEASIBLE_NOT_PROVEN_OPTIMAL").status == "FEASIBLE", "feasible compatibility projection drift")
+    require(project_v2_to_legacy_status("UNBOUNDED").status == "UNKNOWN", "unbounded compatibility projection drift")
 
     ortools = map_provider_status(ortools_cp_sat_status_map("9.15.6755"), raw_status="MODEL_INVALID", raw_status_code="1")
     require(ortools.normalized_status == "MODEL_INVALID", "OR-Tools model-invalid mapping drift")
@@ -85,6 +102,19 @@ def main() -> None:
     require(highs.normalized_status == "INFEASIBLE_OR_UNBOUNDED", "HiGHS unbounded-or-infeasible mapping drift")
     unknown = map_provider_status(highs_status_map("1.14.0"), raw_status="kFutureStatus", raw_status_code="999")
     require(unknown.mapping_status == "NO_EXACT_RULE" and unknown.termination.raw_status_code == "999", "unknown provider status guessed")
+
+    synthetic = ProviderStatusMap(
+        "v56-terminal-gate", "1", "aasm.v56-gate", "1",
+        (
+            ProviderStatusRule("MEMORY_LIMIT", "MEMORY_LIMIT_DYNAMIC", raw_status="MEMORY", raw_status_code="21", incumbent_eligibility="VALIDATED_IF_PRESENT", provider_version_range="==1"),
+            ProviderStatusRule("PROVIDER_UNAVAILABLE", "PROVIDER_UNAVAILABLE", raw_status="UNAVAILABLE", raw_status_code="22", provider_version_range="==1"),
+            ProviderStatusRule("UNSUPPORTED_FEATURE", "UNSUPPORTED_FEATURE", raw_status="UNSUPPORTED", raw_status_code="23", provider_version_range="==1"),
+        ),
+    )
+    require(map_provider_status(synthetic, raw_status="MEMORY", raw_status_code="21").normalized_status == "MEMORY_LIMIT_NO_SOLUTION", "memory-limit mapping drift")
+    require(map_provider_status(synthetic, raw_status="UNAVAILABLE", raw_status_code="22").normalized_status == "PROVIDER_UNAVAILABLE", "provider-unavailable mapping drift")
+    require(map_provider_status(synthetic, raw_status="UNSUPPORTED", raw_status_code="23").normalized_status == "UNSUPPORTED_FEATURE", "unsupported-feature mapping drift")
+
     print("v0.56 solver outcome/status-v2 source contract: PASS")
 
 
