@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/solver-learning-validation.schema.json",
+  "title": "AASM Solver Learning Validation",
+  "type": "object",
+  "required": [
+    "validation_id",
+    "learning_id",
+    "model_fingerprint",
+    "status",
+    "application_authority",
+    "checker_id",
+    "checker_version",
+    "enumeration_certificate_id",
+    "diagnostics",
+    "details",
+    "fingerprint"
+  ],
+  "properties": {
+    "validation_id": {"type": "string", "minLength": 1},
+    "learning_id": {"type": "string", "minLength": 1},
+    "model_fingerprint": {"type": "string", "minLength": 1},
+    "status": {"enum": ["PASS", "FAIL", "INCONCLUSIVE", "UNSUPPORTED"]},
+    "application_authority": {"type": "string", "minLength": 1},
+    "checker_id": {"const": "aasm.checker.solver-learning-finite.v1"},
+    "checker_version": {"const": "0.1.0"},
+    "enumeration_certificate_id": {"type": "string"},
+    "diagnostics": {"type": "array", "items": {"type": "string"}},
+    "details": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
