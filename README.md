@@ -257,7 +257,7 @@ Linear criteria compile into the existing exact-finite multi-objective engine on
 Verification uses the archived **event sequence** as the replay source and runs the existing AASM reducer. The persisted snapshot is comparison evidence, not a replay input.
 
 ```text
-replay source                     = ARCHIVED_EVENT_SEQUENCE_ONLY
+replay source                      = ARCHIVED_EVENT_SEQUENCE_ONLY
 persisted snapshot as replay input = false
 derived projections grant truth    = false
 ```
@@ -404,7 +404,17 @@ portable event-replay archive
 active public v0.55 surface
 ```
 
-Repository-wide gates additionally cover ordinary unit/compatibility tests, build reproducibility, formal models, native solver integrations, proof claims, solution pools, scoped authority, solver learning, and release artifact validation.
+### Reproducible release evidence
+
+The permanent repository gates retain the evidence labels used by the Semantic Solver RC claim audit:
+
+- **Python 3.11 / 3.12 / 3.13** — the main CI matrix;
+- **Promela/SPIN** — bounded operational formal assurance alongside TLA+;
+- **Optimization Backends** — native CaDiCaL, OR-Tools CP-SAT, HiGHS, CVXPY, and PuLP conformance where applicable;
+- **Cross-Run Knowledge** — cross-run admission, replay, privacy, and non-inheritance-of-authority checks;
+- **LICENSE_POLICY.md** — project-wide Apache-2.0 policy with earlier MIT grants preserved.
+
+Repository-wide gates additionally cover build reproducibility, proof claims, solution pools, scoped authority, solver learning, semantic-solver RC certification, and exact immutable release-asset verification.
 
 ## Release progression
 
