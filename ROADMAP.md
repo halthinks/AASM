@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.53.0 / Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening**.
+AASM is currently **v0.54.0 / Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery**.
 
 The roadmap is explicitly **product-backward**: known destination properties must shape public contracts before implementation depth makes them expensive to add. A capability may be staged, but it may not be deferred in a way that makes the current architecture structurally incompatible with it.
 
@@ -26,7 +26,8 @@ The roadmap is explicitly **product-backward**: known destination properties mus
 - v0.50.0 Proof-Carrying Solver Claims
 - v0.51.0 Governed Solution Pools & Complete Enumeration
 - v0.52.0 Resource-Governed Multi-Objective Decisions & Pareto Solving
-- **v0.53.0 Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening — Current Release**
+- v0.53.0 Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
+- **v0.54.0 Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery — Current Release**
 
 ## Product destination that constrains the next releases
 
@@ -127,7 +128,7 @@ Neither optimality, frontier completeness, resource availability, nor SII utilit
 
 # v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
 
-**Status: released / current.**
+**Status: released / frozen parent of v0.54.**
 
 Public contracts and runtime surfaces:
 
@@ -173,24 +174,56 @@ Hard completion criterion satisfied:
 
 # v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery
 
-**Next active layer.**
+**Status: released / current.**
 
-Primary goals:
+Public contracts and runtime surfaces:
 
-- public `EffectIntent` lifecycle;
-- certified effect ownership handoff/recovery beyond the v0.53 scoped authorization foundation;
-- stronger idempotency/ownership records across distributed executors;
-- `CONFIRMED | FAILED | UNKNOWN` outcomes with explicit reconciliation;
-- resource reservation before governed external execution and settlement after observation;
-- deterministic multi-backend/model racing under leases/budgets;
-- certified translation of exchanged incumbents, bounds, conflicts/no-goods, cores, and compatible solver state;
-- no winner-by-speed or majority-vote truth shortcut.
+```text
+aasm.effect.intent.v1 / 0.1.0
+aasm.effect.dispatch-request.v1 / 0.1.0
+aasm.effect.ownership.v1 / 0.1.0
+aasm.effect.reconciliation.v1 / 0.1.0
+aasm.effect.resource-settlement.v1 / 0.1.0
+aasm.solver.translation.v1 / 0.1.0
+aasm.solver.portfolio.v1 / 0.1.0
+aasm.solver.portfolio.runtime.v1 / 0.1.0
+aasm.solver.exchange.v1 / 0.1.0
+aasm.adoption.v1 / 0.30.0
+```
 
-Hard completion criterion:
+Delivered:
 
-> Crash/retry fixtures cannot silently duplicate or lose effect ownership, UNKNOWN effects remain unresolved until evidenced, and portfolio execution cannot consume resources outside its governed allocation.
+- public durable `EffectIntent`, dispatch request, ownership, and reconciliation lifecycle;
+- durable atomic EffectOwnership recorded before external executor invocation;
+- existing TaskLease, scoped effect authority, and declared resource reservations bound to each external dispatch;
+- crash/restart recovery preserving ownership and converting ambiguous in-flight outcomes to `UNKNOWN`;
+- `UNKNOWN` retry blocking until explicit scoped Evidence-backed reconciliation;
+- append-only dispatch, ownership, and reconciliation history;
+- actual external consumption reconciliation through the existing scoped `resource.settle` path after `CONFIRMED | FAILED` outcomes;
+- idempotent recoverable multi-reservation effect settlement and exact-actual conflict rejection;
+- certified canonical solver-family translation with independent semantic-equality checking;
+- deterministic portfolio racing over ordinary existing optimization requests, TaskDemand, TaskLease, provider execution, validation, and Evidence;
+- no v0.54 parallel scheduler or alternate solver executor;
+- explicit rejection of fastest-result, arrival-order, and majority-vote correctness shortcuts;
+- proof-aware portfolio decisions using the existing v0.50 proof-certificate plane;
+- uncertified negative claims cannot outvote a validated feasible solution;
+- certified/validated contradictions fail closed as `CONFLICT`;
+- native OR-Tools CP-SAT + HiGHS governed portfolio race through the real existing TaskLease/provider path;
+- certified cross-solver exchange of v0.53 solver-learning artifacts with source PASS validation, source/target translation certification, and target-local revalidation;
+- correctness-sensitive no-good/core/bound exchange remains inert until target validation;
+- incumbent/warm-start exchange remains performance-only;
+- native accelerator state is forbidden across different solvers;
+- cross-solver agreement grants no truth or policy authority;
+- dedicated exact-SHA `aasm/v54` release gate, with `aasm/optimization` providing the real native backend race proof;
+- active package/public surface `0.54.0` / adoption contract `0.30.0`.
+
+Hard completion criterion satisfied:
+
+> Crash/retry fixtures cannot silently duplicate or lose effect ownership, UNKNOWN effects remain unresolved until evidenced, actual external consumption settles only through the governed resource ledger, and portfolio execution cannot consume resources or execute solver work outside the existing governed allocation/TaskLease/provider boundaries.
 
 # v0.55.0 — Extended Mathematical IR + Portable Machine Archive
+
+**Next active layer.**
 
 Primary goals:
 
@@ -249,7 +282,7 @@ Hard completion criterion:
 
 # After v0.57 — Private Hosted Product Fabric and Further Public Hardening
 
-Resource-aware SII and the product objective vector are public v0.52 semantics; scoped authority/store boundaries and cross-run solver learning are public v0.53 semantics; all are hardened further through v0.57.
+Resource-aware SII and the product objective vector are public v0.52 semantics; scoped authority/store boundaries and cross-run solver learning are public v0.53 semantics; effect ownership/resource reconciliation and deterministic cross-solver portfolio/exchange are public v0.54 semantics; all are hardened further through v0.57.
 
 Public hardening may continue with:
 
@@ -258,30 +291,3 @@ Public hardening may continue with:
 - scoped principal-authority delegation and capability-ceiling maturity;
 - profile binding/migration maturity for generated operator stacks;
 - provider adapters mapping external usage telemetry into the generic observation contract without becoming kernel dependencies.
-
-The private Hosted AASM fabric consumes the public contracts:
-
-```text
-Fabric Root Policy
-Bootstrap
-Tenancy
-Provisioning
-Usage
-Resource Broker
-Health
-Upgrade
-Support
-Portal / API gateway / billing / isolation topology
-```
-
-Private product policy may determine deployment topology and operator content, but it may not replace public scope, authority, resource, effect, replay, decision-routing, or commitment semantics.
-
-# No Presumed v1.0
-
-AASM does not infer v1.0 from version arithmetic. `0.x` remains architecture-expansion territory. A stable major requires a separate project-wide readiness review supported by migration guarantees, authority/safety evidence, replay guarantees, operational evidence, and field results.
-
-# Permanent Engineering Doctrine
-
-> **No known target capability may be deferred in a way that makes current public contracts structurally incompatible with it. Implementation may be staged; architectural accommodation may not.**
-
-> **Proposal is cheap. Commitment, authority, resource consumption, and external effects are not.**
