@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.54.0] - 2026-08-15
+
+### Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery
+
+- advanced package/public surface to `0.54.0` and `aasm.adoption.v1 / 0.30.0`;
+- added public `aasm.effect.intent.v1`, dispatch-request, ownership, reconciliation, and resource-settlement contracts;
+- made durable atomic `EffectOwnership` mandatory before the external executor boundary and bound it to the existing scoped authority, TaskLease, workspace/scope, and declared resource reservations;
+- added crash/restart UNKNOWN recovery that preserves ownership and blocks redispatch until explicit scoped Evidence-backed reconciliation;
+- kept dispatch, ownership, and reconciliation history append-only and refused silent adoption of legacy pre-v0.54 effects;
+- added `aasm.effect.resource-settlement.v1 / 0.1.0`, reconciling observed actual external consumption only after `CONFIRMED | FAILED` outcomes through the existing scoped `resource.settle` authority and resource ledger;
+- made multi-reservation effect settlement recoverable/idempotent per reservation and rejected retries that attempt to rewrite already-durable actual consumption;
+- added `aasm.solver.translation.v1 / 0.1.0` with deterministic source/target identity and independent exact semantic-equivalence checking across compatible solver-family representations;
+- added `aasm.solver.portfolio.v1 / 0.1.0` and `aasm.solver.portfolio.runtime.v1 / 0.1.0` while preserving ordinary optimization requests, `TaskDemand`, `TaskLease`, existing provider execution, result validation, Evidence, and proof-certificate pathways;
+- introduced no parallel race scheduler and explicitly forbade fastest-result, arrival-order, and majority-vote correctness shortcuts;
+- made uncertified negative claims unable to outvote validated feasible assignments and made incompatible certified/validated facts fail closed as `CONFLICT`;
+- added proof-aware portfolio decisions using the existing v0.50 proof-certificate plane rather than creating a second certification authority;
+- added a real OR-Tools CP-SAT + HiGHS governed portfolio race through the existing TaskLease/provider path and required the deterministic certified-optimal result;
+- added `aasm.solver.exchange.v1 / 0.1.0`, reusing v0.53 `SolverLearningArtifact`, validation, and application semantics for cross-solver learned-artifact exchange;
+- required source local PASS validation, independently reproducible source/target translation certificates, and target-local revalidation before exchanged learning can be applied;
+- kept no-goods/cores/bounds correctness-sensitive, incumbents/warm starts performance-only, and native accelerator state non-portable across different solvers;
+- preserved `cross_solver_agreement_grants_truth = false`, `truth_authority = NONE`, and `policy_authority = NONE`;
+- promoted `runtime_v54_full.AASMEngine`, `public_v54`, and `cli_v54` to the active package surface while retaining v0.53 as a versioned frozen parent;
+- added permanent exact-SHA `aasm/v54` conformance and hardened release publication to require it alongside CI, formal assurance, RC, proof claims, solution pools, optimization, scoped authority, and solver learning;
+- preserved all v0.53 scoped-identity/authority and solver-learning semantics, v0.52 resource/multi-objective semantics, v0.51 complete enumeration, v0.50 proof certification, v0.49 RC, v0.48 cross-run admission, and v0.47 governed SII as versioned parents.
+
 ## [0.53.0] - 2026-08-14
 
 ### Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
