@@ -2,9 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Protocol
+from typing import Any, Mapping, Protocol
 
 from .model import new_id, now
+from .semantic_result import semantic_fingerprint
+
+
+EFFECT_INTENT_CONTRACT_ID = "aasm.effect.intent.v1"
+EFFECT_OWNERSHIP_CONTRACT_ID = "aasm.effect.ownership.v1"
+EFFECT_RECONCILIATION_CONTRACT_ID = "aasm.effect.reconciliation.v1"
+EFFECT_GOVERNANCE_CONTRACT_VERSION = "0.1.0"
+EFFECT_GOVERNANCE_STABILITY = "FOUNDATION_EXPERIMENTAL"
 
 
 class EffectStatus(str, Enum):
@@ -15,6 +23,12 @@ class EffectStatus(str, Enum):
     FAILED = "FAILED"
     UNKNOWN = "UNKNOWN"
     CANCELLED = "CANCELLED"
+
+
+class EffectOutcome(str, Enum):
+    CONFIRMED = "CONFIRMED"
+    FAILED = "FAILED"
+    UNKNOWN = "UNKNOWN"
 
 
 @dataclass
@@ -41,6 +55,239 @@ class EffectSpec:
             self.idempotency_key = self.effect_id
 
 
+@dataclass(frozen=True)
+class EffectIntent:
+    effect_id: str
+    effect_type: str
+    idempotency_key: str
+    workspace_id: str
+    scope_id: str
+    resource_reservation_ids: tuple[str, ...] = ()
+    proposer_principal_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    contract_id: str = EFFECT_INTENT_CONTRACT_ID
+    contract_version: str = EFFECT_GOVERNANCE_CONTRACT_VERSION
+
+    def __post_init__(self) -> None:
+        for name in ("effect_id", "effect_type", "idempotency_key", "workspace_id", "scope_id"):
+            if not str(getattr(self, name)).strip():
+                raise ValueError(f"effect intent {name} is required")
+        if self.contract_id != EFFECT_INTENT_CONTRACT_ID or self.contract_version != EFFECT_GOVERNANCE_CONTRACT_VERSION:
+            raise ValueError("unsupported effect intent contract")
+        object.__setattr__(self, "resource_reservation_ids", tuple(sorted(set(map(str, self.resource_reservation_ids)))))
+        object.__setattr__(self, "metadata", dict(self.metadata))
+
+    def identity_payload(self) -> dict[str, Any]:
+        return {
+            "contract_id": self.contract_id,
+            "contract_version": self.contract_version,
+            "effect_id": self.effect_id,
+            "effect_type": self.effect_type,
+            "idempotency_key": self.idempotency_key,
+            "workspace_id": self.workspace_id,
+            "scope_id": self.scope_id,
+            "resource_reservation_ids": list(self.resource_reservation_ids),
+            "proposer_principal_id": self.proposer_principal_id,
+            "metadata": self.metadata,
+        }
+
+    @property
+    def fingerprint(self) -> str:
+        return semantic_fingerprint(self.identity_payload())
+
+    @property
+    def intent_id(self) -> str:
+        return f"effect-intent-{self.fingerprint[:24]}"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {**self.identity_payload(), "intent_id": self.intent_id, "fingerprint": self.fingerprint}
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "EffectIntent":
+        payload = dict(data)
+        payload.pop("intent_id", None)
+        payload.pop("fingerprint", None)
+        payload["resource_reservation_ids"] = tuple(payload.get("resource_reservation_ids") or ())
+        return cls(**payload)
+
+    @classmethod
+    def from_spec(
+        cls,
+        spec: EffectSpec,
+        *,
+        workspace_id: str,
+        scope_id: str,
+        resource_reservation_ids=(),
+        proposer_principal_id: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
+    ) -> "EffectIntent":
+        return cls(
+            spec.effect_id,
+            spec.effect_type,
+            spec.idempotency_key,
+            workspace_id,
+            scope_id,
+            tuple(resource_reservation_ids),
+            proposer_principal_id,
+            dict(metadata or {}),
+        )
+
+
+@dataclass(frozen=True)
+class EffectOwnership:
+    effect_id: str
+    intent_id: str
+    execution_id: str
+    owner_worker_id: str
+    workspace_id: str
+    scope_id: str
+    authority_decision_evidence_id: str
+    resource_reservation_ids: tuple[str, ...] = ()
+    task_lease_id: str | None = None
+    owner_principal_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    contract_id: str = EFFECT_OWNERSHIP_CONTRACT_ID
+    contract_version: str = EFFECT_GOVERNANCE_CONTRACT_VERSION
+
+    def __post_init__(self) -> None:
+        for name in (
+            "effect_id",
+            "intent_id",
+            "execution_id",
+            "owner_worker_id",
+            "workspace_id",
+            "scope_id",
+            "authority_decision_evidence_id",
+        ):
+            if not str(getattr(self, name)).strip():
+                raise ValueError(f"effect ownership {name} is required")
+        if self.contract_id != EFFECT_OWNERSHIP_CONTRACT_ID or self.contract_version != EFFECT_GOVERNANCE_CONTRACT_VERSION:
+            raise ValueError("unsupported effect ownership contract")
+        object.__setattr__(self, "resource_reservation_ids", tuple(sorted(set(map(str, self.resource_reservation_ids)))))
+        object.__setattr__(self, "metadata", dict(self.metadata))
+
+    def identity_payload(self) -> dict[str, Any]:
+        return {
+            "contract_id": self.contract_id,
+            "contract_version": self.contract_version,
+            "effect_id": self.effect_id,
+            "intent_id": self.intent_id,
+            "execution_id": self.execution_id,
+            "owner_worker_id": self.owner_worker_id,
+            "workspace_id": self.workspace_id,
+            "scope_id": self.scope_id,
+            "authority_decision_evidence_id": self.authority_decision_evidence_id,
+            "resource_reservation_ids": list(self.resource_reservation_ids),
+            "task_lease_id": self.task_lease_id,
+            "owner_principal_id": self.owner_principal_id,
+            "metadata": self.metadata,
+        }
+
+    @property
+    def fingerprint(self) -> str:
+        return semantic_fingerprint(self.identity_payload())
+
+    @property
+    def ownership_id(self) -> str:
+        return f"effect-ownership-{self.fingerprint[:24]}"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {**self.identity_payload(), "ownership_id": self.ownership_id, "fingerprint": self.fingerprint}
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "EffectOwnership":
+        payload = dict(data)
+        payload.pop("ownership_id", None)
+        payload.pop("fingerprint", None)
+        payload["resource_reservation_ids"] = tuple(payload.get("resource_reservation_ids") or ())
+        return cls(**payload)
+
+
+@dataclass(frozen=True)
+class EffectReconciliation:
+    effect_id: str
+    outcome: str
+    evidence_ids: tuple[str, ...] = ()
+    ownership_id: str | None = None
+    reconciled_by_principal_id: str | None = None
+    authority_decision_evidence_id: str | None = None
+    result: dict[str, Any] | None = None
+    error: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    contract_id: str = EFFECT_RECONCILIATION_CONTRACT_ID
+    contract_version: str = EFFECT_GOVERNANCE_CONTRACT_VERSION
+
+    def __post_init__(self) -> None:
+        if not self.effect_id.strip():
+            raise ValueError("effect reconciliation effect_id is required")
+        if self.outcome not in {row.value for row in EffectOutcome}:
+            raise ValueError(f"invalid effect reconciliation outcome: {self.outcome}")
+        if self.contract_id != EFFECT_RECONCILIATION_CONTRACT_ID or self.contract_version != EFFECT_GOVERNANCE_CONTRACT_VERSION:
+            raise ValueError("unsupported effect reconciliation contract")
+        object.__setattr__(self, "evidence_ids", tuple(sorted(set(map(str, self.evidence_ids)))))
+        object.__setattr__(self, "metadata", dict(self.metadata))
+
+    @property
+    def retry_blocked(self) -> bool:
+        return self.outcome == EffectOutcome.UNKNOWN.value
+
+    def identity_payload(self) -> dict[str, Any]:
+        return {
+            "contract_id": self.contract_id,
+            "contract_version": self.contract_version,
+            "effect_id": self.effect_id,
+            "outcome": self.outcome,
+            "evidence_ids": list(self.evidence_ids),
+            "ownership_id": self.ownership_id,
+            "reconciled_by_principal_id": self.reconciled_by_principal_id,
+            "authority_decision_evidence_id": self.authority_decision_evidence_id,
+            "result": self.result,
+            "error": self.error,
+            "metadata": self.metadata,
+        }
+
+    @property
+    def fingerprint(self) -> str:
+        return semantic_fingerprint(self.identity_payload())
+
+    @property
+    def reconciliation_id(self) -> str:
+        return f"effect-reconciliation-{self.fingerprint[:24]}"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            **self.identity_payload(),
+            "reconciliation_id": self.reconciliation_id,
+            "fingerprint": self.fingerprint,
+            "retry_blocked": self.retry_blocked,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> "EffectReconciliation":
+        payload = dict(data)
+        payload.pop("reconciliation_id", None)
+        payload.pop("fingerprint", None)
+        payload.pop("retry_blocked", None)
+        payload["evidence_ids"] = tuple(payload.get("evidence_ids") or ())
+        return cls(**payload)
+
+
+def effect_governance_contract() -> dict[str, Any]:
+    return {
+        "intent_contract_id": EFFECT_INTENT_CONTRACT_ID,
+        "ownership_contract_id": EFFECT_OWNERSHIP_CONTRACT_ID,
+        "reconciliation_contract_id": EFFECT_RECONCILIATION_CONTRACT_ID,
+        "contract_version": EFFECT_GOVERNANCE_CONTRACT_VERSION,
+        "stability": EFFECT_GOVERNANCE_STABILITY,
+        "existing_effect_execution": "REUSED_NEVER_REPLACED",
+        "authorization_before_ownership": True,
+        "resource_reservations": "BOUND_TO_INTENT_AND_OWNERSHIP_WHEN_DECLARED",
+        "task_lease": "EXISTING_AASM_TASKLEASE_ONLY",
+        "unknown_outcome": "REQUIRES_EXPLICIT_RECONCILIATION_BEFORE_NEW_OWNERSHIP",
+        "truth_authority": "EXISTING_AASM_POLICY_ONLY",
+    }
+
+
 @dataclass
 class EffectRecord:
     machine_id: str
@@ -53,8 +300,32 @@ class EffectRecord:
     result: dict[str, Any] | None = None
     error: str | None = None
     evidence: list[str] = field(default_factory=list)
+    intent: dict[str, Any] | None = None
+    ownership: dict[str, Any] | None = None
+    reconciliation: dict[str, Any] | None = None
     created_at: float = field(default_factory=now)
     updated_at: float = field(default_factory=now)
+
+    def __post_init__(self) -> None:
+        if self.intent is not None:
+            item = EffectIntent.from_dict(self.intent)
+            if item.effect_id != self.spec.effect_id:
+                raise ValueError("effect intent does not match EffectSpec effect_id")
+            self.intent = item.to_dict()
+        if self.ownership is not None:
+            item = EffectOwnership.from_dict(self.ownership)
+            if item.effect_id != self.spec.effect_id:
+                raise ValueError("effect ownership does not match EffectSpec effect_id")
+            if self.intent is not None and item.intent_id != self.intent["intent_id"]:
+                raise ValueError("effect ownership does not match bound EffectIntent")
+            self.ownership = item.to_dict()
+        if self.reconciliation is not None:
+            item = EffectReconciliation.from_dict(self.reconciliation)
+            if item.effect_id != self.spec.effect_id:
+                raise ValueError("effect reconciliation does not match EffectSpec effect_id")
+            if self.ownership is not None and item.ownership_id not in {None, self.ownership["ownership_id"]}:
+                raise ValueError("effect reconciliation does not match bound EffectOwnership")
+            self.reconciliation = item.to_dict()
 
 
 class EffectExecutor(Protocol):
