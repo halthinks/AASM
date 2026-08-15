@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/scheduling-provider-binding.schema.json",
+  "title": "AASM Scheduling Provider Binding v1",
+  "type": "object",
+  "required": ["binding_id", "contract_id", "contract_version", "model_id", "model_fingerprint", "feature_set_id", "feature_set_fingerprint", "provider_manifest_id", "provider_manifest_fingerprint", "admission_report_id", "admission_report_fingerprint", "provider_id", "environment_fingerprint", "fingerprint"],
+  "properties": {
+    "binding_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.optimization.scheduling-provider-binding.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "model_id": {"type": "string", "minLength": 1},
+    "model_fingerprint": {"type": "string", "minLength": 16},
+    "feature_set_id": {"type": "string", "minLength": 1},
+    "feature_set_fingerprint": {"type": "string", "minLength": 16},
+    "provider_manifest_id": {"type": "string", "minLength": 1},
+    "provider_manifest_fingerprint": {"type": "string", "minLength": 16},
+    "admission_report_id": {"type": "string", "minLength": 1},
+    "admission_report_fingerprint": {"type": "string", "minLength": 16},
+    "provider_id": {"type": "string", "minLength": 1},
+    "environment_fingerprint": {"type": "string"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
