@@ -57,7 +57,8 @@ def main() -> None:
     ])
 
     require(root / "src/aasm/runtime_v53.py", [
-        "class AASMEngine(ScopedAuthorityRuntimeMixin, V52Engine)",
+        "class AASMEngine(PrincipalAwareResourceHistoryMixin, ScopedAuthorityRuntimeMixin, V52Engine)",
+        '_guard_resource_evidence_by_version = True',
         '"capacity_register": "resource.capacity.register"',
         '"observe": "resource.observe"',
         '"reserve": "resource.reserve"',
@@ -74,6 +75,39 @@ def main() -> None:
         "resource_state_granted_authority",
     ])
 
+    require(root / "src/aasm/engine.py", [
+        "def add_evidence_guarded",
+        "expected_machine_version",
+        "self.snapshot=self.store.load_snapshot(machine_id)",
+        "self.events=self.store.load_events(machine_id)",
+    ])
+    for store_path in ("memory.py", "sqlite.py", "postgres.py"):
+        require(root / "src/aasm/persistence" / store_path, [
+            "expected_machine_version",
+            "Stale machine version",
+        ])
+    require(root / "src/aasm/_runtime_v52_resources.py", [
+        '_guard_resource_evidence_by_version',
+        "add_evidence_guarded",
+    ])
+    require(root / "src/aasm/_runtime_v53_resource_history.py", [
+        "class PrincipalAwareResourceHistoryMixin",
+        '"principal_history": "DERIVED_FROM_SCOPED_AUTHORITY_EVIDENCE"',
+        '"concurrent_commit_guard": "V53_OPTIMISTIC_MACHINE_VERSION_FAIL_CLOSED"',
+    ])
+
+    require(root / "src/aasm/scoped_store.py", [
+        'SCOPED_STORE_CONTRACT_ID = "aasm.store.scoped.v1"',
+        '"raw_snapshot_access": "ROOT_SCOPE_SINGLE_WORKSPACE_ONLY"',
+        '"multi_workspace_raw_access": "FAIL_CLOSED_USE_SCOPED_PROJECTIONS"',
+        '"legacy_unscoped_effect_access": "FAIL_CLOSED"',
+        '"direct_store_write": "FORBIDDEN_USE_GOVERNED_RUNTIME_TRANSITIONS"',
+        "class ScopedStoreAccess",
+        "class ScopedStoreView",
+        "_require_raw_machine_access",
+        "_effect_visible",
+    ])
+
     require(root / "src/aasm/cross_run_knowledge.py", [
         '"authority_transfer": "NEVER"',
         '"authority_inherited": False',
@@ -84,6 +118,7 @@ def main() -> None:
         "workspace.schema.json",
         "scoped-authority-grant.schema.json",
         "scoped-authority-decision.schema.json",
+        "scoped-store-access.schema.json",
     }
     parsed = {name: schema(root, name) for name in sorted(required_schemas)}
     decision = parsed["scoped-authority-decision.schema.json"]
@@ -114,7 +149,16 @@ def main() -> None:
     require(root / "tests/test_v53_resource_authority.py", [
         "test_denied_reservation_is_durable_authority_evidence_but_never_resource_commitment",
         "test_authorized_reservation_transaction_derives_from_authority_decision",
+        "test_two_hosts_cannot_commit_reservations_from_same_stale_resource_snapshot",
         "test_settlement_has_independent_capability_and_preserves_reservation_when_denied",
+    ])
+    require(root / "tests/test_v53_scoped_store.py", [
+        "test_raw_machine_reads_fail_closed_across_workspaces",
+        "test_raw_store_access_requires_root_scope_even_when_principal_has_root_grant",
+        "test_multi_workspace_machine_cannot_be_returned_as_raw_snapshot",
+        "test_unfinished_machine_listing_does_not_leak_other_workspace_machine_ids",
+        "test_effect_reads_require_v53_binding_and_scoped_read_authority",
+        "test_scoped_store_view_exposes_no_direct_append_or_mutation_surface",
     ])
 
     print("v0.53 scoped authority contract check: PASS")
