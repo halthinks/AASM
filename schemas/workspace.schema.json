@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/workspace.schema.json",
+  "title": "AASM Workspace",
+  "type": "object",
+  "required": ["workspace_id", "root_principal_id", "owner_principal_id", "active"],
+  "properties": {
+    "workspace_id": {"type": "string", "minLength": 1},
+    "root_principal_id": {"type": "string", "minLength": 1},
+    "owner_principal_id": {"type": "string", "minLength": 1},
+    "active": {"type": "boolean"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
