@@ -13,7 +13,7 @@ def main():
     root = Path(__file__).resolve().parents[1]
     with (root / "pyproject.toml").open("rb") as handle:
         version = str(tomllib.load(handle)["project"]["version"])
-    if version != "0.52.0":
+    if version != "0.53.0":
         raise SystemExit(f"unexpected formal release version: {version}")
 
     require(root / "formal/AASMCalculus.tla", ["HardRequiresCertificate", "CandidateActivationIsAtomic"])
@@ -50,7 +50,7 @@ def main():
         "reputation_granted_authority", "reputation_granted_resources",
     ])
 
-    # v0.51 solution-pool assurance remains a required parent layer for v0.52.
+    # v0.51 solution-pool assurance remains a required parent layer for v0.52+.
     require(root / "formal/AASMSolutionPools.tla", [
         "CompleteImpliesExhausted", "CompleteImpliesIndependentChecker",
         "CompleteImpliesPassingChecker", "CompleteImpliesDurableCursor",
@@ -84,7 +84,6 @@ def main():
         "enumerate_complete_solution_pool", "solution_pool_record_type", "EVIDENCE_ONLY",
     ])
 
-    # v0.50 proof-carrying solver claims remain a required parent boundary.
     require(root / "formal/AASMSolverProofClaims.tla", [
         "ProofCertifiedImpliesIndependentChecker", "ProofCertifiedImpliesExactBinding",
         "ProofCertifiedImpliesPassingCheck", "SolverClaimNeverSelfCertifies",
@@ -160,7 +159,7 @@ def main():
     require(root / "src/aasm/advanced_optimization.py", ["aasm.optimization.advanced.v1", "SEARCH_STATE_NEVER_PROMOTES_TRUTH", "EPHEMERAL_PERFORMANCE_ONLY", "unsat_core", "warm_start", "affine_soc"])
     require(root / "src/aasm/_runtime_v46_advanced.py", ["advanced result lease expired before result commit", "advanced result implementation does not match admitted provider", "EVIDENCE_ONLY"])
 
-    print("v0.52.0 formal contracts: PASS")
+    print("v0.53.0 formal contracts: PASS")
     return 0
 
 
