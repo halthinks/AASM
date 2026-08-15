@@ -18,7 +18,7 @@ from aasm.semantic_solver_rc import (
 
 
 def test_rc_runtime_is_thin_v48_composition_and_public():
-    assert __version__ == "0.54.0"
+    assert __version__ == "0.55.0"
     assert v49.__version__ == "0.49.0"
     assert v49.public_api_contract()["contract_version"] == "0.25.0"
     assert issubclass(V50Engine, V49Engine)
@@ -32,7 +32,7 @@ def test_rc_runtime_is_thin_v48_composition_and_public():
     assert contract["authority"] == "EXISTING_AASM_AUTHORITY_ONLY"
     public = validate_public_api_contract()
     assert public["valid"], public
-    assert public["contract"]["contract_version"] == "0.30.0"
+    assert public["contract"]["contract_version"] == "0.31.0"
     assert public["contract"]["semantic_solver_rc"]["contract_id"] == SEMANTIC_SOLVER_RC_CONTRACT_ID
 
 
@@ -41,8 +41,8 @@ def test_freeze_manifest_is_deterministic_for_current_public_contract():
     first = build_semantic_solver_rc_freeze_manifest(contract)
     second = build_semantic_solver_rc_freeze_manifest(contract)
     assert first == second
-    assert first["runtime_version"] == "0.54.0"
-    assert first["adoption_contract_version"] == "0.30.0"
+    assert first["runtime_version"] == "0.55.0"
+    assert first["adoption_contract_version"] == "0.31.0"
     assert first["freeze_fingerprint"]
     assert first["license"] == "Apache-2.0"
     assert first["license_policy_file"] == "LICENSE_POLICY.md"
@@ -89,7 +89,8 @@ def test_dependency_neutral_rc_certification_passes_current_public_contract():
     assert report["status"] == "PASS", report
     assert report["real_backends"] is False
     assert all(report["checks"].values())
-    assert report["freeze_manifest"]["runtime_version"] == "0.54.0"
+    assert report["freeze_manifest"]["runtime_version"] == "0.55.0"
+    assert report["freeze_manifest"]["adoption_contract_version"] == "0.31.0"
     assert report["benchmark"]["inner_solver_claim"] == "NONE"
     assert report["contract"]["native_solver_claim"] == "AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS"
 
