@@ -67,12 +67,12 @@ jobs:
           lines[stats_index] = "            stats = {\"conflicts\": int(solver.num_conflicts), \"branches\": int(solver.num_branches), \"wall_time_seconds\": float(solver.wall_time), \"raw_status\": raw_name, \"solver_learning_hint_count\": len(consumed_learning_applications), \"solver_learning_application_ids\": list(consumed_learning_applications)}"
 
           return_hits = [i for i in range(stats_index + 1, min(end, stats_index + 5)) if lines[i].lstrip().startswith("return OptimizationResult(request.request_id")]
-          if len(return_hits) != 1:
-              raise SystemExit(f"expected one CP-SAT result return, found {len(return_hits)}")
-          return_index = return_hits[0]
+          if len(return_hits) != 2:
+              raise SystemExit(f"expected CP-SAT error and success returns, found {len(return_hits)}")
+          return_index = return_hits[-1]
           old_return = lines[return_index]
           if "statistics=stats)" not in old_return:
-              raise SystemExit("CP-SAT result return shape drifted")
+              raise SystemExit("CP-SAT success return shape drifted")
           lines[return_index] = old_return.replace(
               "statistics=stats)",
               "statistics=stats, metadata={\"solver_learning_application_ids\": list(consumed_learning_applications), \"solver_learning_hints_consumed\": len(consumed_learning_applications)})",
