@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/sii-resource-aware-proposal.schema.json",
+  "title": "AASM v0.52 Resource-Aware SII Structured Proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "resource_aware_proposal_id",
+    "proposal",
+    "contract_id",
+    "contract_version",
+    "parent_proposal_id",
+    "parent_proposal_fingerprint",
+    "resource_demands",
+    "fingerprint"
+  ],
+  "properties": {
+    "resource_aware_proposal_id": {"type": "string", "minLength": 1},
+    "proposal": {"type": "object"},
+    "contract_id": {"const": "aasm.sii.resource-aware-proposal.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "parent_proposal_id": {"type": "string", "minLength": 1},
+    "parent_proposal_fingerprint": {"type": "string", "minLength": 1},
+    "resource_demands": {
+      "type": "array",
+      "items": {"$ref": "resource-demand.schema.json"}
+    },
+    "expected_correctness": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "expected_evidence_quality": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "expected_progress": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "expected_wall_time_seconds": {"type": ["number", "null"], "minimum": 0},
+    "expected_monetary_cost": {"type": ["number", "null"], "minimum": 0},
+    "expected_scarce_expert_usage": {"type": ["number", "null"], "minimum": 0},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  }
+}
