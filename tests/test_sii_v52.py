@@ -1,4 +1,15 @@
-from aasm.resource_governance import ResourceDemandEstimate
+from datetime import datetime, timezone
+
+from aasm.model import ProblemSpec
+from aasm.resource_governance import (
+    CapacityWindowKind,
+    MeasurementAuthority,
+    ResourceCapacity,
+    ResourceDemandEstimate,
+    ResourceObservation,
+)
+from aasm.resource_routing import ResourceAwareCandidate, ResourceRoutingPolicy
+from aasm.runtime_v52 import AASMEngine
 from aasm.sii import StructuredProposal
 from aasm.sii_v52 import ResourceAwareStructuredProposal
 
@@ -86,3 +97,90 @@ def test_missing_quality_estimates_do_not_inherit_proposer_confidence():
     assert candidate.correctness == 0.0
     assert candidate.evidence_quality == 0.0
     assert candidate.expected_progress == 0.0
+
+
+def _weekly_capacity(*, consumed=0.0, reserve=20.0):
+    return ResourceCapacity(
+        resource_id="expert-weekly",
+        resource_class="EXPERT_MODEL_ALLOWANCE",
+        unit="credits",
+        workspace_id="workspace-a",
+        scope_id="root",
+        provider="fixture",
+        window_kind=CapacityWindowKind.FIXED,
+        total=100.0,
+        consumed=consumed,
+        protected_reserve=reserve,
+        resets_at=datetime(2026, 8, 18, tzinfo=timezone.utc),
+    )
+
+
+def _expert_candidate(amount=4.0):
+    return ResourceAwareCandidate(
+        "expert",
+        .96,
+        .95,
+        .90,
+        scarce_expert_usage=amount,
+        demands=(ResourceDemandEstimate("EXPERT_MODEL_ALLOWANCE", amount, "credits", resource_id="expert-weekly", upper_bound=amount),),
+    )
+
+
+def test_routing_explanation_persists_policy_and_pre_reservation_weekly_capacity_snapshot():
+    engine = AASMEngine(ProblemSpec("resource explanation"))
+    engine.register_resource_capacity(_weekly_capacity(consumed=60, reserve=20))
+    engine.record_resource_observation(
+        ResourceObservation(
+            resource_id="expert-weekly",
+            observed_at=datetime(2026, 8, 15, tzinfo=timezone.utc),
+            source="provider_usage_surface",
+            measurement_authority=MeasurementAuthority.OBSERVED,
+            reported_remaining=25.0,
+            confidence=.9,
+        ),
+        workspace_id="workspace-a",
+        scope_id="root",
+    )
+    result = engine.select_and_reserve_resource_candidate(
+        [_expert_candidate(amount=4)],
+        ResourceRoutingPolicy(min_correctness=.9, min_evidence_quality=.9),
+        workspace_id="workspace-a",
+        scope_id="root",
+    )
+    tx_id = result["transaction"]["transaction_id"]
+    explanation = engine.resource_routing_explanation_report(workspace_id="workspace-a", scope_id="root")["explanations"][tx_id]
+    snapshot = explanation["document"]["capacity_snapshot"]["expert-weekly"]
+    assert snapshot["declared_allocatable"] == 20.0
+    assert snapshot["planning_allocatable"] == 5.0
+    assert snapshot["protected_reserve"] == 20.0
+    assert snapshot["latest_observation"]["measurement_authority"] == "OBSERVED"
+    assert result["evidence_id"] in explanation["derived_from"]
+    assert engine.resource_routing_explanation_report(workspace_id="workspace-b", scope_id="root")["explanations"] == {}
+    assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
+
+
+def test_settlement_history_projects_resource_estimation_calibration_as_performance_evidence():
+    engine = AASMEngine(ProblemSpec("resource calibration"))
+    engine.register_resource_capacity(_weekly_capacity(consumed=0, reserve=20))
+    result = engine.select_and_reserve_resource_candidate(
+        [_expert_candidate(amount=10)],
+        ResourceRoutingPolicy(),
+        workspace_id="workspace-a",
+        scope_id="root",
+    )
+    reservation_id = result["transaction"]["reservation"]["reservation_id"]
+    engine.settle_resource_reservation(
+        reservation_id,
+        {"expert-weekly": 7.0},
+        workspace_id="workspace-a",
+        scope_id="root",
+    )
+    calibration = engine.resource_consumption_calibration_report(workspace_id="workspace-a", scope_id="root")
+    row = calibration["resources"]["expert-weekly"]
+    assert row["samples"] == 1
+    assert row["reserved_total"] == 10.0
+    assert row["actual_total"] == 7.0
+    assert row["mean_signed_error"] == -3.0
+    assert row["mean_absolute_error"] == 3.0
+    assert row["actual_to_reserved_ratio"] == .7
+    assert calibration["authority"] == "PERFORMANCE_EVIDENCE_ONLY"
