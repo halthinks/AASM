@@ -15,6 +15,7 @@
 ./.github/workflows/scoped-authority.yml
 ./.github/workflows/solution-pools.yml
 ./.github/workflows/solver-learning.yml
+./.github/workflows/v54.yml
 ./.gitignore
 ./CHANGELOG.md
 ./CHANGELOG_0.18_AND_EARLIER.md
@@ -349,6 +350,7 @@
 ./scripts/check_v52_contracts.py
 ./scripts/check_v53_contracts.py
 ./scripts/check_v53_solver_learning_contracts.py
+./scripts/check_v54_contracts.py
 ./scripts/release_artifacts.py
 ./scripts/release_artifacts_cli.py
 ./scripts/release_artifacts_core.py
@@ -441,6 +443,7 @@
 ./src/aasm/cli_v51.py
 ./src/aasm/cli_v52.py
 ./src/aasm/cli_v53.py
+./src/aasm/cli_v54.py
 ./src/aasm/codex_executor.py
 ./src/aasm/codex_policy.py
 ./src/aasm/codex_telemetry.py
@@ -529,6 +532,7 @@
 ./src/aasm/public_v51.py
 ./src/aasm/public_v52.py
 ./src/aasm/public_v53.py
+./src/aasm/public_v54.py
 ./src/aasm/pulp_adapter.py
 ./src/aasm/reasoning.py
 ./src/aasm/reference_data/research/expected_synthesis.json
@@ -727,4 +731,5 @@
 ./tests/test_v53_scoped_authority_hardening.py
 ./tests/test_v53_scoped_store.py
 ./tests/test_v53_solver_learning.py
+./tests/test_v54_public.py
 ./tests/test_workers_leases.py
