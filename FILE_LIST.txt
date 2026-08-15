@@ -408,6 +408,7 @@
 ./src/aasm/_runtime_v53_resource_history.py
 ./src/aasm/_runtime_v53_solver_learning.py
 ./src/aasm/_runtime_v54_effect_resources.py
+./src/aasm/_runtime_v55_semantic_evolution.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -617,6 +618,7 @@
 ./src/aasm/runtime_v54_exchange.py
 ./src/aasm/runtime_v54_full.py
 ./src/aasm/runtime_v54_portfolio.py
+./src/aasm/runtime_v55_foundation.py
 ./src/aasm/scheduler.py
 ./src/aasm/scoped_authority.py
 ./src/aasm/scoped_store.py
@@ -750,4 +752,5 @@
 ./tests/test_v54_public.py
 ./tests/test_v55_model_feature_admission.py
 ./tests/test_v55_semantic_evolution_foundation.py
+./tests/test_v55_semantic_evolution_runtime.py
 ./tests/test_workers_leases.py
