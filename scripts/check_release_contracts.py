@@ -32,7 +32,7 @@ def main():
         project = tomllib.load(handle)["project"]
 
     version = str(project["version"])
-    if version != "0.55.0":
+    if version != "0.56.0":
         raise SystemExit(f"unexpected release version: {version}")
 
     if project.get("license") != "Apache-2.0":
@@ -60,7 +60,51 @@ def main():
         forbid(policy_doc, stale_license_policy)
 
     # Active public release boundary.
-    require(root / "src/aasm/__init__.py", ["public_v55"])
+    require(root / "src/aasm/__init__.py", ["public_v56"])
+    require(root / "src/aasm/public_v56.py", [
+        '__version__ = "0.56.0"',
+        '"contract_version": "0.32.0"',
+        'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
+        "SOLVER_OUTCOME_V2_CONTRACT_ID",
+        "SOLVER_STATUS_V2_CONTRACT_ID",
+        "SOLVER_TERMINATION_V2_CONTRACT_ID",
+        "SOLVER_EVIDENCE_GRADE_CONTRACT_ID",
+        "PROVIDER_STATUS_MAP_CONTRACT_ID",
+        "project_v2_to_legacy_status",
+        "map_provider_status",
+        "_demo_stack.AASMEngine = AASMEngine",
+    ])
+    require(root / "src/aasm/runtime_v56.py", ["AASMEngine"])
+    require(root / "src/aasm/runtime_v56_foundation.py", ["SolverOutcomeV2RuntimeMixin", "V55FoundationEngine", "AASMEngine"])
+    require(root / "src/aasm/solver_outcome_v2.py", [
+        'SOLVER_OUTCOME_V2_CONTRACT_ID = "aasm.solver.outcome.v2"',
+        'SOLVER_STATUS_V2_CONTRACT_ID = "aasm.solver.status.v2"',
+        'SOLVER_TERMINATION_V2_CONTRACT_ID = "aasm.solver.termination.v2"',
+        '"authoritative_detailed_status": "normalized_status"',
+        '"incumbent_admission": "NONEMPTY_ASSIGNMENT_MUST_PASS_AASM_INDEPENDENT_MODEL_VALIDATION"',
+        '"legacy_projection": "V2_TO_V1_ONE_WAY_EXPLICITLY_LOSSY_WHERE_REQUIRED"',
+        '"truth_authority": "NONE"',
+        "MEMORY_LIMIT_WITH_INCUMBENT",
+        "PROVIDER_UNAVAILABLE",
+        "UNSUPPORTED_FEATURE",
+        "STALE_RESULT",
+    ])
+    require(root / "src/aasm/provider_status_v2.py", [
+        'PROVIDER_STATUS_MAP_CONTRACT_ID = "aasm.solver.provider-status-map.v1"',
+        '"fuzzy_matching": "FORBIDDEN"',
+        '"substring_inference": "FORBIDDEN"',
+        "ortools_cp_sat_status_map",
+        "highs_status_map",
+        "pysat_cadical_status_map",
+    ])
+    require(root / "src/aasm/_runtime_v56_solver_outcome.py", [
+        'SOLVER_OUTCOME_V2_RUNTIME_CONTRACT_ID = "aasm.solver.outcome-v2.runtime.v1"',
+        '"parallel_result_table": "NONE"',
+        '"incumbent_validation": "AASM_VALIDATE_OPTIMIZATION_SOLUTION_BEFORE_ACCEPTANCE"',
+        '"truth_authority": "NONE"',
+    ])
+
+    # Released v0.55 parent remains intact.
     require(root / "src/aasm/public_v55.py", [
         '__version__ = "0.55.0"',
         '"contract_version": "0.31.0"',
@@ -68,19 +112,13 @@ def main():
         "EXTERNAL_REFERENCE_CONTRACT_ID",
         "PROBLEM_REVISION_CONTRACT_ID",
         "PROBLEM_DELTA_CONTRACT_ID",
-        "MODEL_FEATURE_SET_CONTRACT_ID",
-        "PROVIDER_CAPABILITY_MANIFEST_CONTRACT_ID",
         "SOLVER_FORMULATION_CONTRACT_ID",
-        "verify_solver_formulation_identity",
         "DiscreteBooleanModel",
         "SchedulingModel",
         "ContinuousModel",
         "GovernedDecisionVector",
         "SemanticEvolutionArchive",
-        "_demo_stack.AASMEngine = AASMEngine",
     ])
-    require(root / "src/aasm/runtime_v55.py", ["AASMEngine"])
-    require(root / "src/aasm/runtime_v55_foundation.py", ["SemanticEvolutionRuntimeMixin", "FormulationRuntimeMixin", "AASMEngine"])
     require(root / "src/aasm/semantic_evolution.py", [
         'EXTERNAL_REFERENCE_CONTRACT_ID = "aasm.external.reference.v1"',
         'PROBLEM_REVISION_CONTRACT_ID = "aasm.problem.revision.v1"',
@@ -125,14 +163,8 @@ def main():
         '"replay_uses_persisted_snapshot": False',
     ])
 
-    # Released parent surfaces remain intact and independently checked.
-    require(root / "src/aasm/public_v54.py", [
-        '__version__ = "0.54.0"',
-        '"contract_version": "0.30.0"',
-        "EFFECT_INTENT_CONTRACT_ID",
-        "SOLVER_PORTFOLIO_CONTRACT_ID",
-        "SOLVER_EXCHANGE_CONTRACT_ID",
-    ])
+    # Earlier parent surfaces remain intact and independently checked.
+    require(root / "src/aasm/public_v54.py", ['__version__ = "0.54.0"', '"contract_version": "0.30.0"'])
     require(root / "src/aasm/public_v53.py", ['__version__ = "0.53.0"', '"contract_version": "0.29.0"'])
     require(root / "src/aasm/public_v52.py", ['__version__ = "0.52.0"', '"contract_version": "0.28.0"'])
     require(root / "src/aasm/public_v51.py", ['__version__ = "0.51.0"', '"contract_version": "0.27.0"'])
@@ -164,7 +196,7 @@ def main():
         "NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE",
     ])
 
-    # v0.55 schemas and source doctrine are part of the release artifact.
+    # Schemas shipped in the current/parent release family.
     for name in (
         "external-reference.schema.json",
         "problem-revision.schema.json",
@@ -182,6 +214,8 @@ def main():
         "continuous-validation.schema.json",
         "decision-vector.schema.json",
         "semantic-evolution-archive.schema.json",
+        "solver-outcome-v2.schema.json",
+        "provider-status-map.schema.json",
     ):
         require(root / "schemas" / name, ['"$schema"', "2020-12"])
 
@@ -195,8 +229,7 @@ def main():
         if token not in modeling:
             raise SystemExit(f"modeling extra missing {token}")
 
-    # Preserve all earlier release-specific contract gates, and run import-based
-    # child checks explicitly against this checkout even in pre-install workflows.
+    # Preserve all earlier release-specific contract gates and the current v0.56 gate.
     for script in (
         "check_v52_contracts.py",
         "check_v53_contracts.py",
@@ -207,41 +240,41 @@ def main():
         "check_v55_continuous_ir.py",
         "check_v55_decision_vector.py",
         "check_v55_semantic_archive.py",
+        "check_v56_solver_outcome.py",
     ):
         run_script(root, script)
 
     require(root / "README.md", [
-        "Current release — v0.55.0",
-        "aasm.adoption.v1 / 0.31.0",
-        "v0.56.0 — Truthful Solver Outcomes, Runtime Provenance, and Reproducibility",
+        "Current release — v0.56.0",
+        "aasm.adoption.v1 / 0.32.0",
+        "v0.56.1 — Execution Profiles + Runtime Provenance",
     ])
     require(root / "docs" / "CURRENT_RELEASE.md", [
-        "AASM v0.55.0",
-        "0.31.0",
-        "public_v55",
-        "aasm.solver.formulation.v1",
-        "Governed decision vectors",
-        "Portable semantic archive",
+        "AASM v0.56.0",
+        "0.32.0",
+        "public_v56",
+        "aasm.solver.outcome.v2",
+        "Truthful Solver Outcomes",
     ])
-    require(root / "docs" / "RELEASE_0.55.md", [
-        "AASM v0.55.0",
-        "Governed Semantic Evolution",
-        "Exact pseudo-Boolean",
-        "Portable semantic archive",
+    require(root / "docs" / "RELEASE_0.56.md", [
+        "AASM v0.56.0",
+        "Normalized Solver Outcome v2",
+        "CaDiCaL",
+        "v0.56.1",
     ])
-    require(root / ".github/workflows/v55.yml", [
-        "AASM v0.55 Release",
+    require(root / ".github/workflows/v56.yml", [
+        "AASM v0.56 Release",
         "ACTIVE_DEVELOPMENT",
-        "active public v0.55 release contract: PASS",
-        "context='aasm/v55'",
+        "active public v0.56 release contract: PASS",
+        "context='aasm/v56'",
     ])
     require(root / ".github/workflows/release.yml", [
-        "aasm/v54 aasm/v55",
+        "aasm/v54 aasm/v55 aasm/v56",
         "verify-github-release",
         "--notes-file docs/CURRENT_RELEASE.md",
     ])
 
-    print("v0.55.0 release contracts: PASS")
+    print("v0.56.0 release contracts: PASS")
     return 0
 
 
