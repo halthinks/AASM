@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/discrete-lowering-certificate.schema.json",
+  "title": "AASM Discrete Lowering Certificate v1",
+  "type": "object",
+  "required": ["certificate_id", "contract_id", "contract_version", "lowering_id", "lowering_fingerprint", "source_model_fingerprint", "target_model_fingerprint", "mapping_complete", "lineage_preserved", "exact", "status", "diagnostics", "checker_id", "checker_version", "fingerprint"],
+  "properties": {
+    "certificate_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.optimization.discrete-lowering-certificate.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "lowering_id": {"type": "string", "minLength": 1},
+    "lowering_fingerprint": {"type": "string", "minLength": 16},
+    "source_model_fingerprint": {"type": "string", "minLength": 16},
+    "target_model_fingerprint": {"type": "string", "minLength": 16},
+    "mapping_complete": {"type": "boolean"},
+    "lineage_preserved": {"type": "boolean"},
+    "exact": {"type": "boolean"},
+    "status": {"enum": ["PASS", "FAIL"]},
+    "diagnostics": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "checker_id": {"const": "aasm.checker.discrete-linearization.v1"},
+    "checker_version": {"const": "0.1.0"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
