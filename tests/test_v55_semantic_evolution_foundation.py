@@ -62,7 +62,8 @@ def test_problem_delta_rejects_evidence_that_is_both_preserved_and_invalidated()
         ProblemDelta(
             base_revision_id="r1",
             base_revision_fingerprint="fp-r1",
-            target_revision_id="r2",
+            target_problem_fingerprint="target-p",
+            target_semantic_projection_fingerprint="target-s",
             invalidated_evidence_ids=("e1",),
             preserved_evidence_ids=("e1",),
         )
@@ -80,7 +81,8 @@ def test_revision_transition_binds_exact_base_delta_and_target():
     provisional_delta = ProblemDelta(
         base_revision_id=base.revision_id,
         base_revision_fingerprint=base.fingerprint,
-        target_revision_id="board-alpha-r8",
+        target_problem_fingerprint="problem-fp-2",
+        target_semantic_projection_fingerprint="semantic-fp-2",
         modified_external_references=(_ref("8"),),
         changed_semantic_ids=("requirement.usb.02",),
         invalidated_evidence_ids=("verification-r7",),
@@ -115,7 +117,8 @@ def test_revision_transition_fails_closed_for_stale_base_fingerprint():
     delta = ProblemDelta(
         base_revision_id="r1",
         base_revision_fingerprint="wrong",
-        target_revision_id="r2",
+        target_problem_fingerprint="p-fp-2",
+        target_semantic_projection_fingerprint="s-fp-2",
     )
     target = ProblemRevision(
         problem_id="p",
@@ -127,6 +130,32 @@ def test_revision_transition_fails_closed_for_stale_base_fingerprint():
     report = validate_revision_transition(base, delta, target)
     assert report["valid"] is False
     assert "BASE_REVISION_FINGERPRINT_MISMATCH" in report["errors"]
+
+
+def test_revision_transition_rejects_wrong_target_semantic_state():
+    base = ProblemRevision(
+        problem_id="p",
+        problem_fingerprint="p-fp",
+        semantic_projection_fingerprint="s-fp",
+        revision_id="r1",
+    )
+    delta = ProblemDelta(
+        base_revision_id="r1",
+        base_revision_fingerprint=base.fingerprint,
+        target_problem_fingerprint="expected-p2",
+        target_semantic_projection_fingerprint="expected-s2",
+    )
+    target = ProblemRevision(
+        problem_id="p",
+        problem_fingerprint="different-p2",
+        semantic_projection_fingerprint="different-s2",
+        parent_revision_ids=("r1",),
+        revision_id="r2",
+    )
+    report = validate_revision_transition(base, delta, target)
+    assert report["valid"] is False
+    assert "TARGET_PROBLEM_FINGERPRINT_MISMATCH" in report["errors"]
+    assert "TARGET_SEMANTIC_PROJECTION_FINGERPRINT_MISMATCH" in report["errors"]
 
 
 def test_contract_declares_no_new_truth_authority():
