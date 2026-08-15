@@ -1,0 +1,49 @@
+name: AASM v0.56 Solver Evidence
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: aasm-v56-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  v56:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install
+        run: python -m pip install -e '.[dev]'
+      - name: Check truthful solver outcome contracts
+        run: python scripts/check_v56_solver_outcome.py
+      - name: Run v0.56 solver outcome fixtures
+        run: |
+          pytest -q \
+            tests/test_v56_solver_outcome_v2.py \
+            tests/test_v56_provider_status_v2.py \
+            tests/test_v56_solver_outcome_runtime.py \
+            tests/test_v56_public_candidate.py
+      - name: Guard candidate and released surfaces
+        run: |
+          python - <<'PY'
+          import aasm
+          from aasm import public_v55, public_v56
+          report = public_v56.validate_public_api_contract()
+          assert report['valid'], report
+          assert public_v56.__version__ == '0.56.0.dev0'
+          assert public_v56.PUBLIC_RELEASE_STABILITY == 'QUALIFICATION_CANDIDATE'
+          assert public_v55.__version__ == '0.55.0.dev0'
+          assert aasm.__version__ == '0.54.0'
+          assert aasm.AASMEngine.__module__ == 'aasm.runtime_v54_full'
+          print('public_v56 candidate valid; public_v55 staged; released root remains v0.54')
+          PY
