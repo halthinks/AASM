@@ -3,7 +3,7 @@
   "$id": "https://aasm.dev/schemas/problem-delta.schema.json",
   "title": "AASM Problem Delta v1",
   "type": "object",
-  "required": ["delta_id", "contract_id", "contract_version", "base_revision_id", "base_revision_fingerprint", "target_problem_fingerprint", "target_semantic_projection_fingerprint", "added_external_references", "removed_external_references", "modified_external_references", "changed_semantic_ids", "changed_quantity_ids", "changed_rule_ids", "changed_objective_ids", "changed_scenario_ids", "changed_artifact_ids", "invalidated_evidence_ids", "preserved_evidence_ids", "impacted_obligation_ids", "impacted_solver_object_ids", "incremental_eligibility", "warm_start_eligibility", "caused_by_refinement_id", "evidence_ids", "metadata", "fingerprint"],
+  "required": ["delta_id", "contract_id", "contract_version", "base_revision_id", "base_revision_fingerprint", "target_problem_fingerprint", "target_semantic_projection_fingerprint", "added_external_references", "removed_external_references", "modified_external_references", "truth_change_roots", "changed_semantic_ids", "changed_quantity_ids", "changed_rule_ids", "changed_objective_ids", "changed_scenario_ids", "changed_artifact_ids", "invalidated_evidence_ids", "preserved_evidence_ids", "impacted_obligation_ids", "impacted_solver_object_ids", "incremental_eligibility", "warm_start_eligibility", "caused_by_refinement_id", "evidence_ids", "metadata", "fingerprint"],
   "properties": {
     "delta_id": {"type": "string", "minLength": 1},
     "contract_id": {"const": "aasm.problem.delta.v1"},
@@ -15,6 +15,20 @@
     "added_external_references": {"type": "array", "items": {"$ref": "external-reference.schema.json"}},
     "removed_external_references": {"type": "array", "items": {"$ref": "external-reference.schema.json"}},
     "modified_external_references": {"type": "array", "items": {"$ref": "external-reference.schema.json"}},
+    "truth_change_roots": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["node_type", "node_id", "key"],
+        "properties": {
+          "node_type": {"type": "string", "minLength": 1},
+          "node_id": {"type": "string", "minLength": 1},
+          "key": {"type": "string", "minLength": 3}
+        },
+        "additionalProperties": false
+      }
+    },
     "changed_semantic_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
     "changed_quantity_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
     "changed_rule_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
