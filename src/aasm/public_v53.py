@@ -39,6 +39,15 @@ from .scoped_authority import (
     scoped_authority_contract,
     validate_grant_admission,
 )
+from .scoped_store import (
+    SCOPED_STORE_CONTRACT_ID,
+    SCOPED_STORE_CONTRACT_VERSION,
+    SCOPED_STORE_STABILITY,
+    STORE_CAPABILITIES,
+    ScopedStoreAccess,
+    ScopedStoreView,
+    scoped_store_contract,
+)
 from .solver_learning import (
     CORRECTNESS_SENSITIVE_KINDS,
     PERFORMANCE_HINT_KINDS,
@@ -107,6 +116,13 @@ _NEW_IMPORTS = [
     "scoped_authority_runtime_contract",
     "evaluate_scoped_authority",
     "validate_grant_admission",
+    "SCOPED_STORE_CONTRACT_ID",
+    "SCOPED_STORE_CONTRACT_VERSION",
+    "SCOPED_STORE_STABILITY",
+    "STORE_CAPABILITIES",
+    "ScopedStoreAccess",
+    "ScopedStoreView",
+    "scoped_store_contract",
     "SOLVER_LEARNING_CONTRACT_ID",
     "SOLVER_LEARNING_CONTRACT_VERSION",
     "SOLVER_LEARNING_STABILITY",
@@ -140,12 +156,14 @@ SUPPORTED_CLI_COMMANDS = list(dict.fromkeys([
     *getattr(_v52, "SUPPORTED_CLI_COMMANDS", []),
     "scoped-authority-contract",
     "scoped-authority-runtime-contract",
+    "scoped-store-contract",
     "solver-learning-contract",
     "solver-learning-runtime-contract",
 ]))
 SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([
     *getattr(_v52, "SUPPORTED_INSPECTION_SURFACES", []),
     "scoped-authority",
+    "scoped-store",
     "effect-authority",
     "solver-learning",
 ]))
@@ -165,6 +183,7 @@ PUBLIC_API_CONTRACT["scoped_identity_authority"] = {
     **scoped_authority_contract(),
     "runtime": scoped_authority_runtime_contract(),
 }
+PUBLIC_API_CONTRACT["scoped_store"] = scoped_store_contract()
 PUBLIC_API_CONTRACT["solver_learning"] = {
     **solver_learning_contract(),
     "application_contract": solver_learning_application_contract(),
@@ -195,6 +214,7 @@ def validate_public_api_contract():
         errors.append("adoption contract mismatch")
     authority = PUBLIC_API_CONTRACT.get("scoped_identity_authority") or {}
     authority_runtime = authority.get("runtime") or {}
+    store_contract = PUBLIC_API_CONTRACT.get("scoped_store") or {}
     solver_learning = PUBLIC_API_CONTRACT.get("solver_learning") or {}
     solver_application = solver_learning.get("application_contract") or {}
     solver_runtime = solver_learning.get("runtime") or {}
@@ -206,6 +226,14 @@ def validate_public_api_contract():
         errors.append("resource state must not grant scoped authority")
     if authority_runtime.get("contract_id") != SCOPED_AUTHORITY_RUNTIME_CONTRACT_ID:
         errors.append("scoped authority runtime contract identity mismatch")
+    if store_contract.get("contract_id") != SCOPED_STORE_CONTRACT_ID:
+        errors.append("scoped store contract identity mismatch")
+    if store_contract.get("raw_snapshot_access") != "ROOT_SCOPE_SINGLE_WORKSPACE_ONLY":
+        errors.append("scoped store raw snapshot boundary mismatch")
+    if store_contract.get("multi_workspace_raw_access") != "FAIL_CLOSED_USE_SCOPED_PROJECTIONS":
+        errors.append("scoped store multi-workspace boundary mismatch")
+    if store_contract.get("direct_store_write") != "FORBIDDEN_USE_GOVERNED_RUNTIME_TRANSITIONS":
+        errors.append("scoped store write boundary mismatch")
     if solver_learning.get("contract_id") != SOLVER_LEARNING_CONTRACT_ID:
         errors.append("solver learning contract identity mismatch")
     if solver_learning.get("cross_run_transport") != "EXISTING_AASM_V48_REUSE_RESULT_ENVELOPE":
