@@ -29,6 +29,15 @@ def main() -> None:
         '"result_authority": "EVIDENCE_ONLY"',
         '"truth_authority": "EXISTING_AASM_POLICY_ONLY"',
     ))
+    require(root / "src/aasm/_runtime_v54_effect_resources.py", (
+        'EFFECT_RESOURCE_SETTLEMENT_CONTRACT_ID = "aasm.effect.resource-settlement.v1"',
+        '"resource_ledger": "EXISTING_AASM_RESOURCE_SETTLEMENT_ONLY"',
+        '"authority": "EXISTING_RESOURCE_SETTLE_SCOPED_AUTHORITY"',
+        '"outcome_gate": "CONFIRMED_OR_FAILED_RECONCILIATION_REQUIRED"',
+        '"unknown_outcome": "SETTLEMENT_BLOCKED"',
+        '"multi_reservation_atomicity": "RECOVERABLE_IDEMPOTENT_PER_RESERVATION_NOT_ALL_OR_NOTHING"',
+        "settle_effect_resources",
+    ))
     require(root / "src/aasm/runtime_v54_portfolio.py", (
         'SOLVER_PORTFOLIO_RUNTIME_CONTRACT_ID = "aasm.solver.portfolio.runtime.v1"',
         '"execution_lease": "EXISTING_AASM_TASKLEASE"',
@@ -55,6 +64,7 @@ def main() -> None:
         '__version__ = "0.54.0"',
         'PUBLIC_RELEASE_STABILITY = "PRE_RELEASE"',
         '"contract_version": "0.30.0"',
+        "settle_effect_resources",
         "validate_public_api_contract",
     ))
     require(root / "tests/test_runtime_v54_effects.py", (
@@ -62,6 +72,11 @@ def main() -> None:
         "test_sqlite_recovery_retains_ownership_marks_unknown_and_requires_scoped_reconciliation",
         "test_portfolio_race_is_arrival_order_and_wall_time_invariant",
         "test_uncertified_negative_majority_cannot_outvote_one_validated_feasible_solution",
+    ))
+    require(root / "tests/test_runtime_v54_settlement.py", (
+        "test_effect_resources_cannot_settle_before_observed_terminal_outcome",
+        "test_confirmed_effect_settles_bound_resource_actuals_and_retry_is_idempotent",
+        "test_settlement_retry_cannot_rewrite_already_durable_actual_consumption",
     ))
     require(root / "tests/test_runtime_v54_portfolio.py", (
         "test_portfolio_plan_uses_existing_requests_tasks_and_taskleases",
@@ -74,7 +89,7 @@ def main() -> None:
         "test_exchange_requires_source_local_pass_validation_before_target_materialization",
         "test_native_accelerator_state_is_not_cross_solver_portable",
     ))
-    print("v0.54 effect, portfolio, exchange, and public contracts: PASS")
+    print("v0.54 effect, resource settlement, portfolio, exchange, and public contracts: PASS")
 
 
 if __name__ == "__main__":
