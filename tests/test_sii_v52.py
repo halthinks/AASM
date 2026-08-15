@@ -24,6 +24,7 @@ def test_resource_aware_successor_preserves_parent_identity_and_adds_resource_id
         expected_progress=.8,
         expected_wall_time_seconds=30,
         expected_monetary_cost=1.25,
+        expected_provider_quota_burn=6,
         expected_scarce_expert_usage=5,
     )
 
@@ -33,18 +34,26 @@ def test_resource_aware_successor_preserves_parent_identity_and_adds_resource_id
     assert wrapped.fingerprint != parent.fingerprint
 
 
-def test_resource_demands_participate_in_v52_fingerprint():
+def test_resource_demands_and_provider_quota_burn_participate_in_v52_fingerprint():
     parent = StructuredProposal("p", "decision", "root", "x", .8)
     cheap = ResourceAwareStructuredProposal(
         parent,
         resource_demands=(ResourceDemandEstimate("MODEL_ALLOWANCE", 1, "credits"),),
+        expected_provider_quota_burn=1,
     )
-    expensive = ResourceAwareStructuredProposal(
+    expensive_demand = ResourceAwareStructuredProposal(
         parent,
         resource_demands=(ResourceDemandEstimate("MODEL_ALLOWANCE", 2, "credits"),),
+        expected_provider_quota_burn=1,
     )
-    assert cheap.fingerprint != expensive.fingerprint
-    assert cheap.parent_proposal_id == expensive.parent_proposal_id
+    expensive_quota = ResourceAwareStructuredProposal(
+        parent,
+        resource_demands=(ResourceDemandEstimate("MODEL_ALLOWANCE", 1, "credits"),),
+        expected_provider_quota_burn=2,
+    )
+    assert cheap.fingerprint != expensive_demand.fingerprint
+    assert cheap.fingerprint != expensive_quota.fingerprint
+    assert cheap.parent_proposal_id == expensive_demand.parent_proposal_id == expensive_quota.parent_proposal_id
 
 
 def test_round_trip_keeps_parent_and_resource_contract():
@@ -53,6 +62,7 @@ def test_round_trip_keeps_parent_and_resource_contract():
         parent,
         resource_demands=(ResourceDemandEstimate("SOLVER", 3, "seconds", confidence=.8),),
         expected_correctness=.9,
+        expected_provider_quota_burn=2.5,
     )
     restored = ResourceAwareStructuredProposal.from_dict(original.to_dict())
     assert restored.to_dict() == original.to_dict()
@@ -78,6 +88,7 @@ def test_v52_proposal_compiles_directly_into_resource_routing_candidate():
         expected_progress=.88,
         expected_wall_time_seconds=12,
         expected_monetary_cost=.5,
+        expected_provider_quota_burn=3.5,
         expected_scarce_expert_usage=4,
     )
     candidate = wrapped.to_routing_candidate()
@@ -85,6 +96,7 @@ def test_v52_proposal_compiles_directly_into_resource_routing_candidate():
     assert candidate.correctness == .93
     assert candidate.evidence_quality == .94
     assert candidate.expected_progress == .88
+    assert candidate.provider_quota_burn == 3.5
     assert candidate.demands[0].upper_bound == 6
     assert candidate.metadata["parent_proposal_id"] == parent.proposal_id
     assert candidate.metadata["scope_id"] == "scope-a"
@@ -97,6 +109,7 @@ def test_missing_quality_estimates_do_not_inherit_proposer_confidence():
     assert candidate.correctness == 0.0
     assert candidate.evidence_quality == 0.0
     assert candidate.expected_progress == 0.0
+    assert candidate.provider_quota_burn == 0.0
 
 
 def _weekly_capacity(*, consumed=0.0, reserve=20.0):
@@ -121,6 +134,7 @@ def _expert_candidate(amount=4.0):
         .96,
         .95,
         .90,
+        provider_quota_burn=amount,
         scarce_expert_usage=amount,
         demands=(ResourceDemandEstimate("EXPERT_MODEL_ALLOWANCE", amount, "credits", resource_id="expert-weekly", upper_bound=amount),),
     )
