@@ -14,6 +14,9 @@
     "result": {"type": ["object", "null"]},
     "error": {"type": ["string", "null"]},
     "evidence": {"type": "array", "items": {"type": "string"}},
+    "intent": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/effectIntent"}]},
+    "ownership": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/effectOwnership"}]},
+    "reconciliation": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/effectReconciliation"}]},
     "created_at": {"type": "number"},
     "updated_at": {"type": "number"},
     "spec": {
@@ -39,6 +42,70 @@
         "reversible": {"type": "boolean"},
         "compensation": {"type": ["object", "null"]}
       }
+    }
+  },
+  "$defs": {
+    "effectIntent": {
+      "type": "object",
+      "required": ["contract_id", "contract_version", "effect_id", "effect_type", "idempotency_key", "workspace_id", "scope_id", "resource_reservation_ids", "intent_id", "fingerprint"],
+      "properties": {
+        "contract_id": {"const": "aasm.effect.intent.v1"},
+        "contract_version": {"const": "0.1.0"},
+        "effect_id": {"type": "string", "minLength": 1},
+        "effect_type": {"type": "string", "minLength": 1},
+        "idempotency_key": {"type": "string", "minLength": 1},
+        "workspace_id": {"type": "string", "minLength": 1},
+        "scope_id": {"type": "string", "minLength": 1},
+        "resource_reservation_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "proposer_principal_id": {"type": ["string", "null"]},
+        "metadata": {"type": "object"},
+        "intent_id": {"type": "string", "minLength": 1},
+        "fingerprint": {"type": "string", "minLength": 64, "maxLength": 64}
+      },
+      "additionalProperties": false
+    },
+    "effectOwnership": {
+      "type": "object",
+      "required": ["contract_id", "contract_version", "effect_id", "intent_id", "execution_id", "owner_worker_id", "workspace_id", "scope_id", "authority_decision_evidence_id", "resource_reservation_ids", "ownership_id", "fingerprint"],
+      "properties": {
+        "contract_id": {"const": "aasm.effect.ownership.v1"},
+        "contract_version": {"const": "0.1.0"},
+        "effect_id": {"type": "string", "minLength": 1},
+        "intent_id": {"type": "string", "minLength": 1},
+        "execution_id": {"type": "string", "minLength": 1},
+        "owner_worker_id": {"type": "string", "minLength": 1},
+        "workspace_id": {"type": "string", "minLength": 1},
+        "scope_id": {"type": "string", "minLength": 1},
+        "authority_decision_evidence_id": {"type": "string", "minLength": 1},
+        "resource_reservation_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "task_lease_id": {"type": ["string", "null"]},
+        "owner_principal_id": {"type": ["string", "null"]},
+        "metadata": {"type": "object"},
+        "ownership_id": {"type": "string", "minLength": 1},
+        "fingerprint": {"type": "string", "minLength": 64, "maxLength": 64}
+      },
+      "additionalProperties": false
+    },
+    "effectReconciliation": {
+      "type": "object",
+      "required": ["contract_id", "contract_version", "effect_id", "outcome", "evidence_ids", "reconciliation_id", "fingerprint", "retry_blocked"],
+      "properties": {
+        "contract_id": {"const": "aasm.effect.reconciliation.v1"},
+        "contract_version": {"const": "0.1.0"},
+        "effect_id": {"type": "string", "minLength": 1},
+        "outcome": {"enum": ["CONFIRMED", "FAILED", "UNKNOWN"]},
+        "evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "ownership_id": {"type": ["string", "null"]},
+        "reconciled_by_principal_id": {"type": ["string", "null"]},
+        "authority_decision_evidence_id": {"type": ["string", "null"]},
+        "result": {"type": ["object", "null"]},
+        "error": {"type": ["string", "null"]},
+        "metadata": {"type": "object"},
+        "reconciliation_id": {"type": "string", "minLength": 1},
+        "fingerprint": {"type": "string", "minLength": 64, "maxLength": 64},
+        "retry_blocked": {"type": "boolean"}
+      },
+      "additionalProperties": false
     }
   }
 }
