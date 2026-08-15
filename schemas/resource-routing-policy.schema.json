@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/resource-routing-policy.schema.json",
+  "title": "AASM v0.52 Resource Routing Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["min_correctness", "min_evidence_quality", "min_expected_progress", "preserve_protected_reserve", "prefer_lower_provider_quota_burn", "prefer_lower_scarce_expert_usage", "prefer_lower_monetary_cost", "prefer_lower_wall_time", "constrain_with_observed_remaining", "accepted_measurement_authorities", "min_observation_confidence", "max_observation_freshness_seconds", "objectives"],
+  "properties": {
+    "min_correctness": {"type": "number", "minimum": 0, "maximum": 1},
+    "min_evidence_quality": {"type": "number", "minimum": 0, "maximum": 1},
+    "min_expected_progress": {"type": "number", "minimum": 0, "maximum": 1},
+    "preserve_protected_reserve": {"type": "boolean"},
+    "prefer_lower_provider_quota_burn": {"type": "boolean"},
+    "prefer_lower_scarce_expert_usage": {"type": "boolean"},
+    "prefer_lower_monetary_cost": {"type": "boolean"},
+    "prefer_lower_wall_time": {"type": "boolean"},
+    "constrain_with_observed_remaining": {"type": "boolean"},
+    "accepted_measurement_authorities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"enum": ["AUTHORITATIVE", "OBSERVED", "DERIVED", "ESTIMATED", "DECLARED", "UNKNOWN"]}
+    },
+    "min_observation_confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "max_observation_freshness_seconds": {"type": ["number", "null"], "minimum": 0},
+    "objectives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["objective_id", "priority", "sense", "tolerance"],
+        "properties": {
+          "objective_id": {"enum": ["correctness", "evidence_quality", "expected_progress", "provider_quota_burn", "scarce_expert_usage", "monetary_cost", "wall_time_seconds"]},
+          "priority": {"type": "integer", "minimum": 0},
+          "sense": {"enum": ["MINIMIZE", "MAXIMIZE"]},
+          "tolerance": {"type": "number", "minimum": 0}
+        }
+      }
+    }
+  }
+}
