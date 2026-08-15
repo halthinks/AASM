@@ -2,23 +2,31 @@
 
 **Durable deterministic control for agents, tools, models, humans, formal systems, native solvers, governed memory, and cross-run knowledge.**
 
-## Current release — v0.51.0
+## Current release — v0.52.0
 
-**Governed Solution Pools & Complete Enumeration**
+**Resource-Governed Multi-Objective Decisions & Pareto Solving**
 
-**Next release:** v0.52.0 — Lexicographic Multi-Objective & Pareto Solving
+**Next release:** v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 
-v0.51 adds governed solution pools and complete finite enumeration as a thin layer over the v0.50 proof runtime. Partial pools remain Evidence; `COMPLETE` requires durable finite-space exhaustion plus an independent exact-set certificate, and neither a pool nor its certificate becomes policy or truth authority.
+v0.52 unifies exact finite multi-objective solving with governed real-world resource allocation. AASM can compare legal alternatives across correctness, evidence quality, expected progress, provider quota burn, monetary cost, wall time, and scarce expert usage; inspect Pareto alternatives; reserve capacity before execution; replan when estimates drift; and reconcile actual consumption afterward. Optimization, resource state, and SII utility remain Evidence—not truth or authority.
 
 AASM's declared project license is **Apache License, Version 2.0 (`Apache-2.0`) across the project**. To the extent AASM has the necessary relicensing rights, prior AASM versions—including versions first distributed under MIT—are **also offered under Apache-2.0**. Previously granted MIT permissions remain valid for their recipients, but prior AASM versions are not designated MIT-only. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`LICENSE_POLICY.md`](LICENSE_POLICY.md).
 
 ### Current release contracts
 
 ```text
-package / public surface: 0.51.0
-aasm.adoption.v1 / 0.27.0
+package / public surface: 0.52.0
+aasm.adoption.v1 / 0.28.0
+aasm.optimization.multi-objective.v1 / 0.1.0
+aasm.optimization.frontier.v1 / 0.1.0
+aasm.resource.capacity.v1 / 0.1.0
+aasm.resource.observation.v1 / 0.1.0
+aasm.resource.demand.v1 / 0.1.0
+aasm.resource.routing.v1 / 0.1.0
+aasm.resource.runtime.v1 / 0.1.0
+aasm.sii.resource-aware-proposal.v1 / 0.1.0
 aasm.optimization.solution-pool.v1 / 0.1.0
 aasm.optimization.enumeration.v1 / 0.1.0
 aasm.solver.proof-certificate.v1 / 0.1.0
@@ -64,6 +72,99 @@ proposal / observation / solver output
 
 Performance state is allowed to improve performance. It is not allowed to redefine correctness.
 
+## v0.52 — Resource-Governed Multi-Objective Decisions & Pareto Solving
+
+v0.52 adds the decision machinery AASM needs to reason over both quality and scarce resources without collapsing everything into one weighted score.
+
+The default resource-routing vector is policy-controlled:
+
+```text
+maximize:
+  correctness
+  evidence quality
+  expected progress
+
+minimize:
+  provider quota burn
+  scarce expert usage
+  monetary cost
+  wall time
+```
+
+Hard correctness/evidence/progress thresholds and capacity checks run before preference ordering. A policy may reorder or omit economic objectives without changing the kernel.
+
+### Exact finite lexicographic and Pareto solving
+
+For supported finite models, v0.52 builds on the v0.51 complete-enumeration substrate:
+
+```text
+complete feasible pool
+        ↓
+independent exhaustion certificate
+        ↓
+lexicographic stages OR Pareto reconstruction
+        ↓
+independent v0.52 verification
+        ↓
+EVIDENCE_ONLY result
+```
+
+Exact Pareto certification checks full point equality—**solution ID + assignment + objective vector**—not IDs alone. Tolerance participates in both lexicographic survivor admission and Pareto dominance; strict improvement must exceed the declared tolerance.
+
+### Governed capacity and quota evidence
+
+Resource capacities can model fixed, rolling, refilling, credit-balance, unbounded, or unknown supply. A weekly model/subscription allowance is therefore a normal governed resource without hard-coding a provider.
+
+Observations preserve their measurement authority:
+
+```text
+AUTHORITATIVE | OBSERVED | DERIVED | ESTIMATED | DECLARED | UNKNOWN
+```
+
+An accepted observation may conservatively reduce planning capacity, but it never creates capacity beyond the declared envelope. Protected reserve can preserve part of remaining capacity for more important future work.
+
+### Proposal → reserve → replan → settle
+
+```text
+governed SII proposal
+        ↓
+resource-aware successor
+        ↓
+quality + capacity feasibility
+        ↓
+lexicographic selection
+        ↓
+atomic reservation
+        ↓
+execution under ordinary AASM authority/effect rules
+        ↓
+reestimate
+  ├─ CONTINUE
+  └─ REPLAN_REQUIRED → RELEASE → reroute
+        ↓
+settle actual consumption
+        ↓
+calibration Evidence
+```
+
+Resource availability never grants authority. SII utility never buys truth or state authority.
+
+### Two different Pareto scopes
+
+- **Exact finite optimization frontier:** complete relative to the independently exhausted supported finite model space.
+- **Resource-candidate frontier:** exact only over the supplied eligible candidate set. It does not claim undiscovered routes do not exist.
+
+Resource-candidate Pareto analysis is non-committing: it records alternatives but reserves no capacity. Commitment occurs only through the separate selection/reservation path.
+
+Public CLI includes:
+
+```bash
+aasm multi-objective-contract
+aasm pareto-frontier-contract
+aasm resource-routing-contract
+```
+
+Dedicated exact-head release gate: `aasm/optimization`.
 
 ## v0.51 — Governed Solution Pools & Complete Enumeration
 
@@ -127,7 +228,7 @@ runtime_extension = THIN_V48_COMPOSITION_NO_NEW_KERNEL
 compatibility_floor exercised = v0.41
 ```
 
-The current runtime is:
+The v0.49 runtime is:
 
 ```text
 SemanticSolverRCRuntimeMixin
@@ -137,7 +238,7 @@ runtime_v48.AASMEngine
 
 ### Public contract freeze
 
-`aasm semantic-solver-rc-freeze` emits and fingerprints the current public compatibility surface:
+`aasm semantic-solver-rc-freeze` emits and fingerprints the v0.49 public compatibility surface:
 
 - contract IDs and versions;
 - engine methods;
@@ -225,23 +326,11 @@ NO_PUBLIC_CAPABILITY_CLAIM_WITHOUT_REPRODUCIBLE_GATE
 
 The claim audit ties major README claims to concrete source/workflow evidence, including Python support, Formal Assurance, Optimization Backends, Cross-Run Knowledge, project-wide Apache licensing, and the Semantic Solver RC gate.
 
-### The RC is a release gate
+### The RC remains a release gate
 
-`.github/workflows/rc.yml` installs the real native optimization/modeling stack and publishes:
+`.github/workflows/rc.yml` installs the real native optimization/modeling stack and publishes `aasm/semantic-solver-rc`.
 
-```text
-aasm/semantic-solver-rc
-```
-
-A release now requires the exact current `main` SHA to have all three:
-
-```text
-aasm/ci-summary
-aasm/formal-assurance
-aasm/semantic-solver-rc
-```
-
-at `success` before publication.
+Current releases require all permanent exact-SHA statuses listed below under Verification.
 
 ## Core architecture
 
@@ -411,7 +500,17 @@ PostgreSQL support:
 pip install 'aasm-runtime[postgres]'
 ```
 
-## RC CLI
+## CLI
+
+v0.52 contract inspection:
+
+```bash
+aasm multi-objective-contract
+aasm pareto-frontier-contract
+aasm resource-routing-contract
+```
+
+Semantic-solver RC inspection/certification remains available:
 
 ```bash
 aasm semantic-solver-rc-contract
@@ -444,13 +543,25 @@ AASM's current release gates include:
 - Compose full-stack smoke testing;
 - byte-reproducible wheel/sdist builds and clean installation;
 - LangGraph and framework-neutral adapter conformance;
-- **Optimization Backends** with real native solvers;
+- **Optimization Backends** with real native solvers plus the dedicated v0.52 contract/adversarial suite; publishes exact-head `aasm/optimization`;
 - **Cross-Run Knowledge** governance/adversarial tests;
-- **Formal Assurance** with bounded TLA+ and Promela/SPIN;
-- **Semantic Solver RC** upgrade, cross-backend, benchmark, claim-audit, public CLI, and full real certification;
-- **Proof Claims** exact binding, proof applicability, adversarial rejection, public CLI, replay, and conformance; publishes exact-head `aasm/proof-claims`;
+- **Formal Assurance** with bounded TLA+ and Promela/SPIN; publishes `aasm/formal-assurance`;
+- **Semantic Solver RC** upgrade, cross-backend, benchmark, claim-audit, public CLI, and full real certification; publishes `aasm/semantic-solver-rc`;
+- **Proof Claims** exact binding, proof applicability, adversarial rejection, public CLI, replay, and conformance; publishes `aasm/proof-claims`;
+- **Solution Pools** exact finite enumeration/completeness conformance; publishes `aasm/solution-pools`;
 - project-wide Apache-2.0 / PEP 639 / `LICENSE` / `NOTICE` / `LICENSE_POLICY.md` release checks;
 - exact-head release publication and remote asset byte verification.
+
+Release publication requires the exact current `main` SHA to have:
+
+```text
+aasm/ci-summary
+aasm/formal-assurance
+aasm/semantic-solver-rc
+aasm/proof-claims
+aasm/solution-pools
+aasm/optimization
+```
 
 ## License
 
@@ -478,16 +589,15 @@ Third-party material, if any, remains subject to its own applicable terms.
 - v0.48 Cross-Run Certified Knowledge & Governed Long-Term Memory ✅
 - v0.49 Semantic Solver Release Candidate ✅
 - v0.50 Proof-Carrying Solver Claims ✅
-- **v0.51 Governed Solution Pools & Complete Enumeration — current ✅**
-- **v0.52 Lexicographic Multi-Objective & Pareto Solving — next**
-- v0.52 Lexicographic Multi-Objective & Pareto Solving
-- v0.53 Durable Cross-Run Solver Learning
+- v0.51 Governed Solution Pools & Complete Enumeration ✅
+- **v0.52 Resource-Governed Multi-Objective Decisions & Pareto Solving — current ✅**
+- **v0.53 Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening — next**
 - v0.54 Certified Cross-Solver Exchange & Deterministic Portfolio Racing
-- v0.55 Extended Mathematical IR
-- v0.56 Proof/Enumeration/Optimization Stress Corpus
-- v0.57 Semantic Solver RC2 / Contract Review
+- v0.55 Extended Mathematical IR + Portable Machine Archive
+- v0.56 Proof/Enumeration/Optimization/Resource/Scope Stress Corpus
+- v0.57 Semantic Solver RC2 / Contract Review + Public Hosted-Foundation Review
 - **Beyond v0.57: open-ended AASM research and capability program; no presumed v1.0.**
 
-The v0.50–v0.57 sequence closes the **currently identified semantic-solver gap cluster**. It does not close AASM and does not imply readiness for a stable-major release.
+The v0.50–v0.57 sequence closes the **currently identified semantic-solver and hosted-foundation gap cluster**. It does not close AASM and does not imply readiness for a stable-major release.
 
-See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/PROOF_CARRYING_SOLVER_CLAIMS.md](docs/PROOF_CARRYING_SOLVER_CLAIMS.md), [docs/RELEASE_0.50.md](docs/RELEASE_0.50.md), [docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md](docs/SEMANTIC_SOLVER_RELEASE_CANDIDATE.md), and [LICENSE_POLICY.md](LICENSE_POLICY.md).
+See [ROADMAP.md](ROADMAP.md), [docs/CURRENT_RELEASE.md](docs/CURRENT_RELEASE.md), [docs/RELEASE_0.52.md](docs/RELEASE_0.52.md), [docs/RESOURCE_GOVERNED_DECISION_FOUNDATION.md](docs/RESOURCE_GOVERNED_DECISION_FOUNDATION.md), and [LICENSE_POLICY.md](LICENSE_POLICY.md).
