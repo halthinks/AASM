@@ -93,23 +93,43 @@ class AASMEngine(V07Engine):
             raise EffectExecutionError(f"Effect {record.spec.effect_id} has no execution ownership token")
         return finisher(record,record.execution_id)
 
+    def _effect_ownership_request_for_claim(self,effect_id):
+        """Optional extension point for a later runtime to bind claim provenance.
+
+        Returning ``None`` preserves the historical v0.8-v0.53 claim behavior.
+        A non-None request is passed to the same store claim transaction that
+        creates the execution_id; stores must not silently drop that request.
+        """
+        del effect_id
+        return None
+
+    def _after_effect_claim(self,record):
+        """Run after durable claim and before the external executor boundary."""
+        del record
+        return None
+
     def execute_effect(self,effect_id,executor):
         claim=getattr(self.store,"claim_effect_attempt",None)
         if claim is None:
             return super().execute_effect(effect_id,executor)
-        record=claim(self.snapshot.machine_id,effect_id)
+        ownership_request=self._effect_ownership_request_for_claim(effect_id)
+        if ownership_request is None:
+            record=claim(self.snapshot.machine_id,effect_id)
+        else:
+            record=claim(self.snapshot.machine_id,effect_id,ownership_request)
         if record.status==EffectStatus.SUCCEEDED.value: return record
         if record.status!=EffectStatus.RUNNING.value: raise ValueError(f"Effect {effect_id} did not enter RUNNING (status={record.status})")
-        self.emit(EventType.EFFECT_STARTED.value,self.state_value,self.state_value,"effect started",data={"effect_id":effect_id,"attempt":record.attempts,"execution_id":record.execution_id,"idempotency_key":record.spec.idempotency_key})
+        self._after_effect_claim(record)
+        self.emit(EventType.EFFECT_STARTED.value,self.state_value,self.state_value,"effect started",data={"effect_id":effect_id,"attempt":record.attempts,"execution_id":record.execution_id,"ownership_id":None if record.ownership is None else record.ownership.get("ownership_id"),"idempotency_key":record.spec.idempotency_key})
         try:
             result=executor(record.spec,record.spec.idempotency_key)
         except Exception as exc:
             record.status=EffectStatus.FAILED.value; record.error=f"{type(exc).__name__}: {exc}"; record.updated_at=now()
             record=self._finish_claimed_effect(record)
-            self.emit(EventType.EFFECT_FAILED.value,self.state_value,self.state_value,"effect failed",data={"effect_id":effect_id,"attempt":record.attempts,"execution_id":record.execution_id,"error":record.error}); return record
+            self.emit(EventType.EFFECT_FAILED.value,self.state_value,self.state_value,"effect failed",data={"effect_id":effect_id,"attempt":record.attempts,"execution_id":record.execution_id,"ownership_id":None if record.ownership is None else record.ownership.get("ownership_id"),"error":record.error}); return record
         record.status=EffectStatus.SUCCEEDED.value; record.result=dict(result or {}); record.error=None; record.updated_at=now()
         record=self._finish_claimed_effect(record)
-        self.emit(EventType.EFFECT_SUCCEEDED.value,self.state_value,self.state_value,"effect succeeded",data={"effect_id":effect_id,"attempt":record.attempts,"execution_id":record.execution_id,"result":record.result}); return record
+        self.emit(EventType.EFFECT_SUCCEEDED.value,self.state_value,self.state_value,"effect succeeded",data={"effect_id":effect_id,"attempt":record.attempts,"execution_id":record.execution_id,"ownership_id":None if record.ownership is None else record.ownership.get("ownership_id"),"result":record.result}); return record
 
     def register_model_profile(self,profile:ModelProfile,*,reason="model profile registered"):
         resources=deepcopy(self.snapshot.resources); models=resources.setdefault("models",[])
