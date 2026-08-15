@@ -247,16 +247,22 @@ class SolverLearningRuntimeMixin:
             source_machine_id=self.snapshot.machine_id,
             source_scope_id=scope_id,
             knowledge_kind="REUSE_RESULT",
-            source_contract_id=SOLVER_LEARNING_CONTRACT_ID,
-            source_contract_version=SOLVER_LEARNING_CONTRACT_VERSION,
             content=artifact.to_dict(),
             source_evidence_ids=(str(row["evidence_id"]),),
-            source_authority_provenance=(str(authorization["evidence_id"]),),
+            source_fingerprints={
+                f"SOLVER_LEARNING:{artifact.learning_id}": artifact.fingerprint,
+            },
+            source_authority_provenance={
+                "authority_decision_evidence_id": str(authorization["evidence_id"]),
+                "source_authority_is_provenance_only": True,
+                "authority_transfer": "NEVER",
+            },
             environment_fingerprint=artifact.environment_fingerprint,
             dependency_fingerprints=artifact.dependency_fingerprints,
             applicability_scope_ids=applicability,
             metadata={
                 "solver_learning_contract_id": SOLVER_LEARNING_CONTRACT_ID,
+                "solver_learning_contract_version": SOLVER_LEARNING_CONTRACT_VERSION,
                 "solver_learning_id": artifact.learning_id,
                 "learning_class": artifact.learning_class,
                 "authority_inherited": False,
@@ -297,11 +303,20 @@ class SolverLearningRuntimeMixin:
         envelope = CrossRunKnowledgeEnvelope.from_dict(admission["envelope"])
         if envelope.knowledge_kind != "REUSE_RESULT":
             raise ValueError("solver learning envelope must use the v0.48 REUSE_RESULT transport kind")
-        if envelope.source_contract_id != SOLVER_LEARNING_CONTRACT_ID:
-            raise ValueError("cross-run envelope does not carry the solver learning contract")
         if envelope.metadata.get("solver_learning_contract_id") != SOLVER_LEARNING_CONTRACT_ID:
             raise ValueError("cross-run solver learning metadata contract mismatch")
+        if envelope.metadata.get("solver_learning_contract_version") != SOLVER_LEARNING_CONTRACT_VERSION:
+            raise ValueError("cross-run solver learning metadata version mismatch")
+        if not isinstance(envelope.content, Mapping):
+            raise ValueError("cross-run solver learning content must be a solver-learning document")
+        if envelope.content.get("contract_id") != SOLVER_LEARNING_CONTRACT_ID:
+            raise ValueError("cross-run solver learning content contract mismatch")
+        if envelope.content.get("contract_version") != SOLVER_LEARNING_CONTRACT_VERSION:
+            raise ValueError("cross-run solver learning content version mismatch")
         artifact = SolverLearningArtifact.from_dict(envelope.content)
+        source_key = f"SOLVER_LEARNING:{artifact.learning_id}"
+        if envelope.source_fingerprints.get(source_key) != artifact.fingerprint:
+            raise ValueError("cross-run solver learning source fingerprint mismatch")
         if artifact.model_fingerprint != expected_model_fingerprint:
             raise ValueError("imported solver learning model fingerprint mismatch")
         authorization = self._authorize_solver_learning_action(
