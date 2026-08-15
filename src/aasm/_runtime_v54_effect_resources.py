@@ -46,13 +46,23 @@ class EffectResourceSettlementMixin:
         raise KeyError(f"resource settlement Evidence not found: {settlement_id}")
 
     def _effect_reconciliation_evidence_id(self, effect_id: str, workspace_id: str, scope_id: str, reconciliation_id: str) -> str:
-        rows = self._effect_governance_rows(
-            workspace_id=workspace_id,
-            scope_id=scope_id,
-            record_types=("effect_reconciliation",),
-            effect_id=effect_id,
-        )
-        matches = [row for row in rows if row["document"].get("reconciliation_id") == reconciliation_id]
+        # Workspace/scope have already been validated against the durable EffectIntent
+        # by settle_effect_resources(). Reconciliation documents intentionally carry
+        # effect/reconciliation identity, not duplicated workspace/scope fields, so
+        # find the canonical Evidence record by those native identities directly.
+        matches: list[dict[str, Any]] = []
+        for row in self.snapshot.evidence.get("records", []):
+            if row.get("status", "active") != "active":
+                continue
+            metadata = row.get("metadata") or {}
+            if metadata.get("aasm_effect_governance_record_type") != "effect_reconciliation":
+                continue
+            document = metadata.get("document")
+            if not isinstance(document, dict):
+                continue
+            if document.get("effect_id") != effect_id or document.get("reconciliation_id") != reconciliation_id:
+                continue
+            matches.append(row)
         if len(matches) != 1:
             raise ValueError("effect resource settlement requires one durable reconciliation Evidence record")
         return str(matches[0]["evidence_id"])
