@@ -372,6 +372,7 @@
 ./src/aasm/_runtime_v49_rc.py
 ./src/aasm/_runtime_v50_proof.py
 ./src/aasm/_runtime_v51_pools.py
+./src/aasm/_runtime_v52_resources.py
 ./src/aasm/_scopes_graph.py
 ./src/aasm/_scopes_invariants.py
 ./src/aasm/_scopes_model.py
@@ -566,6 +567,7 @@
 ./src/aasm/runtime_v49.py
 ./src/aasm/runtime_v50.py
 ./src/aasm/runtime_v51.py
+./src/aasm/runtime_v52.py
 ./src/aasm/scheduler.py
 ./src/aasm/scopes.py
 ./src/aasm/semantic_dependencies.py
@@ -626,6 +628,7 @@
 ./tests/test_replay_fork.py
 ./tests/test_resource_governance.py
 ./tests/test_resource_routing.py
+./tests/test_runtime_v52_resources.py
 ./tests/test_scheduler.py
 ./tests/test_schemas.py
 ./tests/test_sdist_smoke.py
