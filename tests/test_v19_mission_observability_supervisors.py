@@ -4,7 +4,6 @@ from http.server import ThreadingHTTPServer
 import pytest
 
 from aasm import (
-    AASMEngine,
     DockerComposeScaleAdapter,
     ExecutionTelemetryRecord,
     ForkRequest,
@@ -22,6 +21,7 @@ from aasm import (
     TelemetryKind,
     WorkerRecord,
 )
+from aasm.runtime_v52 import AASMEngine
 from aasm.remote import AASMRemoteClient, RemoteProtocolError
 from aasm.server import make_handler
 
