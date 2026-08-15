@@ -21,7 +21,7 @@ from ._runtime_v53_solver_learning import (
     SOLVER_LEARNING_RUNTIME_STABILITY,
     solver_learning_runtime_contract,
 )
-from .runtime_v53_learning import AASMEngine
+from .runtime_v53_learning import AASMEngine, SOLVER_LEARNING_APPLY_CAPABILITY
 from .scoped_authority import (
     AUTHORITY_EFFECTS,
     AUTHORITY_WILDCARD,
@@ -42,15 +42,22 @@ from .scoped_authority import (
 from .solver_learning import (
     CORRECTNESS_SENSITIVE_KINDS,
     PERFORMANCE_HINT_KINDS,
+    SOLVER_LEARNING_APPLICATION_CLASSES,
+    SOLVER_LEARNING_APPLICATION_CONTRACT_ID,
+    SOLVER_LEARNING_APPLICATION_CONTRACT_VERSION,
     SOLVER_LEARNING_CHECKER_ID,
     SOLVER_LEARNING_CHECKER_VERSION,
     SOLVER_LEARNING_CONTRACT_ID,
     SOLVER_LEARNING_CONTRACT_VERSION,
     SOLVER_LEARNING_KINDS,
     SOLVER_LEARNING_STABILITY,
+    SolverLearningApplication,
     SolverLearningArtifact,
     SolverLearningValidation,
+    apply_solver_learning_to_optimization_request,
+    build_solver_learning_application,
     revalidate_finite_solver_learning,
+    solver_learning_application_contract,
     solver_learning_contract,
     validate_native_accelerator_hint,
 )
@@ -76,6 +83,7 @@ _NEW_ENGINE_METHODS = [
     "export_solver_learning_artifact",
     "admit_cross_run_solver_learning",
     "revalidate_solver_learning",
+    "apply_solver_learning",
     "solver_learning_report",
 ]
 
@@ -112,10 +120,18 @@ _NEW_IMPORTS = [
     "solver_learning_contract",
     "revalidate_finite_solver_learning",
     "validate_native_accelerator_hint",
+    "SOLVER_LEARNING_APPLICATION_CONTRACT_ID",
+    "SOLVER_LEARNING_APPLICATION_CONTRACT_VERSION",
+    "SOLVER_LEARNING_APPLICATION_CLASSES",
+    "SolverLearningApplication",
+    "solver_learning_application_contract",
+    "build_solver_learning_application",
+    "apply_solver_learning_to_optimization_request",
     "SOLVER_LEARNING_RUNTIME_CONTRACT_ID",
     "SOLVER_LEARNING_RUNTIME_CONTRACT_VERSION",
     "SOLVER_LEARNING_RUNTIME_STABILITY",
     "SOLVER_LEARNING_AUTHORITY_CAPABILITIES",
+    "SOLVER_LEARNING_APPLY_CAPABILITY",
     "solver_learning_runtime_contract",
 ]
 
@@ -151,6 +167,7 @@ PUBLIC_API_CONTRACT["scoped_identity_authority"] = {
 }
 PUBLIC_API_CONTRACT["solver_learning"] = {
     **solver_learning_contract(),
+    "application": solver_learning_application_contract(),
     "runtime": solver_learning_runtime_contract(),
 }
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
@@ -179,6 +196,7 @@ def validate_public_api_contract():
     authority = PUBLIC_API_CONTRACT.get("scoped_identity_authority") or {}
     authority_runtime = authority.get("runtime") or {}
     solver_learning = PUBLIC_API_CONTRACT.get("solver_learning") or {}
+    solver_application = solver_learning.get("application") or {}
     solver_runtime = solver_learning.get("runtime") or {}
     if authority.get("contract_id") != SCOPED_AUTHORITY_CONTRACT_ID:
         errors.append("scoped authority contract identity mismatch")
@@ -198,10 +216,28 @@ def validate_public_api_contract():
         errors.append("cross-run solver learning admission must not imply truth")
     if solver_learning.get("pruning_application") != "LOCAL_REVALIDATION_REQUIRED":
         errors.append("correctness-sensitive solver learning must require local revalidation")
+    if solver_learning.get("application") != "EXPLICIT_VALIDATED_ADAPTER_APPLICATION_ONLY":
+        errors.append("solver learning application declaration mismatch")
+    if solver_learning.get("application_truth_authority") != "NONE" or solver_learning.get("application_policy_authority") != "NONE":
+        errors.append("solver learning application must carry no truth or policy authority")
+    if solver_application.get("contract_id") != SOLVER_LEARNING_APPLICATION_CONTRACT_ID:
+        errors.append("solver learning application contract identity mismatch")
+    if solver_application.get("validation_required") != "PASS_EXACT_ARTIFACT_AND_MODEL":
+        errors.append("solver learning application validation boundary mismatch")
+    if solver_application.get("truth_authority") != "NONE" or solver_application.get("policy_authority") != "NONE":
+        errors.append("solver learning application contract must carry no authority")
     if solver_runtime.get("contract_id") != SOLVER_LEARNING_RUNTIME_CONTRACT_ID:
         errors.append("solver learning runtime contract identity mismatch")
-    if solver_runtime.get("application") != "NO_AUTOMATIC_APPLICATION_IN_V0.53_FOUNDATION":
-        errors.append("solver learning application boundary mismatch")
+    if solver_runtime.get("application") != "EXPLICIT_VALIDATED_ADAPTER_APPLICATION_ONLY":
+        errors.append("solver learning runtime application boundary mismatch")
+    if solver_runtime.get("apply_authority") != "SCOPED_SOLVER_LEARNING_APPLY_REQUIRED":
+        errors.append("solver learning apply authority boundary mismatch")
+    if solver_runtime.get("truth_authority") != "NONE" or solver_runtime.get("policy_authority") != "NONE":
+        errors.append("solver learning runtime must not grant truth or policy authority")
+    if solver_runtime.get("solver_execution") != "EXISTING_AASM_OPTIMIZATION_PROVIDER_PATH_ONLY":
+        errors.append("solver learning execution path mismatch")
+    if SOLVER_LEARNING_AUTHORITY_CAPABILITIES.get("apply") != SOLVER_LEARNING_APPLY_CAPABILITY:
+        errors.append("solver learning apply capability mismatch")
     if PUBLIC_API_CONTRACT.get("distribution", {}).get("version") != __version__:
         errors.append("distribution version mismatch")
     if PUBLIC_RELEASE_STABILITY != "PRE_RELEASE":
