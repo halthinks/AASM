@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/resource-observation.schema.json",
+  "title": "AASM Resource Observation",
+  "type": "object",
+  "required": ["resource_id", "observed_at", "source", "measurement_authority"],
+  "properties": {
+    "resource_id": {"type": "string", "minLength": 1},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "source": {"type": "string", "minLength": 1},
+    "measurement_authority": {
+      "enum": ["AUTHORITATIVE", "OBSERVED", "DERIVED", "ESTIMATED", "DECLARED", "UNKNOWN"]
+    },
+    "reported_capacity": {"type": ["number", "null"], "minimum": 0},
+    "reported_consumed": {"type": ["number", "null"], "minimum": 0},
+    "reported_remaining": {"type": ["number", "null"], "minimum": 0},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1, "default": 1},
+    "freshness_seconds": {"type": ["number", "null"], "minimum": 0},
+    "metadata": {"type": "object"}
+  },
+  "additionalProperties": false
+}
