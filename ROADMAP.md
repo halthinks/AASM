@@ -1,6 +1,6 @@
 # AASM Roadmap
 
-AASM is currently **v0.52.0 / Resource-Governed Multi-Objective Decisions & Pareto Solving**.
+AASM is currently **v0.53.0 / Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening**.
 
 The roadmap is explicitly **product-backward**: known destination properties must shape public contracts before implementation depth makes them expensive to add. A capability may be staged, but it may not be deferred in a way that makes the current architecture structurally incompatible with it.
 
@@ -25,7 +25,8 @@ The roadmap is explicitly **product-backward**: known destination properties mus
 - v0.49.0 Semantic Solver Release Candidate
 - v0.50.0 Proof-Carrying Solver Claims
 - v0.51.0 Governed Solution Pools & Complete Enumeration
-- **v0.52.0 Resource-Governed Multi-Objective Decisions & Pareto Solving — Current Release**
+- v0.52.0 Resource-Governed Multi-Objective Decisions & Pareto Solving
+- **v0.53.0 Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening — Current Release**
 
 ## Product destination that constrains the next releases
 
@@ -45,7 +46,7 @@ what actually happened and what it consumed
 how the run can be exported and replayed without hosted-only state
 ```
 
-The decision vector already established in v0.52 is policy-selectable:
+The decision vector established in v0.52 remains policy-selectable:
 
 ```text
 maximize:
@@ -84,7 +85,7 @@ A weekly model/subscription allowance is a valid governed resource. AASM may rea
 
 # v0.52.0 — Resource-Governed Multi-Objective Decisions & Pareto Solving
 
-**Status: released / current.**
+**Status: released / frozen parent of v0.53.**
 
 Public contracts:
 
@@ -126,29 +127,59 @@ Neither optimality, frontier completeness, resource availability, nor SII utilit
 
 # v0.53.0 — Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
 
+**Status: released / current.**
+
+Public contracts and runtime surfaces:
+
+```text
+aasm.identity.scoped.v1 / 0.1.0
+aasm.authority.scoped.v1 / 0.1.0
+aasm.authority.scoped.runtime.v1 / 0.1.0
+aasm.store.scoped.v1 / 0.1.0
+aasm.solver.learning.v1 / 0.1.0
+aasm.solver.learning.runtime.v1 / 0.1.0
+aasm.solver.learning.application.v1 / 0.1.0
+aasm.adoption.v1 / 0.29.0
+```
+
+Delivered:
+
+- durable Principal / Workspace / Scope / Machine identity separation;
+- explicit scoped ALLOW/DENY authority with default deny and DENY precedence;
+- delegation ceilings for capability, scope, depth, expiry, and nondelegable grants;
+- delegated wildcard prohibition and fail-closed malformed/unknown scopes;
+- source/cross-run authority remains provenance only and never becomes receiving authority;
+- `aasm.store.scoped.v1` read-only fail-closed persistence facade for raw machine/effect access;
+- resource capacity/observation/reservation/re-estimate/release/settlement operations require scoped capabilities;
+- principal-aware resource history derived from exact durable authorization Evidence rather than duplicated actor fields;
+- optimistic machine-version guarded resource Evidence commits preventing two stale hosts from committing conflicting reservations;
+- stale-writer canonical reload verified on MemoryStore, SQLite, and PostgreSQL;
+- scope-bound external effect proposals with separate `effect.authorize`, `effect.execute`, and `effect.reconcile` authority;
+- fresh authorization before each external execution attempt, preventing expired/revoked grants from being bypassed by retries;
+- durable solver-learning artifacts for `NO_GOOD`, `UNSAT_CORE`, `BOUND`, `INCUMBENT`, `WARM_START`, and `NATIVE_ACCELERATOR`;
+- cross-run solver learning carried through the existing v0.48 `REUSE_RESULT` envelope/admission pathway;
+- correctness-sensitive imported learning remains inert until receiving-run exact local revalidation;
+- foreign solver learning never imports truth, policy authority, resource entitlement, or source authority;
+- explicit `aasm.solver.learning.application.v1` separating validation from application;
+- scoped `solver.learning.apply` required for application;
+- certified pruning lowered into a new canonical optimization model and routed through the existing provider path;
+- validated incumbent/warm-start hints remain performance-only and are explicitly consumed by the existing OR-Tools CP-SAT adapter via `CpModel.add_hint(...)`;
+- dedicated exact-SHA `aasm/scoped-authority` and `aasm/solver-learning` release gates;
+- release publication hardened to require those gates in addition to CI, formal assurance, RC, proof, solution-pool, and optimization gates.
+
+Hard completion criterion satisfied:
+
+> Cross-scope reads/writes, privilege amplification, cross-principal resource misuse, stale distributed reservations, unscoped effect execution, and unvalidated foreign solver learning fail closed in adversarial tests, while compatible learned solver/resource state remains reusable without inheriting foreign authority or truth.
+
+# v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery
+
 **Next active layer.**
 
 Primary goals:
 
-- freeze Principal / Workspace / Scope / Machine semantics across durable records;
-- make store/query APIs scope-safe by construction;
-- formalize capability delegation, ceilings, expiry, and nondelegable denies;
-- preserve the rule that source authority never becomes receiving-run authority;
-- implement compatible durable cross-run solver learning (canonical no-goods/bounds/cores plus performance-only native accelerator state);
-- make resource capacities, leases, observations, consumption, and learned resource-estimation evidence principal-aware without a retrofit;
-- strengthen distributed reservation/lease ownership so concurrent workers cannot oversubscribe a governed resource.
-
-Hard completion criterion:
-
-> Cross-scope reads/writes, privilege amplification, and cross-principal resource misuse fail closed in adversarial tests, while compatible learned solver/resource state remains reusable without inheriting foreign authority or truth.
-
-# v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery
-
-Primary goals:
-
 - public `EffectIntent` lifecycle;
-- authorization before effect ownership;
-- idempotency/ownership records;
+- certified effect ownership handoff/recovery beyond the v0.53 scoped authorization foundation;
+- stronger idempotency/ownership records across distributed executors;
 - `CONFIRMED | FAILED | UNKNOWN` outcomes with explicit reconciliation;
 - resource reservation before governed external execution and settlement after observation;
 - deterministic multi-backend/model racing under leases/budgets;
@@ -176,7 +207,7 @@ Hard completion criterion:
 
 # v0.56.0 — Proof/Enumeration/Optimization/Resource/Scope Stress Corpus
 
-Permanent stress coverage includes:
+Permanent Stress Corpus coverage includes:
 
 - SAT/UNSAT and proof-grade negative claims;
 - exact enumeration and solution pools;
@@ -218,13 +249,13 @@ Hard completion criterion:
 
 # After v0.57 — Private Hosted Product Fabric and Further Public Hardening
 
-Resource-aware SII and the product objective vector are already public v0.52 semantics and are hardened through v0.57.
+Resource-aware SII and the product objective vector are public v0.52 semantics; scoped authority/store boundaries and cross-run solver learning are public v0.53 semantics; all are hardened further through v0.57.
 
 Public hardening may continue with:
 
 - learned resource-estimate calibration from predicted-versus-actual history;
 - richer scarcity policies using remaining capacity, reset/refill horizon, protected reserve, consumption velocity, and forecast demand;
-- central principal-authority delegation and capability ceilings;
+- scoped principal-authority delegation and capability-ceiling maturity;
 - profile binding/migration maturity for generated operator stacks;
 - provider adapters mapping external usage telemetry into the generic observation contract without becoming kernel dependencies.
 
