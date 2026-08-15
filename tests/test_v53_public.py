@@ -1,3 +1,4 @@
+from aasm import demo_stack
 from aasm import public_v52
 from aasm import public_v53
 from aasm.cli_v53 import build_parser
@@ -12,6 +13,11 @@ def test_v53_public_surface_is_additive_and_pre_release():
     assert public_v53.PUBLIC_API_CONTRACT["contract_version"] == "0.29.0"
     assert public_v53.PUBLIC_API_CONTRACT["runtime_version"] == "0.53.0"
     assert public_v52.__version__ == "0.52.0"
+
+
+def test_pre_release_v53_import_does_not_rebind_active_v52_demo_stack():
+    assert demo_stack.AASMEngine is public_v52.AASMEngine
+    assert demo_stack._runtime_version() == "0.52.0"
 
 
 def test_v53_public_contract_preserves_authority_and_solver_learning_safety_boundaries():
