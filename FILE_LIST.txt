@@ -567,6 +567,7 @@
 ./src/aasm/persistence/memory.py
 ./src/aasm/persistence/postgres.py
 ./src/aasm/persistence/serde.py
+./src/aasm/persistence/sqlite.py
 ./src/aasm/profile_conformance.py
 ./src/aasm/profile_packages.py
 ./src/aasm/proof_claim_conformance.py
