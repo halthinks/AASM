@@ -94,12 +94,19 @@ def test_dependency_neutral_rc_certification_passes_current_public_contract():
     assert report["contract"]["native_solver_claim"] == "AASM_DOES_NOT_CLAIM_FASTER_INNER_SOLVER_KERNELS"
 
 
-def test_runtime_rc_facade_delegates_without_new_authority():
-    engine = V50Engine(ProblemSpec("rc facade under v0.50"))
-    manifest = engine.semantic_solver_rc_freeze_manifest(public_api_contract())
+def test_versioned_rc_runtime_facade_certifies_frozen_v49_contract_without_new_authority():
+    engine = V49Engine(ProblemSpec("versioned rc facade"))
+    manifest = engine.semantic_solver_rc_freeze_manifest(v49.public_api_contract())
+    assert manifest["runtime_version"] == "0.49.0"
+    assert manifest["adoption_contract_version"] == "0.25.0"
     assert manifest["freeze_fingerprint"]
     assert engine.semantic_solver_rc_claim_audit()["status"] == "PASS"
     assert engine.semantic_solver_rc_cross_backend_report(real=False)["status"] == "PASS"
+    certified = engine.semantic_solver_rc_certify(real=False, public_contract=v49.public_api_contract())
+    assert certified["status"] == "PASS", certified
+    assert certified["freeze_manifest"]["runtime_version"] == "0.49.0"
+    assert certified["freeze_manifest"]["adoption_contract_version"] == "0.25.0"
+    assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
 
 
 def test_rc_contract_freezes_no_ungated_performance_claim():
