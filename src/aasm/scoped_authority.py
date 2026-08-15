@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable, Mapping
 
 from ._scopes_graph import scope_flow_allowed
-from ._scopes_model import ROOT_SCOPE_ID, normalize_scope_state
+from ._scopes_model import normalize_scope_state
 from .semantic_result import semantic_fingerprint
 
 
@@ -245,6 +245,7 @@ def scoped_authority_contract() -> dict[str, Any]:
         "scope_flow": "EXISTING_AASM_SCOPE_FLOW_ONLY",
         "deny_precedence": "ANY_MATCHING_DENY_OVERRIDES_ALLOW",
         "delegation": "ISSUER_CANNOT_GRANT_MORE_THAN_ACTIVE_DELEGABLE_PARENT",
+        "delegated_wildcard": "FORBIDDEN",
         "root_bootstrap": "EXPLICIT_WORKSPACE_ROOT_PRINCIPAL_ONLY",
         "resource_state_grants_authority": False,
         "cross_run_authority_transfer": "NEVER",
@@ -263,13 +264,17 @@ def _scope_is_active(scope_state: Mapping[str, Any], scope_id: str) -> bool:
 
 
 def _grant_matches_request(grant: ScopedAuthorityGrant, request: AuthorityRequest, scope_state: Mapping[str, Any]) -> bool:
-    return (
-        grant.subject_principal_id == request.principal_id
-        and grant.workspace_id == request.workspace_id
-        and grant.active_at(request.at_time)
-        and _capability_matches(grant, request.capability)
-        and scope_flow_allowed(dict(scope_state), grant.scope_id, request.scope_id)
-    )
+    if (
+        grant.subject_principal_id != request.principal_id
+        or grant.workspace_id != request.workspace_id
+        or not grant.active_at(request.at_time)
+        or not _capability_matches(grant, request.capability)
+    ):
+        return False
+    try:
+        return scope_flow_allowed(dict(scope_state), grant.scope_id, request.scope_id)
+    except KeyError:
+        return False
 
 
 def evaluate_scoped_authority(
@@ -306,10 +311,10 @@ def evaluate_scoped_authority(
 
 
 def _parent_covers_capabilities(parent: ScopedAuthorityGrant, child: ScopedAuthorityGrant) -> bool:
-    if AUTHORITY_WILDCARD in parent.capabilities:
-        return True
     if AUTHORITY_WILDCARD in child.capabilities:
         return False
+    if AUTHORITY_WILDCARD in parent.capabilities:
+        return True
     return set(child.capabilities).issubset(set(parent.capabilities))
 
 
@@ -343,6 +348,8 @@ def validate_grant_admission(
         if grant.issuer_principal_id != workspace.root_principal_id:
             errors.append("ONLY_WORKSPACE_ROOT_MAY_BOOTSTRAP_GRANT")
     elif grant.parent_grant_id:
+        if AUTHORITY_WILDCARD in grant.capabilities:
+            errors.append("DELEGATED_WILDCARD_FORBIDDEN")
         parent = grant_map.get(grant.parent_grant_id)
         if parent is None:
             errors.append("UNKNOWN_PARENT_GRANT")
