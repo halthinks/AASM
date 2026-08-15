@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/multi-objective-problem.schema.json",
+  "title": "AASM Multi-Objective Problem",
+  "type": "object",
+  "required": ["problem_id", "model", "objectives"],
+  "properties": {
+    "problem_id": {"type": "string", "minLength": 1},
+    "model": {"type": "object"},
+    "objectives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["objective_id", "priority", "sense", "coefficients", "offset", "tolerance"],
+        "properties": {
+          "objective_id": {"type": "string", "minLength": 1},
+          "priority": {"type": "integer", "minimum": 0},
+          "sense": {"enum": ["MINIMIZE", "MAXIMIZE"]},
+          "coefficients": {"type": "object", "additionalProperties": {"type": "number"}},
+          "offset": {"type": "number"},
+          "tolerance": {"type": "number", "minimum": 0}
+        },
+        "additionalProperties": false
+      }
+    },
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
