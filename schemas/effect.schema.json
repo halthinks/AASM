@@ -15,8 +15,12 @@
     "error": {"type": ["string", "null"]},
     "evidence": {"type": "array", "items": {"type": "string"}},
     "intent": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/effectIntent"}]},
+    "dispatch_request": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/effectDispatchRequest"}]},
     "ownership": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/effectOwnership"}]},
     "reconciliation": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/effectReconciliation"}]},
+    "dispatch_history": {"type": "array", "items": {"$ref": "#/$defs/effectDispatchRequest"}},
+    "ownership_history": {"type": "array", "items": {"$ref": "#/$defs/effectOwnership"}},
+    "reconciliation_history": {"type": "array", "items": {"$ref": "#/$defs/effectReconciliation"}},
     "created_at": {"type": "number"},
     "updated_at": {"type": "number"},
     "spec": {
@@ -64,6 +68,26 @@
       },
       "additionalProperties": false
     },
+    "effectDispatchRequest": {
+      "type": "object",
+      "required": ["contract_id", "contract_version", "effect_id", "intent_id", "owner_worker_id", "task_lease_id", "workspace_id", "scope_id", "resource_reservation_ids", "dispatch_request_id", "fingerprint"],
+      "properties": {
+        "contract_id": {"const": "aasm.effect.dispatch-request.v1"},
+        "contract_version": {"const": "0.1.0"},
+        "effect_id": {"type": "string", "minLength": 1},
+        "intent_id": {"type": "string", "minLength": 1},
+        "owner_worker_id": {"type": "string", "minLength": 1},
+        "task_lease_id": {"type": "string", "minLength": 1},
+        "workspace_id": {"type": "string", "minLength": 1},
+        "scope_id": {"type": "string", "minLength": 1},
+        "resource_reservation_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "owner_principal_id": {"type": ["string", "null"]},
+        "metadata": {"type": "object"},
+        "dispatch_request_id": {"type": "string", "minLength": 1},
+        "fingerprint": {"type": "string", "minLength": 64, "maxLength": 64}
+      },
+      "additionalProperties": false
+    },
     "effectOwnership": {
       "type": "object",
       "required": ["contract_id", "contract_version", "effect_id", "intent_id", "execution_id", "owner_worker_id", "workspace_id", "scope_id", "authority_decision_evidence_id", "resource_reservation_ids", "ownership_id", "fingerprint"],
@@ -80,6 +104,7 @@
         "resource_reservation_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
         "task_lease_id": {"type": ["string", "null"]},
         "owner_principal_id": {"type": ["string", "null"]},
+        "dispatch_request_id": {"type": ["string", "null"]},
         "metadata": {"type": "object"},
         "ownership_id": {"type": "string", "minLength": 1},
         "fingerprint": {"type": "string", "minLength": 64, "maxLength": 64}
