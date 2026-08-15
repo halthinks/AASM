@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/scoped-authority-decision.schema.json",
+  "title": "AASM Scoped Authority Decision",
+  "type": "object",
+  "required": [
+    "contract_id",
+    "contract_version",
+    "request_fingerprint",
+    "allowed",
+    "reason",
+    "allow_grant_ids",
+    "deny_grant_ids",
+    "diagnostics"
+  ],
+  "properties": {
+    "contract_id": {"const": "aasm.authority.scoped.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "request_fingerprint": {"type": "string", "minLength": 1},
+    "allowed": {"type": "boolean"},
+    "reason": {"type": "string", "minLength": 1},
+    "allow_grant_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "deny_grant_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "diagnostics": {"type": "array", "items": {"type": "string"}},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
