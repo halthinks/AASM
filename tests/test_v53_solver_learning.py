@@ -1,12 +1,19 @@
+import pytest
+
 from aasm.optimization import (
     OptimizationConstraint,
     OptimizationModel,
     OptimizationObjective,
+    OptimizationRequest,
     OptimizationVariable,
 )
 from aasm.solver_learning import (
+    SolverLearningApplication,
     SolverLearningArtifact,
+    apply_solver_learning_to_optimization_request,
+    build_solver_learning_application,
     revalidate_finite_solver_learning,
+    solver_learning_application_contract,
     solver_learning_contract,
     validate_native_accelerator_hint,
 )
@@ -53,6 +60,16 @@ def test_contract_separates_pruning_knowledge_from_performance_hints():
     assert contract["cross_run_admission_implies_truth"] is False
     assert contract["pruning_application"] == "LOCAL_REVALIDATION_REQUIRED"
     assert contract["performance_hint_authority"] == "NEVER_TRUTH_OR_POLICY"
+    assert contract["application"] == "EXPLICIT_VALIDATED_ADAPTER_APPLICATION_ONLY"
+    assert contract["application_truth_authority"] == "NONE"
+    assert contract["application_policy_authority"] == "NONE"
+    assert contract["solver_execution"] == "EXISTING_AASM_OPTIMIZATION_PROVIDER_PATH_ONLY"
+
+    application = solver_learning_application_contract()
+    assert application["contract_id"] == "aasm.solver.learning.application.v1"
+    assert application["truth_authority"] == "NONE"
+    assert application["policy_authority"] == "NONE"
+    assert application["current_assignment_hint_provider"] == "ortools-cp-sat"
 
 
 def test_learning_artifact_is_canonical_and_round_trips_exactly():
@@ -91,6 +108,36 @@ def test_exact_finite_no_good_revalidation_accepts_only_truly_infeasible_conjunc
     assert failed.details["violating_solution_ids"]
 
 
+def test_no_good_revalidation_rejects_unknown_and_non_boolean_literal_variables_before_enumeration():
+    fixture = model()
+    unknown = SolverLearningArtifact(
+        "NO_GOOD",
+        fixture.fingerprint,
+        fixture.solver_family,
+        {"literals": [{"variable_id": "ghost", "positive": True}]},
+    )
+    checked = revalidate_finite_solver_learning(unknown, fixture)
+    assert checked.status == "FAIL"
+    assert checked.application_authority == "NONE"
+    assert checked.diagnostics == ("UNKNOWN_LITERAL_VARIABLE:ghost",)
+
+    integer_model = OptimizationModel(
+        "integer-learning-fixture",
+        (OptimizationVariable("n", "INTEGER", 0, 1),),
+        (OptimizationConstraint("LINEAR", coefficients={"n": 1}, sense=">=", rhs=0),),
+        family="CP_SAT",
+    )
+    non_boolean = SolverLearningArtifact(
+        "NO_GOOD",
+        integer_model.fingerprint,
+        integer_model.solver_family,
+        {"literals": [{"variable_id": "n", "positive": True}]},
+    )
+    checked = revalidate_finite_solver_learning(non_boolean, integer_model)
+    assert checked.status == "FAIL"
+    assert checked.diagnostics == ("NON_BOOLEAN_LITERAL_VARIABLE:n",)
+
+
 def test_unsat_core_uses_same_complete_finite_revalidation_boundary():
     fixture = model()
     core = artifact(
@@ -118,6 +165,77 @@ def test_exact_finite_bound_revalidation_rejects_false_bound():
     assert revalidate_finite_solver_learning(upper, fixture).status == "PASS"
 
 
+def test_certified_boolean_no_good_lowers_to_existing_cp_sat_model_ir():
+    fixture = model()
+    learned = artifact(
+        "NO_GOOD",
+        {"literals": [{"variable_id": "x", "positive": False}, {"variable_id": "y", "positive": False}]},
+    )
+    validation = revalidate_finite_solver_learning(learned, fixture)
+    application, transformed = build_solver_learning_application(learned, validation, fixture)
+    assert application.application_class == "PRUNING_CONSTRAINTS"
+    assert application.truth_authority == "NONE"
+    assert application.policy_authority == "NONE"
+    assert transformed is not None
+    assert transformed.fingerprint == application.transformed_model_fingerprint
+    assert transformed.metadata["solver_learning_original_model_fingerprint"] == fixture.fingerprint
+    constraint = transformed.constraints[-1]
+    assert constraint.kind == "LINEAR"
+    assert constraint.coefficients == {"x": 1.0, "y": 1.0}
+    assert constraint.sense == ">="
+    assert constraint.rhs == 1.0
+    assert constraint.metadata["truth_authority"] == "NONE"
+    assert SolverLearningApplication.from_dict(application.to_dict()).to_dict() == application.to_dict()
+
+
+def test_certified_sat_no_good_lowers_to_complement_clause():
+    sat = OptimizationModel(
+        "sat-learning-fixture",
+        (OptimizationVariable("x", "BOOL"), OptimizationVariable("y", "BOOL")),
+        (OptimizationConstraint("CLAUSE", literals=({"variable_id": "x", "positive": True}, {"variable_id": "y", "positive": True})),),
+        family="SAT",
+    )
+    learned = SolverLearningArtifact(
+        "NO_GOOD",
+        sat.fingerprint,
+        sat.solver_family,
+        {"literals": [{"variable_id": "x", "positive": False}, {"variable_id": "y", "positive": False}]},
+    )
+    validation = revalidate_finite_solver_learning(learned, sat)
+    assert validation.status == "PASS"
+    application, transformed = build_solver_learning_application(learned, validation, sat)
+    learned_clause = transformed.constraints[-1]
+    assert learned_clause.kind == "CLAUSE"
+    assert [(row.variable_id, row.positive) for row in learned_clause.literals] == [("x", True), ("y", True)]
+    assert application.application_class == "PRUNING_CONSTRAINTS"
+
+
+def test_certified_bound_application_preserves_validation_tolerance():
+    fixture = model()
+    learned = artifact("BOUND", {"bound_type": "LOWER", "value": 1.25, "tolerance": 0.25})
+    validation = revalidate_finite_solver_learning(learned, fixture)
+    assert validation.status == "PASS"
+    application, transformed = build_solver_learning_application(learned, validation, fixture)
+    constraint = transformed.constraints[-1]
+    assert constraint.coefficients == {"x": 1.0, "y": 1.0}
+    assert constraint.sense == ">="
+    assert constraint.rhs == 1.0
+    assert constraint.metadata["validated_tolerance"] == 0.25
+    assert application.truth_authority == "NONE"
+
+
+def test_failed_validation_cannot_be_turned_into_application():
+    fixture = model()
+    forged = artifact(
+        "NO_GOOD",
+        {"literals": [{"variable_id": "x", "positive": True}, {"variable_id": "y", "positive": False}]},
+    )
+    failed = revalidate_finite_solver_learning(forged, fixture)
+    assert failed.status == "FAIL"
+    with pytest.raises(ValueError, match="PASS local validation"):
+        build_solver_learning_application(forged, failed, fixture)
+
+
 def test_incumbent_and_warm_start_are_validated_as_performance_hints_only():
     fixture = model()
     incumbent = artifact("INCUMBENT", {"assignment": {"x": 1, "y": 0}, "objective": 1})
@@ -130,6 +248,42 @@ def test_incumbent_and_warm_start_are_validated_as_performance_hints_only():
     failed = revalidate_finite_solver_learning(invalid, fixture)
     assert failed.status == "FAIL"
     assert failed.application_authority == "NONE"
+
+
+def test_validated_assignment_hint_is_packaged_only_for_explicit_ortools_adapter():
+    fixture = model()
+    learned = artifact("INCUMBENT", {"assignment": {"x": 1, "y": 0}, "objective": 1})
+    validation = revalidate_finite_solver_learning(learned, fixture)
+    request = OptimizationRequest(
+        fixture,
+        "solver.cp_sat",
+        "0.1.0",
+        "learning-hint-obligation",
+        required_provider="ortools-cp-sat",
+    )
+    application, updated = apply_solver_learning_to_optimization_request(learned, validation, request)
+    assert application.application_class == "PERFORMANCE_HINT"
+    assert application.provider_id == "ortools-cp-sat"
+    assert updated.model.fingerprint == fixture.fingerprint
+    assert updated.metadata["solver_learning_truth_authority"] == "NONE"
+    hints = updated.metadata["solver_learning_hints"]
+    assert hints == [{
+        "application_id": application.application_id,
+        "provider_id": "ortools-cp-sat",
+        "hint_kind": "ASSIGNMENT",
+        "source_kind": "INCUMBENT",
+        "assignment": {"x": 1.0, "y": 0.0},
+    }]
+
+    unsupported = OptimizationRequest(
+        fixture,
+        "solver.cp_sat",
+        "0.1.0",
+        "unsupported-hint-obligation",
+        required_provider="",
+    )
+    with pytest.raises(ValueError, match="explicit ortools-cp-sat adapter"):
+        apply_solver_learning_to_optimization_request(learned, validation, unsupported)
 
 
 def test_model_fingerprint_mismatch_fails_before_any_learning_use():
@@ -171,6 +325,9 @@ def test_native_accelerator_requires_exact_backend_version_and_environment_and_s
     assert passed.status == "PASS"
     assert passed.application_authority == "PERFORMANCE_HINT_ONLY"
     assert passed.details["truth_authority"] == "NONE"
+
+    with pytest.raises(ValueError, match="no explicit public adapter application"):
+        build_solver_learning_application(native, passed, fixture, provider_id="ortools-cp-sat")
 
     mismatched = validate_native_accelerator_hint(
         native,
