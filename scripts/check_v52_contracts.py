@@ -95,6 +95,40 @@ def main() -> None:
         "settle_resource_reservation",
     ])
 
+    # v0.52 public surface is intentionally defined and testable before release
+    # promotion. The installed/default package remains on v0.51 until promotion.
+    require(root / "src/aasm/public_v52.py", [
+        '__version__ = "0.52.0"',
+        'PUBLIC_RELEASE_STABILITY = "PRE_RELEASE"',
+        '"contract_version": "0.28.0"',
+        "from .runtime_v52 import AASMEngine",
+        '"multi_objective"',
+        '"pareto_frontier"',
+        '"resource_governance"',
+        '"resource_aware_sii"',
+        '"resource_state_authority": "NEVER_GRANTS_AUTHORITY"',
+        '"observation_truth": "EVIDENCE_ONLY"',
+        '"candidate_frontier_scope": "EXACT_OVER_SUPPLIED_ELIGIBLE_CANDIDATE_SET_ONLY"',
+        '"authority_reward": "NEVER"',
+        'if PUBLIC_RELEASE_STABILITY != "PRE_RELEASE"',
+    ])
+    require(root / "src/aasm/cli_v52.py", [
+        "multi-objective-contract",
+        "pareto-frontier-contract",
+        "resource-routing-contract",
+        '"candidate_frontier_scope": "EXACT_OVER_SUPPLIED_ELIGIBLE_CANDIDATE_SET_ONLY"',
+        '"result_authority": "EVIDENCE_ONLY"',
+        '"resource_state_authority": "NEVER_GRANTS_AUTHORITY"',
+    ])
+    require(root / "tests/test_v52_public.py", [
+        "test_v52_pre_release_public_contract_is_additive_and_valid",
+        "test_v52_public_surface_preserves_v51_parent_contract_without_promoting_it",
+        "test_v52_public_surface_exposes_product_backward_resource_objective_vector",
+        "test_v52_cli_contract_commands_are_inspection_only_public_commands",
+        'assert public_v51.__version__ == "0.51.0"',
+        'assert public_v52.PUBLIC_RELEASE_STABILITY == "PRE_RELEASE"',
+    ])
+
     required_schemas = {
         "multi-objective-problem.schema.json",
         "lexicographic-result.schema.json",
