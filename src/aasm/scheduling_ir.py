@@ -191,8 +191,12 @@ class CumulativeResourceConstraint:
         object.__setattr__(self, "resource_id", _required(self.resource_id, "resource_id"))
         if isinstance(self.capacity, bool) or int(self.capacity) != self.capacity or int(self.capacity) <= 0:
             raise ValueError("cumulative capacity must be a positive integer")
-        demands = {str(task_id): int(amount) for task_id, amount in sorted(self.demands.items())}
-        if not demands or any(amount <= 0 for amount in demands.values()):
+        demands = {}
+        for task_id, amount in sorted(self.demands.items()):
+            if isinstance(amount, bool) or int(amount) != amount or int(amount) <= 0:
+                raise ValueError("cumulative demands must be positive integers")
+            demands[str(task_id)] = int(amount)
+        if not demands:
             raise ValueError("cumulative demands must be positive integers")
         object.__setattr__(self, "capacity", int(self.capacity))
         object.__setattr__(self, "demands", demands)
