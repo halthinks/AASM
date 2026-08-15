@@ -73,7 +73,7 @@ from .solver_learning import (
 
 
 __version__ = "0.53.0"
-PUBLIC_RELEASE_STABILITY = "PRE_RELEASE"
+PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"
 REMOTE_PROTOCOL_NAME = _v52.REMOTE_PROTOCOL_NAME
 REMOTE_PROTOCOL_VERSION = _v52.REMOTE_PROTOCOL_VERSION
 
@@ -268,6 +268,11 @@ def validate_public_api_contract():
         errors.append("solver learning apply capability mismatch")
     if PUBLIC_API_CONTRACT.get("distribution", {}).get("version") != __version__:
         errors.append("distribution version mismatch")
-    if PUBLIC_RELEASE_STABILITY != "PRE_RELEASE":
-        errors.append("v0.53 must remain PRE_RELEASE before promotion")
+    if PUBLIC_RELEASE_STABILITY != "ACTIVE_DEVELOPMENT":
+        errors.append("v0.53 active release stability mismatch")
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
+
+
+from . import demo_stack as _demo_stack
+_demo_stack.AASMEngine = AASMEngine
+_demo_stack._runtime_version = lambda: __version__
