@@ -3,7 +3,13 @@ from threading import Event, Thread
 import pytest
 
 from aasm.evidence import EvidenceRecord
-from aasm.effects import EffectExecutionError, EffectSpec, EffectStatus, RetryPolicy
+from aasm.effects import (
+    EffectExecutionError,
+    EffectSpec,
+    EffectStatus,
+    EffectUnknownOutcome,
+    RetryPolicy,
+)
 from aasm.model import ProblemSpec
 from aasm.persistence import SQLiteStore
 from aasm.resource_governance import CapacityWindowKind, ResourceCapacity, ResourceDemandEstimate
@@ -376,7 +382,7 @@ def test_sqlite_recovery_retains_ownership_marks_unknown_and_requires_scoped_rec
         assert len(unknown.reconciliation_history) == 1
 
         calls = []
-        with pytest.raises(ValueError, match="status UNKNOWN"):
+        with pytest.raises(EffectUnknownOutcome, match="explicit scoped reconciliation"):
             recovered.execute_effect(
                 record.spec.effect_id,
                 lambda spec, key: calls.append(key) or {},
@@ -394,11 +400,31 @@ def test_sqlite_recovery_retains_ownership_marks_unknown_and_requires_scoped_rec
         assert "lost execution ownership" in str(error_box["error"])
         assert recovery_store.load_effect(machine_id, record.spec.effect_id).status == EffectStatus.UNKNOWN.value
 
+        with pytest.raises(KeyError, match="Evidence is not local"):
+            recovered.reconcile_effect(
+                record.spec.effect_id,
+                succeeded=True,
+                result={"observed": True},
+                evidence=["external-observation"],
+                workspace_id=WORKSPACE,
+                scope_id=SCOPE,
+                actor_principal_id=ROOT,
+            )
+        assert recovery_store.load_effect(machine_id, record.spec.effect_id).status == EffectStatus.UNKNOWN.value
+
+        observation = recovered.add_evidence(
+            EvidenceRecord(
+                kind="observation",
+                statement="external system confirms the effect occurred",
+                source="fixture.external-observer",
+            ),
+            reason="external effect outcome observed",
+        )
         reconciled = recovered.reconcile_effect(
             record.spec.effect_id,
             succeeded=True,
             result={"observed": True},
-            evidence=["external-observation"],
+            evidence=[observation.evidence_id],
             workspace_id=WORKSPACE,
             scope_id=SCOPE,
             actor_principal_id=ROOT,
@@ -408,6 +434,7 @@ def test_sqlite_recovery_retains_ownership_marks_unknown_and_requires_scoped_rec
         assert reconciled.reconciliation["outcome"] == "CONFIRMED"
         assert reconciled.reconciliation["ownership_id"] == ownership_id
         assert reconciled.reconciliation["retry_blocked"] is False
+        assert observation.evidence_id in reconciled.reconciliation["evidence_ids"]
         assert len(reconciled.reconciliation_history) == 2
         assert [row["outcome"] for row in reconciled.reconciliation_history] == ["UNKNOWN", "CONFIRMED"]
         report = recovered.effect_governance_report(workspace_id=WORKSPACE, scope_id=SCOPE)
