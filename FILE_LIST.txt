@@ -16,6 +16,7 @@
 ./.github/workflows/solution-pools.yml
 ./.github/workflows/solver-learning.yml
 ./.github/workflows/v54.yml
+./.github/workflows/v55.yml
 ./.gitignore
 ./CHANGELOG.md
 ./CHANGELOG_0.18_AND_EARLIER.md
@@ -362,6 +363,7 @@
 ./scripts/check_v53_contracts.py
 ./scripts/check_v53_solver_learning_contracts.py
 ./scripts/check_v54_contracts.py
+./scripts/check_v55_contracts.py
 ./scripts/release_artifacts.py
 ./scripts/release_artifacts_cli.py
 ./scripts/release_artifacts_core.py
