@@ -137,6 +137,46 @@ def test_stale_result_is_first_class_fail_closed_status():
     assert outcome.legacy_projection.status == "UNKNOWN"
 
 
+@pytest.mark.parametrize(
+    ("termination_reason", "normalized_status", "legacy_status"),
+    (
+        ("NODE_LIMIT", "NODE_LIMIT_NO_SOLUTION", "UNKNOWN"),
+        ("MEMORY_LIMIT", "MEMORY_LIMIT_NO_SOLUTION", "UNKNOWN"),
+        ("USER_INTERRUPT", "USER_INTERRUPT_NO_SOLUTION", "UNKNOWN"),
+        ("PROVIDER_UNAVAILABLE", "PROVIDER_UNAVAILABLE", "ERROR"),
+        ("UNSUPPORTED_FEATURE", "UNSUPPORTED_FEATURE", "ERROR"),
+    ),
+)
+def test_all_roadmap_mandated_terminal_classes_are_first_class(termination_reason: str, normalized_status: str, legacy_status: str):
+    request = _request()
+    outcome = normalize_optimization_result_v2(
+        _result(request, "UNKNOWN" if termination_reason in {"NODE_LIMIT", "MEMORY_LIMIT", "USER_INTERRUPT"} else "ERROR"),
+        request=request,
+        termination=ProviderTermination(termination_reason, raw_status=termination_reason),
+        normalized_status=normalized_status,
+    )
+    assert outcome.normalized_status == normalized_status
+    assert outcome.termination.reason == termination_reason
+    assert outcome.incumbent_status == "ABSENT"
+    assert outcome.legacy_projection.status == legacy_status
+    assert outcome.legacy_projection.lossy is True
+
+
+def test_node_and_memory_limit_with_incumbent_require_independent_validation():
+    request = _request()
+    for reason, status in (("NODE_LIMIT", "NODE_LIMIT_WITH_INCUMBENT"), ("MEMORY_LIMIT", "MEMORY_LIMIT_WITH_INCUMBENT")):
+        source = _result(request, "FEASIBLE", assignment={"x": 2.0}, objective_value=2.0, best_bound=1.0)
+        outcome = normalize_optimization_result_v2(
+            source,
+            request=request,
+            termination=ProviderTermination(reason, raw_status=reason),
+            normalized_status=status,
+        )
+        assert outcome.normalized_status == status
+        assert outcome.incumbent_validation == "VALIDATED"
+        assert outcome.best_bound == 1.0
+
+
 def test_checked_certificate_is_stronger_than_provider_optimality_claim():
     request = _request()
     evidence = SolverEvidenceGrade(
