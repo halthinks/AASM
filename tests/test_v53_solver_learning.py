@@ -179,7 +179,7 @@ def test_certified_boolean_no_good_lowers_to_existing_cp_sat_model_ir():
     assert transformed is not None
     assert transformed.fingerprint == application.transformed_model_fingerprint
     assert transformed.metadata["solver_learning_original_model_fingerprint"] == fixture.fingerprint
-    constraint = transformed.constraints[-1]
+    constraint = next(row for row in transformed.constraints if row.metadata.get("solver_learning_id") == learned.learning_id)
     assert constraint.kind == "LINEAR"
     assert constraint.coefficients == {"x": 1.0, "y": 1.0}
     assert constraint.sense == ">="
@@ -204,7 +204,7 @@ def test_certified_sat_no_good_lowers_to_complement_clause():
     validation = revalidate_finite_solver_learning(learned, sat)
     assert validation.status == "PASS"
     application, transformed = build_solver_learning_application(learned, validation, sat)
-    learned_clause = transformed.constraints[-1]
+    learned_clause = next(row for row in transformed.constraints if row.metadata.get("solver_learning_id") == learned.learning_id)
     assert learned_clause.kind == "CLAUSE"
     assert [(row.variable_id, row.positive) for row in learned_clause.literals] == [("x", True), ("y", True)]
     assert application.application_class == "PRUNING_CONSTRAINTS"
@@ -216,7 +216,7 @@ def test_certified_bound_application_preserves_validation_tolerance():
     validation = revalidate_finite_solver_learning(learned, fixture)
     assert validation.status == "PASS"
     application, transformed = build_solver_learning_application(learned, validation, fixture)
-    constraint = transformed.constraints[-1]
+    constraint = next(row for row in transformed.constraints if row.metadata.get("solver_learning_id") == learned.learning_id)
     assert constraint.coefficients == {"x": 1.0, "y": 1.0}
     assert constraint.sense == ">="
     assert constraint.rhs == 1.0
