@@ -20,9 +20,10 @@ def test_pre_release_v53_import_does_not_rebind_active_v52_demo_stack():
     assert demo_stack._runtime_version() == "0.52.0"
 
 
-def test_v53_public_contract_preserves_authority_and_solver_learning_safety_boundaries():
+def test_v53_public_contract_preserves_authority_store_and_solver_learning_safety_boundaries():
     contract = public_v53.public_api_contract()
     authority = contract["scoped_identity_authority"]
+    store = contract["scoped_store"]
     learning = contract["solver_learning"]
     application = learning["application_contract"]
     runtime = learning["runtime"]
@@ -31,6 +32,11 @@ def test_v53_public_contract_preserves_authority_and_solver_learning_safety_boun
     assert authority["cross_run_authority_transfer"] == "NEVER"
     assert authority["resource_state_grants_authority"] is False
     assert authority["runtime"]["durability"] == "EXISTING_AASM_EVIDENCE_EVENT_REPLAY"
+    assert store["contract_id"] == "aasm.store.scoped.v1"
+    assert store["raw_snapshot_access"] == "ROOT_SCOPE_SINGLE_WORKSPACE_ONLY"
+    assert store["multi_workspace_raw_access"] == "FAIL_CLOSED_USE_SCOPED_PROJECTIONS"
+    assert store["legacy_unscoped_effect_access"] == "FAIL_CLOSED"
+    assert store["direct_store_write"] == "FORBIDDEN_USE_GOVERNED_RUNTIME_TRANSITIONS"
     assert learning["contract_id"] == "aasm.solver.learning.v1"
     assert learning["cross_run_transport"] == "EXISTING_AASM_V48_REUSE_RESULT_ENVELOPE"
     assert learning["cross_run_authority_transfer"] == "NEVER"
@@ -72,6 +78,13 @@ def test_v53_engine_and_imports_are_present_without_promoting_default_package():
         "Principal",
         "Workspace",
         "ScopedAuthorityGrant",
+        "SCOPED_STORE_CONTRACT_ID",
+        "SCOPED_STORE_CONTRACT_VERSION",
+        "SCOPED_STORE_STABILITY",
+        "STORE_CAPABILITIES",
+        "ScopedStoreAccess",
+        "ScopedStoreView",
+        "scoped_store_contract",
         "SolverLearningArtifact",
         "SolverLearningValidation",
         "SolverLearningApplication",
@@ -95,6 +108,7 @@ def test_v53_cli_exposes_contract_inspection_commands_without_switching_default_
     for command in (
         "scoped-authority-contract",
         "scoped-authority-runtime-contract",
+        "scoped-store-contract",
         "solver-learning-contract",
         "solver-learning-runtime-contract",
     ):
