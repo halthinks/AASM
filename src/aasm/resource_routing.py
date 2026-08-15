@@ -18,6 +18,7 @@ class ResourceAwareCandidate:
     expected_progress: float
     wall_time_seconds: float = 0.0
     monetary_cost: float = 0.0
+    provider_quota_burn: float = 0.0
     scarce_expert_usage: float = 0.0
     demands: tuple[ResourceDemandEstimate, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -28,7 +29,7 @@ class ResourceAwareCandidate:
         for name in ("correctness", "evidence_quality", "expected_progress"):
             if not 0.0 <= float(getattr(self, name)) <= 1.0:
                 raise ValueError(f"{name} must be between 0 and 1")
-        for name in ("wall_time_seconds", "monetary_cost", "scarce_expert_usage"):
+        for name in ("wall_time_seconds", "monetary_cost", "provider_quota_burn", "scarce_expert_usage"):
             if float(getattr(self, name)) < 0:
                 raise ValueError(f"{name} must be non-negative")
 
@@ -39,6 +40,7 @@ class ResourceRoutingPolicy:
     min_evidence_quality: float = 0.0
     min_expected_progress: float = 0.0
     preserve_protected_reserve: bool = True
+    prefer_lower_provider_quota_burn: bool = True
     prefer_lower_scarce_expert_usage: bool = True
     prefer_lower_monetary_cost: bool = True
     prefer_lower_wall_time: bool = True
@@ -168,6 +170,7 @@ def select_resource_aware_candidate(candidates: Iterable[ResourceAwareCandidate]
             -candidate.correctness,
             -candidate.evidence_quality,
             -candidate.expected_progress,
+            candidate.provider_quota_burn if policy.prefer_lower_provider_quota_burn else 0.0,
             candidate.scarce_expert_usage if policy.prefer_lower_scarce_expert_usage else 0.0,
             candidate.monetary_cost if policy.prefer_lower_monetary_cost else 0.0,
             candidate.wall_time_seconds if policy.prefer_lower_wall_time else 0.0,
