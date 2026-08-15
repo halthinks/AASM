@@ -2,151 +2,162 @@ from __future__ import annotations
 
 import pytest
 
-from aasm.optimization import OptimizationResult, OptimizationSolverIdentity
+from aasm.optimization import (
+    OptimizationConstraint,
+    OptimizationModel,
+    OptimizationObjective,
+    OptimizationRequest,
+    OptimizationResult,
+    OptimizationSolverIdentity,
+    OptimizationVariable,
+)
 from aasm.solver_outcome_v2 import (
+    LegacyStatusProjection,
     ProviderTermination,
     SolverEvidenceGrade,
     SolverOutcomeV2,
     normalize_optimization_result_v2,
+    project_v2_to_legacy_status,
     solver_outcome_v2_contract,
 )
 
 
-def _result(status: str, *, assignment=None, objective_value=None, best_bound=None, relative_gap=None) -> OptimizationResult:
+def _request(*, objective=True) -> OptimizationRequest:
+    model = OptimizationModel(
+        "status-v2-fixture",
+        (OptimizationVariable("x", "INTEGER", 0, 10),),
+        (OptimizationConstraint("LINEAR", coefficients={"x": 1}, sense=">=", rhs=1),),
+        OptimizationObjective("MINIMIZE", {"x": 1}) if objective else None,
+        family="CP_SAT",
+    )
+    return OptimizationRequest(model, "solver.cp_sat", "0.1.0", "status-v2-obligation", required_provider="ortools-cp-sat")
+
+
+def _result(request: OptimizationRequest, status: str, *, assignment=None, objective_value=None, best_bound=None, relative_gap=None, raw_status="", raw_code="") -> OptimizationResult:
     return OptimizationResult(
-        "request-1",
-        "request-fingerprint-1",
-        "model-fingerprint-1",
+        request.request_id,
+        request.fingerprint,
+        request.model.fingerprint,
         status,
-        OptimizationSolverIdentity("provider-1", "solver.impl", "1.2.3", ("solver", "--flag")),
+        OptimizationSolverIdentity("ortools-cp-sat", "ortools.cp-sat", "9.15.6755"),
         assignment=assignment or {},
         objective_value=objective_value,
         best_bound=best_bound,
         relative_gap=relative_gap,
         wall_time_ms=1234,
-        statistics={"nodes": 99},
+        statistics={"raw_status": raw_status or status, "raw_status_code": raw_code},
         diagnostics=("provider diagnostic",),
-        metadata={"provider_payload_hash": "abc"},
-        result_id=f"result-{status.lower()}",
+        result_id=f"result-{status.lower()}-{bool(assignment)}",
     )
 
 
-def test_status_v2_contract_separates_axes_and_preserves_legacy_result():
+def test_contract_makes_v2_authoritative_and_v1_projection_one_way():
     contract = solver_outcome_v2_contract()
-    assert contract["legacy_result"] == "PRESERVED_AND_FINGERPRINT_BOUND"
-    assert contract["timeout_with_incumbent"] == "FEASIBLE_INCUMBENT_PRESERVED_SEPARATELY_FROM_TIME_LIMIT"
-    assert contract["provider_optimal_status"] == "CLAIMED_OPTIMAL_NOT_PROVEN_OPTIMAL_WITHOUT_CHECKED_CERTIFICATE"
-    assert contract["raw_provider_status"] == "PRESERVED_VERBATIM_IN_TERMINATION_RECORD"
-    assert contract["truth_authority"] == "NONE"
+    assert contract["authoritative_detailed_status"] == "normalized_status"
+    assert contract["legacy_projection"] == "V2_TO_V1_ONE_WAY_EXPLICITLY_LOSSY_WHERE_REQUIRED"
+    assert contract["incumbent_admission"] == "NONEMPTY_ASSIGNMENT_MUST_PASS_AASM_INDEPENDENT_MODEL_VALIDATION"
+    assert contract["model_invalid"] == "DISTINCT_FROM_INFEASIBLE"
+    assert contract["numerical_failure"] == "DISTINCT_FROM_UNKNOWN"
 
 
-def test_timeout_with_incumbent_remains_feasible_and_preserves_bound_gap():
-    source = _result("TIMEOUT", assignment={"x": 1.0}, objective_value=10.0, best_bound=8.0, relative_gap=0.2)
-    outcome = normalize_optimization_result_v2(source)
-    assert outcome.termination.reason == "TIME_LIMIT"
-    assert outcome.solution_status == "FEASIBLE"
-    assert outcome.incumbent_status == "PRESENT"
-    assert outcome.optimality_claim == "NOT_CLAIMED"
-    assert outcome.objective_value == 10.0
-    assert outcome.best_bound == 8.0
-    assert outcome.relative_gap == 0.2
-    assert outcome.source_result_fingerprint == source.fingerprint
-    assert outcome.evidence.grade == "PROVIDER_ASSERTED"
-    assert outcome.has_proven_optimality is False
+def test_time_limit_with_validated_incumbent_preserves_bound_gap_and_projects_lossily():
+    request = _request()
+    source = _result(request, "TIMEOUT", assignment={"x": 2.0}, objective_value=2.0, best_bound=1.0, relative_gap=0.5)
+    outcome = normalize_optimization_result_v2(source, request=request)
+    assert outcome.normalized_status == "TIME_LIMIT_WITH_INCUMBENT"
+    assert outcome.incumbent_validation == "VALIDATED"
+    assert outcome.objective_value == 2.0 and outcome.best_bound == 1.0 and outcome.relative_gap == 0.5
+    assert outcome.legacy_projection.status == "TIMEOUT" and outcome.legacy_projection.lossy is True
 
 
-def test_timeout_without_incumbent_is_unknown_not_infeasible():
-    outcome = normalize_optimization_result_v2(_result("TIMEOUT"))
-    assert outcome.termination.reason == "TIME_LIMIT"
-    assert outcome.solution_status == "UNKNOWN"
+def test_time_limit_without_incumbent_is_explicit_no_solution():
+    request = _request()
+    outcome = normalize_optimization_result_v2(_result(request, "TIMEOUT"), request=request)
+    assert outcome.normalized_status == "TIME_LIMIT_NO_SOLUTION"
     assert outcome.incumbent_status == "ABSENT"
-    assert outcome.optimality_claim == "UNKNOWN"
+    assert outcome.incumbent_validation == "NOT_PRESENT"
 
 
-def test_provider_optimal_is_claim_not_proof_by_default():
-    outcome = normalize_optimization_result_v2(_result("OPTIMAL", assignment={"x": 1.0}, objective_value=4.0))
-    assert outcome.solution_status == "FEASIBLE"
+def test_optimal_requires_validated_incumbent_and_provider_completed_termination():
+    request = _request()
+    source = _result(request, "OPTIMAL", assignment={"x": 1.0}, objective_value=1.0)
+    outcome = normalize_optimization_result_v2(source, request=request)
+    assert outcome.normalized_status == "OPTIMAL"
     assert outcome.optimality_claim == "CLAIMED_OPTIMAL"
-    assert outcome.evidence.proof_status == "NO_CERTIFICATE"
-    assert outcome.evidence.grade == "PROVIDER_ASSERTED"
     assert outcome.has_proven_optimality is False
+    with pytest.raises(ValueError, match="provider optimal completion"):
+        normalize_optimization_result_v2(source, request=request, termination=ProviderTermination("TIME_LIMIT"), normalized_status="OPTIMAL")
 
 
-def test_checked_certificate_can_promote_optimality_claim_to_proven_without_changing_provider_status():
-    evidence = SolverEvidenceGrade(
-        "CHECKED_CERTIFICATE",
-        "CHECKED_CERTIFICATE",
-        certificate_ids=("cert-1",),
-        checker_ids=("checker-1",),
-        validation_evidence_ids=("evidence-check-1",),
+def test_invalid_incumbent_is_rejected_before_with_incumbent_status_can_exist():
+    request = _request()
+    source = _result(request, "FEASIBLE", assignment={"x": 0.0}, objective_value=0.0)
+    with pytest.raises(ValueError, match="violates"):
+        normalize_optimization_result_v2(source, request=request)
+
+
+def test_inconsistent_objective_is_rejected_by_independent_checker():
+    request = _request()
+    source = _result(request, "FEASIBLE", assignment={"x": 2.0}, objective_value=9.0)
+    with pytest.raises(ValueError, match="objective"):
+        normalize_optimization_result_v2(source, request=request)
+
+
+def test_incumbent_without_exact_request_fails_closed():
+    request = _request()
+    source = _result(request, "FEASIBLE", assignment={"x": 2.0}, objective_value=2.0)
+    with pytest.raises(ValueError, match="exact OptimizationRequest"):
+        normalize_optimization_result_v2(source)
+
+
+def test_model_invalid_and_numerical_failure_never_collapse_to_infeasible_or_unknown():
+    request = _request()
+    invalid = normalize_optimization_result_v2(
+        _result(request, "ERROR"), request=request,
+        termination=ProviderTermination("MODEL_INVALID", raw_status="MODEL_INVALID", raw_status_code="1"),
+        normalized_status="MODEL_INVALID",
     )
-    source = _result("OPTIMAL", assignment={"x": 1.0}, objective_value=4.0)
-    outcome = normalize_optimization_result_v2(source, evidence=evidence)
-    assert outcome.legacy_status == "OPTIMAL"
+    numerical = normalize_optimization_result_v2(
+        _result(request, "ERROR"), request=request,
+        termination=ProviderTermination("NUMERICAL_FAILURE", raw_status="NUMERICAL_FAILURE"),
+        normalized_status="NUMERICAL_FAILURE",
+    )
+    assert invalid.normalized_status == "MODEL_INVALID" and invalid.legacy_projection.status == "ERROR"
+    assert numerical.normalized_status == "NUMERICAL_FAILURE" and numerical.legacy_projection.status == "ERROR"
+
+
+def test_stale_result_is_first_class_fail_closed_status():
+    request = _request()
+    outcome = normalize_optimization_result_v2(
+        _result(request, "UNKNOWN"), request=request,
+        termination=ProviderTermination("STALE_RESULT", raw_status="STALE"),
+        normalized_status="STALE_RESULT",
+    )
+    assert outcome.normalized_status == "STALE_RESULT"
+    assert outcome.legacy_projection.status == "UNKNOWN"
+
+
+def test_checked_certificate_is_stronger_than_provider_optimality_claim():
+    request = _request()
+    evidence = SolverEvidenceGrade(
+        "CHECKED_CERTIFICATE", "CHECKED_CERTIFICATE",
+        certificate_ids=("cert-1",), checker_ids=("checker-1",),
+    )
+    source = _result(request, "OPTIMAL", assignment={"x": 1.0}, objective_value=1.0)
+    outcome = normalize_optimization_result_v2(source, request=request, evidence=evidence)
     assert outcome.has_proven_optimality is True
-    assert outcome.evidence.certificate_ids == ("cert-1",)
     assert SolverOutcomeV2.from_dict(outcome.to_dict()).fingerprint == outcome.fingerprint
 
 
-def test_infeasible_provider_status_is_not_decisive_negative_without_checked_certificate():
-    outcome = normalize_optimization_result_v2(_result("INFEASIBLE"))
-    assert outcome.solution_status == "INFEASIBLE"
-    assert outcome.incumbent_status == "ABSENT"
-    assert outcome.has_decisive_negative_proof is False
-
-    checked = SolverEvidenceGrade(
-        "CHECKED_CERTIFICATE",
-        "CHECKED_CERTIFICATE",
-        certificate_ids=("infeasible-cert",),
-        checker_ids=("independent-checker",),
-    )
-    proven = normalize_optimization_result_v2(_result("INFEASIBLE"), evidence=checked)
-    assert proven.has_decisive_negative_proof is True
+def test_v2_to_v1_projection_examples_are_explicitly_lossy():
+    assert project_v2_to_legacy_status("FEASIBLE_NOT_PROVEN_OPTIMAL") == LegacyStatusProjection("FEASIBLE", True, "v1 cannot preserve explicit not-proven-optimal semantics")
+    assert project_v2_to_legacy_status("TIME_LIMIT_WITH_INCUMBENT").status == "TIMEOUT"
+    assert project_v2_to_legacy_status("NUMERICAL_FAILURE").status == "ERROR"
+    assert project_v2_to_legacy_status("UNBOUNDED").status == "UNKNOWN"
 
 
-def test_raw_provider_node_limit_is_preserved_independently_from_incumbent():
-    termination = ProviderTermination(
-        "NODE_LIMIT",
-        raw_status="kHighsModelStatusSolutionLimit",
-        raw_status_code="17",
-        raw_message="node cap reached",
-        limit_value=1000,
-        limit_unit="nodes",
-        metadata={"provider": "highs"},
-    )
-    outcome = normalize_optimization_result_v2(
-        _result("FEASIBLE", assignment={"x": 1.0}),
-        termination=termination,
-    )
-    assert outcome.termination.reason == "NODE_LIMIT"
-    assert outcome.termination.raw_status == "kHighsModelStatusSolutionLimit"
-    assert outcome.termination.raw_status_code == "17"
-    assert outcome.termination.limit_value == 1000.0
-    assert outcome.solution_status == "FEASIBLE"
-    assert outcome.incumbent_status == "PRESENT"
-
-
-def test_independent_validation_is_not_misreported_as_certificate_proof():
-    evidence = SolverEvidenceGrade(
-        "INDEPENDENTLY_VALIDATED",
-        "NO_CERTIFICATE",
-        validation_evidence_ids=("validation-evidence",),
-    )
-    outcome = normalize_optimization_result_v2(_result("FEASIBLE", assignment={"x": 1.0}), evidence=evidence)
-    assert outcome.evidence.grade == "INDEPENDENTLY_VALIDATED"
-    assert outcome.evidence.proof_status == "NO_CERTIFICATE"
-    assert outcome.has_proven_optimality is False
-
-
-def test_checked_evidence_grade_requires_certificate_and_checker():
-    with pytest.raises(ValueError, match="certificate"):
-        SolverEvidenceGrade("CHECKED_CERTIFICATE", "CHECKED_CERTIFICATE")
-    with pytest.raises(ValueError, match="validation Evidence"):
-        SolverEvidenceGrade("INDEPENDENTLY_VALIDATED", "NO_CERTIFICATE")
-
-
-def test_legacy_feasible_or_optimal_without_assignment_fails_closed():
-    with pytest.raises(ValueError, match="requires assignment"):
-        normalize_optimization_result_v2(_result("OPTIMAL"))
-    with pytest.raises(ValueError, match="requires assignment"):
-        normalize_optimization_result_v2(_result("FEASIBLE"))
+def test_no_solution_status_rejects_assignment_even_if_caller_tries_to_force_it():
+    request = _request()
+    source = _result(request, "UNKNOWN", assignment={"x": 2.0}, objective_value=2.0)
+    with pytest.raises(ValueError, match="forbids an incumbent"):
+        normalize_optimization_result_v2(source, request=request, normalized_status="TIME_LIMIT_NO_SOLUTION")
