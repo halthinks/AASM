@@ -188,7 +188,8 @@ class ProblemRevision:
 class ProblemDelta:
     base_revision_id: str
     base_revision_fingerprint: str
-    target_revision_id: str
+    target_problem_fingerprint: str
+    target_semantic_projection_fingerprint: str
     added_external_references: tuple[ExternalReference | Mapping[str, Any], ...] = ()
     removed_external_references: tuple[ExternalReference | Mapping[str, Any], ...] = ()
     modified_external_references: tuple[ExternalReference | Mapping[str, Any], ...] = ()
@@ -212,13 +213,11 @@ class ProblemDelta:
     contract_version: str = PROBLEM_DELTA_CONTRACT_VERSION
 
     def __post_init__(self) -> None:
-        for name in ("base_revision_id", "base_revision_fingerprint", "target_revision_id"):
+        for name in ("base_revision_id", "base_revision_fingerprint", "target_problem_fingerprint", "target_semantic_projection_fingerprint"):
             value = str(getattr(self, name)).strip()
             if not value:
                 raise ValueError(f"problem delta {name} is required")
             object.__setattr__(self, name, value)
-        if self.base_revision_id == self.target_revision_id:
-            raise ValueError("problem delta must change the revision")
         if self.contract_id != PROBLEM_DELTA_CONTRACT_ID or self.contract_version != PROBLEM_DELTA_CONTRACT_VERSION:
             raise ValueError("unsupported problem delta contract")
         if self.incremental_eligibility not in INCREMENTAL_ELIGIBILITY:
@@ -266,7 +265,8 @@ class ProblemDelta:
             "contract_version": self.contract_version,
             "base_revision_id": self.base_revision_id,
             "base_revision_fingerprint": self.base_revision_fingerprint,
-            "target_revision_id": self.target_revision_id,
+            "target_problem_fingerprint": self.target_problem_fingerprint,
+            "target_semantic_projection_fingerprint": self.target_semantic_projection_fingerprint,
             "added_external_references": [row.to_dict() for row in self.added_external_references],
             "removed_external_references": [row.to_dict() for row in self.removed_external_references],
             "modified_external_references": [row.to_dict() for row in self.modified_external_references],
@@ -331,8 +331,10 @@ def validate_revision_transition(
         errors.append("BASE_REVISION_ID_MISMATCH")
     if change.base_revision_fingerprint != source.fingerprint:
         errors.append("BASE_REVISION_FINGERPRINT_MISMATCH")
-    if change.target_revision_id != result.revision_id:
-        errors.append("TARGET_REVISION_ID_MISMATCH")
+    if change.target_problem_fingerprint != result.problem_fingerprint:
+        errors.append("TARGET_PROBLEM_FINGERPRINT_MISMATCH")
+    if change.target_semantic_projection_fingerprint != result.semantic_projection_fingerprint:
+        errors.append("TARGET_SEMANTIC_PROJECTION_FINGERPRINT_MISMATCH")
     if source.problem_id != result.problem_id:
         errors.append("PROBLEM_ID_CHANGED")
     if source.revision_id not in result.parent_revision_ids:
@@ -358,7 +360,7 @@ def semantic_evolution_contract() -> dict[str, Any]:
         "problem_delta_contract_version": PROBLEM_DELTA_CONTRACT_VERSION,
         "stability": SEMANTIC_EVOLUTION_STABILITY,
         "revision_identity": "IMMUTABLE_FINGERPRINT_BOUND",
-        "delta_identity": "BASE_AND_TARGET_REVISION_BOUND",
+        "delta_identity": "BASE_REVISION_AND_TARGET_SEMANTIC_STATE_BOUND",
         "external_lineage": "TYPED_REFERENCE_NOT_FREEFORM_NAME_PARSING",
         "authority": "NONE_GRANTED_BY_REVISION_OR_DELTA",
         "truth_authority": "EXISTING_AASM_ADMISSION_PATH_ONLY",
