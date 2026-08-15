@@ -336,6 +336,7 @@
 ./schemas/worker.schema.json
 ./scripts/check_formal_models.py
 ./scripts/check_release_contracts.py
+./scripts/check_v52_contracts.py
 ./scripts/release_artifacts.py
 ./scripts/release_artifacts_cli.py
 ./scripts/release_artifacts_core.py
