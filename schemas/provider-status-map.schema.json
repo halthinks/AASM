@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aasm.dev/schemas/provider-status-map.schema.json",
-  "title": "AASM Provider Status Map v1",
+  "title": "AASM Provider Status Map",
   "type": "object",
   "required": ["map_id", "contract_id", "contract_version", "provider_id", "provider_version", "adapter_id", "adapter_version", "rules", "metadata", "fingerprint"],
   "properties": {
     "map_id": {"type": "string", "minLength": 1},
     "contract_id": {"const": "aasm.solver.provider-status-map.v1"},
-    "contract_version": {"const": "0.1.0"},
+    "contract_version": {"const": "0.2.0"},
     "provider_id": {"type": "string", "minLength": 1},
     "provider_version": {"type": "string", "minLength": 1},
     "adapter_id": {"type": "string", "minLength": 1},
@@ -17,13 +17,19 @@
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["rule_id", "reason", "raw_status", "raw_status_code", "limit_unit", "metadata", "fingerprint"],
+        "required": ["rule_id", "reason", "normalized_status", "raw_status", "raw_status_code", "incumbent_eligibility", "bound_eligibility", "certificate_eligibility", "provider_version_range", "limit_unit", "notes", "metadata", "fingerprint"],
         "properties": {
           "rule_id": {"type": "string", "minLength": 1},
-          "reason": {"enum": ["COMPLETED", "TIME_LIMIT", "NODE_LIMIT", "ITERATION_LIMIT", "SOLUTION_LIMIT", "MEMORY_LIMIT", "USER_INTERRUPT", "NUMERICAL_FAILURE", "MODEL_INVALID", "PROVIDER_UNAVAILABLE", "UNSUPPORTED_FEATURE", "INTERNAL_ERROR", "UNKNOWN"]},
+          "reason": {"type": "string", "minLength": 1},
+          "normalized_status": {"type": "string", "minLength": 1},
           "raw_status": {"type": "string"},
           "raw_status_code": {"type": "string"},
+          "incumbent_eligibility": {"enum": ["NEVER", "VALIDATED_IF_PRESENT", "REQUIRED"]},
+          "bound_eligibility": {"enum": ["NEVER", "IF_PROVIDER_SUPPLIED", "EXPECTED_IF_OBJECTIVE"]},
+          "certificate_eligibility": {"enum": ["NONE", "OPTIONAL", "PROVIDER_SPECIFIC"]},
+          "provider_version_range": {"type": "string"},
           "limit_unit": {"type": "string"},
+          "notes": {"type": "string"},
           "metadata": {"type": "object"},
           "fingerprint": {"type": "string", "minLength": 16}
         },
