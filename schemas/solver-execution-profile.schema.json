@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/solver-execution-profile.schema.json",
+  "title": "AASM Solver Execution Profile v1",
+  "type": "object",
+  "required": ["profile_id", "contract_id", "contract_version", "name", "determinism_policy", "requested_options", "required_effective_options", "provider_id", "provider_version", "adapter_id", "adapter_version", "required_environment_fingerprint", "numeric_policy_id", "numeric_policy_fingerprint", "metadata", "fingerprint"],
+  "properties": {
+    "profile_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.solver.execution-profile.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "name": {"type": "string", "minLength": 1},
+    "determinism_policy": {"enum": ["BEST_EFFORT", "REPRODUCIBLE_REQUESTED", "STRICT_EFFECTIVE_OPTIONS"]},
+    "requested_options": {"type": "object"},
+    "required_effective_options": {"type": "object"},
+    "provider_id": {"type": "string"},
+    "provider_version": {"type": "string"},
+    "adapter_id": {"type": "string"},
+    "adapter_version": {"type": "string"},
+    "required_environment_fingerprint": {"type": "string"},
+    "numeric_policy_id": {"type": "string"},
+    "numeric_policy_fingerprint": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
