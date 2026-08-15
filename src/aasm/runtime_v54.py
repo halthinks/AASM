@@ -17,6 +17,7 @@ from .effects import (
     EffectOwnershipRequest,
     EffectReconciliation,
     EffectStatus,
+    EffectUnknownOutcome,
     bind_effect_reconciliation,
     effect_governance_contract,
 )
@@ -51,6 +52,8 @@ def effect_governance_runtime_contract() -> dict[str, Any]:
         "resource_reservation": "DECLARED_RESERVATIONS_MUST_REMAIN_ACTIVE_AT_AUTHORIZATION_AND_DISPATCH",
         "external_boundary": "DURABLE_OWNERSHIP_EVIDENCE_REQUIRED_BEFORE_EXECUTOR_CALL",
         "unknown_outcome": "RETRY_BLOCKED_UNTIL_EXPLICIT_RECONCILIATION",
+        "reconciliation_evidence": "LOCAL_EVIDENCE_IDS_ONLY_VALIDATED_BEFORE_MUTATION",
+        "crash_idempotency": "INTENT_AND_DISPATCH_EVIDENCE_REPAIRABLE",
         "resource_state_grants_authority": False,
         "truth_authority": "NONE_ADDED_BY_EFFECT_GOVERNANCE",
     }
@@ -110,6 +113,20 @@ class AASMEngine(V53Engine):
         else:
             self.add_evidence(record, reason=reason)
         return evidence_id
+
+    def _local_evidence_ids(self) -> set[str]:
+        return {
+            str(row.get("evidence_id"))
+            for row in self.snapshot.evidence.get("records", [])
+            if row.get("evidence_id")
+        }
+
+    def _require_local_evidence_ids(self, evidence_ids: Iterable[str]) -> tuple[str, ...]:
+        ids = tuple(sorted(set(map(str, evidence_ids))))
+        missing = sorted(set(ids) - self._local_evidence_ids())
+        if missing:
+            raise KeyError(f"effect reconciliation Evidence is not local: {missing}")
+        return ids
 
     def _effect_governance_rows(
         self,
@@ -222,7 +239,7 @@ class AASMEngine(V53Engine):
             scope_id=scope_id,
             proposer_principal_id=proposer_principal_id,
         )
-        intent = EffectIntent.from_spec(
+        requested_intent = EffectIntent.from_spec(
             record.spec,
             workspace_id=workspace_id,
             scope_id=scope_id,
@@ -231,14 +248,15 @@ class AASMEngine(V53Engine):
             metadata=intent_metadata,
         )
         if record.intent is not None:
-            existing = EffectIntent.from_dict(record.intent)
-            if existing.fingerprint != intent.fingerprint:
+            intent = EffectIntent.from_dict(record.intent)
+            if intent.fingerprint != requested_intent.fingerprint:
                 raise ValueError("idempotent effect reuse conflicts with the existing v0.54 EffectIntent")
-            return record
-        if record.status != EffectStatus.PROPOSED.value:
-            raise PermissionError("existing pre-v0.54 effect must be explicitly migrated before attaching an EffectIntent")
-        record.intent = intent.to_dict()
-        self.store.save_effect(record)
+        else:
+            if record.status != EffectStatus.PROPOSED.value:
+                raise PermissionError("existing pre-v0.54 effect must be explicitly migrated before attaching an EffectIntent")
+            intent = requested_intent
+            record.intent = intent.to_dict()
+            self.store.save_effect(record)
         proposal_context = self._effect_context(record.spec.effect_id)
         lineage = [proposal_context["evidence_id"], *self._resource_reservation_evidence_ids(reservation_ids)]
         evidence_id = self._record_effect_governance_document(
@@ -296,8 +314,6 @@ class AASMEngine(V53Engine):
         worker = next((row for row in self.list_workers() if row.get("worker_id") == owner_worker_id), None)
         if worker is None or worker.get("status") != "ACTIVE":
             raise ValueError(f"effect dispatch worker is not ACTIVE: {owner_worker_id}")
-        if (lease.get("metadata") or {}).get("effect_id") not in {None, "", lease.get("metadata", {}).get("effect_id")}:
-            raise ValueError("invalid effect TaskLease metadata")
         return lease
 
     def _bind_dispatch_request(
@@ -322,7 +338,7 @@ class AASMEngine(V53Engine):
         lease_effect_id = str((lease.get("metadata") or {}).get("effect_id") or "")
         if lease_effect_id and lease_effect_id != effect_id:
             raise PermissionError("TaskLease metadata binds it to a different effect")
-        dispatch = EffectDispatchRequest.from_intent(
+        requested_dispatch = EffectDispatchRequest.from_intent(
             intent,
             owner_worker_id=owner_worker_id,
             task_lease_id=task_lease_id,
@@ -333,13 +349,19 @@ class AASMEngine(V53Engine):
         if record.status in {EffectStatus.RUNNING.value, EffectStatus.UNKNOWN.value}:
             raise ValueError(f"effect cannot accept a new dispatch request from status {record.status}")
         if record.dispatch_request is not None:
-            current = EffectDispatchRequest.from_dict(record.dispatch_request)
-            if current.fingerprint == dispatch.fingerprint:
-                return current
-        record.dispatch_request = dispatch.to_dict()
-        if not any(row.get("dispatch_request_id") == dispatch.dispatch_request_id for row in record.dispatch_history):
-            record.dispatch_history.append(dispatch.to_dict())
-        self.store.save_effect(record)
+            dispatch = EffectDispatchRequest.from_dict(record.dispatch_request)
+            if dispatch.fingerprint != requested_dispatch.fingerprint:
+                dispatch = requested_dispatch
+                record.dispatch_request = dispatch.to_dict()
+                if not any(row.get("dispatch_request_id") == dispatch.dispatch_request_id for row in record.dispatch_history):
+                    record.dispatch_history.append(dispatch.to_dict())
+                self.store.save_effect(record)
+        else:
+            dispatch = requested_dispatch
+            record.dispatch_request = dispatch.to_dict()
+            if not any(row.get("dispatch_request_id") == dispatch.dispatch_request_id for row in record.dispatch_history):
+                record.dispatch_history.append(dispatch.to_dict())
+            self.store.save_effect(record)
         intent_rows = self._effect_governance_rows(
             workspace_id=workspace_id,
             scope_id=scope_id,
@@ -378,6 +400,10 @@ class AASMEngine(V53Engine):
         record = self.store.load_effect(self.snapshot.machine_id, effect_id)
         if record.status == EffectStatus.SUCCEEDED.value:
             return self._ensure_terminal_reconciliation(record)
+        if record.status == EffectStatus.UNKNOWN.value:
+            raise EffectUnknownOutcome(
+                f"Effect {effect_id} has an unknown prior outcome; explicit scoped reconciliation is required before any new ownership"
+            )
         if not workspace_id or not scope_id or not owner_worker_id or not task_lease_id:
             raise PermissionError(
                 "v0.54 effect dispatch requires workspace_id, scope_id, owner_worker_id, and task_lease_id"
@@ -504,6 +530,8 @@ class AASMEngine(V53Engine):
             return current
         ownership = EffectOwnership.from_dict(current.ownership)
         expected_outcome = EffectOutcome.CONFIRMED.value if current.status == EffectStatus.SUCCEEDED.value else EffectOutcome.FAILED.value
+        local_ids = self._local_evidence_ids()
+        durable_evidence_ids = tuple(sorted(set(row for row in current.evidence if row in local_ids)))
         existing = EffectReconciliation.from_dict(current.reconciliation) if current.reconciliation is not None else None
         if existing is not None and existing.outcome == expected_outcome and existing.ownership_id == ownership.ownership_id:
             reconciliation = existing
@@ -511,7 +539,7 @@ class AASMEngine(V53Engine):
             reconciliation = EffectReconciliation(
                 effect_id=current.spec.effect_id,
                 outcome=expected_outcome,
-                evidence_ids=tuple(current.evidence),
+                evidence_ids=durable_evidence_ids,
                 ownership_id=ownership.ownership_id,
                 reconciled_by_principal_id=ownership.owner_principal_id,
                 authority_decision_evidence_id=ownership.authority_decision_evidence_id,
@@ -554,8 +582,9 @@ class AASMEngine(V53Engine):
         before = self.store.load_effect(self.snapshot.machine_id, effect_id)
         if before.status != EffectStatus.UNKNOWN.value:
             raise ValueError("v0.54 explicit reconciliation is only valid for UNKNOWN effects")
+        requested_evidence_ids = self._require_local_evidence_ids(evidence or ())
         merged_evidence = list(before.evidence)
-        for evidence_id in evidence or []:
+        for evidence_id in requested_evidence_ids:
             if evidence_id not in merged_evidence:
                 merged_evidence.append(evidence_id)
         reconciled = super().reconcile_effect(
@@ -581,10 +610,12 @@ class AASMEngine(V53Engine):
         decision_evidence_id = str(latest["document"].get("authority_decision_evidence_id") or "")
         current = self.store.load_effect(self.snapshot.machine_id, effect_id)
         ownership = EffectOwnership.from_dict(current.ownership) if current.ownership is not None else None
+        local_ids = self._local_evidence_ids()
+        durable_evidence_ids = tuple(sorted(set(row for row in current.evidence if row in local_ids)))
         reconciliation = EffectReconciliation(
             effect_id=effect_id,
             outcome=EffectOutcome.CONFIRMED.value if succeeded else EffectOutcome.FAILED.value,
-            evidence_ids=tuple(current.evidence),
+            evidence_ids=durable_evidence_ids,
             ownership_id=None if ownership is None else ownership.ownership_id,
             reconciled_by_principal_id=actor_principal_id,
             authority_decision_evidence_id=decision_evidence_id,
