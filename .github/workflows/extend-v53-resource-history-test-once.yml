@@ -1,0 +1,134 @@
+name: Extend v0.53 resource history test once
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Extend provenance test and remove helper
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("tests/test_v53_resource_authority.py")
+          text = path.read_text(encoding="utf-8")
+          text = text.replace(
+              "from threading import Event, Thread\n",
+              "from datetime import datetime, timezone\nfrom threading import Event, Thread\n",
+              1,
+          )
+          old_import = "from aasm.resource_governance import CapacityWindowKind, ResourceCapacity, ResourceDemandEstimate\n"
+          new_import = "from aasm.resource_governance import CapacityWindowKind, MeasurementAuthority, ResourceCapacity, ResourceDemandEstimate, ResourceObservation\n"
+          if text.count(old_import) != 1:
+              raise SystemExit("resource governance import drift")
+          text = text.replace(old_import, new_import)
+
+          old_caps = '''    engine = engine_with_workspace_and_root(
+        RESOURCE_AUTHORITY_CAPABILITIES["capacity_register"],
+        RESOURCE_AUTHORITY_CAPABILITIES["reserve"],
+        RESOURCE_AUTHORITY_CAPABILITIES["settle"],
+    )
+    registered = engine.register_resource_capacity(capacity(), actor_principal_id="root")
+'''
+          new_caps = '''    engine = engine_with_workspace_and_root(
+        RESOURCE_AUTHORITY_CAPABILITIES["capacity_register"],
+        RESOURCE_AUTHORITY_CAPABILITIES["observe"],
+        RESOURCE_AUTHORITY_CAPABILITIES["reserve"],
+        RESOURCE_AUTHORITY_CAPABILITIES["reestimate"],
+        RESOURCE_AUTHORITY_CAPABILITIES["settle"],
+    )
+    registered = engine.register_resource_capacity(capacity(), actor_principal_id="root")
+    observed = engine.record_resource_observation(
+        ResourceObservation(
+            "expert-weekly",
+            datetime(2026, 8, 14, 12, 0, tzinfo=timezone.utc),
+            "fixture-provider-api",
+            MeasurementAuthority.AUTHORITATIVE,
+            reported_capacity=100.0,
+            reported_consumed=0.0,
+            reported_remaining=100.0,
+        ),
+        workspace_id="workspace-a",
+        scope_id="root",
+        actor_principal_id="root",
+    )
+'''
+          if text.count(old_caps) != 1:
+              raise SystemExit("principal history setup drift")
+          text = text.replace(old_caps, new_caps)
+
+          old_reservation = '''    reservation_id = reserved["transaction"]["reservation"]["reservation_id"]
+    settled = engine.settle_resource_reservation(
+'''
+          new_reservation = '''    reservation_id = reserved["transaction"]["reservation"]["reservation_id"]
+    reestimated = engine.reestimate_resource_reservation(
+        reservation_id,
+        {"expert-weekly": 12.0},
+        ResourceRoutingPolicy(),
+        workspace_id="workspace-a",
+        scope_id="root",
+        actor_principal_id="root",
+    )
+    settled = engine.settle_resource_reservation(
+'''
+          if text.count(old_reservation) != 1:
+              raise SystemExit("principal history reservation drift")
+          text = text.replace(old_reservation, new_reservation)
+
+          marker = '''    assert capacity_row["authority_decision_evidence_id"] == registered["authority_decision_evidence_id"]
+
+    routing_row = next(row for row in history if row["record_type"] == "routing_transaction")
+'''
+          insert = '''    assert capacity_row["authority_decision_evidence_id"] == registered["authority_decision_evidence_id"]
+
+    observation_row = next(
+        row for row in history
+        if row["record_type"] == "observation" and row["evidence_id"] == observed["evidence_id"]
+    )
+    assert observation_row["actor_principal_id"] == "root"
+    assert observation_row["authority_action"] == "observe"
+    assert observation_row["authority_decision_evidence_id"] == observed["authority_decision_evidence_id"]
+
+    routing_row = next(row for row in history if row["record_type"] == "routing_transaction")
+'''
+          if text.count(marker) != 1:
+              raise SystemExit("principal history observation assertion drift")
+          text = text.replace(marker, insert)
+
+          marker = '''    assert routing_row["authority_decision_evidence_id"] == reserved["authority_decision_evidence_id"]
+
+    settlement_row = next(row for row in history if row["record_type"] == "settlement_transaction")
+'''
+          insert = '''    assert routing_row["authority_decision_evidence_id"] == reserved["authority_decision_evidence_id"]
+
+    reestimate_row = next(row for row in history if row["record_type"] == "reservation_reestimate")
+    assert reestimate_row["actor_principal_id"] == "root"
+    assert reestimate_row["authority_action"] == RESOURCE_AUTHORITY_CAPABILITIES["reestimate"]
+    assert reestimate_row["authority_decision_evidence_id"] == reestimated["authority_decision_evidence_id"]
+
+    settlement_row = next(row for row in history if row["record_type"] == "settlement_transaction")
+'''
+          if text.count(marker) != 1:
+              raise SystemExit("principal history reestimate assertion drift")
+          path.write_text(text.replace(marker, insert), encoding="utf-8")
+          PY
+          python -m compileall -q tests/test_v53_resource_authority.py
+          git rm .github/workflows/extend-v53-resource-history-test-once.yml
+          python scripts/release_manifest.py --write-file-list
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/test_v53_resource_authority.py FILE_LIST.txt
+          git commit -m 'Verify principal history for resource observation and reestimate'
+          git push origin HEAD:main
