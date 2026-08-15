@@ -16,7 +16,14 @@ from aasm.model_features import (
     evaluate_model_admission,
     model_feature_contract,
 )
-from aasm.optimization import OptimizationConstraint, OptimizationModel, OptimizationObjective, OptimizationVariable
+from aasm.optimization import (
+    OPTIMIZATION_CAPABILITIES,
+    OptimizationConstraint,
+    OptimizationModel,
+    OptimizationObjective,
+    OptimizationRequest,
+    OptimizationVariable,
+)
 from aasm.runtime_v54 import translate_model_for_solver
 from aasm.runtime_v55_foundation import AASMEngine
 from aasm.semantic_evolution import (
@@ -36,6 +43,7 @@ from aasm.solver_formulation import (
     formulation_from_v54_translation,
     solver_formulation_contract,
 )
+from aasm._runtime_v55_formulation import formulation_runtime_contract
 from aasm._runtime_v55_semantic_evolution import (
     SEMANTIC_EVOLUTION_RUNTIME_CONTRACT_ID,
     semantic_evolution_runtime_contract,
@@ -81,6 +89,7 @@ def check_contracts_and_schemas() -> None:
     runtime = semantic_evolution_runtime_contract()
     features = model_feature_contract()
     formulation = solver_formulation_contract()
+    formulation_runtime = formulation_runtime_contract()
     require(semantic["external_reference_contract_id"] == EXTERNAL_REFERENCE_CONTRACT_ID, "external reference contract drift")
     require(semantic["problem_revision_contract_id"] == PROBLEM_REVISION_CONTRACT_ID, "problem revision contract drift")
     require(semantic["problem_delta_contract_id"] == PROBLEM_DELTA_CONTRACT_ID, "problem delta contract drift")
@@ -99,6 +108,10 @@ def check_contracts_and_schemas() -> None:
     require(formulation["builtin_checker_scope"] == "EXACT_IDENTITY_ONLY", "built-in formulation checker must not overclaim nontrivial translations")
     require(formulation["nontrivial_translation_policy"] == "NO_PASS_WITHOUT_AN_INDEPENDENT_CHECKER_FOR_THE_REQUESTED_FIDELITY", "nontrivial formulation checking must fail closed")
     require(formulation["truth_authority"] == "NONE", "solver formulation evidence may not create truth authority")
+    require(formulation_runtime["registry"] == "EVIDENCE_PROJECTION_NO_SIDE_TABLE", "formulation runtime may not add a side registry")
+    require(formulation_runtime["execution_precondition"] == "REGISTERED_EXACT_PASS_FORMULATION_AND_EXACT_GOVERNANCE_CHAIN", "formulation runtime must fail closed before provider execution")
+    require(formulation_runtime["problem_revision_precondition"] == "CURRENT_USABLE_REVISION_MUST_MATCH_WHEN_FORMULATION_IS_REVISION_BOUND", "formulation runtime must fence superseded revisions")
+    require(formulation_runtime["truth_authority"] == "NONE", "formulation runtime may not create truth authority")
 
     schema_contracts = {
         "external-reference.schema.json": EXTERNAL_REFERENCE_CONTRACT_ID,
@@ -186,8 +199,8 @@ def check_model_admission() -> None:
     require(not rejected.admitted, "approximate provider support must fail closed when exact semantics are required")
 
 
-def check_formulation_bridge() -> None:
-    model = OptimizationModel(
+def _formulation_fixture_model() -> OptimizationModel:
+    return OptimizationModel(
         "v55-formulation-fixture",
         (OptimizationVariable("x", "BOOL"), OptimizationVariable("y", "BOOL")),
         (
@@ -201,6 +214,10 @@ def check_formulation_bridge() -> None:
         ),
         objective=OptimizationObjective("MINIMIZE", {"x": 1, "y": 2}),
     )
+
+
+def check_formulation_bridge() -> None:
+    model = _formulation_fixture_model()
     translation, translation_certificate = translate_model_for_solver(
         model,
         target_family="MILP",
@@ -238,6 +255,94 @@ def check_formulation_bridge() -> None:
     require(formulation.predecessor_translation_id == translation.translation_id, "formulation must preserve v0.54 translation ancestry")
 
 
+def check_formulation_runtime_revision_fencing() -> None:
+    engine = AASMEngine(ProblemSpec("v0.55 formulation runtime fixture"))
+    base = ProblemRevision(
+        problem_id="board-formulation",
+        problem_fingerprint="board-problem-r1",
+        semantic_projection_fingerprint="board-semantic-r1",
+        revision_id="board-formulation-r1",
+    )
+    engine.register_initial_problem_revision(base, authority_id="v55-policy", authority_class="POLICY")
+
+    model = _formulation_fixture_model()
+    translation, translation_certificate = translate_model_for_solver(
+        model,
+        target_family="MILP",
+        target_provider_id="v55-highs-runtime",
+    )
+    features = ModelFeatureSet(
+        model.fingerprint,
+        (ModelFeatureRequirement("BOOLEAN", "EXACT_ONLY"),),
+        problem_revision_id=base.revision_id,
+        problem_revision_fingerprint=base.fingerprint,
+    )
+    manifest = ProviderCapabilityManifest(
+        "v55-highs-runtime",
+        "1",
+        "aasm.highs",
+        "1",
+        (ProviderFeatureSupport("BOOLEAN", "EXACT_NATIVE"),),
+        solver_families=("MILP",),
+    )
+    admission = evaluate_model_admission(features, manifest)
+    formulation, certificate = formulation_from_v54_translation(
+        model,
+        translation,
+        translation_certificate,
+        feature_set=features,
+        provider_manifest=manifest,
+        admission_report=admission,
+        problem_revision_id=base.revision_id,
+        problem_revision_fingerprint=base.fingerprint,
+    )
+    registered = engine.register_solver_formulation(
+        formulation,
+        certificate,
+        feature_set=features,
+        provider_manifest=manifest,
+        admission_report=admission,
+        authority_id="v55-policy",
+        authority_class="POLICY",
+    )
+    require(registered["formulation"]["fingerprint"] == formulation.fingerprint, "formulation runtime must durably register the exact formulation")
+    require(engine.formulation_report(formulation.formulation_id)["valid"], "durable formulation projection must remain valid")
+
+    request = OptimizationRequest(
+        formulation.target_model,
+        OPTIMIZATION_CAPABILITIES[formulation.target_model.solver_family],
+        "0.1.0",
+        "v55-formulation-runtime-obligation",
+        required_provider=manifest.provider_id,
+    )
+    bound = engine.prepare_registered_formulation_request(request, formulation.formulation_id)
+    require(bound["binding"]["formulation_fingerprint"] == formulation.fingerprint, "execution binding must pin the exact formulation fingerprint")
+    require(bound["binding"]["request_fingerprint"] == request.fingerprint, "execution binding must pin the exact optimization request")
+    require(engine.replay().canonical_hash() == engine.snapshot.canonical_hash(), "formulation registration and binding must replay through the existing reducer")
+
+    delta = ProblemDelta(
+        base_revision_id=base.revision_id,
+        base_revision_fingerprint=base.fingerprint,
+        target_problem_fingerprint="board-problem-r2",
+        target_semantic_projection_fingerprint="board-semantic-r2",
+    )
+    target = ProblemRevision(
+        problem_id=base.problem_id,
+        problem_fingerprint="board-problem-r2",
+        semantic_projection_fingerprint="board-semantic-r2",
+        parent_revision_ids=(base.revision_id,),
+        created_from_delta_id=delta.delta_id,
+        revision_id="board-formulation-r2",
+    )
+    engine.commit_problem_revision_transition(delta, target, authority_id="v55-policy", authority_class="POLICY")
+    try:
+        engine.prepare_registered_formulation_request(request, formulation.formulation_id)
+    except ValueError as exc:
+        require("superseded or mismatched problem revision" in str(exc), "superseded formulation must fail for the revision-fencing reason")
+    else:
+        raise SystemExit("formulation bound to a superseded problem revision was incorrectly accepted")
+
+
 def main() -> None:
     check_source_doctrine()
     check_active_release_boundary()
@@ -245,6 +350,7 @@ def main() -> None:
     check_reference_transition()
     check_model_admission()
     check_formulation_bridge()
+    check_formulation_runtime_revision_fencing()
     print("v0.55 governed semantic evolution foundation contracts: PASS")
 
 
