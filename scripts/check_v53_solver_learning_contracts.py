@@ -116,11 +116,15 @@ def main() -> None:
         raise SystemExit("solver-learning validation checker identity drift")
 
     require(root / "src/aasm/cross_run_knowledge.py", [
-        "def propose_cross_run_admission(self, envelope, *, proposer_id: str",
-        "def commit_cross_run_admission(self, decision_id: str, *, worker_id: str)",
-        '"envelopes": deepcopy(dict(sorted(envelopes.items())))',
         '"authority_transfer": "NEVER"',
         '"authority_inherited": False',
+    ])
+    require(root / "src/aasm/_runtime_v48_knowledge.py", [
+        "def propose_cross_run_admission(self, envelope, *, proposer_id: str",
+        "def authorize_cross_run_admission(self, decision_id: str, *, authority_id: str, authority_class: str)",
+        "def commit_cross_run_admission(self, decision_id: str, *, worker_id: str)",
+        '"envelopes": deepcopy(dict(sorted(envelopes.items())))',
+        '"source_authority_inherited": False',
     ])
 
     require(root / "tests/test_v53_solver_learning.py", [
