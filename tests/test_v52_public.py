@@ -7,17 +7,17 @@ from aasm.resource_routing import RESOURCE_ROUTING_CONTRACT_ID, RESOURCE_ROUTING
 from aasm.sii_v52 import SII_RESOURCE_AWARE_PROPOSAL_CONTRACT_ID
 
 
-def test_v52_pre_release_public_contract_is_additive_and_valid():
+def test_v52_active_public_contract_is_additive_and_valid():
     report = public_v52.validate_public_api_contract()
     assert report["valid"] is True, report["errors"]
     contract = report["contract"]
 
     assert public_v52.__version__ == "0.52.0"
-    assert public_v52.PUBLIC_RELEASE_STABILITY == "PRE_RELEASE"
+    assert public_v52.PUBLIC_RELEASE_STABILITY == "ACTIVE_DEVELOPMENT"
     assert contract["contract_version"] == "0.28.0"
     assert contract["runtime_version"] == "0.52.0"
     assert contract["distribution"]["version"] == "0.52.0"
-    assert contract["distribution"]["stability"] == "PRE_RELEASE"
+    assert contract["distribution"]["stability"] == "ACTIVE_DEVELOPMENT"
 
     assert contract["multi_objective"]["contract_id"] == MULTI_OBJECTIVE_CONTRACT_ID
     assert contract["pareto_frontier"]["contract_id"] == FRONTIER_CONTRACT_ID
@@ -29,7 +29,7 @@ def test_v52_pre_release_public_contract_is_additive_and_valid():
     assert contract["resource_aware_sii"]["authority_reward"] == "NEVER"
 
 
-def test_v52_public_surface_preserves_v51_parent_contract_without_promoting_it():
+def test_v52_public_surface_preserves_v51_parent_contract():
     parent = public_v51.validate_public_api_contract()
     child = public_v52.validate_public_api_contract()
     assert parent["valid"] is True
@@ -44,13 +44,9 @@ def test_v52_public_surface_preserves_v51_parent_contract_without_promoting_it()
         assert name in public_v52.SUPPORTED_ENGINE_METHODS
 
 
-def test_v52_pre_release_import_does_not_mutate_active_demo_stack():
-    # Importing the preview surface must not silently promote the active runtime.
-    # The package/default public surface remains v0.51 until the release commit.
-    assert public_v51.__version__ == "0.51.0"
-    assert demo_stack.AASMEngine is public_v51.AASMEngine
-    assert demo_stack.AASMEngine is not public_v52.AASMEngine
-    assert demo_stack._runtime_version() == public_v51.__version__
+def test_v52_active_release_binds_demo_stack_to_v52_runtime():
+    assert demo_stack.AASMEngine is public_v52.AASMEngine
+    assert demo_stack._runtime_version() == public_v52.__version__
 
 
 def test_v52_public_surface_exposes_product_backward_resource_objective_vector():
@@ -86,7 +82,7 @@ def test_v52_public_surface_exposes_product_backward_resource_objective_vector()
         assert callable(getattr(public_v52.AASMEngine, method, None))
 
 
-def test_v52_cli_contract_commands_are_inspection_only_public_commands():
+def test_v52_cli_contract_commands_are_public_commands():
     parser = build_parser()
     for command in (
         "multi-objective-contract",
