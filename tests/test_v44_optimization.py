@@ -43,10 +43,10 @@ def _sat_result(request, model, *, implementation=CADICAL_IMPLEMENTATION, assign
 
 
 def test_v44_public_contract_is_live_and_preserves_formal_portfolio():
-    assert __version__ == "0.52.0"
+    assert __version__ == "0.53.0"
     report = validate_public_api_contract()
     assert report["valid"], report
-    assert report["contract"]["contract_version"] == "0.28.0"
+    assert report["contract"]["contract_version"] == "0.29.0"
     optimization = report["contract"]["optimization"]
     assert optimization["contract_id"] == "aasm.optimization.v1"
     assert optimization["scheduler"] == "EXISTING_AASM_RESOURCE_WORKER_LEASE"
