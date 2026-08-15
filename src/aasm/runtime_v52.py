@@ -5,6 +5,14 @@ from math import isinf
 from typing import Any, Iterable, Mapping
 
 from ._runtime_v52_resources import ResourceGovernanceRuntimeMixin, _capacity_from_dict
+from .evidence import EvidenceRecord
+from .multi_objective import (
+    FRONTIER_CONTRACT_ID,
+    MULTI_OBJECTIVE_CONTRACT_ID,
+    MultiObjectiveProblem,
+    solve_exact_finite_pareto_frontier,
+    solve_lexicographic_finite,
+)
 from .resource_routing import (
     RESOURCE_ROUTING_CONTRACT_ID,
     ResourceAwareCandidate,
@@ -12,6 +20,7 @@ from .resource_routing import (
     planning_allocatable,
 )
 from .runtime_v51 import AASMEngine as V51Engine
+from .semantic_result import canonical_semantic_json, semantic_fingerprint
 from .sii_v52 import (
     SII_RESOURCE_AWARE_PROPOSAL_CONTRACT_ID,
     ResourceAwareStructuredProposal,
@@ -20,6 +29,8 @@ from .sii_v52 import (
 
 _RESOURCE_RECORD_TYPE = "aasm_resource_record_type"
 _RESOURCE_DOCUMENT = "document"
+_MULTI_OBJECTIVE_RECORD_TYPE = "aasm_multi_objective_record_type"
+_MULTI_OBJECTIVE_DOCUMENT = "document"
 
 
 def _finite_or_label(value: float | None) -> float | str | None:
@@ -47,7 +58,7 @@ def _routing_policy_document(policy: ResourceRoutingPolicy) -> dict[str, Any]:
 
 
 class AASMEngine(ResourceGovernanceRuntimeMixin, V51Engine):
-    """Experimental v0.52 resource-governed decision runtime over v0.51."""
+    """Experimental v0.52 resource-governed and multi-objective runtime over v0.51."""
 
     def _durable_parent_sii_proposal(self, item: ResourceAwareStructuredProposal) -> dict[str, Any]:
         projection = self._governed_sii().legacy.projection()
@@ -317,6 +328,249 @@ class AASMEngine(ResourceGovernanceRuntimeMixin, V51Engine):
             **result,
             "proposal_ids": list(ids),
             "proposal_evidence_ids": proposal_evidence_ids,
+        }
+
+    def _record_multi_objective_document(
+        self,
+        *,
+        record_type: str,
+        object_id: str,
+        document: Mapping[str, Any],
+        source: str,
+        workspace_id: str | None,
+        scope_id: str | None,
+        derived_from=(),
+    ) -> str:
+        self._validate_resource_context(workspace_id=workspace_id, scope_id=scope_id)
+        payload = deepcopy(dict(document))
+        payload["workspace_id"] = workspace_id
+        payload["scope_id"] = scope_id
+        evidence_id = f"multi-objective-evidence-{semantic_fingerprint({'record_type': record_type, 'object_id': object_id, 'document': payload})[:24]}"
+        for row in self.snapshot.evidence.get("records", []):
+            if row.get("evidence_id") != evidence_id:
+                continue
+            metadata = row.get("metadata") or {}
+            if metadata.get(_MULTI_OBJECTIVE_RECORD_TYPE) != record_type or metadata.get(_MULTI_OBJECTIVE_DOCUMENT) != payload:
+                raise ValueError(f"multi-objective evidence collision: {evidence_id}")
+            return evidence_id
+        self.add_evidence(
+            EvidenceRecord(
+                kind="optimization_result",
+                statement=canonical_semantic_json(payload),
+                source=source,
+                derived_from=list(sorted(set(map(str, derived_from)))),
+                metadata={
+                    _MULTI_OBJECTIVE_RECORD_TYPE: record_type,
+                    "object_id": object_id,
+                    _MULTI_OBJECTIVE_DOCUMENT: payload,
+                    "authority": "EVIDENCE_ONLY",
+                },
+                evidence_id=evidence_id,
+            ),
+            reason=f"v0.52 multi-objective {record_type} recorded",
+        )
+        return evidence_id
+
+    def _persist_multi_objective_basis(
+        self,
+        problem: MultiObjectiveProblem,
+        solved: Mapping[str, Any],
+        *,
+        workspace_id: str | None,
+        scope_id: str | None,
+        derived_from=(),
+    ) -> dict[str, str]:
+        problem_evidence_id = self._record_multi_objective_document(
+            record_type="problem",
+            object_id=problem.problem_id,
+            document={"problem": problem.to_dict()},
+            source=MULTI_OBJECTIVE_CONTRACT_ID,
+            workspace_id=workspace_id,
+            scope_id=scope_id,
+            derived_from=derived_from,
+        )
+        pool = solved["pool"]
+        pool_evidence_id = self._record_multi_objective_document(
+            record_type="complete_feasible_pool",
+            object_id=pool.pool_id,
+            document={"pool": pool.to_dict()},
+            source=MULTI_OBJECTIVE_CONTRACT_ID,
+            workspace_id=workspace_id,
+            scope_id=scope_id,
+            derived_from=[problem_evidence_id],
+        )
+        certificate = solved["enumeration_certificate"]
+        if certificate.status != "PASS":
+            raise ValueError("multi-objective result requires a passing finite enumeration certificate")
+        enumeration_evidence_id = self._record_multi_objective_document(
+            record_type="enumeration_certificate",
+            object_id=certificate.certificate_id,
+            document={"certificate": certificate.to_dict()},
+            source=MULTI_OBJECTIVE_CONTRACT_ID,
+            workspace_id=workspace_id,
+            scope_id=scope_id,
+            derived_from=[pool_evidence_id],
+        )
+        return {
+            "problem_evidence_id": problem_evidence_id,
+            "pool_evidence_id": pool_evidence_id,
+            "enumeration_evidence_id": enumeration_evidence_id,
+        }
+
+    def solve_lexicographic_multi_objective(
+        self,
+        problem: MultiObjectiveProblem,
+        *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
+        derived_from=(),
+        max_total_states: int = 100_000,
+        max_states_per_step: int = 1_000,
+    ) -> dict[str, Any]:
+        solved = solve_lexicographic_finite(
+            problem,
+            max_total_states=max_total_states,
+            max_states_per_step=max_states_per_step,
+        )
+        result = solved["result"]
+        verification = solved["verification"]
+        if result.verification_status != "PASS" or verification.get("status") != "PASS":
+            raise ValueError("uncertified lexicographic result is not durable-admissible")
+        lineage = self._persist_multi_objective_basis(
+            problem,
+            solved,
+            workspace_id=workspace_id,
+            scope_id=scope_id,
+            derived_from=derived_from,
+        )
+        result_evidence_id = self._record_multi_objective_document(
+            record_type="lexicographic_result",
+            object_id=result.result_id,
+            document={
+                "problem_fingerprint": problem.fingerprint,
+                "result": result.to_dict(),
+                "verification": deepcopy(verification),
+            },
+            source=MULTI_OBJECTIVE_CONTRACT_ID,
+            workspace_id=workspace_id,
+            scope_id=scope_id,
+            derived_from=[lineage["enumeration_evidence_id"]],
+        )
+        return {
+            **solved,
+            **lineage,
+            "result_evidence_id": result_evidence_id,
+            "authority": "EVIDENCE_ONLY",
+        }
+
+    def solve_exact_pareto_multi_objective(
+        self,
+        problem: MultiObjectiveProblem,
+        *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
+        derived_from=(),
+        max_total_states: int = 100_000,
+        max_states_per_step: int = 1_000,
+    ) -> dict[str, Any]:
+        solved = solve_exact_finite_pareto_frontier(
+            problem,
+            max_total_states=max_total_states,
+            max_states_per_step=max_states_per_step,
+        )
+        frontier = solved["frontier"]
+        certificate = solved["certificate"]
+        if (
+            frontier.completeness_status != "COMPLETE"
+            or certificate.status != "PASS"
+            or not certificate.pairwise_nondominant
+            or not certificate.exact_solution_set_match
+        ):
+            raise ValueError("uncertified exact Pareto frontier is not durable-admissible")
+        lineage = self._persist_multi_objective_basis(
+            problem,
+            solved,
+            workspace_id=workspace_id,
+            scope_id=scope_id,
+            derived_from=derived_from,
+        )
+        certificate_evidence_id = self._record_multi_objective_document(
+            record_type="pareto_certificate",
+            object_id=certificate.certificate_id,
+            document={"certificate": certificate.to_dict()},
+            source=FRONTIER_CONTRACT_ID,
+            workspace_id=workspace_id,
+            scope_id=scope_id,
+            derived_from=[lineage["enumeration_evidence_id"]],
+        )
+        frontier_evidence_id = self._record_multi_objective_document(
+            record_type="pareto_frontier",
+            object_id=frontier.frontier_id,
+            document={
+                "problem_fingerprint": problem.fingerprint,
+                "frontier": frontier.to_dict(),
+            },
+            source=FRONTIER_CONTRACT_ID,
+            workspace_id=workspace_id,
+            scope_id=scope_id,
+            derived_from=[certificate_evidence_id],
+        )
+        return {
+            **solved,
+            **lineage,
+            "certificate_evidence_id": certificate_evidence_id,
+            "frontier_evidence_id": frontier_evidence_id,
+            "authority": "EVIDENCE_ONLY",
+        }
+
+    def multi_objective_report(
+        self,
+        *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
+    ) -> dict[str, Any]:
+        self._validate_resource_context(workspace_id=workspace_id, scope_id=scope_id)
+        groups: dict[str, dict[str, Any]] = {
+            "problems": {},
+            "complete_feasible_pools": {},
+            "enumeration_certificates": {},
+            "lexicographic_results": {},
+            "pareto_certificates": {},
+            "pareto_frontiers": {},
+        }
+        mapping = {
+            "problem": "problems",
+            "complete_feasible_pool": "complete_feasible_pools",
+            "enumeration_certificate": "enumeration_certificates",
+            "lexicographic_result": "lexicographic_results",
+            "pareto_certificate": "pareto_certificates",
+            "pareto_frontier": "pareto_frontiers",
+        }
+        for row in self.snapshot.evidence.get("records", []):
+            if row.get("status", "active") != "active":
+                continue
+            metadata = row.get("metadata") or {}
+            record_type = metadata.get(_MULTI_OBJECTIVE_RECORD_TYPE)
+            bucket = mapping.get(str(record_type))
+            if bucket is None:
+                continue
+            document = metadata.get(_MULTI_OBJECTIVE_DOCUMENT)
+            if not isinstance(document, dict):
+                continue
+            if document.get("workspace_id") != workspace_id or document.get("scope_id") != scope_id:
+                continue
+            object_id = str(metadata.get("object_id") or row.get("evidence_id") or "")
+            groups[bucket][object_id] = {
+                "document": deepcopy(document),
+                "evidence_id": row.get("evidence_id"),
+                "derived_from": list(row.get("derived_from") or []),
+            }
+        return {
+            "contract_id": MULTI_OBJECTIVE_CONTRACT_ID,
+            "frontier_contract_id": FRONTIER_CONTRACT_ID,
+            "access_context": {"workspace_id": workspace_id, "scope_id": scope_id},
+            "authority": "EVIDENCE_ONLY",
+            **groups,
         }
 
 
