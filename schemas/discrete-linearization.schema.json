@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/discrete-linearization.schema.json",
+  "title": "AASM Discrete Linearization v1",
+  "type": "object",
+  "required": ["lowering_id", "contract_id", "contract_version", "source_model", "target_model", "target_provider_id", "provider_manifest_id", "provider_manifest_fingerprint", "feature_set_id", "feature_set_fingerprint", "admission_report_id", "admission_report_fingerprint", "mappings", "fingerprint"],
+  "properties": {
+    "lowering_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.optimization.discrete-linearization.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "source_model": {"$ref": "discrete-boolean-model.schema.json"},
+    "target_model": {"type": "object"},
+    "target_provider_id": {"type": "string", "minLength": 1},
+    "provider_manifest_id": {"type": "string", "minLength": 1},
+    "provider_manifest_fingerprint": {"type": "string", "minLength": 16},
+    "feature_set_id": {"type": "string", "minLength": 1},
+    "feature_set_fingerprint": {"type": "string", "minLength": 16},
+    "admission_report_id": {"type": "string", "minLength": 1},
+    "admission_report_fingerprint": {"type": "string", "minLength": 16},
+    "mappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source_constraint_id", "source_kind", "target_constraint_ids", "transformation_id", "source_reference_fingerprints", "fingerprint"],
+        "properties": {
+          "source_constraint_id": {"type": "string", "minLength": 1},
+          "source_kind": {"enum": ["PSEUDO_BOOLEAN", "CARDINALITY"]},
+          "target_constraint_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "transformation_id": {"enum": ["aasm.transform.pseudo-boolean.linear.v1", "aasm.transform.cardinality.linear.v1"]},
+          "source_reference_fingerprints": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+          "fingerprint": {"type": "string", "minLength": 16}
+        },
+        "additionalProperties": false
+      }
+    },
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
