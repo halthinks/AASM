@@ -48,7 +48,7 @@ def observed_remaining(remaining, *, authority=MeasurementAuthority.OBSERVED, co
 def test_hard_quality_thresholds_dominate_resource_savings():
     local = ResourceAwareCandidate("local", correctness=.80, evidence_quality=.90, expected_progress=.95, monetary_cost=0, scarce_expert_usage=0)
     expert = ResourceAwareCandidate(
-        "expert", correctness=.95, evidence_quality=.95, expected_progress=.90, monetary_cost=5, scarce_expert_usage=10,
+        "expert", correctness=.95, evidence_quality=.95, expected_progress=.90, monetary_cost=5, provider_quota_burn=10, scarce_expert_usage=10,
         demands=(ResourceDemandEstimate("EXPERT_MODEL_ALLOWANCE", 10, "credits", resource_id="expert-weekly"),),
     )
     decision = select_resource_aware_candidate([local, expert], [weekly_capacity()], ResourceRoutingPolicy(min_correctness=.90, min_evidence_quality=.90))
@@ -65,6 +65,35 @@ def test_equivalent_quality_preserves_scarce_expert_capacity():
     decision = select_resource_aware_candidate([expert, local], [weekly_capacity()], ResourceRoutingPolicy(min_correctness=.9, min_evidence_quality=.9))
     assert decision.selected_candidate_id == "local"
     assert decision.reason == "LEXICOGRAPHIC_QUALITY_THEN_RESOURCE_ECONOMY"
+
+
+def test_provider_quota_burn_is_independent_and_precedes_other_economic_tiebreakers():
+    quota_efficient = ResourceAwareCandidate(
+        "quota-efficient",
+        .95,
+        .95,
+        .90,
+        monetary_cost=5,
+        provider_quota_burn=1,
+        scarce_expert_usage=10,
+    )
+    quota_hungry = ResourceAwareCandidate(
+        "quota-hungry",
+        .95,
+        .95,
+        .90,
+        monetary_cost=0,
+        provider_quota_burn=8,
+        scarce_expert_usage=0,
+    )
+    decision = select_resource_aware_candidate([quota_hungry, quota_efficient], [], ResourceRoutingPolicy())
+    assert decision.selected_candidate_id == "quota-efficient"
+    ignored = select_resource_aware_candidate(
+        [quota_hungry, quota_efficient],
+        [],
+        ResourceRoutingPolicy(prefer_lower_provider_quota_burn=False),
+    )
+    assert ignored.selected_candidate_id == "quota-hungry"
 
 
 def test_protected_reserve_can_make_expert_path_ineligible():
