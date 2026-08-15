@@ -1,158 +1,77 @@
-# AASM v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery
+# AASM v0.55.0 — Governed Semantic Evolution and Engineering IR
 
-AASM v0.54.0 advances the public package/runtime to `0.54.0` and `aasm.adoption.v1 / 0.30.0`.
-
-```text
-active public surface: public_v54
-active runtime: runtime_v54_full.AASMEngine
-parent public surface: public_v53
-parent runtime: runtime_v53_learning.AASMEngine
-
-aasm.effect.intent.v1 / 0.1.0
-aasm.effect.dispatch-request.v1 / 0.1.0
-aasm.effect.ownership.v1 / 0.1.0
-aasm.effect.reconciliation.v1 / 0.1.0
-aasm.effect.resource-settlement.v1 / 0.1.0
-aasm.solver.translation.v1 / 0.1.0
-aasm.solver.portfolio.v1 / 0.1.0
-aasm.solver.portfolio.runtime.v1 / 0.1.0
-aasm.solver.exchange.v1 / 0.1.0
-```
-
-v0.54 extends the v0.53 scoped-authority and solver-learning foundation without creating a second scheduler, resource ledger, effect ledger, truth system, or solver executor.
-
-## Effect intent, dispatch, ownership, and reconciliation
-
-External execution now has an explicit durable lifecycle:
+AASM v0.55.0 is the active public package/runtime and advances the adoption contract to `aasm.adoption.v1 / 0.31.0`.
 
 ```text
-EffectIntent
-    ↓
-authorization
-    ↓
-EffectDispatchRequest
-    ↓
-atomic EffectOwnership
-    ↓
-external boundary
-    ↓
-CONFIRMED | FAILED | UNKNOWN
-    ↓
-EffectReconciliation
+active public surface: public_v55
+active runtime: runtime_v55.AASMEngine
+parent public surface: public_v54
+parent runtime: runtime_v54_full.AASMEngine
+
+semantic evolution:
+  aasm.external.reference.v1
+  aasm.problem.revision.v1
+  aasm.problem.delta.v1
+  aasm.semantic-evolution.runtime.v1
+
+solver formulation:
+  aasm.solver.formulation.v1
+  aasm.solver.formulation-certificate.v1
+  aasm.solver.formulation-execution-binding.v1
+  aasm.solver.formulation-runtime.v1
+
+engineering IR:
+  exact pseudo-Boolean/cardinality
+  portable scheduling semantics
+  deterministic quadratic/conic representation
+  governed decision vectors
+  portable semantic-evolution archive
 ```
 
-A TaskLease, declared resource reservations, scoped execution authority, durable intent, and durable dispatch request must all agree before ownership can cross the external boundary. Ownership Evidence is durable before the executor is called.
+v0.55 extends v0.54 without adding a second truth store, scheduler, resource ledger, or effect lifecycle.
 
-If a process dies after ownership is acquired but before a trustworthy terminal observation is committed, recovery marks the effect `UNKNOWN`. A new dispatch is blocked until explicit scoped reconciliation supplies local Evidence for the observed external outcome.
+## Governed semantic evolution
 
-Ownership, dispatch, and reconciliation history is append-only. Legacy pre-v0.54 effects are not silently adopted into the new lifecycle.
+External engineering identities, problem revisions, and deltas are explicit durable objects. Revision transitions are reconstructed from existing Evidence and events. A revision-bound operation fails closed while truth-maintenance work is pending or after its source revision is superseded.
 
-## Actual effect-resource settlement
+## Solver formulation governance
 
-`aasm.effect.resource-settlement.v1` binds observed external consumption back to the existing v0.52/v0.53 resource settlement path.
+A solver formulation binds the exact source/target models, provider capability manifest, model-admission report, object mappings, external-reference mappings, and optional problem revision. Execution requests may only be bound to a durably registered formulation with a passing governance chain.
 
-```text
-reserved capacity
-      ↓
-external execution
-      ↓
-CONFIRMED | FAILED reconciliation
-      ↓
-observed actual consumption
-      ↓
-existing resource.settle authority + ledger
-      ↓
-Effect resource-settlement Evidence
-```
+The built-in formulation checker is deliberately limited to exact identity formulations. Non-trivial translations require an independent checker for the requested fidelity.
 
-Settlement is blocked while an effect is `UNKNOWN`. Actual resource keys must exactly match each bound reservation. Multi-reservation settlement is recoverable and idempotent per reservation; a retry may continue already-partially-settled work only when the durable actual-consumption values match exactly.
+## Exact discrete IR
 
-No new resource authority is introduced. `resource.settle` remains the governing scoped capability and resource observations remain Evidence.
+Pseudo-Boolean and cardinality constraints have deterministic exact linearization with independent checking and preserved external-reference lineage. Approximate lowering is not claimed.
 
-## Certified canonical solver translation
+## Scheduling IR
 
-v0.54 can represent one canonical optimization model for compatible solver families without pretending separately cloned models are automatically equivalent.
+Portable scheduling models cover integer tasks, precedence, no-overlap, cumulative resources, exact assignment validation, revision binding, and provider capability admission. Resource capacities/demands must be positive integers.
 
-A `SolverTranslation` binds:
+`execution_adapter = NOT_CLAIMED_BY_THIS_FOUNDATION` remains an explicit release boundary.
 
-- the source canonical model fingerprint;
-- a semantic fingerprint independent of target-family metadata;
-- the target solver-family model;
-- the target provider;
-- a deterministic translation identity.
+## Continuous quadratic/conic IR
 
-The AASM translation checker independently reconstructs and verifies exact semantic equality before the representation may enter a portfolio or solver-learning exchange.
+Continuous models use canonical decimal strings and named numeric tolerance policies. The independent validator supports linear/quadratic expressions and standard second-order-cone constraints using deterministic `Decimal` evaluation.
 
-## Deterministic governed portfolio racing
+Exact structural representation is distinct from numerical satisfaction under tolerance. `optimality_proof = NOT_CLAIMED_BY_ASSIGNMENT_VALIDATION`.
 
-Portfolio racing reuses the existing optimization lifecycle:
+## Governed decision vectors
 
-```text
-certified translations
-        ↓
-ordinary optimization requests
-        ↓
-ordinary TaskDemand queue
-        ↓
-ordinary TaskLease claims
-        ↓
-existing execute_optimization_lease
-        ↓
-normalized + independently validated results
-        ↓
-proof-certificate discovery
-        ↓
-deterministic portfolio decision Evidence
-```
+Hard floors are constraints, not weighted objectives. Only hard-floor-compliant candidates enter lexicographic comparison. Linear criteria may compile to the released exact-finite multi-objective engine when semantics match exactly. `scalarization = NONE`.
 
-There is no v0.54 parallel scheduler. Race legs are ordinary AASM optimization tasks.
+## Portable semantic archive
 
-Correctness selection explicitly excludes wall time, arrival order, fastest-response wins, and majority voting. Uncertified negative claims cannot outvote a validated feasible assignment. Certified contradictions fail closed as `CONFLICT`.
+The archive contains canonical snapshot material, complete event history, and derived v0.55 projections with section fingerprints and a root fingerprint. Verification replays the archived event sequence through the existing AASM reducer and compares canonical state with the persisted snapshot.
 
-For claims that require proof-grade strength, the existing v0.50 `SolverClaimCertificate` path remains authoritative for certification status. Portfolio agreement itself grants no truth authority.
+Event sequence numbers provide durable ordering; they are not machine-version counters. Derived projections grant no truth authority and are never replay inputs.
 
-A real native OR-Tools CP-SAT + HiGHS fixture exercises this complete TaskLease/provider/proof-aware race path.
+## Exact release boundary
 
-## Certified cross-solver learned-artifact exchange
+The dedicated `aasm/v55` gate is read-only and checks inventory, all v0.55 engineering contracts, semantic-evolution/formulation fixtures, replay/archive behavior, and the active `public_v55` surface.
 
-v0.54 reuses the v0.53 `SolverLearningArtifact`, validation, and application contracts. It does not invent a second learning representation.
+Repository-wide release publication remains gated by the ordinary AASM CI/formal/solver/release workflows. See `docs/RELEASE_0.55.md` for the release-specific capability and claim summary.
 
-A cross-solver exchange requires:
-
-1. a source artifact with an exact local PASS validation;
-2. independently reproducible source and target solver-translation certificates;
-3. a newly bound target-family `SolverLearningArtifact`;
-4. receiving-target local revalidation against the target model;
-5. existing scoped solver-learning application authority before use.
-
-Correctness-sensitive no-goods, cores, and bounds must pass target-local validation before pruning. Incumbents and warm starts remain performance-only. Native accelerator state is not portable across different solvers.
-
-```text
-cross_solver_agreement_grants_truth = false
-truth_authority  = NONE
-policy_authority = NONE
-```
-
-## Exact-SHA release gates
-
-v0.54 publication requires success on the exact current `main` commit from:
-
-```text
-aasm/ci-summary
-aasm/formal-assurance
-aasm/semantic-solver-rc
-aasm/proof-claims
-aasm/solution-pools
-aasm/optimization
-aasm/scoped-authority
-aasm/solver-learning
-aasm/v54
-```
-
-`aasm/v54` covers effect ownership/UNKNOWN recovery, effect actual-resource settlement, deterministic portfolio semantics and execution, certified cross-solver exchange, and the active public v0.54 surface. `aasm/optimization` additionally exercises the real OR-Tools + HiGHS governed portfolio race.
-
-The release workflow builds two byte-identical distributions, clean-installs the wheel, validates the active public contract, publishes the GitHub release once, and verifies every remote release asset byte.
-
-Next: **v0.55.0 — Extended Mathematical IR + Portable Machine Archive**.
+Next: **v0.56.0 — Truthful Solver Outcomes, Runtime Provenance, and Reproducibility**.
 
 AASM remains an `0.x` active-development project. License: Apache-2.0 project-wide under `LICENSE`, `NOTICE`, and `LICENSE_POLICY.md`.
