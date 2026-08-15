@@ -99,7 +99,7 @@ def test_postgres_claim_uses_latest_quota_not_stale_worker_snapshot():
         e.set_quota(QuotaPolicy("new-one-at-a-time",scope="machine",max_active_leases=1))
         e.claim_task(TaskDemand("task-a",["code"]),"w1",lease_seconds=60)
         with pytest.raises(ValueError,match="Quota exceeded: new-one-at-a-time"):
-            stale.claim_task(TaskDemand("task-b",["code"]),"w2",lease_seconds=60)
+            stale.claim_task(TaskDemand("task-b",["code"],demand=1),"w2",lease_seconds=60)
     finally:
         a.close(); b.close()
 
@@ -180,3 +180,104 @@ def test_postgres_effect_execution_has_single_owner_across_hosts():
     assert "error" not in error_box
     assert result_box["record"].status == EffectStatus.SUCCEEDED.value
     assert result_box["record"].result == {"owner":"first"}
+
+
+def test_postgres_v53_resource_guard_rejects_stale_reservation_commit():
+    from threading import Event, Thread
+
+    from aasm.evidence import EvidenceRecord
+    from aasm.model import ProblemSpec
+    from aasm.persistence.postgres import PostgresStore
+    from aasm.resource_governance import CapacityWindowKind, ResourceCapacity, ResourceDemandEstimate
+    from aasm.resource_routing import ResourceAwareCandidate, ResourceRoutingPolicy
+    from aasm.runtime_v53 import AASMEngine, RESOURCE_AUTHORITY_CAPABILITIES
+    from aasm.scoped_authority import Principal, ScopedAuthorityGrant, Workspace
+
+    seed_store=PostgresStore(DSN)
+    seed=AASMEngine(ProblemSpec("postgres v0.53 resource CAS"),store=seed_store)
+    trust=seed.add_evidence(EvidenceRecord(kind="trust_anchor",statement="postgres v53 root",source="fixture"),reason="postgres v53 trust")
+    seed.bootstrap_scoped_workspace(Principal("root","SYSTEM"),Workspace("workspace-a","root"),trust_anchor_evidence_id=trust.evidence_id)
+    seed.admit_scoped_authority_grant(ScopedAuthorityGrant(
+        "root","root","workspace-a","root",
+        (RESOURCE_AUTHORITY_CAPABILITIES["capacity_register"],RESOURCE_AUTHORITY_CAPABILITIES["reserve"]),
+        delegable=True,remaining_delegation_depth=4,
+    ))
+    seed.register_resource_capacity(ResourceCapacity(
+        resource_id="expert-weekly",
+        resource_class="EXPERT_MODEL_ALLOWANCE",
+        unit="credits",
+        owner_principal_id="root",
+        workspace_id="workspace-a",
+        scope_id="root",
+        provider="fixture",
+        window_kind=CapacityWindowKind.FIXED,
+        total=100.0,
+        protected_reserve=20.0,
+    ),actor_principal_id="root")
+    mid=seed.snapshot.machine_id
+    seed_store.close()
+
+    store_a=PostgresStore(DSN)
+    store_b=PostgresStore(DSN)
+    host_a=AASMEngine.resume(mid,store_a)
+    host_b=AASMEngine.resume(mid,store_b)
+    reached_commit=Event()
+    release_commit=Event()
+    outcome={}
+    original_record=host_b._record_resource_document
+
+    def candidate():
+        return ResourceAwareCandidate(
+            "expert",
+            correctness=.95,
+            evidence_quality=.95,
+            expected_progress=.9,
+            provider_quota_burn=50,
+            scarce_expert_usage=50,
+            demands=(ResourceDemandEstimate(
+                "EXPERT_MODEL_ALLOWANCE",50,"credits",resource_id="expert-weekly",upper_bound=50,
+            ),),
+        )
+
+    def blocked_record(*,record_type,**kwargs):
+        if record_type=="routing_transaction":
+            reached_commit.set()
+            if not release_commit.wait(10):
+                raise TimeoutError("PostgreSQL stale reservation test was not released")
+        return original_record(record_type=record_type,**kwargs)
+
+    host_b._record_resource_document=blocked_record
+
+    def run_stale_host():
+        try:
+            outcome["result"]=host_b.select_and_reserve_resource_candidate(
+                [candidate()],ResourceRoutingPolicy(),workspace_id="workspace-a",scope_id="root",actor_principal_id="root",
+            )
+        except Exception as exc:
+            outcome["error"]=exc
+
+    thread=Thread(target=run_stale_host,daemon=True)
+    thread.start()
+    try:
+        assert reached_commit.wait(10),"PostgreSQL host B never reached guarded resource commit"
+        first=host_a.select_and_reserve_resource_candidate(
+            [candidate()],ResourceRoutingPolicy(),workspace_id="workspace-a",scope_id="root",actor_principal_id="root",
+        )
+        assert first["transaction"]["reservation"]["total_reserved"]==50.0
+    finally:
+        release_commit.set()
+        thread.join(10)
+
+    try:
+        assert not thread.is_alive()
+        assert "result" not in outcome
+        assert isinstance(outcome.get("error"),ValueError)
+        assert "Stale machine version" in str(outcome["error"])
+        canonical=store_a.load_snapshot(mid)
+        assert host_b.snapshot.canonical_hash()==canonical.canonical_hash()
+        report=host_b.resource_governance_report(workspace_id="workspace-a",scope_id="root")
+        assert len(report["reservations"])==1
+        assert report["capacities"]["expert-weekly"]["committed"]==50.0
+        assert host_b.replay().canonical_hash()==canonical.canonical_hash()
+    finally:
+        store_a.close(); store_b.close()
