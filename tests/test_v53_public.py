@@ -1,6 +1,7 @@
 from aasm import demo_stack
 from aasm import public_v52
 from aasm import public_v53
+from aasm import public_v54
 from aasm.cli_v53 import build_parser
 from aasm.runtime_v53_learning import AASMEngine, SOLVER_LEARNING_APPLY_CAPABILITY
 
@@ -15,9 +16,10 @@ def test_v53_public_surface_is_additive_and_active():
     assert public_v52.__version__ == "0.52.0"
 
 
-def test_v53_active_public_surface_binds_demo_stack_to_v53_runtime():
-    assert demo_stack.AASMEngine is public_v53.AASMEngine
-    assert demo_stack._runtime_version() == "0.53.0"
+def test_v53_parent_no_longer_owns_active_demo_stack_after_v54_promotion():
+    assert demo_stack.AASMEngine is public_v54.AASMEngine
+    assert demo_stack._runtime_version() == "0.54.0"
+    assert demo_stack.AASMEngine is not public_v53.AASMEngine
 
 
 def test_v53_public_contract_preserves_authority_store_and_solver_learning_safety_boundaries():
