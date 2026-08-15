@@ -1,8 +1,11 @@
+from threading import Event, Thread
+
 import pytest
 
 from aasm.evidence import EvidenceRecord
-from aasm.effects import EffectSpec, EffectStatus, RetryPolicy
+from aasm.effects import EffectExecutionError, EffectSpec, EffectStatus, RetryPolicy
 from aasm.model import ProblemSpec
+from aasm.persistence import SQLiteStore
 from aasm.resource_governance import CapacityWindowKind, ResourceCapacity, ResourceDemandEstimate
 from aasm.resource_routing import ResourceAwareCandidate, ResourceRoutingPolicy
 from aasm.resources import ResourceRecord, TaskDemand
@@ -17,8 +20,9 @@ SCOPE = "root"
 ROOT = "root"
 
 
-def bootstrapped_engine(engine_cls=AASMEngine):
-    engine = engine_cls(ProblemSpec("v0.54 effect governance"))
+def bootstrapped_engine(engine_cls=AASMEngine, *, store=None):
+    kwargs = {} if store is None else {"store": store}
+    engine = engine_cls(ProblemSpec("v0.54 effect governance"), **kwargs)
     trust = engine.add_evidence(
         EvidenceRecord(
             kind="trust_anchor",
@@ -304,6 +308,117 @@ def test_retry_appends_new_ownership_and_reconciliation_instead_of_overwriting_h
     assert len(second.ownership_history) == 2
     assert len(second.reconciliation_history) == 2
     assert {row["outcome"] for row in second.reconciliation_history} == {"FAILED", "CONFIRMED"}
+
+
+def test_sqlite_recovery_retains_ownership_marks_unknown_and_requires_scoped_reconciliation(tmp_path):
+    db = tmp_path / "v54-unknown.db"
+    first_store = SQLiteStore(db)
+    first = bootstrapped_engine(store=first_store)
+    grant(first, "effect.authorize", "effect.execute", "effect.reconcile")
+    record = first.propose_effect(
+        EffectSpec("external-write", idempotency_key="v54-unknown"),
+        workspace_id=WORKSPACE,
+        scope_id=SCOPE,
+        proposer_principal_id=ROOT,
+    )
+    lease = effect_lease(first, record.spec.effect_id)
+    first.authorize_effect(
+        record.spec.effect_id,
+        workspace_id=WORKSPACE,
+        scope_id=SCOPE,
+        actor_principal_id=ROOT,
+    )
+    machine_id = first.snapshot.machine_id
+    entered = Event()
+    release = Event()
+    error_box = {}
+
+    def executor(spec, key):
+        durable = first_store.load_effect(machine_id, spec.effect_id)
+        assert durable.ownership is not None
+        entered.set()
+        if not release.wait(10):
+            raise TimeoutError("test executor was not released")
+        return {"external": "may-have-succeeded"}
+
+    def run_first():
+        try:
+            first.execute_effect(
+                record.spec.effect_id,
+                executor,
+                workspace_id=WORKSPACE,
+                scope_id=SCOPE,
+                actor_principal_id=ROOT,
+                owner_worker_id="worker-1",
+                task_lease_id=lease["lease_id"],
+            )
+        except Exception as exc:
+            error_box["error"] = exc
+
+    thread = Thread(target=run_first, daemon=True)
+    thread.start()
+    recovery_store = SQLiteStore(db)
+    try:
+        assert entered.wait(10), "executor never crossed the external boundary"
+        running = recovery_store.load_effect(machine_id, record.spec.effect_id)
+        ownership_id = running.ownership["ownership_id"]
+        execution_id = running.execution_id
+
+        recovered = AASMEngine.resume(machine_id, recovery_store, recover_effects=True)
+        unknown = recovery_store.load_effect(machine_id, record.spec.effect_id)
+        assert unknown.status == EffectStatus.UNKNOWN.value
+        assert unknown.execution_id == execution_id
+        assert unknown.ownership["ownership_id"] == ownership_id
+        assert unknown.reconciliation["outcome"] == "UNKNOWN"
+        assert unknown.reconciliation["ownership_id"] == ownership_id
+        assert unknown.reconciliation["retry_blocked"] is True
+        assert len(unknown.ownership_history) == 1
+        assert len(unknown.reconciliation_history) == 1
+
+        calls = []
+        with pytest.raises(ValueError, match="status UNKNOWN"):
+            recovered.execute_effect(
+                record.spec.effect_id,
+                lambda spec, key: calls.append(key) or {},
+                workspace_id=WORKSPACE,
+                scope_id=SCOPE,
+                actor_principal_id=ROOT,
+                owner_worker_id="worker-1",
+                task_lease_id=lease["lease_id"],
+            )
+        assert calls == []
+
+        release.set()
+        thread.join(10)
+        assert isinstance(error_box.get("error"), EffectExecutionError)
+        assert "lost execution ownership" in str(error_box["error"])
+        assert recovery_store.load_effect(machine_id, record.spec.effect_id).status == EffectStatus.UNKNOWN.value
+
+        reconciled = recovered.reconcile_effect(
+            record.spec.effect_id,
+            succeeded=True,
+            result={"observed": True},
+            evidence=["external-observation"],
+            workspace_id=WORKSPACE,
+            scope_id=SCOPE,
+            actor_principal_id=ROOT,
+        )
+        assert reconciled.status == EffectStatus.SUCCEEDED.value
+        assert reconciled.ownership["ownership_id"] == ownership_id
+        assert reconciled.reconciliation["outcome"] == "CONFIRMED"
+        assert reconciled.reconciliation["ownership_id"] == ownership_id
+        assert reconciled.reconciliation["retry_blocked"] is False
+        assert len(reconciled.reconciliation_history) == 2
+        assert [row["outcome"] for row in reconciled.reconciliation_history] == ["UNKNOWN", "CONFIRMED"]
+        report = recovered.effect_governance_report(workspace_id=WORKSPACE, scope_id=SCOPE)
+        assert ownership_id in report["ownerships"]
+        assert reconciled.reconciliation["reconciliation_id"] in report["reconciliations"]
+        assert recovered.replay().canonical_hash() == recovered.snapshot.canonical_hash()
+    finally:
+        release.set()
+        thread.join(10)
+        first_store.close()
+        recovery_store.close()
 
 
 def test_v54_refuses_to_silently_adopt_legacy_v53_effect_without_intent():
