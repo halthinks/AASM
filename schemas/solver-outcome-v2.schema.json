@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/solver-outcome-v2.schema.json",
+  "title": "AASM Solver Outcome v2",
+  "type": "object",
+  "required": ["outcome_id", "contract_id", "contract_version", "source_result_id", "source_result_fingerprint", "request_id", "request_fingerprint", "model_fingerprint", "provider_id", "provider_implementation", "provider_version", "legacy_status", "termination", "solution_status", "incumbent_status", "optimality_claim", "evidence", "objective_value", "best_bound", "relative_gap", "wall_time_ms", "statistics", "source_diagnostics", "metadata", "has_decisive_negative_proof", "has_proven_optimality", "fingerprint"],
+  "properties": {
+    "outcome_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.solver.outcome.v2"},
+    "contract_version": {"const": "0.1.0"},
+    "source_result_id": {"type": "string", "minLength": 1},
+    "source_result_fingerprint": {"type": "string", "minLength": 16},
+    "request_id": {"type": "string", "minLength": 1},
+    "request_fingerprint": {"type": "string", "minLength": 1},
+    "model_fingerprint": {"type": "string", "minLength": 1},
+    "provider_id": {"type": "string", "minLength": 1},
+    "provider_implementation": {"type": "string", "minLength": 1},
+    "provider_version": {"type": "string", "minLength": 1},
+    "legacy_status": {"enum": ["SAT", "UNSAT", "OPTIMAL", "FEASIBLE", "INFEASIBLE", "UNKNOWN", "TIMEOUT", "ERROR"]},
+    "termination": {
+      "type": "object",
+      "required": ["contract_id", "contract_version", "reason", "raw_status", "raw_status_code", "raw_message", "limit_value", "limit_unit", "metadata"],
+      "properties": {
+        "contract_id": {"const": "aasm.solver.termination.v2"},
+        "contract_version": {"const": "0.1.0"},
+        "reason": {"enum": ["COMPLETED", "TIME_LIMIT", "NODE_LIMIT", "ITERATION_LIMIT", "SOLUTION_LIMIT", "MEMORY_LIMIT", "USER_INTERRUPT", "NUMERICAL_FAILURE", "MODEL_INVALID", "PROVIDER_UNAVAILABLE", "UNSUPPORTED_FEATURE", "INTERNAL_ERROR", "UNKNOWN"]},
+        "raw_status": {"type": "string"},
+        "raw_status_code": {"type": "string"},
+        "raw_message": {"type": "string"},
+        "limit_value": {"type": ["number", "null"]},
+        "limit_unit": {"type": "string"},
+        "metadata": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "solution_status": {"enum": ["FEASIBLE", "INFEASIBLE", "UNKNOWN"]},
+    "incumbent_status": {"enum": ["PRESENT", "ABSENT", "UNKNOWN"]},
+    "optimality_claim": {"enum": ["CLAIMED_OPTIMAL", "NOT_CLAIMED", "NOT_APPLICABLE", "UNKNOWN"]},
+    "evidence": {
+      "type": "object",
+      "required": ["contract_id", "contract_version", "grade", "proof_status", "certificate_ids", "checker_ids", "validation_evidence_ids", "diagnostics"],
+      "properties": {
+        "contract_id": {"const": "aasm.solver.evidence-grade.v1"},
+        "contract_version": {"const": "0.1.0"},
+        "grade": {"enum": ["CHECKED_CERTIFICATE", "INDEPENDENTLY_VALIDATED", "PROVIDER_ASSERTED", "UNVERIFIED", "INCONCLUSIVE"]},
+        "proof_status": {"enum": ["CHECKED_CERTIFICATE", "UNCHECKED_CERTIFICATE", "NO_CERTIFICATE", "NOT_APPLICABLE", "UNKNOWN"]},
+        "certificate_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "checker_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "validation_evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "diagnostics": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "objective_value": {"type": ["number", "null"]},
+    "best_bound": {"type": ["number", "null"]},
+    "relative_gap": {"type": ["number", "null"]},
+    "wall_time_ms": {"type": "integer", "minimum": 0},
+    "statistics": {"type": "object"},
+    "source_diagnostics": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "metadata": {"type": "object"},
+    "has_decisive_negative_proof": {"type": "boolean"},
+    "has_proven_optimality": {"type": "boolean"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
