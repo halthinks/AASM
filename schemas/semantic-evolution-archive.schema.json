@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/semantic-evolution-archive.schema.json",
+  "title": "AASM Semantic Evolution Archive v1",
+  "type": "object",
+  "required": ["archive_id", "contract_id", "contract_version", "machine_id", "snapshot", "events", "derived_projections", "snapshot_fingerprint", "events_fingerprint", "projections_fingerprint", "root_fingerprint"],
+  "properties": {
+    "archive_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.semantic-evolution.archive.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "machine_id": {"type": "string", "minLength": 1},
+    "snapshot": {"type": "object"},
+    "events": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "derived_projections": {"type": "object"},
+    "snapshot_fingerprint": {"type": "string", "minLength": 16},
+    "events_fingerprint": {"type": "string", "minLength": 16},
+    "projections_fingerprint": {"type": "string", "minLength": 16},
+    "root_fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
