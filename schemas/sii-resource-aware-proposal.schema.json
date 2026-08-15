@@ -30,6 +30,7 @@
     "expected_progress": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
     "expected_wall_time_seconds": {"type": ["number", "null"], "minimum": 0},
     "expected_monetary_cost": {"type": ["number", "null"], "minimum": 0},
+    "expected_provider_quota_burn": {"type": ["number", "null"], "minimum": 0},
     "expected_scarce_expert_usage": {"type": ["number", "null"], "minimum": 0},
     "metadata": {"type": "object"},
     "fingerprint": {"type": "string", "minLength": 1}
