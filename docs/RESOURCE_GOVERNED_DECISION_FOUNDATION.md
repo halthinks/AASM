@@ -1,6 +1,6 @@
 # Resource-Governed Decision Foundation
 
-**Status:** implementation foundation for the v0.52 program; not a v0.52 completion claim.
+**Status:** active implementation foundation for the v0.52 program; not a v0.52 completion claim.
 
 ## Product-backward requirement
 
@@ -75,7 +75,7 @@ Uncertain resource state is Evidence. It is not silently promoted to truth.
 
 ## Capacity windows
 
-The public resource model must support:
+The public resource model supports:
 
 ```text
 FIXED
@@ -86,7 +86,7 @@ UNBOUNDED
 UNKNOWN
 ```
 
-A weekly subscription allowance is a capacity window with an explicit reset/refill horizon. The implementation must not hard-code OpenAI, Codex, ChatGPT, Anthropic, or any other provider into the kernel.
+A weekly subscription allowance is a capacity window with an explicit reset/refill horizon. The implementation does not hard-code OpenAI, Codex, ChatGPT, Anthropic, or any other provider into the kernel.
 
 ## Protected reserve
 
@@ -106,7 +106,7 @@ This prevents routine work from consuming scarce expert-model capacity that poli
 
 ## Proposal-side resource demand
 
-Proposals must be able to state expected resource demand with uncertainty:
+The v0.52 proposal successor binds expected resource demand directly into proposal identity:
 
 ```text
 resource class / optional concrete resource
@@ -116,7 +116,53 @@ unit
 confidence
 ```
 
-Future SII evolution must add these demands to the structured proposal contract rather than creating a separate intelligence-only accounting path.
+`aasm.sii.resource-aware-proposal.v1` wraps the frozen parent SII proposal without rewriting v0.47-v0.51 semantics. Its fingerprint binds the parent proposal fingerprint, the resource demand vector, expected correctness, expected evidence quality, expected progress, expected wall time, expected monetary cost, and expected scarce-expert usage.
+
+Missing decision-quality estimates fail closed to zero during routing compilation. Proposer confidence is not silently reinterpreted as correctness, evidence quality, or expected progress.
+
+## Deterministic resource-aware routing
+
+`aasm.resource.routing.v1` now provides the first governed candidate-selection slice.
+
+Hard feasibility gates apply before ranking:
+
+```text
+correctness >= policy threshold
+evidence quality >= policy threshold
+expected progress >= policy threshold
+all conservative resource demands are feasible
+protected reserves remain intact
+unknown finite capacity is not allocatable
+```
+
+Eligible candidates are then ordered lexicographically:
+
+```text
+1. maximize correctness
+2. maximize evidence quality
+3. maximize expected progress
+4. minimize scarce expert usage
+5. minimize monetary cost
+6. minimize wall time
+7. deterministic candidate ID tie-break
+```
+
+This means cheaper work never defeats a required quality threshold, while equivalent-quality work can preserve scarce expert-model allowance.
+
+## Selection-to-reservation boundary
+
+Selection does not itself consume capacity. The selected candidate's conservative demand envelope must be reserved before execution.
+
+The foundation implements atomic reservation planning:
+
+1. use each demand's upper bound when present;
+2. resolve explicit resource IDs directly;
+3. resolve class-only demands deterministically by resource ID;
+4. preflight the complete allocation plan without mutation;
+5. if any demand is infeasible, reserve nothing;
+6. only after the whole plan is feasible, commit every reservation.
+
+This prevents partial reservation and immediate oversubscription races in the in-process foundation model. Durable distributed reservation/lease ownership remains a later runtime integration step.
 
 ## Authority and resource rights are distinct
 
@@ -129,9 +175,9 @@ Both may be required. Resource availability never grants authority; authority ne
 
 ## Reconciliation and replanning
 
-Reservations are estimates, not final consumption. Execution must reconcile reserved capacity with actual metered use. When expected consumption materially changes, the runtime must be able to pause and re-evaluate the plan before silently exceeding a lease or protected reserve.
+Reservations are estimates, not final consumption. `ResourceCapacity.settle()` separates committed capacity from actual consumption and releases reservation slack during reconciliation.
 
-Required future transition family:
+The broader runtime still needs the durable transition family:
 
 ```text
 RESERVE
@@ -144,6 +190,8 @@ THROTTLE
 FALLBACK
 FREEZE
 ```
+
+When expected consumption materially changes, the runtime must be able to pause and re-evaluate the plan before silently exceeding a lease or protected reserve.
 
 ## Multi-objective target
 
@@ -164,49 +212,50 @@ minimize:
 
 These are dimensions, not fixed kernel weights. Policies may impose hard thresholds, lexicographic priority, Pareto comparison, or other explicitly governed rules.
 
-Example:
-
-```text
-hard:
-  correctness >= required threshold
-  evidence >= required grade
-  protected expert reserve must remain intact
-
-lexicographic:
-  1. maximize correctness
-  2. maximize evidence quality
-  3. maximize expected progress
-  4. minimize scarce expert capacity
-  5. minimize money
-  6. minimize wall time
-```
+The deterministic routing implementation is the first concrete lexicographic policy slice. It does not yet claim to be the full generic v0.52 Pareto/multi-objective engine.
 
 ## Scope compatibility
 
-All new resource objects include principal/workspace/scope seams now so hosted multi-tenancy does not require replacing resource identity later. Scope enforcement remains a public-runtime concern; hosted routing/isolation topology may remain private.
+All new resource objects include principal/workspace/scope seams now so hosted multi-tenancy does not require replacing resource identity later. Resource-aware SII routing also preserves proposer and scope identifiers in its routing IR.
 
-## Initial implementation slice
+Scope enforcement remains a public-runtime concern; hosted routing/isolation topology may remain private.
 
-The first code slice introduces:
+## Delivered foundation slices
+
+The implementation now includes:
 
 - `CapacityWindowKind`;
 - `MeasurementAuthority`;
 - `ResourceObservation`;
 - `ResourceCapacity`;
 - `ResourceDemandEstimate`;
+- `ResourceAwareStructuredProposal`;
+- `ResourceAwareCandidate`;
+- `ResourceRoutingPolicy`;
+- `ResourceRoutingDecision`;
+- `ResourceReservation`;
 - protected-reserve accounting;
 - explicit reset horizon;
 - reservation/release/settlement primitives;
-- fail-closed behavior when finite capacity is unknown;
-- JSON schemas and focused tests.
+- fail-closed unknown finite capacity;
+- conservative upper-bound feasibility;
+- deterministic resource-aware selection;
+- atomic multi-resource reservation;
+- SII proposal → routing-candidate compilation;
+- JSON schemas and focused/adversarial tests.
 
-It intentionally does **not** yet claim:
+## Still required for v0.52 completion
+
+This foundation intentionally does **not** yet claim:
 
 - integration with every provider meter;
-- complete SII proposal wiring;
-- full durable lease persistence;
+- durable resource capacity/observation persistence through the main event reducer;
+- distributed reservation/lease ownership and race safety across workers/processes;
+- full runtime submission/commit APIs for resource-aware SII proposals;
+- automatic re-estimation/replan transitions;
+- predicted-versus-actual calibration history;
+- generic Pareto-frontier solving over resource-aware decision vectors;
 - automatic scarcity pricing;
-- full v0.52 multi-objective solving;
 - hosted billing or portal behavior.
 
 Those must build on these public primitives rather than bypass them.
