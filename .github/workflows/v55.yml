@@ -26,12 +26,13 @@ jobs:
         run: python scripts/release_manifest.py --check-file-list
       - name: Check v0.55 contract doctrine
         run: python scripts/check_v55_contracts.py
-      - name: Run v0.55 semantic evolution and provider admission fixtures
+      - name: Run v0.55 governed semantic evolution fixtures
         run: |
           pytest -q \
             tests/test_v55_semantic_evolution_foundation.py \
             tests/test_v55_semantic_evolution_runtime.py \
-            tests/test_v55_model_feature_admission.py
+            tests/test_v55_model_feature_admission.py \
+            tests/test_v55_solver_formulation.py
       - name: Guard released public surface
         run: |
           python - <<'PY'
