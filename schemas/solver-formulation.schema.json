@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/solver-formulation.schema.json",
+  "title": "AASM Solver Formulation v1",
+  "type": "object",
+  "required": ["formulation_id", "contract_id", "contract_version", "source_model", "source_semantic_fingerprint", "target_model", "target_semantic_fingerprint", "target_provider_id", "target_family", "provider_manifest_id", "provider_manifest_fingerprint", "feature_set_id", "feature_set_fingerprint", "admission_report_id", "admission_report_fingerprint", "semantic_fidelity", "object_mappings", "generated_target_objects", "external_reference_bindings", "problem_revision_id", "problem_revision_fingerprint", "predecessor_translation_id", "metadata", "fingerprint"],
+  "$defs": {
+    "mapping": {
+      "type": "object",
+      "required": ["object_kind", "source_id", "target_ids", "mapping_kind", "transformation_id", "tolerance_policy_id", "external_reference_fingerprints", "metadata", "fingerprint"],
+      "properties": {
+        "object_kind": {"enum": ["VARIABLE", "CONSTRAINT", "OBJECTIVE"]},
+        "source_id": {"type": "string", "minLength": 1},
+        "target_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "mapping_kind": {"enum": ["IDENTITY", "EXACT_TRANSFORM", "APPROXIMATE_TRANSFORM"]},
+        "transformation_id": {"type": "string"},
+        "tolerance_policy_id": {"type": "string"},
+        "external_reference_fingerprints": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "metadata": {"type": "object"},
+        "fingerprint": {"type": "string", "minLength": 16}
+      },
+      "additionalProperties": false
+    },
+    "generated": {
+      "type": "object",
+      "required": ["object_kind", "target_id", "transformation_id", "external_reference_fingerprints", "metadata", "fingerprint"],
+      "properties": {
+        "object_kind": {"enum": ["VARIABLE", "CONSTRAINT", "OBJECTIVE"]},
+        "target_id": {"type": "string", "minLength": 1},
+        "transformation_id": {"type": "string", "minLength": 1},
+        "external_reference_fingerprints": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "metadata": {"type": "object"},
+        "fingerprint": {"type": "string", "minLength": 16}
+      },
+      "additionalProperties": false
+    },
+    "reference_binding": {
+      "type": "object",
+      "required": ["reference", "source_object_kind", "source_object_id", "target_object_kind", "target_object_ids", "metadata", "fingerprint"],
+      "properties": {
+        "reference": {"$ref": "external-reference.schema.json"},
+        "source_object_kind": {"enum": ["VARIABLE", "CONSTRAINT", "OBJECTIVE"]},
+        "source_object_id": {"type": "string", "minLength": 1},
+        "target_object_kind": {"enum": ["VARIABLE", "CONSTRAINT", "OBJECTIVE"]},
+        "target_object_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "metadata": {"type": "object"},
+        "fingerprint": {"type": "string", "minLength": 16}
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "formulation_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.solver.formulation.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "source_model": {"type": "object"},
+    "source_semantic_fingerprint": {"type": "string", "minLength": 16},
+    "target_model": {"type": "object"},
+    "target_semantic_fingerprint": {"type": "string", "minLength": 16},
+    "target_provider_id": {"type": "string", "minLength": 1},
+    "target_family": {"type": "string", "minLength": 1},
+    "provider_manifest_id": {"type": "string", "minLength": 1},
+    "provider_manifest_fingerprint": {"type": "string", "minLength": 16},
+    "feature_set_id": {"type": "string", "minLength": 1},
+    "feature_set_fingerprint": {"type": "string", "minLength": 16},
+    "admission_report_id": {"type": "string", "minLength": 1},
+    "admission_report_fingerprint": {"type": "string", "minLength": 16},
+    "semantic_fidelity": {"enum": ["EXACT", "APPROXIMATE"]},
+    "object_mappings": {"type": "array", "items": {"$ref": "#/$defs/mapping"}},
+    "generated_target_objects": {"type": "array", "items": {"$ref": "#/$defs/generated"}},
+    "external_reference_bindings": {"type": "array", "items": {"$ref": "#/$defs/reference_binding"}},
+    "problem_revision_id": {"type": "string"},
+    "problem_revision_fingerprint": {"type": "string"},
+    "predecessor_translation_id": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
