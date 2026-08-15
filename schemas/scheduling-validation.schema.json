@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/scheduling-validation.schema.json",
+  "title": "AASM Scheduling Validation v1",
+  "type": "object",
+  "required": ["report_id", "contract_id", "contract_version", "model_fingerprint", "assignment_fingerprint", "valid", "violations", "validator_id", "validator_version", "fingerprint"],
+  "properties": {
+    "report_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.optimization.scheduling-validation.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "model_fingerprint": {"type": "string", "minLength": 16},
+    "assignment_fingerprint": {"type": "string", "minLength": 16},
+    "valid": {"type": "boolean"},
+    "violations": {"type": "array", "items": {"type": "object"}},
+    "validator_id": {"const": "aasm.checker.scheduling-assignment.v1"},
+    "validator_version": {"const": "0.1.0"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
