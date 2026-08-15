@@ -149,8 +149,14 @@ def main() -> None:
     require(root / "tests/test_v53_resource_authority.py", [
         "test_denied_reservation_is_durable_authority_evidence_but_never_resource_commitment",
         "test_authorized_reservation_transaction_derives_from_authority_decision",
+        "test_resource_principal_history_is_derived_from_exact_authority_evidence",
         "test_two_hosts_cannot_commit_reservations_from_same_stale_resource_snapshot",
+        "test_sqlite_two_connections_reject_same_stale_resource_commit",
         "test_settlement_has_independent_capability_and_preserves_reservation_when_denied",
+    ])
+    require(root / "tests/test_postgres_integration.py", [
+        "test_postgres_v53_resource_guard_rejects_stale_reservation_commit",
+        "Stale machine version",
     ])
     require(root / "tests/test_v53_scoped_store.py", [
         "test_raw_machine_reads_fail_closed_across_workspaces",
@@ -159,6 +165,11 @@ def main() -> None:
         "test_unfinished_machine_listing_does_not_leak_other_workspace_machine_ids",
         "test_effect_reads_require_v53_binding_and_scoped_read_authority",
         "test_scoped_store_view_exposes_no_direct_append_or_mutation_surface",
+    ])
+    require(root / "tests/test_v53_public.py", [
+        "test_pre_release_v53_import_does_not_rebind_active_v52_demo_stack",
+        "test_v53_public_contract_preserves_authority_store_and_solver_learning_safety_boundaries",
+        '"scoped-store-contract"',
     ])
 
     print("v0.53 scoped authority contract check: PASS")
