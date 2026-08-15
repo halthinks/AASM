@@ -36,6 +36,7 @@ jobs:
         run: |
           pytest -q \
             tests/test_runtime_v54_effects.py \
+            tests/test_runtime_v54_settlement.py \
             tests/test_runtime_v54_portfolio.py \
             tests/test_runtime_v54_exchange.py \
             tests/test_v54_public.py
@@ -49,7 +50,7 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='v0.54 effect ownership, deterministic portfolio, and solver exchange gates passed'
+            description='v0.54 effect ownership/settlement, deterministic portfolio, and solver exchange gates passed'
           else
             state=failure
             description='v0.54 conformance gate failed'
