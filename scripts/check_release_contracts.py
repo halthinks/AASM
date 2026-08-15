@@ -156,7 +156,6 @@ def main():
         "scoped-store-access.schema.json",
         "solver-learning-artifact.schema.json",
         "solver-learning-validation.schema.json",
-        "solver-learning-application.schema.json",
         "multi-objective-problem.schema.json",
         "pareto-frontier.schema.json",
         "resource-capacity.schema.json",
