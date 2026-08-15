@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aasm.dev/schemas/pareto-frontier.schema.json",
-  "title": "AASM Pareto Frontier",
+  "title": "AASM v0.52 Pareto Frontier",
   "type": "object",
-  "required": ["frontier_id", "problem_fingerprint", "mode", "points", "solution_ids", "completeness_status"],
+  "required": ["frontier_id", "problem_fingerprint", "mode", "points", "solution_ids", "completeness_status", "certificate", "fingerprint"],
   "properties": {
     "frontier_id": {"type": "string", "minLength": 1},
     "problem_fingerprint": {"type": "string", "minLength": 1},
@@ -21,9 +21,14 @@
         "additionalProperties": false
       }
     },
-    "solution_ids": {"type": "array", "items": {"type": "string"}},
-    "completeness_status": {"type": "string", "minLength": 1},
-    "certificate": {"type": ["object", "null"]},
+    "solution_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "completeness_status": {"enum": ["EXHAUSTED_PENDING_CERTIFICATION", "COMPLETE", "FAILED_COMPLETENESS"]},
+    "certificate": {
+      "oneOf": [
+        {"$ref": "pareto-frontier-certificate.schema.json"},
+        {"type": "null"}
+      ]
+    },
     "fingerprint": {"type": "string", "minLength": 1}
   },
   "additionalProperties": false
