@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/solver-learning-artifact.schema.json",
+  "title": "AASM Solver Learning Artifact",
+  "type": "object",
+  "required": [
+    "learning_id",
+    "contract_id",
+    "contract_version",
+    "learning_kind",
+    "learning_class",
+    "model_fingerprint",
+    "solver_family",
+    "payload",
+    "source_evidence_ids",
+    "source_validation",
+    "dependency_fingerprints",
+    "fingerprint"
+  ],
+  "properties": {
+    "learning_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.solver.learning.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "learning_kind": {"enum": ["NO_GOOD", "UNSAT_CORE", "BOUND", "INCUMBENT", "WARM_START", "NATIVE_ACCELERATOR"]},
+    "learning_class": {"enum": ["CORRECTNESS_SENSITIVE", "PERFORMANCE_HINT"]},
+    "model_fingerprint": {"type": "string", "minLength": 1},
+    "solver_family": {"type": "string", "minLength": 1},
+    "payload": {"type": "object"},
+    "source_result_fingerprint": {"type": "string"},
+    "source_evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "source_validation": {"type": "string", "minLength": 1},
+    "provider_id": {"type": "string"},
+    "provider_version": {"type": "string"},
+    "environment_fingerprint": {"type": "string"},
+    "dependency_fingerprints": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
