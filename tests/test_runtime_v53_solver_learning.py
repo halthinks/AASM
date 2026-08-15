@@ -62,17 +62,23 @@ def bootstrapped_engine(name, *capabilities):
 def admit_v48_envelope(target, envelope):
     proposed = target.propose_cross_run_admission(
         envelope,
+        proposer_id="solver-learning-importer",
         target_scope_id="root",
     )
-    assert proposed["status"] == "PROPOSED"
+    decision_id = proposed["decision"]["decision_id"]
+    assert proposed["decision"]["status"] == "PROPOSED"
     authorized = target.authorize_cross_run_admission(
-        envelope.envelope_id,
+        decision_id,
         authority_id="policy",
         authority_class="POLICY",
     )
-    assert authorized["status"] == "AUTHORIZED"
-    committed = target.commit_cross_run_admission(envelope.envelope_id)
-    assert committed["status"] == "ADMITTED"
+    assert authorized["decision"]["status"] == "ACTIVE"
+    committed = target.commit_cross_run_admission(
+        decision_id,
+        worker_id="solver-learning-admission-worker",
+    )
+    assert committed["entry"]["status"] == "ACTIVE"
+    assert committed["entry"]["envelope"]["envelope_id"] == envelope.envelope_id
     return committed
 
 
