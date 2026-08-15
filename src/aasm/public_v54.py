@@ -8,6 +8,12 @@ for _name in dir(_v53):
     if not _name.startswith("_"):
         globals()[_name] = getattr(_v53, _name)
 
+from ._runtime_v54_effect_resources import (
+    EFFECT_RESOURCE_SETTLEMENT_CONTRACT_ID,
+    EFFECT_RESOURCE_SETTLEMENT_CONTRACT_VERSION,
+    EFFECT_RESOURCE_SETTLEMENT_STABILITY,
+    effect_resource_settlement_contract,
+)
 from .effects import (
     EFFECT_DISPATCH_REQUEST_CONTRACT_ID,
     EFFECT_GOVERNANCE_CONTRACT_VERSION,
@@ -46,7 +52,6 @@ from .runtime_v54 import (
     verify_solver_translation,
 )
 from .runtime_v54_exchange import (
-    AASMEngine,
     SOLVER_EXCHANGE_AUTHORITY_CAPABILITY,
     SOLVER_EXCHANGE_CHECKER_ID,
     SOLVER_EXCHANGE_CHECKER_VERSION,
@@ -56,6 +61,7 @@ from .runtime_v54_exchange import (
     SolverLearningExchangeCertificate,
     solver_exchange_contract,
 )
+from .runtime_v54_full import AASMEngine
 from .runtime_v54_portfolio import (
     SOLVER_PORTFOLIO_AUTHORITY_CAPABILITIES,
     SOLVER_PORTFOLIO_RUNTIME_CONTRACT_ID,
@@ -74,6 +80,8 @@ REMOTE_PROTOCOL_VERSION = _v53.REMOTE_PROTOCOL_VERSION
 _NEW_ENGINE_METHODS = [
     "effect_governance_runtime_contract_report",
     "effect_governance_report",
+    "effect_resource_settlement_contract_report",
+    "settle_effect_resources",
     "solver_portfolio_contract_report",
     "solver_portfolio_runtime_contract_report",
     "prepare_solver_portfolio",
@@ -105,6 +113,10 @@ _NEW_IMPORTS = [
     "EFFECT_GOVERNANCE_RUNTIME_CONTRACT_VERSION",
     "EFFECT_GOVERNANCE_RUNTIME_STABILITY",
     "effect_governance_runtime_contract",
+    "EFFECT_RESOURCE_SETTLEMENT_CONTRACT_ID",
+    "EFFECT_RESOURCE_SETTLEMENT_CONTRACT_VERSION",
+    "EFFECT_RESOURCE_SETTLEMENT_STABILITY",
+    "effect_resource_settlement_contract",
     "SOLVER_TRANSLATION_CONTRACT_ID",
     "SOLVER_TRANSLATION_CHECKER_ID",
     "SOLVER_TRANSLATION_CHECKER_VERSION",
@@ -142,6 +154,7 @@ SUPPORTED_CLI_COMMANDS = list(dict.fromkeys([
     *getattr(_v53, "SUPPORTED_CLI_COMMANDS", []),
     "effect-governance-contract",
     "effect-governance-runtime-contract",
+    "effect-resource-settlement-contract",
     "solver-portfolio-contract",
     "solver-portfolio-runtime-contract",
     "solver-exchange-contract",
@@ -149,6 +162,7 @@ SUPPORTED_CLI_COMMANDS = list(dict.fromkeys([
 SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([
     *getattr(_v53, "SUPPORTED_INSPECTION_SURFACES", []),
     "effect-governance",
+    "effect-resource-settlement",
     "solver-portfolio",
     "solver-exchange",
 ]))
@@ -167,6 +181,7 @@ PUBLIC_API_CONTRACT.update({
 PUBLIC_API_CONTRACT["effect_governance"] = {
     **effect_governance_contract(),
     "runtime": effect_governance_runtime_contract(),
+    "resource_settlement": effect_resource_settlement_contract(),
 }
 PUBLIC_API_CONTRACT["solver_portfolio"] = {
     **solver_portfolio_contract(),
@@ -205,6 +220,10 @@ def validate_public_api_contract():
         errors.append("effect external-boundary contract mismatch")
     if (effect.get("runtime") or {}).get("unknown_outcome") != "RETRY_BLOCKED_UNTIL_EXPLICIT_RECONCILIATION":
         errors.append("effect UNKNOWN recovery contract mismatch")
+    if (effect.get("resource_settlement") or {}).get("resource_ledger") != "EXISTING_AASM_RESOURCE_SETTLEMENT_ONLY":
+        errors.append("effect resource-settlement ledger boundary mismatch")
+    if (effect.get("resource_settlement") or {}).get("outcome_gate") != "CONFIRMED_OR_FAILED_RECONCILIATION_REQUIRED":
+        errors.append("effect resource-settlement outcome gate mismatch")
     if portfolio.get("portfolio_contract_id") != SOLVER_PORTFOLIO_CONTRACT_ID:
         errors.append("solver portfolio contract mismatch")
     if portfolio.get("fastest_result") != "NEVER_CORRECTNESS_TIEBREAK":
