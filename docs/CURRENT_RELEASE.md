@@ -1,80 +1,84 @@
-# AASM v0.55.0 — Governed Semantic Evolution and Engineering IR
+# AASM v0.56.0 — Truthful Solver Outcomes
 
-AASM v0.55.0 is the active public package/runtime and advances the adoption contract to `aasm.adoption.v1 / 0.31.0`.
+AASM v0.56.0 is the active public package/runtime and advances the adoption contract to `aasm.adoption.v1 / 0.32.0`.
 
 The stable remote wire-protocol compatibility surface remains **`aasm.remote.v1 / 0.19.0`**. That protocol version is intentionally independent of the package/runtime release version.
 
 ```text
-active public surface: public_v55
-active runtime: runtime_v55.AASMEngine
-parent public surface: public_v54
-parent runtime: runtime_v54_full.AASMEngine
+active public surface: public_v56
+active runtime: runtime_v56.AASMEngine
+parent public surface: public_v55
+parent runtime: runtime_v55.AASMEngine
 remote wire protocol: aasm.remote.v1 / 0.19.0
 
-semantic evolution:
-  aasm.external.reference.v1
-  aasm.problem.revision.v1
-  aasm.problem.delta.v1
-  aasm.semantic-evolution.runtime.v1
-
-solver formulation:
-  aasm.solver.formulation.v1
-  aasm.solver.formulation-certificate.v1
-  aasm.solver.formulation-execution-binding.v1
-  aasm.solver.formulation-runtime.v1
-
-engineering IR:
-  exact pseudo-Boolean/cardinality
-  portable scheduling semantics
-  deterministic quadratic/conic representation
-  governed decision vectors
-  portable semantic-evolution archive
+truthful solver evidence:
+  aasm.solver.outcome.v2
+  aasm.solver.status.v2
+  aasm.solver.termination.v2
+  aasm.solver.evidence-grade.v1
+  aasm.solver.status-v1-projection.v1
+  aasm.solver.provider-status-map.v1
+  aasm.solver.outcome-v2.runtime.v1
 ```
 
-v0.55 extends v0.54 without adding a second truth store, scheduler, resource ledger, or effect lifecycle.
+v0.56.0 is the first cumulative release in the v0.56 family. It completes work package **56.1 — Normalized Solver Outcome v2**. Later v0.56.x patch releases may add the remaining v0.56 work packages without reopening or weakening the v0.56.0 status contract.
 
-## Governed semantic evolution
+## Authoritative detailed solver outcome
 
-External engineering identities, problem revisions, and deltas are explicit durable objects. Revision transitions are reconstructed from existing Evidence and events. A revision-bound operation fails closed while truth-maintenance work is pending or after its source revision is superseded.
+New v0.56 solver-facing features use `SolverOutcomeV2.normalized_status` as the authoritative detailed status. The older v1 optimization status is preserved and fingerprint-bound for compatibility, but projection from v2 to v1 is one-way and explicitly lossy where v1 cannot preserve the distinction.
 
-## Solver formulation governance
+The release distinguishes, among others:
 
-A solver formulation binds the exact source/target models, provider capability manifest, model-admission report, object mappings, external-reference mappings, and optional problem revision. Execution requests may only be bound to a durably registered formulation with a passing governance chain.
+- `OPTIMAL` from `FEASIBLE_NOT_PROVEN_OPTIMAL`;
+- timeout/node/iteration/solution/memory/objective/user-interrupt termination with and without incumbents;
+- `MODEL_INVALID` from `INFEASIBLE`;
+- `NUMERICAL_FAILURE` from generic `UNKNOWN`;
+- `PROVIDER_UNAVAILABLE` and `UNSUPPORTED_FEATURE` from internal errors;
+- `STALE_RESULT` as a first-class fail-closed state;
+- `UNBOUNDED` and `INFEASIBLE_OR_UNBOUNDED` from ordinary infeasibility.
 
-The built-in formulation checker is deliberately limited to exact identity formulations. Non-trivial translations require an independent checker for the requested fidelity.
+## Independent incumbent admission
 
-## Exact discrete IR
+A nonempty assignment cannot become a v0.56 `*_WITH_INCUMBENT`, `SAT`, `OPTIMAL`, or `FEASIBLE_NOT_PROVEN_OPTIMAL` outcome merely because a provider returned values. AASM revalidates the assignment against the exact durable `OptimizationRequest` and model, including objective-value consistency where applicable, before the incumbent is accepted.
 
-Pseudo-Boolean and cardinality constraints have deterministic exact linearization with independent checking and preserved external-reference lineage. Approximate lowering is not claimed.
+The resulting local validation is durable Evidence derived from the exact source result. Outcome normalization itself grants no truth authority.
 
-## Scheduling IR
+## Provider status mapping
 
-Portable scheduling models cover integer tasks, precedence, no-overlap, cumulative resources, exact assignment validation, revision binding, and provider capability admission. Resource capacities/demands must be positive integers.
+Provider status translation is versioned and exact. Substring/fuzzy inference is forbidden.
 
-`execution_adapter = NOT_CLAIMED_BY_THIS_FOUNDATION` remains an explicit release boundary.
+The v0.56.0 qualification corpus includes real provider identity/status checks for:
 
-## Continuous quadratic/conic IR
+- CaDiCaL through PySAT;
+- OR-Tools CP-SAT;
+- HiGHS.
 
-Continuous models use canonical decimal strings and named numeric tolerance policies. The independent validator supports linear/quadratic expressions and standard second-order-cone constraints using deterministic `Decimal` evaluation.
+Raw native status names/codes are preserved. Unknown future provider statuses remain `UNKNOWN`; AASM does not guess their meaning from text fragments.
 
-Exact structural representation is distinct from numerical satisfaction under tolerance. `optimality_proof = NOT_CLAIMED_BY_ASSIGNMENT_VALIDATION`.
+## Proof and optimality boundary
 
-## Governed decision vectors
+A provider `OPTIMAL` status plus an independently validated incumbent remains a provider optimality claim. It is **not** independently proved optimal merely by normalization. Proof certification remains the stronger v0.50 proof/checker boundary and requires its own checked certificate.
 
-Hard floors are constraints, not weighted objectives. Only hard-floor-compliant candidates enter lexicographic comparison. Linear criteria may compile to the released exact-finite multi-objective engine when semantics match exactly. `scalarization = NONE`.
+Likewise, negative provider status does not silently become proof-grade infeasibility.
 
-## Portable semantic archive
+## Durability and replay
 
-The archive contains canonical snapshot material, complete event history, and derived v0.55 projections with section fingerprints and a root fingerprint. Verification replays the archived event sequence through the existing AASM reducer and compares canonical state with the persisted snapshot.
-
-Event sequence numbers provide durable ordering; they are not machine-version counters. Derived projections grant no truth authority and are never replay inputs.
+Solver Outcome v2 records are stored through the existing AASM Evidence/event/reducer path. There is no parallel result table or alternate truth store. Outcome records bind the exact durable request/result/model/provider identities and survive SQLite restart/replay through the existing machine history.
 
 ## Exact release boundary
 
-The dedicated `aasm/v55` gate is read-only and checks inventory, all v0.55 engineering contracts, semantic-evolution/formulation fixtures, replay/archive behavior, and the active `public_v55` surface.
+The dedicated `aasm/v56` gate checks:
 
-Repository-wide release publication remains gated by the ordinary AASM CI/formal/solver/release workflows. See `docs/RELEASE_0.55.md` for the release-specific capability and claim summary.
+- authoritative Solver Outcome v2 contracts and schemas;
+- exhaustive roadmap-mandated terminal-class fixtures;
+- independent incumbent-validation attacks;
+- explicit lossy v2→v1 projection;
+- exact provider-status mapping and ambiguity rejection;
+- real CaDiCaL/PySAT, OR-Tools CP-SAT, and HiGHS qualification;
+- active `public_v56` / released `public_v55` parent compatibility.
 
-Next: **v0.56.0 — Truthful Solver Outcomes, Runtime Provenance, and Reproducibility**.
+Repository-wide release publication remains gated by ordinary AASM CI, formal assurance, Semantic Solver RC, proof, solution-pool, optimization, scoped-authority, solver-learning, v0.54/v0.55 parent gates, and the active v0.56 gate on the same exact SHA.
+
+Next cumulative release: **v0.56.1 — Execution Profiles + Runtime Provenance**.
 
 AASM remains an `0.x` active-development project. License: Apache-2.0 project-wide under `LICENSE`, `NOTICE`, and `LICENSE_POLICY.md`.
