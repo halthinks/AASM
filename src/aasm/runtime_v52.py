@@ -18,6 +18,8 @@ from .resource_routing import (
     ResourceAwareCandidate,
     ResourceRoutingPolicy,
     planning_allocatable,
+    resource_candidate_objective_vector,
+    resource_candidate_pareto_frontier,
 )
 from .runtime_v51 import AASMEngine as V51Engine
 from .semantic_result import canonical_semantic_json, semantic_fingerprint
@@ -47,6 +49,7 @@ def _routing_policy_document(policy: ResourceRoutingPolicy) -> dict[str, Any]:
         "min_evidence_quality": policy.min_evidence_quality,
         "min_expected_progress": policy.min_expected_progress,
         "preserve_protected_reserve": policy.preserve_protected_reserve,
+        "prefer_lower_provider_quota_burn": policy.prefer_lower_provider_quota_burn,
         "prefer_lower_scarce_expert_usage": policy.prefer_lower_scarce_expert_usage,
         "prefer_lower_monetary_cost": policy.prefer_lower_monetary_cost,
         "prefer_lower_wall_time": policy.prefer_lower_wall_time,
@@ -54,6 +57,7 @@ def _routing_policy_document(policy: ResourceRoutingPolicy) -> dict[str, Any]:
         "accepted_measurement_authorities": list(policy.accepted_measurement_authorities),
         "min_observation_confidence": policy.min_observation_confidence,
         "max_observation_freshness_seconds": policy.max_observation_freshness_seconds,
+        "objectives": [row.to_dict() for row in policy.objectives],
     }
 
 
@@ -170,6 +174,10 @@ class AASMEngine(ResourceGovernanceRuntimeMixin, V51Engine):
             }
 
         rows = tuple(candidates)
+        candidate_objectives = {
+            row.candidate_id: resource_candidate_objective_vector(row)
+            for row in sorted(rows, key=lambda value: value.candidate_id)
+        }
         result = super().select_and_reserve_resource_candidate(
             rows,
             policy,
@@ -183,6 +191,7 @@ class AASMEngine(ResourceGovernanceRuntimeMixin, V51Engine):
             "workspace_id": workspace_id,
             "scope_id": scope_id,
             "policy": _routing_policy_document(policy),
+            "candidate_objectives": candidate_objectives,
             "capacity_snapshot": capacity_snapshot,
             "decision": deepcopy(transaction["decision"]),
             "reservation": deepcopy(transaction["reservation"]),
@@ -228,6 +237,78 @@ class AASMEngine(ResourceGovernanceRuntimeMixin, V51Engine):
             "contract_id": RESOURCE_ROUTING_CONTRACT_ID,
             "access_context": {"workspace_id": workspace_id, "scope_id": scope_id},
             "explanations": explanations,
+        }
+
+    def record_resource_candidate_pareto_frontier(
+        self,
+        candidates: Iterable[ResourceAwareCandidate],
+        policy: ResourceRoutingPolicy,
+        *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
+        derived_from=(),
+    ) -> dict[str, Any]:
+        report = self.resource_governance_report(workspace_id=workspace_id, scope_id=scope_id)
+        capacities = [_capacity_from_dict(document) for _, document in sorted(report["capacities"].items())]
+        rows = tuple(candidates)
+        if not rows:
+            raise ValueError("at least one resource-aware candidate is required")
+        frontier = resource_candidate_pareto_frontier(rows, capacities, policy)
+        seed = {
+            "workspace_id": workspace_id,
+            "scope_id": scope_id,
+            "policy": _routing_policy_document(policy),
+            "candidate_vectors": {
+                row.candidate_id: resource_candidate_objective_vector(row)
+                for row in sorted(rows, key=lambda value: value.candidate_id)
+            },
+            "frontier": deepcopy(frontier),
+        }
+        frontier_id = f"resource-candidate-frontier-{semantic_fingerprint(seed)[:20]}"
+        document = {"frontier_id": frontier_id, **seed}
+        evidence_id = self._record_resource_document(
+            record_type="candidate_pareto_frontier",
+            object_id=frontier_id,
+            document=document,
+            source=RESOURCE_ROUTING_CONTRACT_ID,
+            derived_from=derived_from,
+        )
+        return {
+            "frontier": document,
+            "evidence_id": evidence_id,
+            "authority": "EVIDENCE_ONLY",
+        }
+
+    def resource_candidate_pareto_report(
+        self,
+        *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
+    ) -> dict[str, Any]:
+        self._validate_resource_context(workspace_id=workspace_id, scope_id=scope_id)
+        frontiers: dict[str, dict[str, Any]] = {}
+        for row in self.snapshot.evidence.get("records", []):
+            if row.get("status", "active") != "active":
+                continue
+            metadata = row.get("metadata") or {}
+            if metadata.get(_RESOURCE_RECORD_TYPE) != "candidate_pareto_frontier":
+                continue
+            document = metadata.get(_RESOURCE_DOCUMENT)
+            if not isinstance(document, dict):
+                continue
+            if document.get("workspace_id") != workspace_id or document.get("scope_id") != scope_id:
+                continue
+            frontier_id = str(document["frontier_id"])
+            frontiers[frontier_id] = {
+                "document": deepcopy(document),
+                "evidence_id": row.get("evidence_id"),
+                "derived_from": list(row.get("derived_from") or []),
+            }
+        return {
+            "contract_id": RESOURCE_ROUTING_CONTRACT_ID,
+            "access_context": {"workspace_id": workspace_id, "scope_id": scope_id},
+            "frontiers": frontiers,
+            "authority": "EVIDENCE_ONLY",
         }
 
     def resource_consumption_calibration_report(
@@ -318,6 +399,44 @@ class AASMEngine(ResourceGovernanceRuntimeMixin, V51Engine):
 
         lineage = tuple(sorted(set((*map(str, derived_from), *proposal_evidence_ids))))
         result = self.select_and_reserve_resource_candidate(
+            candidates,
+            policy,
+            workspace_id=workspace_id,
+            scope_id=scope_id,
+            derived_from=lineage,
+        )
+        return {
+            **result,
+            "proposal_ids": list(ids),
+            "proposal_evidence_ids": proposal_evidence_ids,
+        }
+
+    def pareto_resource_aware_sii_proposals(
+        self,
+        proposal_ids: Iterable[str],
+        policy: ResourceRoutingPolicy,
+        *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
+        derived_from=(),
+    ) -> dict[str, Any]:
+        report = self.resource_aware_sii_proposal_report(workspace_id=workspace_id, scope_id=scope_id)
+        ids = tuple(sorted(set(map(str, proposal_ids))))
+        if not ids:
+            raise ValueError("at least one durable resource-aware proposal is required")
+        candidates = []
+        proposal_evidence_ids = []
+        for proposal_id in ids:
+            try:
+                row = report["proposals"][proposal_id]
+            except KeyError:
+                raise KeyError(f"unknown resource-aware proposal in access context: {proposal_id}") from None
+            item = ResourceAwareStructuredProposal.from_dict(row["document"]["proposal"])
+            self._durable_parent_sii_proposal(item)
+            candidates.append(item.to_routing_candidate())
+            proposal_evidence_ids.append(str(row["evidence_id"]))
+        lineage = tuple(sorted(set((*map(str, derived_from), *proposal_evidence_ids))))
+        result = self.record_resource_candidate_pareto_frontier(
             candidates,
             policy,
             workspace_id=workspace_id,
