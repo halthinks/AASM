@@ -1,0 +1,61 @@
+name: v0.54 Conformance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  v54:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install AASM test dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Validate v0.54 source/public contracts
+        run: |
+          python scripts/check_v54_contracts.py
+          python - <<'PY'
+          from aasm import public_v54
+          report = public_v54.validate_public_api_contract()
+          assert report['valid'], report
+          assert public_v54.__version__ == '0.54.0'
+          assert public_v54.PUBLIC_RELEASE_STABILITY == 'PRE_RELEASE'
+          assert public_v54.PUBLIC_API_CONTRACT['contract_version'] == '0.30.0'
+          PY
+      - name: Execute v0.54 adversarial and public conformance suite
+        run: |
+          pytest -q \
+            tests/test_runtime_v54_effects.py \
+            tests/test_runtime_v54_portfolio.py \
+            tests/test_runtime_v54_exchange.py \
+            tests/test_v54_public.py
+      - name: Publish v0.54 status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='v0.54 effect ownership, deterministic portfolio, and solver exchange gates passed'
+          else
+            state=failure
+            description='v0.54 conformance gate failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" \
+            -f context='aasm/v54' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
