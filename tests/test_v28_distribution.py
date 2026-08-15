@@ -29,8 +29,8 @@ def test_release_workflow_is_immutable_and_version_agnostic():
     for token in ['workflows: ["CI"]',"aasm/ci-summary","aasm/formal-assurance","compare-builds","SOURCE_DATE_EPOCH","SHA256SUMS.txt",'gh release create "$TAG"','--target "$COMMIT_SHA"','--notes-file docs/CURRENT_RELEASE.md',"verify-github-release"]: assert token in workflow
     assert "--clobber" not in workflow
 
-def test_release_docs_show_current_version_and_next_milestone():
-    readme=(ROOT/"README.md").read_text(encoding="utf-8"); assert f"v{VERSION}" in readme; assert "Next release" in readme; assert "aasm.remote.v1 / 0.19.0" in readme
+def test_release_docs_show_current_version_next_milestone_and_remote_protocol():
+    readme=(ROOT/"README.md").read_text(encoding="utf-8"); current=(ROOT/"docs"/"CURRENT_RELEASE.md").read_text(encoding="utf-8"); assert f"v{VERSION}" in readme; assert "Next release" in readme; assert "aasm.remote.v1 / 0.19.0" in current
 
 def test_release_artifact_cli_reports_project_version():
     completed=subprocess.run([sys.executable,"scripts/release_artifacts.py","version"],cwd=ROOT,check=True,text=True,capture_output=True); assert completed.stdout.strip()==VERSION
