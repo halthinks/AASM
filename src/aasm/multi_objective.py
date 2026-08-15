@@ -469,28 +469,45 @@ def verify_exact_finite_pareto_frontier(problem: MultiObjectiveProblem, frontier
     pool, _, independent_certificate = _complete_pool(problem, max_total_states=max_total_states, max_states_per_step=max_states_per_step)
     all_points = [_point(problem, row) for row in pool.solutions]
     expected = _nondominated(problem, all_points)
-    expected_ids = {row.solution_id for row in expected}
-    actual_ids = {row.solution_id for row in frontier.points}
-    pairwise_nondominant = all(not dominates(problem, left, right) and not dominates(problem, right, left) for index, left in enumerate(frontier.points) for right in frontier.points[index + 1:])
+    expected_by_id = {row.solution_id: row.to_dict() for row in expected}
+    actual_by_id = {row.solution_id: row.to_dict() for row in frontier.points}
+    expected_ids = set(expected_by_id)
+    actual_ids = set(actual_by_id)
+    exact_points_match = actual_by_id == expected_by_id
+    pairwise_nondominant = all(
+        not dominates(problem, left, right) and not dominates(problem, right, left)
+        for index, left in enumerate(frontier.points)
+        for right in frontier.points[index + 1:]
+    )
     diagnostics: list[str] = []
+    if frontier.problem_fingerprint != problem.fingerprint:
+        diagnostics.append("frontier problem fingerprint mismatch")
     if frontier.mode != "EXACT_FINITE_PARETO_FRONTIER":
         diagnostics.append("frontier mode is not exact finite")
     if enumeration_certificate.status != "PASS" or independent_certificate.status != "PASS":
         diagnostics.append("finite feasible-space exhaustion is not certified")
+    if enumeration_certificate.certificate_id != independent_certificate.certificate_id:
+        diagnostics.append("enumeration certificate does not match independently reconstructed finite-space certificate")
     if not pairwise_nondominant:
         diagnostics.append("frontier contains a dominated pair")
     if actual_ids != expected_ids:
-        diagnostics.append("frontier solution set does not equal independently reconstructed nondominated set")
-    frontier_fingerprint = semantic_fingerprint({"problem_fingerprint": problem.fingerprint, "solution_ids": sorted(actual_ids), "points": [row.to_dict() for row in sorted(frontier.points, key=lambda row: row.solution_id)]})
+        diagnostics.append("frontier solution IDs do not equal independently reconstructed nondominated IDs")
+    if not exact_points_match:
+        diagnostics.append("frontier assignments/objective vectors do not exactly match independently reconstructed nondominated points")
+    frontier_fingerprint = semantic_fingerprint({
+        "problem_fingerprint": problem.fingerprint,
+        "solution_ids": sorted(actual_ids),
+        "points": [row.to_dict() for row in sorted(frontier.points, key=lambda row: row.solution_id)],
+    })
     return ParetoFrontierCertificate(
         problem.fingerprint,
         frontier_fingerprint,
-        enumeration_certificate.certificate_id,
+        independent_certificate.certificate_id,
         len(all_points),
         len(frontier.points),
         len(all_points) - len(expected),
         pairwise_nondominant,
-        actual_ids == expected_ids,
+        exact_points_match,
         "PASS" if not diagnostics else "FAIL",
         tuple(diagnostics),
     )
