@@ -1,13 +1,68 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 from .resource_governance import MeasurementAuthority, ResourceCapacity, ResourceDemandEstimate
 
 RESOURCE_ROUTING_CONTRACT_ID = "aasm.resource.routing.v1"
 RESOURCE_ROUTING_CONTRACT_VERSION = "0.1.0"
 RESOURCE_ROUTING_STABILITY = "FOUNDATION_EXPERIMENTAL"
+RESOURCE_ROUTING_OBJECTIVE_IDS = (
+    "correctness",
+    "evidence_quality",
+    "expected_progress",
+    "provider_quota_burn",
+    "scarce_expert_usage",
+    "monetary_cost",
+    "wall_time_seconds",
+)
+
+
+@dataclass(frozen=True)
+class ResourceRoutingObjective:
+    objective_id: str
+    priority: int
+    sense: str
+    tolerance: float = 0.0
+
+    def __post_init__(self) -> None:
+        if self.objective_id not in RESOURCE_ROUTING_OBJECTIVE_IDS:
+            raise ValueError(f"unknown resource routing objective: {self.objective_id}")
+        if int(self.priority) < 0:
+            raise ValueError("resource routing objective priority must be non-negative")
+        if self.sense not in {"MINIMIZE", "MAXIMIZE"}:
+            raise ValueError("resource routing objective sense must be MINIMIZE or MAXIMIZE")
+        if float(self.tolerance) < 0:
+            raise ValueError("resource routing objective tolerance must be non-negative")
+        object.__setattr__(self, "priority", int(self.priority))
+        object.__setattr__(self, "tolerance", float(self.tolerance))
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "objective_id": self.objective_id,
+            "priority": self.priority,
+            "sense": self.sense,
+            "tolerance": self.tolerance,
+        }
+
+
+def default_resource_routing_objectives() -> tuple[ResourceRoutingObjective, ...]:
+    """Backward-compatible quality-first order with quota burn explicit.
+
+    Policies can replace this tuple to choose another governed order; the
+    kernel no longer assumes one permanent economic priority ordering.
+    """
+
+    return (
+        ResourceRoutingObjective("correctness", 0, "MAXIMIZE"),
+        ResourceRoutingObjective("evidence_quality", 1, "MAXIMIZE"),
+        ResourceRoutingObjective("expected_progress", 2, "MAXIMIZE"),
+        ResourceRoutingObjective("provider_quota_burn", 3, "MINIMIZE"),
+        ResourceRoutingObjective("scarce_expert_usage", 4, "MINIMIZE"),
+        ResourceRoutingObjective("monetary_cost", 5, "MINIMIZE"),
+        ResourceRoutingObjective("wall_time_seconds", 6, "MINIMIZE"),
+    )
 
 
 @dataclass(frozen=True)
@@ -32,6 +87,9 @@ class ResourceAwareCandidate:
         for name in ("wall_time_seconds", "monetary_cost", "provider_quota_burn", "scarce_expert_usage"):
             if float(getattr(self, name)) < 0:
                 raise ValueError(f"{name} must be non-negative")
+        metadata = dict(self.metadata)
+        metadata.setdefault("provider_quota_burn", float(self.provider_quota_burn))
+        object.__setattr__(self, "metadata", metadata)
 
 
 @dataclass(frozen=True)
@@ -52,6 +110,7 @@ class ResourceRoutingPolicy:
     )
     min_observation_confidence: float = 0.0
     max_observation_freshness_seconds: float | None = None
+    objectives: tuple[ResourceRoutingObjective | Mapping[str, Any], ...] = ()
 
     def __post_init__(self) -> None:
         for name in ("min_correctness", "min_evidence_quality", "min_expected_progress", "min_observation_confidence"):
@@ -64,6 +123,17 @@ class ResourceRoutingPolicy:
         object.__setattr__(self, "accepted_measurement_authorities", tuple(sorted(set(self.accepted_measurement_authorities))))
         if self.max_observation_freshness_seconds is not None and self.max_observation_freshness_seconds < 0:
             raise ValueError("max_observation_freshness_seconds must be non-negative")
+        objectives = tuple(
+            row if isinstance(row, ResourceRoutingObjective) else ResourceRoutingObjective(**dict(row))
+            for row in self.objectives
+        ) or default_resource_routing_objectives()
+        ids = [row.objective_id for row in objectives]
+        priorities = [row.priority for row in objectives]
+        if len(ids) != len(set(ids)):
+            raise ValueError("resource routing objectives must have unique objective IDs")
+        if len(priorities) != len(set(priorities)):
+            raise ValueError("resource routing objectives must have unique priorities")
+        object.__setattr__(self, "objectives", tuple(sorted(objectives, key=lambda row: (row.priority, row.objective_id))))
 
 
 @dataclass(frozen=True)
@@ -144,7 +214,11 @@ def _capacity_rejection_reasons(candidate: ResourceAwareCandidate, capacities: d
     return reasons
 
 
-def select_resource_aware_candidate(candidates: Iterable[ResourceAwareCandidate], capacities: Iterable[ResourceCapacity], policy: ResourceRoutingPolicy) -> ResourceRoutingDecision:
+def _eligible_resource_candidates(
+    candidates: Iterable[ResourceAwareCandidate],
+    capacities: Iterable[ResourceCapacity],
+    policy: ResourceRoutingPolicy,
+) -> tuple[list[ResourceAwareCandidate], dict[str, tuple[str, ...]]]:
     capacity_map = {row.resource_id: row for row in capacities}
     rows = sorted(candidates, key=lambda row: row.candidate_id)
     rejected: dict[str, tuple[str, ...]] = {}
@@ -162,28 +236,103 @@ def select_resource_aware_candidate(candidates: Iterable[ResourceAwareCandidate]
             rejected[candidate.candidate_id] = tuple(sorted(set(reasons)))
         else:
             eligible.append(candidate)
+    return eligible, rejected
+
+
+def resource_candidate_objective_vector(candidate: ResourceAwareCandidate) -> dict[str, float]:
+    return {objective_id: float(getattr(candidate, objective_id)) for objective_id in RESOURCE_ROUTING_OBJECTIVE_IDS}
+
+
+def _legacy_objective_enabled(policy: ResourceRoutingPolicy, objective_id: str) -> bool:
+    return {
+        "provider_quota_burn": policy.prefer_lower_provider_quota_burn,
+        "scarce_expert_usage": policy.prefer_lower_scarce_expert_usage,
+        "monetary_cost": policy.prefer_lower_monetary_cost,
+        "wall_time_seconds": policy.prefer_lower_wall_time,
+    }.get(objective_id, True)
+
+
+def _rank_value(candidate: ResourceAwareCandidate, objective: ResourceRoutingObjective, policy: ResourceRoutingPolicy) -> float:
+    if not _legacy_objective_enabled(policy, objective.objective_id):
+        return 0.0
+    value = float(getattr(candidate, objective.objective_id))
+    return -value if objective.sense == "MAXIMIZE" else value
+
+
+def select_resource_aware_candidate(candidates: Iterable[ResourceAwareCandidate], capacities: Iterable[ResourceCapacity], policy: ResourceRoutingPolicy) -> ResourceRoutingDecision:
+    eligible, rejected = _eligible_resource_candidates(candidates, capacities, policy)
     if not eligible:
         return ResourceRoutingDecision(None, (), rejected, "NO_ELIGIBLE_CANDIDATE")
 
     def rank(candidate: ResourceAwareCandidate) -> tuple[Any, ...]:
-        return (
-            -candidate.correctness,
-            -candidate.evidence_quality,
-            -candidate.expected_progress,
-            candidate.provider_quota_burn if policy.prefer_lower_provider_quota_burn else 0.0,
-            candidate.scarce_expert_usage if policy.prefer_lower_scarce_expert_usage else 0.0,
-            candidate.monetary_cost if policy.prefer_lower_monetary_cost else 0.0,
-            candidate.wall_time_seconds if policy.prefer_lower_wall_time else 0.0,
-            candidate.candidate_id,
-        )
+        return tuple(_rank_value(candidate, objective, policy) for objective in policy.objectives) + (candidate.candidate_id,)
 
     selected = min(eligible, key=rank)
     return ResourceRoutingDecision(
         selected.candidate_id,
         tuple(row.candidate_id for row in sorted(eligible, key=lambda row: row.candidate_id)),
         rejected,
-        "LEXICOGRAPHIC_QUALITY_THEN_RESOURCE_ECONOMY",
+        "LEXICOGRAPHIC_GOVERNED_OBJECTIVE_POLICY",
     )
+
+
+def _objective_no_worse(left: float, right: float, objective: ResourceRoutingObjective) -> bool:
+    if objective.sense == "MAXIMIZE":
+        return left >= right - objective.tolerance
+    return left <= right + objective.tolerance
+
+
+def _objective_strictly_better(left: float, right: float, objective: ResourceRoutingObjective) -> bool:
+    if objective.sense == "MAXIMIZE":
+        return left > right + objective.tolerance
+    return left < right - objective.tolerance
+
+
+def resource_candidate_dominates(
+    left: ResourceAwareCandidate,
+    right: ResourceAwareCandidate,
+    policy: ResourceRoutingPolicy,
+) -> bool:
+    objectives = tuple(row for row in policy.objectives if _legacy_objective_enabled(policy, row.objective_id))
+    if not objectives:
+        return False
+    return all(
+        _objective_no_worse(float(getattr(left, row.objective_id)), float(getattr(right, row.objective_id)), row)
+        for row in objectives
+    ) and any(
+        _objective_strictly_better(float(getattr(left, row.objective_id)), float(getattr(right, row.objective_id)), row)
+        for row in objectives
+    )
+
+
+def resource_candidate_pareto_frontier(
+    candidates: Iterable[ResourceAwareCandidate],
+    capacities: Iterable[ResourceCapacity],
+    policy: ResourceRoutingPolicy,
+) -> dict[str, Any]:
+    eligible, rejected = _eligible_resource_candidates(candidates, capacities, policy)
+    frontier = tuple(sorted(
+        (
+            candidate
+            for candidate in eligible
+            if not any(
+                other.candidate_id != candidate.candidate_id and resource_candidate_dominates(other, candidate, policy)
+                for other in eligible
+            )
+        ),
+        key=lambda row: row.candidate_id,
+    ))
+    return {
+        "contract_id": RESOURCE_ROUTING_CONTRACT_ID,
+        "contract_version": RESOURCE_ROUTING_CONTRACT_VERSION,
+        "mode": "EXACT_OVER_ELIGIBLE_CANDIDATE_SET",
+        "objective_policy": [row.to_dict() for row in policy.objectives],
+        "eligible_candidate_ids": [row.candidate_id for row in eligible],
+        "frontier_candidate_ids": [row.candidate_id for row in frontier],
+        "frontier_vectors": {row.candidate_id: resource_candidate_objective_vector(row) for row in frontier},
+        "rejected": rejected,
+        "authority": "EVIDENCE_ONLY",
+    }
 
 
 def reserve_candidate_resources(candidate: ResourceAwareCandidate, capacities: Iterable[ResourceCapacity], policy: ResourceRoutingPolicy | None = None) -> ResourceReservation:
@@ -213,11 +362,17 @@ __all__ = [
     "RESOURCE_ROUTING_CONTRACT_ID",
     "RESOURCE_ROUTING_CONTRACT_VERSION",
     "RESOURCE_ROUTING_STABILITY",
+    "RESOURCE_ROUTING_OBJECTIVE_IDS",
     "ResourceAwareCandidate",
     "ResourceReservation",
     "ResourceRoutingDecision",
+    "ResourceRoutingObjective",
     "ResourceRoutingPolicy",
+    "default_resource_routing_objectives",
     "planning_allocatable",
+    "resource_candidate_dominates",
+    "resource_candidate_objective_vector",
+    "resource_candidate_pareto_frontier",
     "reserve_candidate_resources",
     "select_resource_aware_candidate",
 ]
