@@ -19,6 +19,23 @@ _RESOURCE_DOCUMENT = "document"
 class AASMEngine(ResourceGovernanceRuntimeMixin, V51Engine):
     """Experimental v0.52 resource-governed decision runtime over v0.51."""
 
+    def _durable_parent_sii_proposal(self, item: ResourceAwareStructuredProposal) -> dict[str, Any]:
+        projection = self._governed_sii().legacy.projection()
+        try:
+            parent = projection["proposals"][item.parent_proposal_id]
+        except KeyError:
+            raise KeyError(
+                f"resource-aware proposal requires an already durable governed parent SII proposal: {item.parent_proposal_id}"
+            ) from None
+        durable = parent["proposal"]
+        if durable.get("fingerprint") != item.proposal.fingerprint:
+            raise ValueError("resource-aware proposal parent fingerprint does not match durable SII proposal")
+        if durable.get("proposer_id") != item.proposer_id:
+            raise ValueError("resource-aware proposal proposer does not match durable SII proposal")
+        if durable.get("scope_id") != item.scope_id:
+            raise ValueError("resource-aware proposal scope does not match durable SII proposal")
+        return parent
+
     def submit_resource_aware_sii_proposal(
         self,
         proposal: ResourceAwareStructuredProposal | Mapping[str, Any],
@@ -32,19 +49,23 @@ class AASMEngine(ResourceGovernanceRuntimeMixin, V51Engine):
         self._validate_resource_context(workspace_id=workspace_id, scope_id=effective_scope_id)
         if item.scope_id != effective_scope_id:
             raise PermissionError("resource-aware proposal scope does not match submission scope")
+        parent = self._durable_parent_sii_proposal(item)
 
         document = {
             "resource_aware_proposal_id": item.resource_aware_proposal_id,
             "workspace_id": workspace_id,
             "scope_id": effective_scope_id,
+            "parent_proposal_id": item.parent_proposal_id,
+            "parent_proposal_evidence_id": parent["evidence_id"],
             "proposal": item.to_dict(),
         }
+        lineage = tuple(sorted(set((*map(str, derived_from), str(parent["evidence_id"])))))
         evidence_id = self._record_resource_document(
             record_type="resource_aware_proposal",
             object_id=item.resource_aware_proposal_id,
             document=document,
             source=SII_RESOURCE_AWARE_PROPOSAL_CONTRACT_ID,
-            derived_from=derived_from,
+            derived_from=lineage,
         )
         return {"proposal": deepcopy(document), "evidence_id": evidence_id}
 
@@ -100,6 +121,7 @@ class AASMEngine(ResourceGovernanceRuntimeMixin, V51Engine):
             except KeyError:
                 raise KeyError(f"unknown resource-aware proposal in access context: {proposal_id}") from None
             item = ResourceAwareStructuredProposal.from_dict(row["document"]["proposal"])
+            self._durable_parent_sii_proposal(item)
             candidates.append(item.to_routing_candidate())
             proposal_evidence_ids.append(str(row["evidence_id"]))
 
