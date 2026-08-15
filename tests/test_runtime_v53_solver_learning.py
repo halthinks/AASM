@@ -5,9 +5,10 @@ from aasm.optimization import (
     OptimizationConstraint,
     OptimizationModel,
     OptimizationObjective,
+    OptimizationRequest,
     OptimizationVariable,
 )
-from aasm.runtime_v53_learning import AASMEngine
+from aasm.runtime_v53_learning import AASMEngine, SOLVER_LEARNING_APPLY_CAPABILITY
 from aasm.scoped_authority import Principal, ScopedAuthorityGrant, Workspace
 from aasm.solver_learning import SolverLearningArtifact
 from aasm._runtime_v53_solver_learning import SOLVER_LEARNING_AUTHORITY_CAPABILITIES
@@ -108,12 +109,8 @@ def source_no_good(source, model, *, forged=False):
     return artifact, recorded
 
 
-def test_cross_run_solver_learning_reuses_v48_transport_and_stays_inert_until_local_validation():
-    model = fixture_model()
-    source = bootstrapped_engine(
-        "source",
-        SOLVER_LEARNING_AUTHORITY_CAPABILITIES["export"],
-    )
+def exported_no_good(model):
+    source = bootstrapped_engine("source", SOLVER_LEARNING_AUTHORITY_CAPABILITIES["export"])
     artifact, recorded = source_no_good(source, model)
     exported = source.export_solver_learning_artifact(
         artifact.learning_id,
@@ -121,7 +118,12 @@ def test_cross_run_solver_learning_reuses_v48_transport_and_stays_inert_until_lo
         scope_id="root",
         actor_principal_id="root",
     )
-    envelope = CrossRunKnowledgeEnvelope.from_dict(exported["envelope"])
+    return source, artifact, recorded, CrossRunKnowledgeEnvelope.from_dict(exported["envelope"])
+
+
+def test_cross_run_solver_learning_reuses_v48_transport_and_stays_inert_until_local_validation():
+    model = fixture_model()
+    source, artifact, recorded, envelope = exported_no_good(model)
     assert envelope.knowledge_kind == "REUSE_RESULT"
     assert envelope.metadata["solver_learning_contract_id"] == "aasm.solver.learning.v1"
     assert envelope.metadata["solver_learning_contract_version"] == "0.1.0"
@@ -161,21 +163,13 @@ def test_cross_run_solver_learning_reuses_v48_transport_and_stays_inert_until_lo
     )
     assert validated["validation"]["status"] == "PASS"
     assert validated["validation"]["application_authority"] == "PRUNING_CERTIFIED_FOR_EXACT_MODEL"
+    assert target.solver_learning_report(workspace_id="workspace-a", scope_id="root")["applications"] == {}
     assert target.replay().canonical_hash() == target.snapshot.canonical_hash()
 
 
 def test_cross_run_solver_learning_cannot_materialize_before_v48_admission_commits():
     model = fixture_model()
-    source = bootstrapped_engine("source", SOLVER_LEARNING_AUTHORITY_CAPABILITIES["export"])
-    artifact, _ = source_no_good(source, model)
-    envelope = CrossRunKnowledgeEnvelope.from_dict(
-        source.export_solver_learning_artifact(
-            artifact.learning_id,
-            workspace_id="workspace-a",
-            scope_id="root",
-            actor_principal_id="root",
-        )["envelope"]
-    )
+    _source, artifact, _recorded, envelope = exported_no_good(model)
     target = bootstrapped_engine("target", SOLVER_LEARNING_AUTHORITY_CAPABILITIES["import"])
     try:
         target.admit_cross_run_solver_learning(
@@ -194,16 +188,7 @@ def test_cross_run_solver_learning_cannot_materialize_before_v48_admission_commi
 
 def test_cross_run_import_requires_local_scoped_import_authority_after_v48_admission():
     model = fixture_model()
-    source = bootstrapped_engine("source", SOLVER_LEARNING_AUTHORITY_CAPABILITIES["export"])
-    artifact, _ = source_no_good(source, model)
-    envelope = CrossRunKnowledgeEnvelope.from_dict(
-        source.export_solver_learning_artifact(
-            artifact.learning_id,
-            workspace_id="workspace-a",
-            scope_id="root",
-            actor_principal_id="root",
-        )["envelope"]
-    )
+    _source, artifact, _recorded, envelope = exported_no_good(model)
     target = bootstrapped_engine("target")
     admit_v48_envelope(target, envelope)
     try:
@@ -308,3 +293,112 @@ def test_performance_hint_import_never_becomes_truth_authority():
     assert checked["validation"]["status"] == "PASS"
     assert checked["validation"]["application_authority"] == "PERFORMANCE_HINT_ONLY"
     assert checked["validation"]["details"]["truth_authority"] == "NONE"
+
+
+def test_validated_learning_remains_inert_without_scoped_apply_authority():
+    model = fixture_model()
+    _source, artifact, _recorded, envelope = exported_no_good(model)
+    target = bootstrapped_engine(
+        "target",
+        SOLVER_LEARNING_AUTHORITY_CAPABILITIES["import"],
+        SOLVER_LEARNING_AUTHORITY_CAPABILITIES["validate"],
+    )
+    admit_v48_envelope(target, envelope)
+    target.admit_cross_run_solver_learning(
+        envelope.envelope_id,
+        expected_model_fingerprint=model.fingerprint,
+        workspace_id="workspace-a",
+        scope_id="root",
+        actor_principal_id="root",
+    )
+    target.revalidate_solver_learning(
+        artifact.learning_id,
+        model,
+        workspace_id="workspace-a",
+        scope_id="root",
+        actor_principal_id="root",
+    )
+    request = OptimizationRequest(
+        model,
+        "solver.cp_sat",
+        "0.1.0",
+        "learning-apply-denied",
+        required_provider="ortools-cp-sat",
+    )
+    try:
+        target.apply_solver_learning(
+            artifact.learning_id,
+            request,
+            workspace_id="workspace-a",
+            scope_id="root",
+            actor_principal_id="root",
+        )
+    except PermissionError as exc:
+        assert SOLVER_LEARNING_APPLY_CAPABILITY in str(exc)
+    else:
+        raise AssertionError("validated solver learning applied without scoped apply authority")
+    report = target.solver_learning_report(workspace_id="workspace-a", scope_id="root")
+    assert report["applications"] == {}
+    assert any(
+        row["decision"]["reason"] == "NO_APPLICABLE_GRANT"
+        for row in target.scoped_authority_report(workspace_id="workspace-a")["decisions"].values()
+    )
+
+
+def test_scoped_apply_builds_durable_existing_path_request_without_executing():
+    model = fixture_model()
+    _source, artifact, _recorded, envelope = exported_no_good(model)
+    target = bootstrapped_engine(
+        "target",
+        SOLVER_LEARNING_AUTHORITY_CAPABILITIES["import"],
+        SOLVER_LEARNING_AUTHORITY_CAPABILITIES["validate"],
+        SOLVER_LEARNING_APPLY_CAPABILITY,
+    )
+    admit_v48_envelope(target, envelope)
+    imported = target.admit_cross_run_solver_learning(
+        envelope.envelope_id,
+        expected_model_fingerprint=model.fingerprint,
+        workspace_id="workspace-a",
+        scope_id="root",
+        actor_principal_id="root",
+    )
+    validated = target.revalidate_solver_learning(
+        artifact.learning_id,
+        model,
+        workspace_id="workspace-a",
+        scope_id="root",
+        actor_principal_id="root",
+    )
+    request = OptimizationRequest(
+        model,
+        "solver.cp_sat",
+        "0.1.0",
+        "learning-apply",
+        required_provider="ortools-cp-sat",
+    )
+    applied = target.apply_solver_learning(
+        artifact.learning_id,
+        request,
+        workspace_id="workspace-a",
+        scope_id="root",
+        actor_principal_id="root",
+    )
+    assert applied["executed"] is False
+    assert applied["application"]["application_class"] == "PRUNING_CONSTRAINTS"
+    assert applied["application"]["truth_authority"] == "NONE"
+    assert applied["application"]["policy_authority"] == "NONE"
+    assert applied["request"]["model"]["fingerprint"] != model.fingerprint
+    assert applied["request"]["metadata"]["solver_learning_original_model_fingerprint"] == model.fingerprint
+    assert applied["request"]["metadata"]["solver_learning_truth_authority"] == "NONE"
+
+    evidence = next(
+        row for row in target.snapshot.evidence["records"] if row["evidence_id"] == applied["evidence_id"]
+    )
+    assert imported["evidence_id"] in evidence["derived_from"]
+    assert validated["evidence_id"] in evidence["derived_from"]
+    assert applied["authority_decision_evidence_id"] in evidence["derived_from"]
+    report = target.solver_learning_report(workspace_id="workspace-a", scope_id="root")
+    assert len(report["applications"]) == 1
+    assert report["authority_capabilities"]["apply"] == SOLVER_LEARNING_APPLY_CAPABILITY
+    assert report["application_contract"]["solver_execution"] if "solver_execution" in report["application_contract"] else True
+    assert target.replay().canonical_hash() == target.snapshot.canonical_hash()
