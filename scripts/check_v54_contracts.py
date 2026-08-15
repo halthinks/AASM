@@ -67,7 +67,7 @@ def main() -> None:
         "settle_effect_resources",
         "validate_public_api_contract",
     ))
-    require(root / "src/aasm/__init__.py", ("public_v55",))
+    require(root / "src/aasm/__init__.py", ("public_v56",))
     require(root / "src/aasm/cli.py", ("cli_v54",))
     require(root / "tests/test_runtime_v54_effects.py", (
         "test_executor_cannot_cross_external_boundary_before_atomic_ownership_and_evidence",
@@ -93,7 +93,7 @@ def main() -> None:
     ))
     require(root / "tests/test_v54_public.py", (
         "test_v54_public_surface_remains_valid_versioned_parent",
-        "test_v54_full_engine_and_imports_remain_available_through_v55",
+        "test_v54_full_engine_and_imports_remain_available_through_v56",
     ))
     print("v0.54 parent effect, resource settlement, portfolio, exchange, and public contracts: PASS")
 
