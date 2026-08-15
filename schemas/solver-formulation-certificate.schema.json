@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/solver-formulation-certificate.schema.json",
+  "title": "AASM Solver Formulation Certificate v1",
+  "type": "object",
+  "required": ["certificate_id", "contract_id", "contract_version", "formulation_id", "formulation_fingerprint", "source_model_fingerprint", "target_model_fingerprint", "provider_manifest_fingerprint", "feature_set_fingerprint", "admission_report_fingerprint", "requested_fidelity", "verified_fidelity", "mapping_complete", "external_references_resolved", "status", "diagnostics", "checker_id", "checker_version", "fingerprint"],
+  "properties": {
+    "certificate_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.solver.formulation-certificate.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "formulation_id": {"type": "string", "minLength": 1},
+    "formulation_fingerprint": {"type": "string", "minLength": 16},
+    "source_model_fingerprint": {"type": "string", "minLength": 16},
+    "target_model_fingerprint": {"type": "string", "minLength": 16},
+    "provider_manifest_fingerprint": {"type": "string", "minLength": 16},
+    "feature_set_fingerprint": {"type": "string", "minLength": 16},
+    "admission_report_fingerprint": {"type": "string", "minLength": 16},
+    "requested_fidelity": {"enum": ["EXACT", "APPROXIMATE"]},
+    "verified_fidelity": {"enum": ["EXACT", "APPROXIMATE", "NONE"]},
+    "mapping_complete": {"type": "boolean"},
+    "external_references_resolved": {"type": "boolean"},
+    "status": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+    "diagnostics": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "checker_id": {"type": "string", "minLength": 1},
+    "checker_version": {"type": "string", "minLength": 1},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
