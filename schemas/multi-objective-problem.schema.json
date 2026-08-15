@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://aasm.dev/schemas/multi-objective-problem.schema.json",
   "title": "AASM Multi-Objective Problem",
+  "description": "v0.52 ordered multi-objective problem. Objective tolerance is normative for both lexicographic survivor admission and Pareto dominance: values within tolerance are treated as not strictly better/worse for that objective according to its sense.",
   "type": "object",
   "required": ["problem_id", "model", "objectives"],
   "properties": {
@@ -19,7 +20,11 @@
           "sense": {"enum": ["MINIMIZE", "MAXIMIZE"]},
           "coefficients": {"type": "object", "additionalProperties": {"type": "number"}},
           "offset": {"type": "number"},
-          "tolerance": {"type": "number", "minimum": 0}
+          "tolerance": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Normative objective tolerance. Lexicographic stages retain values within tolerance of the stage optimum. Pareto dominance requires no-worse comparison within tolerance and strict improvement beyond tolerance on at least one objective."
+          }
         },
         "additionalProperties": false
       }
