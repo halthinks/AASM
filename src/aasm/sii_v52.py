@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 from .resource_governance import ResourceDemandEstimate
+from .resource_routing import ResourceAwareCandidate
 from .semantic_result import semantic_fingerprint
 from .sii import StructuredProposal
 
@@ -96,6 +97,32 @@ class ResourceAwareStructuredProposal:
     @property
     def resource_aware_proposal_id(self) -> str:
         return f"sii-v52-proposal-{self.fingerprint[:20]}"
+
+    def to_routing_candidate(self) -> ResourceAwareCandidate:
+        """Compile the proposal into the deterministic resource-routing IR.
+
+        Missing quality estimates fail closed to zero rather than being inferred
+        from proposer confidence. Resource routing must not silently equate
+        confidence with correctness, evidence quality, or expected progress.
+        """
+
+        return ResourceAwareCandidate(
+            candidate_id=self.resource_aware_proposal_id,
+            correctness=float(self.expected_correctness or 0.0),
+            evidence_quality=float(self.expected_evidence_quality or 0.0),
+            expected_progress=float(self.expected_progress or 0.0),
+            wall_time_seconds=float(self.expected_wall_time_seconds or 0.0),
+            monetary_cost=float(self.expected_monetary_cost or 0.0),
+            scarce_expert_usage=float(self.expected_scarce_expert_usage or 0.0),
+            demands=tuple(self.resource_demands),
+            metadata={
+                "parent_proposal_id": self.parent_proposal_id,
+                "parent_proposal_fingerprint": self.proposal.fingerprint,
+                "proposer_id": self.proposer_id,
+                "scope_id": self.scope_id,
+                **dict(self.metadata),
+            },
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return {
