@@ -62,8 +62,37 @@ class ResourceRoutingDecision:
     contract_version: str = RESOURCE_ROUTING_CONTRACT_VERSION
 
 
+@dataclass(frozen=True)
+class ResourceReservation:
+    candidate_id: str
+    allocations: tuple[tuple[str, float], ...]
+    contract_id: str = RESOURCE_ROUTING_CONTRACT_ID
+    contract_version: str = RESOURCE_ROUTING_CONTRACT_VERSION
+
+    @property
+    def total_reserved(self) -> float:
+        return sum(amount for _, amount in self.allocations)
+
+
 def _demand_amount(demand: ResourceDemandEstimate) -> float:
     return float(demand.upper_bound if demand.upper_bound is not None else demand.amount)
+
+
+def _matching_capacities(
+    demand: ResourceDemandEstimate,
+    capacities: dict[str, ResourceCapacity],
+) -> list[ResourceCapacity]:
+    if demand.resource_id is not None:
+        capacity = capacities.get(demand.resource_id)
+        return [capacity] if capacity is not None else []
+    return sorted(
+        (
+            capacity
+            for capacity in capacities.values()
+            if capacity.resource_class == demand.resource_class and capacity.unit == demand.unit
+        ),
+        key=lambda row: row.resource_id,
+    )
 
 
 def _capacity_rejection_reasons(
@@ -72,20 +101,10 @@ def _capacity_rejection_reasons(
 ) -> list[str]:
     reasons: list[str] = []
     for demand in candidate.demands:
-        if demand.resource_id is None:
-            matching = [
-                capacity
-                for capacity in capacities.values()
-                if capacity.resource_class == demand.resource_class and capacity.unit == demand.unit
-            ]
-        else:
-            capacity = capacities.get(demand.resource_id)
-            matching = [capacity] if capacity is not None else []
-
+        matching = _matching_capacities(demand, capacities)
         if not matching:
             reasons.append(f"missing_capacity:{demand.resource_id or demand.resource_class}")
             continue
-
         required = _demand_amount(demand)
         if not any(capacity.can_reserve(required) for capacity in matching):
             reasons.append(f"insufficient_or_unknown_capacity:{demand.resource_id or demand.resource_class}")
@@ -155,12 +174,53 @@ def select_resource_aware_candidate(
     )
 
 
+def reserve_candidate_resources(
+    candidate: ResourceAwareCandidate,
+    capacities: Iterable[ResourceCapacity],
+) -> ResourceReservation:
+    """Atomically reserve the candidate's conservative demand envelope.
+
+    This function performs a full deterministic allocation plan before mutating
+    any capacity. If any demand is infeasible, no reservation is made.
+    Resource-class-only demands choose the lexicographically first feasible
+    resource ID to keep identical inputs deterministic.
+    """
+
+    capacity_map = {row.resource_id: row for row in capacities}
+    planned: list[tuple[ResourceCapacity, float]] = []
+    provisional: dict[str, float] = {}
+
+    for demand in candidate.demands:
+        required = _demand_amount(demand)
+        selected: ResourceCapacity | None = None
+        for capacity in _matching_capacities(demand, capacity_map):
+            already_planned = provisional.get(capacity.resource_id, 0.0)
+            available = capacity.allocatable
+            if available is not None and required + already_planned <= available:
+                selected = capacity
+                break
+        if selected is None:
+            raise ValueError(f"candidate resource reservation infeasible: {demand.resource_id or demand.resource_class}")
+        planned.append((selected, required))
+        provisional[selected.resource_id] = provisional.get(selected.resource_id, 0.0) + required
+
+    for capacity, amount in planned:
+        capacity.reserve(amount)
+
+    return ResourceReservation(
+        candidate_id=candidate.candidate_id,
+        allocations=tuple((capacity.resource_id, amount) for capacity, amount in planned),
+    )
+
+
 __all__ = [
     "RESOURCE_ROUTING_CONTRACT_ID",
     "RESOURCE_ROUTING_CONTRACT_VERSION",
     "RESOURCE_ROUTING_STABILITY",
     "ResourceAwareCandidate",
+    "ResourceReservation",
     "ResourceRoutingDecision",
     "ResourceRoutingPolicy",
+    "reserve_candidate_resources",
     "select_resource_aware_candidate",
 ]
