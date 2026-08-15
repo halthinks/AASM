@@ -86,8 +86,9 @@ def test_cli_adoption_contract_is_machine_readable(capsys):
 
 
 def test_cli_effects_lists_persisted_effect(tmp_path, capsys):
-    from aasm import AASMEngine, EffectSpec, ProblemSpec, SQLiteStore
+    from aasm import EffectSpec, ProblemSpec, SQLiteStore
     from aasm.cli import main
+    from aasm.runtime_v52 import AASMEngine
     import sys
 
     database = tmp_path / "cli-effects.db"
