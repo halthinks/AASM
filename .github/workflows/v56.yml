@@ -1,4 +1,4 @@
-name: AASM v0.56 Solver Outcome v2
+name: AASM v0.56 Release
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 concurrency:
-  group: aasm-v56-status-v2-${{ github.ref }}
+  group: aasm-v56-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -15,7 +15,7 @@ permissions:
   statuses: write
 
 jobs:
-  status_v2:
+  v56:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -23,11 +23,11 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-      - name: Install v0.56 status qualification dependencies
+      - name: Install v0.56 release qualification dependencies
         run: python -m pip install -e '.[dev,optimization]'
       - name: Check authoritative solver outcome contracts
         run: python scripts/check_v56_solver_outcome.py
-      - name: Run v0.56 solver outcome fixtures
+      - name: Run complete v0.56 solver outcome fixtures
         run: |
           pytest -q \
             tests/test_v56_solver_outcome_v2.py \
@@ -62,22 +62,24 @@ jobs:
               else: assert mapping.normalized_status == 'OPTIMAL'
           print('real CaDiCaL/PySAT, OR-Tools CP-SAT, and HiGHS status identity qualification: PASS')
           PY
-      - name: Guard released v0.55 root and additive v0.56 candidate
+      - name: Validate active v0.56 release source contract
+        run: python scripts/check_release_contracts.py
+      - name: Guard active v0.56 root and released v0.55 parent
         run: |
           python - <<'PY'
           import aasm
           from aasm import public_v55, public_v56
           report = public_v56.validate_public_api_contract()
           assert report['valid'], report
-          assert public_v56.__version__ == '0.56.0.dev0'
-          assert public_v56.PUBLIC_RELEASE_STABILITY == 'QUALIFICATION_CANDIDATE'
+          assert public_v56.__version__ == '0.56.0'
+          assert public_v56.PUBLIC_RELEASE_STABILITY == 'ACTIVE_DEVELOPMENT'
           assert public_v55.__version__ == '0.55.0'
-          assert aasm.__version__ == '0.55.0'
-          assert aasm.AASMEngine is public_v55.AASMEngine
-          assert public_v56.AASMEngine is not aasm.AASMEngine
-          print('public_v56 status candidate valid; released root remains v0.55.0')
+          assert aasm.__version__ == '0.56.0'
+          assert aasm.AASMEngine is public_v56.AASMEngine
+          assert public_v56.AASMEngine is not public_v55.AASMEngine
+          print('active public v0.56 release contract: PASS')
           PY
-      - name: Publish v0.56 status-v2 qualification
+      - name: Publish v0.56 release qualification
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
@@ -87,12 +89,12 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='v0.56 solver outcome/status v2 qualification passed'
+            description='v0.56 active release qualification passed'
           else
             state=failure
-            description='v0.56 solver outcome/status v2 qualification failed'
+            description='v0.56 active release qualification failed'
           fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            -f state="$state" -f context='aasm/v56-status-v2' \
+            -f state="$state" -f context='aasm/v56' \
             -f description="$description" \
             -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
