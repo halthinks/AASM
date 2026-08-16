@@ -50,11 +50,11 @@ def main():
     if set(project.get("license-files", [])) != {"LICENSE", "NOTICE", "LICENSE_POLICY.md"}:
         _fail("license file set drift", path=root / "pyproject.toml")
 
-    # Active development public surface.
+    # Active development public surface. Contract identity may advance independently of package SemVer.
     require(root / "src/aasm/__init__.py", ["public_v56"])
     require(root / "src/aasm/public_v56.py", [
         '__version__ = "0.56.1"',
-        '"contract_version": "0.32.1"',
+        '"contract_version": "0.32.2"',
         'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
         "SOLVER_OUTCOME_V2_CONTRACT_ID",
         "SOLVER_RUNTIME_PROVENANCE_CONTRACT_ID",
@@ -62,8 +62,14 @@ def main():
         "SolverRuntimeProvenance",
         "solver_provenance_runtime_contract",
         '"interrupted_provenance_v2": "DORMANT_NON_AUTHORITATIVE_NOT_EXPOSED"',
+        "FACT_AUTHORITY_CONTRACT_ID",
+        "STATE_CLAIM_CONTRACT_ID",
+        "FactAuthority",
+        "StateClaim",
+        "state_authority_runtime_contract",
     ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
+        "StateAuthorityRuntimeMixin",
         "SolverProvenanceRuntimeMixin",
         "SolverOutcomeV2RuntimeMixin",
         "V55FoundationEngine",
@@ -105,6 +111,21 @@ def main():
         "UNAVAILABLE_FROM_CURRENT_ADAPTER",
         "BACKEND_SPECIFIC_NOT_EXPOSED_BY_CURRENT_CVXPY_ADAPTER",
     ])
+    require(root / "src/aasm/state_authority.py", [
+        'FACT_AUTHORITY_CONTRACT_ID = "aasm.fact.authority.v1"',
+        'STATE_CLAIM_CONTRACT_ID = "aasm.state.claim.v1"',
+        '"aggregation_grants_authority": False',
+        '"fact_authority_grants_effect_authority": False',
+        '"machine_state_mutation": "NONE_BY_THIS_CONTRACT"',
+    ])
+    require(root / "src/aasm/state_authority_runtime.py", [
+        'STATE_AUTHORITY_RUNTIME_CONTRACT_ID = "aasm.state.authority.runtime.v1"',
+        '"parallel_truth_table": "NONE"',
+        '"machine_state_mutation": "NONE"',
+        '"effect_authority": "NONE"',
+        "authorize_scoped_request",
+        "add_evidence_guarded",
+    ])
 
     for schema in (
         "solver-outcome-v2.schema.json",
@@ -112,6 +133,8 @@ def main():
         "solver-execution-profile.schema.json",
         "solver-runtime-provenance.schema.json",
         "solver-profile-evaluation.schema.json",
+        "fact-authority.schema.json",
+        "state-claim.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -138,6 +161,7 @@ def main():
         "check_v55_semantic_archive.py",
         "check_v56_solver_outcome.py",
         "check_v561_provenance.py",
+        "check_state_authority_contracts.py",
     ):
         run_script(root, script)
 
@@ -177,17 +201,24 @@ def main():
         "AASM 0.56.1 Execution Provenance Qualification",
         "context='aasm/v56-provenance'",
     ])
+    require(root / ".github/workflows/state-authority.yml", [
+        "State Authority",
+        "check_state_authority_contracts.py",
+        "tests/test_state_authority.py",
+        "context='aasm/state-authority'",
+    ])
     require(root / ".github/workflows/release.yml", [
         "workflow_dispatch:",
         "confirm_release:",
         "aasm/v56-provenance",
+        "aasm/state-authority",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
     ])
     forbid(root / ".github/workflows/release.yml", ["workflow_run:"])
 
-    print("0.56.1 development-target contracts + v0.56.0 published identity: PASS")
+    print("0.56.1 development-target contracts + adoption 0.32.2 + v0.56.0 published identity: PASS")
     return 0
 
 
