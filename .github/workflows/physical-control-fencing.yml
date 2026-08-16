@@ -1,0 +1,48 @@
+name: Physical Control Fencing
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  physical_control_fencing:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install physical control fencing dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile physical control fencing surface
+        run: python -m compileall -q src/aasm/effect_capability_use.py src/aasm/physical_preemption.py src/aasm/physical_control_fencing_runtime.py tests/test_physical_control_fencing.py scripts/check_physical_control_fencing_contracts.py
+      - name: Validate physical control fencing source contracts
+        run: python scripts/check_physical_control_fencing_contracts.py
+      - name: Run stale-command and preemption adversarial/replay tests
+        run: pytest -q tests/test_physical_control_fencing.py
+      - name: Publish Physical Control Fencing status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='stale command fences, dual-authority preemption, canonical lease revocation, and no-Effect boundary passed'
+          else
+            state=failure
+            description='physical control fencing qualification failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" -f context='aasm/physical-control-fencing' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
