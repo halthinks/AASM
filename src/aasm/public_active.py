@@ -33,6 +33,45 @@ from .effect_capability_use import (
     EffectCapabilityUse,
     effect_capability_use_contract,
 )
+from .event_causality import (
+    CAUSAL_RELATIONS,
+    CLOCK_QUALITIES,
+    CLOCK_QUALITY_RANK,
+    EVENT_CAUSALITY_CONTRACT_ID,
+    EVENT_CAUSALITY_CONTRACT_VERSION,
+    EVENT_CAUSALITY_STABILITY,
+    PORTABLE_U63_MAX,
+    CausalEventIdentity,
+    CausalRelation,
+    event_causality_contract,
+)
+from .event_causality_runtime import (
+    EVENT_CAUSALITY_CAPABILITIES,
+    EVENT_CAUSALITY_RUNTIME_CONTRACT_ID,
+    EVENT_CAUSALITY_RUNTIME_CONTRACT_VERSION,
+    EVENT_CAUSALITY_RUNTIME_STABILITY,
+    event_causality_runtime_contract,
+    project_event_causality_evidence,
+)
+from .observation_freshness import (
+    FRESHNESS_AGE_BASES,
+    FRESHNESS_REASONS,
+    FRESHNESS_STATUSES,
+    OBSERVATION_FRESHNESS_CONTRACT_ID,
+    OBSERVATION_FRESHNESS_CONTRACT_VERSION,
+    OBSERVATION_FRESHNESS_STABILITY,
+    ObservationFreshnessAssessment,
+    assess_freshness,
+    observation_freshness_contract,
+)
+from .observation_freshness_runtime import (
+    OBSERVATION_FRESHNESS_CAPABILITIES,
+    OBSERVATION_FRESHNESS_RUNTIME_CONTRACT_ID,
+    OBSERVATION_FRESHNESS_RUNTIME_CONTRACT_VERSION,
+    OBSERVATION_FRESHNESS_RUNTIME_STABILITY,
+    observation_freshness_runtime_contract,
+    project_observation_freshness_evidence,
+)
 from .physical_control_fencing_runtime import (
     PHYSICAL_CONTROL_FENCING_CAPABILITIES,
     PHYSICAL_CONTROL_FENCING_RUNTIME_CONTRACT_ID,
@@ -112,6 +151,17 @@ _NEW_ENGINE_METHODS = [
     "record_state_conflict",
     "state_conflict_report",
     "state_conflicts_report",
+    "event_causality_contract_report",
+    "record_causal_event",
+    "record_machine_observation_causal_event",
+    "record_causal_relation",
+    "causal_event_report",
+    "causal_relation_report",
+    "event_causality_report",
+    "observation_freshness_contract_report",
+    "assess_machine_observation_freshness",
+    "observation_freshness_assessment_report",
+    "observation_freshness_report",
 ]
 
 _NEW_IMPORTS = [
@@ -171,6 +221,37 @@ _NEW_IMPORTS = [
     "STATE_CONFLICT_CAPABILITIES",
     "project_state_conflict_evidence",
     "state_conflict_runtime_contract",
+    "EVENT_CAUSALITY_CONTRACT_ID",
+    "EVENT_CAUSALITY_CONTRACT_VERSION",
+    "EVENT_CAUSALITY_STABILITY",
+    "PORTABLE_U63_MAX",
+    "CLOCK_QUALITIES",
+    "CLOCK_QUALITY_RANK",
+    "CAUSAL_RELATIONS",
+    "CausalEventIdentity",
+    "CausalRelation",
+    "event_causality_contract",
+    "EVENT_CAUSALITY_RUNTIME_CONTRACT_ID",
+    "EVENT_CAUSALITY_RUNTIME_CONTRACT_VERSION",
+    "EVENT_CAUSALITY_RUNTIME_STABILITY",
+    "EVENT_CAUSALITY_CAPABILITIES",
+    "project_event_causality_evidence",
+    "event_causality_runtime_contract",
+    "OBSERVATION_FRESHNESS_CONTRACT_ID",
+    "OBSERVATION_FRESHNESS_CONTRACT_VERSION",
+    "OBSERVATION_FRESHNESS_STABILITY",
+    "FRESHNESS_STATUSES",
+    "FRESHNESS_AGE_BASES",
+    "FRESHNESS_REASONS",
+    "ObservationFreshnessAssessment",
+    "assess_freshness",
+    "observation_freshness_contract",
+    "OBSERVATION_FRESHNESS_RUNTIME_CONTRACT_ID",
+    "OBSERVATION_FRESHNESS_RUNTIME_CONTRACT_VERSION",
+    "OBSERVATION_FRESHNESS_RUNTIME_STABILITY",
+    "OBSERVATION_FRESHNESS_CAPABILITIES",
+    "project_observation_freshness_evidence",
+    "observation_freshness_runtime_contract",
 ]
 
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*getattr(_base, "SUPPORTED_ENGINE_METHODS", []), *_NEW_ENGINE_METHODS]))
@@ -181,12 +262,14 @@ SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([
     "physical-control-fencing",
     "physical-effect-integration",
     "state-conflict",
+    "event-causality",
+    "observation-freshness",
 ]))
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*getattr(_base, "SUPPORTED_PUBLIC_IMPORTS", []), *_NEW_IMPORTS]))
 
 PUBLIC_API_CONTRACT = deepcopy(_base.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.32.9",
+    "contract_version": "0.32.10",
     "runtime_version": __version__,
     "release_stability": PUBLIC_RELEASE_STABILITY,
     "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
@@ -214,6 +297,14 @@ PUBLIC_API_CONTRACT["state_conflict"] = {
     **state_conflict_contract(),
     "runtime": state_conflict_runtime_contract(),
 }
+PUBLIC_API_CONTRACT["event_causality"] = {
+    **event_causality_contract(),
+    "runtime": event_causality_runtime_contract(),
+}
+PUBLIC_API_CONTRACT["observation_freshness"] = {
+    **observation_freshness_contract(),
+    "runtime": observation_freshness_runtime_contract(),
+}
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
 
@@ -236,7 +327,7 @@ def validate_public_api_contract():
         errors.append(f"missing active governed-reality engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
         errors.append("active runtime version mismatch")
-    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.9":
+    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.10":
         errors.append("active adoption contract mismatch")
 
     capability = PUBLIC_API_CONTRACT.get("effect_capability", {})
@@ -343,6 +434,66 @@ def validate_public_api_contract():
         errors.append("state conflict introduced parallel truth table")
     if conflict_runtime.get("parallel_dependency_graph") != "NONE":
         errors.append("state conflict introduced parallel dependency graph")
+
+    causal = PUBLIC_API_CONTRACT.get("event_causality", {})
+    if causal.get("contract_id") != EVENT_CAUSALITY_CONTRACT_ID:
+        errors.append("S3 event causality semantic contract missing")
+    if causal.get("local_event_identity") != "NODE_ID_PLUS_BOOT_EPOCH_PLUS_MONOTONIC_LOCAL_SEQUENCE":
+        errors.append("S3 causal local identity drift")
+    if causal.get("receipt_order_implies_source_order") is not False:
+        errors.append("receipt order incorrectly became source order")
+    if causal.get("host_wall_clock") != "NOT_UNIVERSAL_TRUTH_AND_NEVER_IMPLICITLY_CAPTURED":
+        errors.append("host wall clock incorrectly became causal truth")
+    if causal.get("event_identity_grants_authority") is not False:
+        errors.append("causal event identity incorrectly grants authority")
+    if causal.get("relation_grants_fact_authority") is not False or causal.get("relation_grants_effect_authority") is not False:
+        errors.append("causal relation incorrectly grants authority")
+    if causal.get("parallel_event_ledger") != "NONE":
+        errors.append("event causality introduced parallel event ledger")
+    causal_runtime = causal.get("runtime", {})
+    if causal_runtime.get("contract_id") != EVENT_CAUSALITY_RUNTIME_CONTRACT_ID:
+        errors.append("S3 event causality runtime contract missing")
+    if causal_runtime.get("core_aasm_event_log") != "UNCHANGED_AND_REMAINS_REPLAY_LEDGER":
+        errors.append("event causality replaced core AASM event log")
+    if causal_runtime.get("authority") != "EXISTING_AASM_SCOPED_AUTHORITY_ONLY":
+        errors.append("event causality introduced parallel authority")
+    if causal_runtime.get("same_node_boot_order") != "SEQUENCE_DEFINES_LOCAL_ORDER_INDEPENDENT_OF_INGEST_ORDER":
+        errors.append("event causality local sequence semantics drift")
+    if causal_runtime.get("parallel_event_ledger") != "NONE":
+        errors.append("event causality runtime introduced parallel event ledger")
+    if causal_runtime.get("parallel_truth_table") != "NONE":
+        errors.append("event causality runtime introduced parallel truth table")
+
+    freshness = PUBLIC_API_CONTRACT.get("observation_freshness", {})
+    if freshness.get("contract_id") != OBSERVATION_FRESHNESS_CONTRACT_ID:
+        errors.append("S3 observation freshness semantic contract missing")
+    if freshness.get("reference_time") != "EXPLICIT_INTEGER_NANOSECONDS_NEVER_IMPLICIT_HOST_NOW":
+        errors.append("freshness reference time became implicit")
+    if freshness.get("freshness_grants_fact_authority") is not False:
+        errors.append("freshness incorrectly grants fact authority")
+    if freshness.get("freshness_grants_effect_authority") is not False:
+        errors.append("freshness incorrectly grants effect authority")
+    if freshness.get("freshness_elevates_observation_authority") is not False:
+        errors.append("freshness incorrectly elevates observation authority")
+    if freshness.get("freshness_is_universal_admission") is not False:
+        errors.append("freshness incorrectly became universal admission")
+    freshness_runtime = freshness.get("runtime", {})
+    if freshness_runtime.get("contract_id") != OBSERVATION_FRESHNESS_RUNTIME_CONTRACT_ID:
+        errors.append("S3 observation freshness runtime contract missing")
+    if freshness_runtime.get("observation_source") != "EXISTING_MACHINE_STATE_OBSERVATION_ONLY":
+        errors.append("freshness bypassed existing machine observation")
+    if freshness_runtime.get("causal_source") != "EXACT_DURABLE_CAUSAL_EVENT_ID_AND_FINGERPRINT":
+        errors.append("freshness causal binding drift")
+    if freshness_runtime.get("reference_time_source") != "EXPLICIT_CALLER_POLICY_INPUT_NOT_HOST_NOW":
+        errors.append("freshness runtime uses implicit host time")
+    if freshness_runtime.get("observation_authority_elevation") != "NONE":
+        errors.append("freshness runtime elevates observation authority")
+    if freshness_runtime.get("universal_admission") != "NONE":
+        errors.append("freshness runtime grants universal admission")
+    if freshness_runtime.get("parallel_observation_store") != "NONE":
+        errors.append("freshness runtime introduced parallel observation store")
+    if freshness_runtime.get("parallel_truth_table") != "NONE":
+        errors.append("freshness runtime introduced parallel truth table")
 
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 
