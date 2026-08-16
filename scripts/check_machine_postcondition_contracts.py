@@ -158,10 +158,12 @@ def main() -> None:
         ),
     )
 
+    # This specialized PR-2C gate owns PR-2C semantics, not the global
+    # adoption revision. The cumulative v0.56 gate owns exact current
+    # adoption-contract identity.
     public = validate_public_api_contract()
     require(public["valid"], f"active public contract invalid: {public['errors']}")
     contract = public_api_contract()
-    require(contract["contract_version"] == "0.32.5", "active adoption contract did not advance for PR-2C")
     require("machine_postcondition" in contract, "PR-2C missing from active public contract")
     post = contract["machine_postcondition"]
     require(post["effect_success_is_achievement"] is False, "public effect success became achievement")
