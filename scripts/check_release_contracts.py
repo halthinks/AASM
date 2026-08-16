@@ -5,25 +5,36 @@ import sys
 import tomllib
 
 
+def _fail(message: str, *, path: Path | None = None) -> None:
+    location = f" file={path}" if path is not None else ""
+    safe = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    print(f"::error{location}::{safe}", file=sys.stderr)
+    raise SystemExit(message)
+
+
 def require(path, tokens):
-    text = Path(path).read_text(encoding="utf-8")
+    path = Path(path)
+    text = path.read_text(encoding="utf-8")
     missing = [token for token in tokens if token not in text]
     if missing:
-        raise SystemExit(f"{path}: missing {missing}")
+        _fail(f"missing required source-contract tokens: {missing}", path=path)
 
 
 def forbid(path, tokens):
-    text = Path(path).read_text(encoding="utf-8")
+    path = Path(path)
+    text = path.read_text(encoding="utf-8")
     present = [token for token in tokens if token in text]
     if present:
-        raise SystemExit(f"{path}: forbidden stale/release-overclaim text {present}")
+        _fail(f"forbidden stale/release-overclaim text: {present}", path=path)
 
 
 def run_script(root: Path, name: str) -> None:
     env = os.environ.copy()
     src = str(root / "src")
     env["PYTHONPATH"] = src if not env.get("PYTHONPATH") else src + os.pathsep + env["PYTHONPATH"]
-    subprocess.check_call([sys.executable, str(root / "scripts" / name)], cwd=root, env=env)
+    completed = subprocess.run([sys.executable, str(root / "scripts" / name)], cwd=root, env=env)
+    if completed.returncode != 0:
+        _fail(f"nested source-contract checker failed: {name}", path=root / "scripts" / name)
 
 
 def main():
@@ -33,11 +44,11 @@ def main():
 
     # 0.56.1 is the current development target on main. It is not a published-release claim.
     if str(project["version"]) != "0.56.1":
-        raise SystemExit(f"unexpected development package target: {project['version']}")
+        _fail(f"unexpected development package target: {project['version']}", path=root / "pyproject.toml")
     if project.get("license") != "Apache-2.0":
-        raise SystemExit("active license must remain Apache-2.0")
+        _fail("active license must remain Apache-2.0", path=root / "pyproject.toml")
     if set(project.get("license-files", [])) != {"LICENSE", "NOTICE", "LICENSE_POLICY.md"}:
-        raise SystemExit("license file set drift")
+        _fail("license file set drift", path=root / "pyproject.toml")
 
     # Active development public surface.
     require(root / "src/aasm/__init__.py", ["public_v56"])
