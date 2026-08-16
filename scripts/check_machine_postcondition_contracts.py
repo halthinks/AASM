@@ -53,6 +53,8 @@ def main() -> None:
     require(semantic["verification_grants_effect_authority"] is False, "verification gained effect authority")
     require(semantic["parallel_truth_table"] == "NONE", "parallel truth table introduced")
     require(semantic["parallel_effect_lifecycle"] == "NONE", "parallel effect lifecycle introduced")
+    require(semantic["freshness_semantics"] == "NOT_YET_CLAIMED_PR4", "PR-2C overclaims freshness semantics")
+    require(semantic["calibration_semantics"] == "NOT_YET_CLAIMED_PR4", "PR-2C overclaims calibration semantics")
 
     require(runtime["contract_id"] == MACHINE_POSTCONDITION_RUNTIME_CONTRACT_ID, "machine postcondition runtime contract drift")
     require(runtime["durability"] == "EXISTING_AASM_EVIDENCE_EVENT_REPLAY", "parallel postcondition persistence introduced")
@@ -104,6 +106,8 @@ def main() -> None:
     require_tokens(
         ROOT / "src/aasm/external_machine_postcondition_execution_correlation.py",
         (
+            "effect.status == EffectStatus.UNKNOWN.value",
+            "effect.status != EffectStatus.SUCCEEDED.value",
             "effect.execution_id",
             "observation.correlation_id != execution_id",
             "super().verify_machine_transition_postconditions(",
@@ -134,6 +138,15 @@ def main() -> None:
         ),
     )
     require_tokens(
+        ROOT / "src/aasm/runtime_v56_foundation.py",
+        (
+            "MachinePostconditionExecutionCorrelationMixin",
+            "MachinePostconditionRuntimeMixin",
+            "MachineTransitionRuntimeMixin",
+            "V55FoundationEngine",
+        ),
+    )
+    require_tokens(
         ROOT / "tests/test_machine_postcondition.py",
         (
             "test_succeeded_effect_alone_is_insufficient_without_correlated_authoritative_observation",
@@ -146,11 +159,17 @@ def main() -> None:
     )
 
     public = validate_public_api_contract()
-    require(public["valid"], f"active dependency public contract invalid: {public['errors']}")
+    require(public["valid"], f"active public contract invalid: {public['errors']}")
     contract = public_api_contract()
-    require(contract["contract_version"] == "0.32.4", "PR-2C foundation expected qualified PR-2B adoption 0.32.4")
-    require("machine_transition" in contract, "PR-2B machine transition missing from active dependency surface")
-    require(contract["machine_transition"]["runtime"]["effect_dispatch"] == "NOT_PERFORMED_USE_EXISTING_EXECUTE_EFFECT", "PR-2B dependency boundary drift")
+    require(contract["contract_version"] == "0.32.5", "active adoption contract did not advance for PR-2C")
+    require("machine_postcondition" in contract, "PR-2C missing from active public contract")
+    post = contract["machine_postcondition"]
+    require(post["effect_success_is_achievement"] is False, "public effect success became achievement")
+    require(post["observation_correlation"] == "PR2A_MACHINE_STATE_OBSERVATION_CORRELATION_ID_MUST_EQUAL_EXISTING_EFFECT_EXECUTION_ID", "public execution-correlation boundary drift")
+    require(post["runtime"]["effect_status_mutation"] == "NONE", "public verifier mutates effect status")
+    require(post["runtime"]["state_claim_creation"] == "NONE", "public verifier creates state claims")
+    require(post["runtime"]["fact_authority_creation"] == "NONE", "public verifier creates fact authority")
+    require(post["runtime"]["parallel_effect_lifecycle"] == "NONE", "public verifier gained parallel effect lifecycle")
 
     print("machine postcondition verifier uses existing effect + PR-1/PR-2A/PR-2B evidence and cannot mint authority or mutate effect truth: PASS")
 
