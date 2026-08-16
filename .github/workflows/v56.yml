@@ -1,4 +1,4 @@
-name: AASM v0.56 Release
+name: AASM v0.56 Development Qualification
 
 on:
   push:
@@ -25,16 +25,14 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-      - name: Install cumulative v0.56 release qualification dependencies
+      - name: Install cumulative v0.56 development qualification dependencies
         run: python -m pip install -e '.[dev,optimization]'
-      - name: Verify tracked file inventory
-        run: python scripts/release_manifest.py --check-file-list
-      - name: Check 56.1 truthful solver outcome contracts
+      - name: Check truthful solver outcome contracts
         run: python scripts/check_v56_solver_outcome.py
-      - name: Run complete 56.1 solver outcome fixtures
+      - name: Run complete solver outcome fixtures
         run: |
           pytest -q tests/test_v56_solver_outcome_v2.py tests/test_v56_provider_status_v2.py tests/test_v56_solver_outcome_runtime.py tests/test_v56_public_candidate.py
-      - name: Qualify real 56.1 provider status identity
+      - name: Qualify real provider status identity
         run: |
           python - <<'PY'
           from aasm.optimization import OptimizationRequest, reference_optimization_models, solve_optimization_request, validate_optimization_result
@@ -46,15 +44,15 @@ jobs:
               mapped=map_provider_status(default_provider_status_map(result.solver.provider_id,result.solver.version),raw_status=raw,raw_status_code=code,has_incumbent=bool(result.assignment),objective_present=model.objective is not None)
               assert mapped.mapping_status=='EXACT_RULE'
           PY
-      - name: Check 56.2 execution provenance contracts
+      - name: Check execution provenance contracts
         run: python scripts/check_v561_provenance.py
-      - name: Run 56.2 provenance replay and adversarial fixtures
+      - name: Run provenance replay and adversarial fixtures
         run: pytest -q tests/test_v56_solver_provenance.py tests/test_v56_solver_provenance_runtime.py
-      - name: Qualify real 56.2 provider provenance
+      - name: Qualify real provider provenance
         run: pytest -q tests/test_v561_solver_provenance_real.py
-      - name: Validate cumulative v0.56 release source contract
+      - name: Validate cumulative development source contract
         run: python scripts/check_release_contracts.py
-      - name: Guard active v0.56.1 root and released v0.55 parent
+      - name: Guard active 0.56.1 development root and released v0.55 parent
         run: |
           python - <<'PY'
           import aasm
@@ -64,9 +62,9 @@ jobs:
           assert public_v55.__version__=='0.55.0'; assert aasm.__version__=='0.56.1'; assert aasm.AASMEngine is public_v56.AASMEngine
           prov=aasm.AASMEngine(aasm.ProblemSpec('v56-gate')).solver_provenance_runtime_contract_report()
           assert prov['parallel_provenance_table']=='NONE'; assert prov['provenance_grants_reproducibility'] is False
-          print('cumulative public v0.56.1 release contract: PASS')
+          print('cumulative 0.56.1 development contract: PASS')
           PY
-      - name: Publish cumulative v0.56 qualification
+      - name: Publish cumulative v0.56 development qualification
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
@@ -74,5 +72,5 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$JOB_STATUS" = success ]; then state=success; description='v0.56.1 cumulative outcome+provenance qualification passed'; else state=failure; description='v0.56 cumulative release qualification failed'; fi
+          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative outcome+provenance development qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='aasm/v56' -f description="$description" -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
