@@ -11,9 +11,11 @@ REPRESENTATIVE_MEMBERS = [
     ".dockerignore",
     ".gitignore",
     ".github/workflows/ci.yml",
+    ".github/workflows/version-policy.yml",
     "compose.yaml",
     "docs/LANGGRAPH_ADAPTER.md",
     "docs/RELEASE_0.29.md",
+    "docs/VERSIONING.md",
     "docs/runbooks/README.md",
     "examples/langgraph_adoption.py",
     "examples/research_synthesis_demo.py",
@@ -22,6 +24,7 @@ REPRESENTATIVE_MEMBERS = [
     "schemas/langgraph-binding.schema.json",
     "schemas/langgraph-recovery.schema.json",
     "scripts/check_release_contracts.py",
+    "scripts/check_version_policy.py",
     "scripts/release_artifacts.py",
     "scripts/release_artifacts_cli.py",
     "scripts/release_artifacts_core.py",
@@ -64,11 +67,16 @@ def test_extracted_sdist_executes_public_contract_and_runbook() -> None:
     assert result.valid is True, result.to_dict()
 
 
-def test_extracted_sdist_file_inventory_is_self_consistent() -> None:
+def test_extracted_sdist_can_generate_a_fresh_manifest_without_release_inventory_freeze(tmp_path: Path) -> None:
+    output = tmp_path / "SHA256SUMS.txt"
     subprocess.run(
-        [sys.executable, "scripts/release_manifest.py", "--check-file-list"],
+        [sys.executable, "scripts/release_manifest.py", "--sha256", str(output)],
         cwd=ROOT,
         check=True,
         text=True,
         capture_output=True,
     )
+    text = output.read_text(encoding="utf-8")
+    assert "src/aasm/__init__.py" in text
+    assert "docs/VERSIONING.md" in text
+    assert "scripts/check_release_contracts.py" in text
