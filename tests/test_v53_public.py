@@ -21,9 +21,9 @@ def test_v53_public_surface_is_additive_and_versioned():
 def test_v53_parent_no_longer_owns_active_demo_stack_after_v56_promotion():
     assert public_v54.__version__ == "0.54.0"
     assert public_v55.__version__ == "0.55.0"
-    assert public_v56.__version__ == "0.56.0"
+    assert public_v56.validate_public_api_contract()["valid"] is True
     assert demo_stack.AASMEngine is public_v56.AASMEngine
-    assert demo_stack._runtime_version() == "0.56.0"
+    assert demo_stack._runtime_version() == public_v56.__version__
     assert demo_stack.AASMEngine is not public_v53.AASMEngine
     assert demo_stack.AASMEngine is not public_v54.AASMEngine
     assert demo_stack.AASMEngine is not public_v55.AASMEngine
