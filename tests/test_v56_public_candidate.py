@@ -14,13 +14,13 @@ def test_v56_base_is_frozen_and_active_overlay_advances_adoption_only():
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.9"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.10"
     assert aasm.AASMEngine is public_active.AASMEngine
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v56.AASMEngine is not public_v55.AASMEngine
 
 
-def test_active_engine_exposes_external_reality_physical_control_and_s3_conflict_surface():
+def test_active_engine_exposes_external_reality_physical_control_and_s3_temporal_surface():
     for method in (
         "solver_outcome_v2_runtime_contract_report", "record_solver_outcome_v2", "solver_outcome_v2_report",
         "solver_provenance_runtime_contract_report", "register_solver_execution_profile", "record_solver_runtime_provenance",
@@ -43,6 +43,10 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_conflict
         "bind_physical_effect_authority", "physical_effect_binding_report", "physical_effect_integration_report",
         "state_conflict_contract_report", "build_state_conflict", "record_state_conflict",
         "state_conflict_report", "state_conflicts_report",
+        "event_causality_contract_report", "record_causal_event", "record_machine_observation_causal_event",
+        "record_causal_relation", "causal_event_report", "causal_relation_report", "event_causality_report",
+        "observation_freshness_contract_report", "assess_machine_observation_freshness",
+        "observation_freshness_assessment_report", "observation_freshness_report",
     ):
         assert callable(getattr(aasm.AASMEngine, method)), method
         assert method in aasm.SUPPORTED_ENGINE_METHODS
@@ -50,7 +54,7 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_conflict
 
 def test_active_contract_preserves_external_reality_physical_control_and_s3_firewalls():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] == "0.32.9"
+    assert contract["contract_version"] == "0.32.10"
 
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -150,8 +154,41 @@ def test_active_contract_preserves_external_reality_physical_control_and_s3_fire
     assert conflict_runtime["parallel_truth_table"] == "NONE"
     assert conflict_runtime["parallel_dependency_graph"] == "NONE"
 
+    causal = contract["event_causality"]
+    assert causal["local_event_identity"] == "NODE_ID_PLUS_BOOT_EPOCH_PLUS_MONOTONIC_LOCAL_SEQUENCE"
+    assert causal["receipt_order_implies_source_order"] is False
+    assert causal["host_wall_clock"] == "NOT_UNIVERSAL_TRUTH_AND_NEVER_IMPLICITLY_CAPTURED"
+    assert causal["event_identity_grants_authority"] is False
+    assert causal["relation_grants_fact_authority"] is False
+    assert causal["relation_grants_effect_authority"] is False
+    assert causal["parallel_event_ledger"] == "NONE"
+    causal_runtime = causal["runtime"]
+    assert causal_runtime["core_aasm_event_log"] == "UNCHANGED_AND_REMAINS_REPLAY_LEDGER"
+    assert causal_runtime["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"
+    assert causal_runtime["ingest_order"] == "MAY_DIFFER_FROM_SOURCE_SEQUENCE"
+    assert causal_runtime["same_node_boot_order"] == "SEQUENCE_DEFINES_LOCAL_ORDER_INDEPENDENT_OF_INGEST_ORDER"
+    assert causal_runtime["parallel_event_ledger"] == "NONE"
+    assert causal_runtime["parallel_truth_table"] == "NONE"
 
-def test_active_import_registry_contains_pr3_and_s3_state_conflict_contracts():
+    freshness = contract["observation_freshness"]
+    assert freshness["reference_time"] == "EXPLICIT_INTEGER_NANOSECONDS_NEVER_IMPLICIT_HOST_NOW"
+    assert freshness["receipt_fallback"] == "OPTIONAL_AND_EXPLICITLY_MARKED_WEAKER_AGE_BASIS"
+    assert freshness["freshness_grants_fact_authority"] is False
+    assert freshness["freshness_grants_effect_authority"] is False
+    assert freshness["freshness_elevates_observation_authority"] is False
+    assert freshness["freshness_is_universal_admission"] is False
+    freshness_runtime = freshness["runtime"]
+    assert freshness_runtime["observation_source"] == "EXISTING_MACHINE_STATE_OBSERVATION_ONLY"
+    assert freshness_runtime["claim_source"] == "EXISTING_DURABLE_OBSERVED_STATE_CLAIM_ONLY"
+    assert freshness_runtime["causal_source"] == "EXACT_DURABLE_CAUSAL_EVENT_ID_AND_FINGERPRINT"
+    assert freshness_runtime["reference_time_source"] == "EXPLICIT_CALLER_POLICY_INPUT_NOT_HOST_NOW"
+    assert freshness_runtime["observation_authority_elevation"] == "NONE"
+    assert freshness_runtime["universal_admission"] == "NONE"
+    assert freshness_runtime["parallel_observation_store"] == "NONE"
+    assert freshness_runtime["parallel_truth_table"] == "NONE"
+
+
+def test_active_import_registry_contains_pr3_and_s3_temporal_contracts():
     for name in (
         "AuthorityDomain", "AuthorityLease", "physical_authority_contract",
         "EffectCapability", "NumericInterval", "effect_capability_contract",
@@ -163,6 +200,10 @@ def test_active_import_registry_contains_pr3_and_s3_state_conflict_contracts():
         "physical_effect_integration_runtime_contract", "PHYSICAL_EFFECT_INTEGRATION_CAPABILITIES",
         "StateConflict", "state_conflict_reasons", "state_conflict_contract",
         "state_conflict_runtime_contract", "STATE_CONFLICT_CAPABILITIES",
+        "CausalEventIdentity", "CausalRelation", "event_causality_contract",
+        "event_causality_runtime_contract", "EVENT_CAUSALITY_CAPABILITIES",
+        "ObservationFreshnessAssessment", "assess_freshness", "observation_freshness_contract",
+        "observation_freshness_runtime_contract", "OBSERVATION_FRESHNESS_CAPABILITIES",
     ):
         assert hasattr(aasm, name), name
         assert name in aasm.SUPPORTED_PUBLIC_IMPORTS
