@@ -175,8 +175,8 @@ def effect_task_lease(engine, effect_id: str, *, worker_id="effect-worker"):
     return engine.claim_task(task, worker_id, lease_seconds=600.0)
 
 
-def execute(engine, effect_id, *, at_time=20.0):
-    lease = effect_task_lease(engine, effect_id)
+def execute(engine, effect_id, *, at_time=20.0, task_lease=None):
+    lease = effect_task_lease(engine, effect_id) if task_lease is None else task_lease
     return engine.execute_effect(
         effect_id,
         lambda spec, key: {"ack": True, "idempotency_key": key},
@@ -320,15 +320,16 @@ def test_preemption_after_authorization_blocks_before_dispatch_and_next_epoch_do
         at_time=25.0,
         reason_code="SAFETY_ENVELOPE",
     )
+    dispatch_lease = effect_task_lease(engine, record.spec.effect_id)
     with pytest.raises(PermissionError, match="lease is not active"):
-        execute(engine, record.spec.effect_id, at_time=25.0)
+        execute(engine, record.spec.effect_id, at_time=25.0, task_lease=dispatch_lease)
     replacement = AuthorityLease(
         domain.domain_id, WORKSPACE, SCOPE, HOLDER, ROOT, 2, 25.0, 80.0,
         ("heater.set",), external_revision_id="device-rev-1",
     )
     engine.grant_authority_lease(replacement, actor_principal_id=ROOT, at_time=25.0)
     with pytest.raises(PermissionError):
-        execute(engine, record.spec.effect_id, at_time=26.0)
+        execute(engine, record.spec.effect_id, at_time=26.0, task_lease=dispatch_lease)
     current = engine.store.load_effect(engine.snapshot.machine_id, record.spec.effect_id)
     assert current.dispatch_request is None
     assert current.ownership is None
@@ -389,8 +390,8 @@ def test_ordinary_unbound_effect_preserves_existing_behavior():
 def test_binding_does_not_replace_scoped_effect_authority():
     engine = bootstrapped_engine(); _, lease, capability = setup_authority(engine)
     record = propose_physical_effect(engine); bind_effect(engine, record, lease, capability)
-    # Remove the holder's effect.authorize by using a new engine fixture would be
-    # expensive; instead prove binding does not manufacture an authorization ID.
+    # Binding is durable semantic Evidence only; existing scoped effect authority
+    # remains a separate later decision.
     current = engine.store.load_effect(engine.snapshot.machine_id, record.spec.effect_id)
     assert current.status == EffectStatus.PROPOSED.value
     assert current.authorization_id is None
