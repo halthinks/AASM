@@ -14,13 +14,13 @@ def test_v56_base_is_frozen_and_active_overlay_advances_adoption_only():
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.8"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.9"
     assert aasm.AASMEngine is public_active.AASMEngine
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v56.AASMEngine is not public_v55.AASMEngine
 
 
-def test_active_engine_exposes_external_reality_and_full_pr3_physical_control_surface():
+def test_active_engine_exposes_external_reality_physical_control_and_s3_conflict_surface():
     for method in (
         "solver_outcome_v2_runtime_contract_report", "record_solver_outcome_v2", "solver_outcome_v2_report",
         "solver_provenance_runtime_contract_report", "register_solver_execution_profile", "record_solver_runtime_provenance",
@@ -41,14 +41,16 @@ def test_active_engine_exposes_external_reality_and_full_pr3_physical_control_su
         "preempt_authority_lease", "effect_capability_use_report", "authority_preemption_report",
         "physical_control_fencing_report", "physical_effect_integration_contract_report",
         "bind_physical_effect_authority", "physical_effect_binding_report", "physical_effect_integration_report",
+        "state_conflict_contract_report", "build_state_conflict", "record_state_conflict",
+        "state_conflict_report", "state_conflicts_report",
     ):
         assert callable(getattr(aasm.AASMEngine, method)), method
         assert method in aasm.SUPPORTED_ENGINE_METHODS
 
 
-def test_active_contract_preserves_external_reality_and_physical_control_firewalls():
+def test_active_contract_preserves_external_reality_physical_control_and_s3_firewalls():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] == "0.32.8"
+    assert contract["contract_version"] == "0.32.9"
 
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -131,8 +133,25 @@ def test_active_contract_preserves_external_reality_and_physical_control_firewal
     assert runtime["parallel_effect_lifecycle"] == "NONE"
     assert runtime["parallel_dispatcher"] == "NONE"
 
+    conflict = contract["state_conflict"]
+    assert conflict["comparison"] == "EXACT_CANONICAL_PORTABLE_JSON_VALUE_PLUS_EXACT_REVISION_IDENTITY"
+    assert conflict["history"] == "EXPECTATION_AND_ACTUAL_STATE_CLAIMS_REMAIN_UNCHANGED"
+    assert conflict["actual_observation_authority"] == "PRESERVE_SOURCE_CLAIM_KIND_NEVER_ELEVATE_OBSERVED_TO_AUTHORITATIVE"
+    assert conflict["conflict_grants_fact_authority"] is False
+    assert conflict["conflict_grants_effect_authority"] is False
+    assert conflict["conflict_mutates_machine_state"] is False
+    assert conflict["conflict_mutates_state_claims"] is False
+    assert conflict["host_wall_clock_in_identity"] is False
+    assert conflict["python_object_identity_in_identity"] is False
+    conflict_runtime = conflict["runtime"]
+    assert conflict_runtime["claim_source"] == "EXISTING_AASM_STATE_CLAIM_PROJECTION_ONLY"
+    assert conflict_runtime["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"
+    assert conflict_runtime["observation_authority_elevation"] == "NONE"
+    assert conflict_runtime["parallel_truth_table"] == "NONE"
+    assert conflict_runtime["parallel_dependency_graph"] == "NONE"
 
-def test_active_import_registry_contains_pr3_capability_preemption_and_effect_integration_contracts():
+
+def test_active_import_registry_contains_pr3_and_s3_state_conflict_contracts():
     for name in (
         "AuthorityDomain", "AuthorityLease", "physical_authority_contract",
         "EffectCapability", "NumericInterval", "effect_capability_contract",
@@ -142,6 +161,8 @@ def test_active_import_registry_contains_pr3_capability_preemption_and_effect_in
         "physical_control_fencing_runtime_contract", "PHYSICAL_CONTROL_FENCING_CAPABILITIES",
         "PhysicalEffectAuthorityBinding", "physical_effect_authority_binding_contract",
         "physical_effect_integration_runtime_contract", "PHYSICAL_EFFECT_INTEGRATION_CAPABILITIES",
+        "StateConflict", "state_conflict_reasons", "state_conflict_contract",
+        "state_conflict_runtime_contract", "STATE_CONFLICT_CAPABILITIES",
     ):
         assert hasattr(aasm, name), name
         assert name in aasm.SUPPORTED_PUBLIC_IMPORTS
