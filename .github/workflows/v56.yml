@@ -84,6 +84,10 @@ jobs:
         run: |
           python scripts/check_physical_effect_integration_contracts.py
           pytest -q tests/test_physical_effect_integration.py
+      - name: Check S3 state conflict physical evidence foundation
+        run: |
+          python scripts/check_state_conflict_contracts.py
+          pytest -q tests/test_state_conflict.py
       - name: Validate cumulative development source contract
         run: python scripts/check_release_contracts.py
       - name: Guard active 0.56.1 development root and additive authority boundaries
@@ -92,7 +96,7 @@ jobs:
           import aasm
           from aasm import public_v55, public_v56
           active=aasm.validate_public_api_contract(); assert active['valid'], active
-          assert aasm.__version__=='0.56.1'; assert aasm.PUBLIC_API_CONTRACT['contract_version']=='0.32.8'
+          assert aasm.__version__=='0.56.1'; assert aasm.PUBLIC_API_CONTRACT['contract_version']=='0.32.9'
           assert public_v56.__version__=='0.56.1'; assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.6'
           assert public_v55.__version__=='0.55.0'; assert aasm.AASMEngine is public_v56.AASMEngine
           engine=aasm.AASMEngine(aasm.ProblemSpec('v56-gate'))
@@ -138,7 +142,14 @@ jobs:
           assert integration['unknown_and_reconciliation']=='EXISTING_V54_UNKNOWN_AND_RECONCILIATION_UNCHANGED'
           assert integration['parallel_authority_evaluator']=='NONE'
           assert integration['parallel_effect_store']=='NONE'; assert integration['parallel_effect_lifecycle']=='NONE'; assert integration['parallel_dispatcher']=='NONE'
-          print('cumulative 0.56.1 development contract + active adoption 0.32.8 PR-3A/H boundaries: PASS')
+          conflict=engine.state_conflict_contract_report()
+          assert conflict['claim_source']=='EXISTING_AASM_STATE_CLAIM_PROJECTION_ONLY'
+          assert conflict['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
+          assert conflict['claim_mutation']=='NONE'; assert conflict['machine_state_mutation']=='NONE'
+          assert conflict['fact_authority_creation']=='NONE'; assert conflict['effect_authority']=='NONE'
+          assert conflict['observation_authority_elevation']=='NONE'
+          assert conflict['parallel_truth_table']=='NONE'; assert conflict['parallel_dependency_graph']=='NONE'
+          print('cumulative 0.56.1 development contract + active adoption 0.32.9 PR-3 + S3 state-conflict boundaries: PASS')
           PY
       - name: Publish cumulative v0.56 development qualification
         if: always()
@@ -148,5 +159,5 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative external-reality+physical-effect integration qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
+          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative external-reality+physical-effect+S3-conflict qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='aasm/v56' -f description="$description" -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
