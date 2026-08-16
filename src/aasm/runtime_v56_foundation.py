@@ -10,12 +10,14 @@ from .external_machine_runtime import ExternalMachineRuntimeMixin
 from .external_machine_transition_runtime import MachineTransitionRuntimeMixin
 from .physical_authority_runtime import PhysicalAuthorityRuntimeMixin
 from .physical_control_fencing_runtime import PhysicalControlFencingRuntimeMixin
+from .physical_effect_integration_boundary import PhysicalEffectIntegrationBoundaryMixin
 from .physical_preemption_recovery_guard import PhysicalPreemptionRecoveryGuardMixin
 from .runtime_v55_foundation import AASMEngine as V55FoundationEngine
 from .state_authority_runtime import StateAuthorityRuntimeMixin
 
 
 class AASMEngine(
+    PhysicalEffectIntegrationBoundaryMixin,
     PhysicalPreemptionRecoveryGuardMixin,
     PhysicalControlFencingRuntimeMixin,
     EffectCapabilityRevocationGuardMixin,
@@ -30,7 +32,7 @@ class AASMEngine(
     SolverOutcomeV2RuntimeMixin,
     V55FoundationEngine,
 ):
-    """Active v0.56 development runtime with governed external reality and PR-3 physical-control foundations."""
+    """Active v0.56 development runtime with governed external reality and bounded physical effects."""
 
 
 __all__ = ["AASMEngine"]
