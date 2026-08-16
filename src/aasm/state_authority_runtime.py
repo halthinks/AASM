@@ -107,9 +107,10 @@ def project_state_authority_evidence(records) -> dict[str, Any]:
                 object_id = str(document.get("authority_id") or "")
                 if not object_id:
                     raise ValueError("fact authority revocation authority_id is required")
-                fingerprint = str(document.get("authority_fingerprint") or "")
-                if not fingerprint:
+                authority_fingerprint = str(document.get("authority_fingerprint") or "")
+                if not authority_fingerprint:
                     raise ValueError("fact authority revocation authority_fingerprint is required")
+                fingerprint = semantic_fingerprint(document)
                 candidate = {"revocation": document, "evidence_id": evidence_id}
                 prior = revocations.get(object_id)
                 if prior is not None and prior != candidate:
