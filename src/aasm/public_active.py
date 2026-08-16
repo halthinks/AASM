@@ -63,6 +63,25 @@ from .physical_preemption import (
     AuthorityPreemption,
     authority_preemption_contract,
 )
+from .state_conflict import (
+    STATE_CONFLICT_ACTUAL_KINDS,
+    STATE_CONFLICT_CONTRACT_ID,
+    STATE_CONFLICT_CONTRACT_VERSION,
+    STATE_CONFLICT_EXPECTATION_KINDS,
+    STATE_CONFLICT_REASONS,
+    STATE_CONFLICT_STABILITY,
+    StateConflict,
+    state_conflict_contract,
+    state_conflict_reasons,
+)
+from .state_conflict_runtime import (
+    STATE_CONFLICT_CAPABILITIES,
+    STATE_CONFLICT_RUNTIME_CONTRACT_ID,
+    STATE_CONFLICT_RUNTIME_CONTRACT_VERSION,
+    STATE_CONFLICT_RUNTIME_STABILITY,
+    project_state_conflict_evidence,
+    state_conflict_runtime_contract,
+)
 from .runtime_v56 import AASMEngine
 
 
@@ -88,6 +107,11 @@ _NEW_ENGINE_METHODS = [
     "bind_physical_effect_authority",
     "physical_effect_binding_report",
     "physical_effect_integration_report",
+    "state_conflict_contract_report",
+    "build_state_conflict",
+    "record_state_conflict",
+    "state_conflict_report",
+    "state_conflicts_report",
 ]
 
 _NEW_IMPORTS = [
@@ -132,6 +156,21 @@ _NEW_IMPORTS = [
     "PHYSICAL_EFFECT_INTEGRATION_CAPABILITIES",
     "project_physical_effect_integration_evidence",
     "physical_effect_integration_runtime_contract",
+    "STATE_CONFLICT_CONTRACT_ID",
+    "STATE_CONFLICT_CONTRACT_VERSION",
+    "STATE_CONFLICT_STABILITY",
+    "STATE_CONFLICT_EXPECTATION_KINDS",
+    "STATE_CONFLICT_ACTUAL_KINDS",
+    "STATE_CONFLICT_REASONS",
+    "StateConflict",
+    "state_conflict_reasons",
+    "state_conflict_contract",
+    "STATE_CONFLICT_RUNTIME_CONTRACT_ID",
+    "STATE_CONFLICT_RUNTIME_CONTRACT_VERSION",
+    "STATE_CONFLICT_RUNTIME_STABILITY",
+    "STATE_CONFLICT_CAPABILITIES",
+    "project_state_conflict_evidence",
+    "state_conflict_runtime_contract",
 ]
 
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*getattr(_base, "SUPPORTED_ENGINE_METHODS", []), *_NEW_ENGINE_METHODS]))
@@ -141,12 +180,13 @@ SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([
     "effect-capability",
     "physical-control-fencing",
     "physical-effect-integration",
+    "state-conflict",
 ]))
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*getattr(_base, "SUPPORTED_PUBLIC_IMPORTS", []), *_NEW_IMPORTS]))
 
 PUBLIC_API_CONTRACT = deepcopy(_base.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.32.8",
+    "contract_version": "0.32.9",
     "runtime_version": __version__,
     "release_stability": PUBLIC_RELEASE_STABILITY,
     "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
@@ -170,6 +210,10 @@ PUBLIC_API_CONTRACT["physical_effect_integration"] = {
     **physical_effect_authority_binding_contract(),
     "runtime": physical_effect_integration_runtime_contract(),
 }
+PUBLIC_API_CONTRACT["state_conflict"] = {
+    **state_conflict_contract(),
+    "runtime": state_conflict_runtime_contract(),
+}
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
 
@@ -187,12 +231,12 @@ def validate_public_api_contract():
     missing_imports = [name for name in _NEW_IMPORTS if name not in globals()]
     missing_methods = [name for name in _NEW_ENGINE_METHODS if not callable(getattr(AASMEngine, name, None))]
     if missing_imports:
-        errors.append(f"missing active PR-3 imports: {missing_imports}")
+        errors.append(f"missing active governed-reality imports: {missing_imports}")
     if missing_methods:
-        errors.append(f"missing active PR-3 engine methods: {missing_methods}")
+        errors.append(f"missing active governed-reality engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
         errors.append("active runtime version mismatch")
-    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.8":
+    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.9":
         errors.append("active adoption contract mismatch")
 
     capability = PUBLIC_API_CONTRACT.get("effect_capability", {})
@@ -268,6 +312,37 @@ def validate_public_api_contract():
         errors.append("physical effect integration introduced parallel effect lifecycle")
     if integration_runtime.get("parallel_dispatcher") != "NONE":
         errors.append("physical effect integration introduced parallel dispatcher")
+
+    conflict = PUBLIC_API_CONTRACT.get("state_conflict", {})
+    if conflict.get("contract_id") != STATE_CONFLICT_CONTRACT_ID:
+        errors.append("S3 state conflict semantic contract missing")
+    if conflict.get("comparison") != "EXACT_CANONICAL_PORTABLE_JSON_VALUE_PLUS_EXACT_REVISION_IDENTITY":
+        errors.append("S3 state conflict comparison drift")
+    if conflict.get("conflict_grants_fact_authority") is not False:
+        errors.append("state conflict incorrectly grants fact authority")
+    if conflict.get("conflict_grants_effect_authority") is not False:
+        errors.append("state conflict incorrectly grants effect authority")
+    if conflict.get("conflict_mutates_machine_state") is not False:
+        errors.append("state conflict incorrectly mutates machine state")
+    if conflict.get("conflict_mutates_state_claims") is not False:
+        errors.append("state conflict incorrectly mutates claims")
+    if conflict.get("host_wall_clock_in_identity") is not False:
+        errors.append("state conflict portable identity depends on host wall clock")
+    if conflict.get("python_object_identity_in_identity") is not False:
+        errors.append("state conflict portable identity depends on Python object identity")
+    conflict_runtime = conflict.get("runtime", {})
+    if conflict_runtime.get("contract_id") != STATE_CONFLICT_RUNTIME_CONTRACT_ID:
+        errors.append("S3 state conflict runtime contract missing")
+    if conflict_runtime.get("claim_source") != "EXISTING_AASM_STATE_CLAIM_PROJECTION_ONLY":
+        errors.append("state conflict bypassed existing state claims")
+    if conflict_runtime.get("authority") != "EXISTING_AASM_SCOPED_AUTHORITY_ONLY":
+        errors.append("state conflict introduced parallel authority")
+    if conflict_runtime.get("observation_authority_elevation") != "NONE":
+        errors.append("state conflict elevates observation authority")
+    if conflict_runtime.get("parallel_truth_table") != "NONE":
+        errors.append("state conflict introduced parallel truth table")
+    if conflict_runtime.get("parallel_dependency_graph") != "NONE":
+        errors.append("state conflict introduced parallel dependency graph")
 
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 
