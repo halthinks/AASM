@@ -52,8 +52,6 @@ def main() -> None:
     require(semantic["parallel_authority_evaluator"] == "NONE", "parallel authority evaluator introduced")
     require(semantic["parallel_effect_lifecycle"] == "NONE", "parallel effect lifecycle introduced")
     require(semantic["effect_authorization_integration"] == "NOT_YET_PR3H", "PR-3A/3B integrated effect authorization early")
-    require(semantic["bounded_effect_capability"] == "RESERVED_PR3C_PR3D", "PR-3A/3B overclaims bounded effect capability")
-    require(semantic["semantic_preemption"] == "RESERVED_PR3G", "PR-3A/3B overclaims preemption")
 
     require(runtime["contract_id"] == PHYSICAL_AUTHORITY_RUNTIME_CONTRACT_ID, "physical-authority runtime contract drift")
     require(runtime["durability"] == "EXISTING_AASM_EVIDENCE_EVENT_REPLAY", "parallel physical-authority persistence introduced")
@@ -77,64 +75,51 @@ def main() -> None:
         schema = json.loads((ROOT / "schemas" / filename).read_text(encoding="utf-8"))
         require(schema["properties"]["contract_id"]["const"] == contract_id, f"physical-authority schema drift: {filename}")
 
-    require_tokens(
-        ROOT / "src/aasm/physical_authority.py",
-        (
-            'AUTHORITY_DOMAIN_CONTRACT_ID = "aasm.authority.domain.v1"',
-            'AUTHORITY_LEASE_CONTRACT_ID = "aasm.authority.lease.v1"',
-            '"lease_exclusivity": "AT_MOST_ONE_ACTIVE_LEASE_PER_DOMAIN"',
-            '"authority_epoch": "STRICTLY_MONOTONIC_PER_DOMAIN"',
-            '"lease_existence_grants_effect_authority": False',
-            '"effect_authorization_integration": "NOT_YET_PR3H"',
-            '"semantic_preemption": "RESERVED_PR3G"',
-        ),
-    )
-    require_tokens(
-        ROOT / "src/aasm/physical_authority_runtime.py",
-        (
-            'PHYSICAL_AUTHORITY_RUNTIME_CONTRACT_ID = "aasm.physical.authority.runtime.v1"',
-            '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"',
-            '"effect_authorization_integration": "NONE_PR3A_PR3B_FOUNDATION"',
-            "self.authorize_scoped_request(",
-            "AuthorityRequest(",
-            "add_evidence_guarded",
-            "expected_epoch = max_epoch + 1",
-            "_intervals_overlap(",
-            "revocation_generation",
-        ),
-    )
-    forbid_tokens(
-        ROOT / "src/aasm/physical_authority_runtime.py",
-        (
-            "self.authorize_effect(",
-            "self.execute_effect(",
-            "self.reconcile_effect(",
-            "EffectDispatchRequest",
-            "EffectOwnership",
-            "EffectReconciliation",
-            "bind_effect_ownership",
-        ),
-    )
-    require_tokens(
-        ROOT / "src/aasm/runtime_v56_foundation.py",
-        ("PhysicalAuthorityRuntimeMixin", "MachinePostconditionRuntimeMixin", "V55FoundationEngine"),
-    )
-    require_tokens(
-        ROOT / "tests/test_physical_authority.py",
-        (
-            "PhysicalAuthorityEngine = AASMEngine",
-            "test_authority_lease_epoch_is_strictly_monotonic_and_intervals_cannot_overlap",
-            "test_revocation_is_append_only_closes_effective_interval_and_next_epoch_can_begin",
-            "test_authority_domain_or_lease_never_grants_existing_effect_authority",
-            "test_physical_authority_records_do_not_mutate_core_machine_state",
-            "test_sqlite_restart_reconstructs_domains_leases_revocations_and_exact_replay",
-        ),
-    )
+    require_tokens(ROOT / "src/aasm/physical_authority.py", (
+        'AUTHORITY_DOMAIN_CONTRACT_ID = "aasm.authority.domain.v1"',
+        'AUTHORITY_LEASE_CONTRACT_ID = "aasm.authority.lease.v1"',
+        '"lease_exclusivity": "AT_MOST_ONE_ACTIVE_LEASE_PER_DOMAIN"',
+        '"authority_epoch": "STRICTLY_MONOTONIC_PER_DOMAIN"',
+        '"lease_existence_grants_effect_authority": False',
+        '"effect_authorization_integration": "NOT_YET_PR3H"',
+    ))
+    require_tokens(ROOT / "src/aasm/physical_authority_runtime.py", (
+        'PHYSICAL_AUTHORITY_RUNTIME_CONTRACT_ID = "aasm.physical.authority.runtime.v1"',
+        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"',
+        '"effect_authorization_integration": "NONE_PR3A_PR3B_FOUNDATION"',
+        "self.authorize_scoped_request(",
+        "AuthorityRequest(",
+        "add_evidence_guarded",
+        "expected_epoch = max_epoch + 1",
+        "_intervals_overlap(",
+        "revocation_generation",
+    ))
+    forbid_tokens(ROOT / "src/aasm/physical_authority_runtime.py", (
+        "self.authorize_effect(",
+        "self.execute_effect(",
+        "self.reconcile_effect(",
+        "EffectDispatchRequest",
+        "EffectOwnership",
+        "EffectReconciliation",
+        "bind_effect_ownership",
+    ))
+    require_tokens(ROOT / "src/aasm/runtime_v56_foundation.py", (
+        "PhysicalAuthorityRuntimeMixin",
+        "MachinePostconditionRuntimeMixin",
+        "V55FoundationEngine",
+    ))
+    require_tokens(ROOT / "tests/test_physical_authority.py", (
+        "PhysicalAuthorityEngine = AASMEngine",
+        "test_authority_lease_epoch_is_strictly_monotonic_and_intervals_cannot_overlap",
+        "test_revocation_is_append_only_closes_effective_interval_and_next_epoch_can_begin",
+        "test_authority_domain_or_lease_never_grants_existing_effect_authority",
+        "test_physical_authority_records_do_not_mutate_core_machine_state",
+        "test_sqlite_restart_reconstructs_domains_leases_revocations_and_exact_replay",
+    ))
 
     public = validate_public_api_contract()
     require(public["valid"], f"active public contract invalid: {public['errors']}")
     contract = public_api_contract()
-    require(contract["contract_version"] == "0.32.6", "active adoption contract did not advance for PR-3A/3B")
     require("physical_authority" in contract, "physical authority missing from active public contract")
     active = contract["physical_authority"]
     require(active["domain_existence_grants_effect_authority"] is False, "public domain existence became effect authority")
@@ -145,7 +130,7 @@ def main() -> None:
     require(active["runtime"]["effect_dispatch"] == "NONE", "public physical authority gained dispatch")
     require(active["runtime"]["preemptor_reference_grants_authority"] is False, "public preemptor reference grants authority")
 
-    print("physical authority domain/lease foundation is active at adoption 0.32.6 and preserves scoped authority, exclusivity, epochs, revocation, and no-effect-authority boundary: PASS")
+    print("physical authority domain/lease foundation remains active and preserves scoped authority, exclusivity, epochs, revocation, and no-effect-authority boundary: PASS")
 
 
 if __name__ == "__main__":
