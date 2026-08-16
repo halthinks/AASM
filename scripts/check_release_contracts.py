@@ -59,25 +59,24 @@ def main() -> int:
         "physical_authority_runtime_contract",
     ])
     require(root / "src/aasm/public_active.py", [
-        '"contract_version": "0.32.9"',
+        '"contract_version": "0.32.10"',
         "EFFECT_CAPABILITY_CONTRACT_ID",
-        "EffectCapability",
-        "EffectCapabilityUse",
-        "AuthorityPreemption",
-        "PHYSICAL_EFFECT_AUTHORITY_BINDING_CONTRACT_ID",
         "PhysicalEffectAuthorityBinding",
-        "PHYSICAL_EFFECT_INTEGRATION_RUNTIME_CONTRACT_ID",
         "STATE_CONFLICT_CONTRACT_ID",
         "StateConflict",
-        "STATE_CONFLICT_RUNTIME_CONTRACT_ID",
-        "effect_capability_runtime_contract",
-        "physical_control_fencing_runtime_contract",
+        "EVENT_CAUSALITY_CONTRACT_ID",
+        "CausalEventIdentity",
+        "CausalRelation",
+        "OBSERVATION_FRESHNESS_CONTRACT_ID",
+        "ObservationFreshnessAssessment",
         "physical_effect_integration_runtime_contract",
         "state_conflict_runtime_contract",
-        '"effect_capability"',
-        '"physical_control_fencing"',
+        "event_causality_runtime_contract",
+        "observation_freshness_runtime_contract",
         '"physical_effect_integration"',
         '"state_conflict"',
+        '"event_causality"',
+        '"observation_freshness"',
     ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
         "PhysicalEffectIntegrationBoundaryMixin",
@@ -87,6 +86,8 @@ def main() -> int:
         "EffectCapabilityRuntimeMixin",
         "PhysicalAuthorityRuntimeMixin",
         "MachinePostconditionExecutionCorrelationMixin",
+        "ObservationFreshnessRuntimeMixin",
+        "EventCausalityRuntimeMixin",
         "StateConflictRuntimeMixin",
         "StateAuthorityRuntimeMixin",
         "V55FoundationEngine",
@@ -126,6 +127,35 @@ def main() -> int:
         '"observation_authority_elevation": "NONE"',
         '"parallel_dependency_graph": "NONE"',
     ])
+    require(root / "src/aasm/event_causality.py", [
+        'EVENT_CAUSALITY_CONTRACT_ID = "aasm.event.causality.v1"',
+        "PORTABLE_U63_MAX = (1 << 63) - 1",
+        '"local_event_identity": "NODE_ID_PLUS_BOOT_EPOCH_PLUS_MONOTONIC_LOCAL_SEQUENCE"',
+        '"receipt_order_implies_source_order": False',
+        '"host_wall_clock": "NOT_UNIVERSAL_TRUTH_AND_NEVER_IMPLICITLY_CAPTURED"',
+        '"parallel_event_ledger": "NONE"',
+    ])
+    require(root / "src/aasm/event_causality_runtime.py", [
+        'EVENT_CAUSALITY_RUNTIME_CONTRACT_ID = "aasm.event.causality.runtime.v1"',
+        '"core_aasm_event_log": "UNCHANGED_AND_REMAINS_REPLAY_LEDGER"',
+        '"same_node_boot_order": "SEQUENCE_DEFINES_LOCAL_ORDER_INDEPENDENT_OF_INGEST_ORDER"',
+        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"',
+        '"parallel_event_ledger": "NONE"',
+    ])
+    require(root / "src/aasm/observation_freshness.py", [
+        'OBSERVATION_FRESHNESS_CONTRACT_ID = "aasm.observation.freshness.v1"',
+        '"reference_time": "EXPLICIT_INTEGER_NANOSECONDS_NEVER_IMPLICIT_HOST_NOW"',
+        '"receipt_fallback": "OPTIONAL_AND_EXPLICITLY_MARKED_WEAKER_AGE_BASIS"',
+        '"freshness_elevates_observation_authority": False',
+        '"freshness_is_universal_admission": False',
+    ])
+    require(root / "src/aasm/observation_freshness_runtime.py", [
+        'OBSERVATION_FRESHNESS_RUNTIME_CONTRACT_ID = "aasm.observation.freshness.runtime.v1"',
+        '"observation_source": "EXISTING_MACHINE_STATE_OBSERVATION_ONLY"',
+        '"causal_source": "EXACT_DURABLE_CAUSAL_EVENT_ID_AND_FINGERPRINT"',
+        '"reference_time_source": "EXPLICIT_CALLER_POLICY_INPUT_NOT_HOST_NOW"',
+        '"universal_admission": "NONE"',
+    ])
 
     require(root / "src/aasm/public_v55.py", ['__version__ = "0.55.0"', '"contract_version": "0.31.0"'])
     require(root / "src/aasm/public_v54.py", ['__version__ = "0.54.0"', '"contract_version": "0.30.0"'])
@@ -157,6 +187,7 @@ def main() -> int:
         "check_physical_control_fencing_contracts.py",
         "check_physical_effect_integration_contracts.py",
         "check_state_conflict_contracts.py",
+        "check_causal_freshness_contracts.py",
     ):
         run_script(root, script)
 
@@ -174,6 +205,9 @@ def main() -> int:
         "authority-preemption.schema.json",
         "physical-effect-authority-binding.schema.json",
         "state-conflict.schema.json",
+        "causal-event.schema.json",
+        "causal-relation.schema.json",
+        "observation-freshness.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -202,16 +236,13 @@ def main() -> int:
 
     require(root / ".github/workflows/v56.yml", [
         "AASM v0.56 Development Qualification",
-        "check_effect_capability_contracts.py",
-        "tests/test_effect_capability.py",
-        "check_physical_control_fencing_contracts.py",
-        "tests/test_physical_control_fencing.py",
-        "tests/test_physical_preemption_recovery.py",
         "check_physical_effect_integration_contracts.py",
         "tests/test_physical_effect_integration.py",
         "check_state_conflict_contracts.py",
         "tests/test_state_conflict.py",
-        "0.32.9",
+        "check_causal_freshness_contracts.py",
+        "tests/test_causal_freshness.py",
+        "0.32.10",
         "context='aasm/v56'",
     ])
     require(root / ".github/workflows/effect-capability.yml", ["context='aasm/effect-capability'"])
@@ -225,6 +256,8 @@ def main() -> int:
     require(root / ".github/workflows/physical-evidence.yml", [
         "check_state_conflict_contracts.py",
         "tests/test_state_conflict.py",
+        "check_causal_freshness_contracts.py",
+        "tests/test_causal_freshness.py",
         "context='aasm/physical-evidence'",
     ])
     require(root / ".github/workflows/release.yml", [
@@ -254,14 +287,14 @@ def main() -> int:
         "import aasm; "
         "r=aasm.validate_public_api_contract(); assert r['valid'], r; "
         "c=aasm.public_api_contract(); assert c['runtime_version']=='0.56.1'; "
-        "assert c['contract_version']=='0.32.9'; "
-        "assert 'effect_capability' in c and 'physical_control_fencing' in c and 'physical_effect_integration' in c and 'state_conflict' in c"
+        "assert c['contract_version']=='0.32.10'; "
+        "assert 'physical_effect_integration' in c and 'state_conflict' in c and 'event_causality' in c and 'observation_freshness' in c"
     )
     completed = subprocess.run([sys.executable, "-c", code], cwd=root, env=env)
     if completed.returncode != 0:
         _fail("active public contract execution failed")
 
-    print("0.56.1 development target + active adoption 0.32.9 + PR-3 + S3 state-conflict source/release contracts: PASS")
+    print("0.56.1 development target + active adoption 0.32.10 + PR-3 + S3 conflict/causality/freshness source/release contracts: PASS")
     return 0
 
 
