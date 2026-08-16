@@ -15,7 +15,6 @@ from aasm.persistence.sqlite import SQLiteStore
 from aasm.physical_authority import AuthorityDomain, AuthorityLease, physical_authority_contract
 from aasm.physical_authority_runtime import (
     PHYSICAL_AUTHORITY_CAPABILITIES,
-    PhysicalAuthorityRuntimeMixin,
     physical_authority_runtime_contract,
 )
 from aasm.scoped_authority import Principal, ScopedAuthorityGrant, Workspace
@@ -28,9 +27,7 @@ HOLDER = "controller-a"
 OTHER = "controller-b"
 PREEMPTOR = "safety-controller"
 
-
-class PhysicalAuthorityEngine(PhysicalAuthorityRuntimeMixin, AASMEngine):
-    pass
+PhysicalAuthorityEngine = AASMEngine
 
 
 def _grant(engine, subject: str, *capabilities: str):
