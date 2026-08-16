@@ -87,7 +87,17 @@ def main() -> None:
             "EffectIntent.from_dict",
             "state_claim_report",
             "machine_binding_report",
-            "authorize_scoped_request",
+            "_authorize_external_machine_action(",
+        ),
+    )
+    # PR-2B deliberately reuses the PR-2A scoped-authority wrapper. Verify that
+    # wrapper still terminates at the existing AASM scoped-authority evaluator.
+    require_tokens(
+        ROOT / "src/aasm/external_machine_runtime.py",
+        (
+            "def _authorize_external_machine_action(",
+            "self.authorize_scoped_request(",
+            "AuthorityRequest(",
         ),
     )
     forbid_tokens(
