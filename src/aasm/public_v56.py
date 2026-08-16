@@ -69,6 +69,23 @@ from .external_machine_transition_runtime import (
     machine_transition_runtime_contract,
     project_machine_transition_evidence,
 )
+from .physical_authority import (
+    AUTHORITY_DOMAIN_CONTRACT_ID,
+    AUTHORITY_LEASE_CONTRACT_ID,
+    PHYSICAL_AUTHORITY_CONTRACT_VERSION,
+    PHYSICAL_AUTHORITY_STABILITY,
+    AuthorityDomain,
+    AuthorityLease,
+    physical_authority_contract,
+)
+from .physical_authority_runtime import (
+    PHYSICAL_AUTHORITY_CAPABILITIES,
+    PHYSICAL_AUTHORITY_RUNTIME_CONTRACT_ID,
+    PHYSICAL_AUTHORITY_RUNTIME_CONTRACT_VERSION,
+    PHYSICAL_AUTHORITY_RUNTIME_STABILITY,
+    physical_authority_runtime_contract,
+    project_physical_authority_evidence,
+)
 from .provider_status_v2 import (
     PROVIDER_STATUS_MAP_CONTRACT_ID, PROVIDER_STATUS_MAP_CONTRACT_VERSION,
     ProviderStatusMap, ProviderStatusMapping, ProviderStatusRule,
@@ -136,7 +153,9 @@ _NEW_ENGINE_METHODS = [
     "machine_transition_contract_report", "propose_machine_transition", "machine_transition_report",
     "machine_transitions_report", "machine_postcondition_contract_report",
     "verify_machine_transition_postconditions", "machine_postcondition_verification_report",
-    "machine_postconditions_report",
+    "machine_postconditions_report", "physical_authority_contract_report",
+    "register_authority_domain", "grant_authority_lease", "revoke_authority_lease",
+    "authority_domain_report", "authority_lease_report", "physical_authority_report",
 ]
 
 _NEW_IMPORTS = [
@@ -182,19 +201,24 @@ _NEW_IMPORTS = [
     "machine_postcondition_verification_contract", "MACHINE_POSTCONDITION_RUNTIME_CONTRACT_ID",
     "MACHINE_POSTCONDITION_RUNTIME_CONTRACT_VERSION", "MACHINE_POSTCONDITION_RUNTIME_STABILITY",
     "MACHINE_POSTCONDITION_CAPABILITIES", "project_machine_postcondition_evidence", "machine_postcondition_runtime_contract",
+    "AUTHORITY_DOMAIN_CONTRACT_ID", "AUTHORITY_LEASE_CONTRACT_ID", "PHYSICAL_AUTHORITY_CONTRACT_VERSION",
+    "PHYSICAL_AUTHORITY_STABILITY", "AuthorityDomain", "AuthorityLease", "physical_authority_contract",
+    "PHYSICAL_AUTHORITY_RUNTIME_CONTRACT_ID", "PHYSICAL_AUTHORITY_RUNTIME_CONTRACT_VERSION",
+    "PHYSICAL_AUTHORITY_RUNTIME_STABILITY", "PHYSICAL_AUTHORITY_CAPABILITIES",
+    "project_physical_authority_evidence", "physical_authority_runtime_contract",
 ]
 
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_ENGINE_METHODS", []), *_NEW_ENGINE_METHODS]))
 SUPPORTED_CLI_COMMANDS = list(getattr(_v55, "SUPPORTED_CLI_COMMANDS", []))
 SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([
     *getattr(_v55, "SUPPORTED_INSPECTION_SURFACES", []),
-    "solver-outcome-v2", "solver-provenance", "state-authority", "external-machine", "machine-transition", "machine-postcondition",
+    "solver-outcome-v2", "solver-provenance", "state-authority", "external-machine", "machine-transition", "machine-postcondition", "physical-authority",
 ]))
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_PUBLIC_IMPORTS", []), *_NEW_IMPORTS]))
 
 PUBLIC_API_CONTRACT = deepcopy(_v55.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.32.5", "runtime_version": __version__, "release_stability": PUBLIC_RELEASE_STABILITY,
+    "contract_version": "0.32.6", "runtime_version": __version__, "release_stability": PUBLIC_RELEASE_STABILITY,
     "supported_imports": SUPPORTED_PUBLIC_IMPORTS, "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
     "supported_cli_commands": SUPPORTED_CLI_COMMANDS, "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
 })
@@ -207,22 +231,11 @@ PUBLIC_API_CONTRACT["solver_provenance"] = {
     "provider_fixtures": ["cadical/pysat", "ortools-cp-sat", "highs", "cvxpy"],
     "interrupted_provenance_v2": "DORMANT_NON_AUTHORITATIVE_NOT_EXPOSED",
 }
-PUBLIC_API_CONTRACT["state_authority"] = {
-    **state_authority_contract(),
-    "runtime": state_authority_runtime_contract(),
-}
-PUBLIC_API_CONTRACT["external_machine"] = {
-    **external_machine_contract(),
-    "runtime": external_machine_runtime_contract(),
-}
-PUBLIC_API_CONTRACT["machine_transition"] = {
-    **machine_transition_contract(),
-    "runtime": machine_transition_runtime_contract(),
-}
-PUBLIC_API_CONTRACT["machine_postcondition"] = {
-    **machine_postcondition_verification_contract(),
-    "runtime": machine_postcondition_runtime_contract(),
-}
+PUBLIC_API_CONTRACT["state_authority"] = {**state_authority_contract(), "runtime": state_authority_runtime_contract()}
+PUBLIC_API_CONTRACT["external_machine"] = {**external_machine_contract(), "runtime": external_machine_runtime_contract()}
+PUBLIC_API_CONTRACT["machine_transition"] = {**machine_transition_contract(), "runtime": machine_transition_runtime_contract()}
+PUBLIC_API_CONTRACT["machine_postcondition"] = {**machine_postcondition_verification_contract(), "runtime": machine_postcondition_runtime_contract()}
+PUBLIC_API_CONTRACT["physical_authority"] = {**physical_authority_contract(), "runtime": physical_authority_runtime_contract()}
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
 
@@ -244,7 +257,7 @@ def validate_public_api_contract():
         errors.append(f"missing v0.56 engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
         errors.append("v0.56 runtime version mismatch")
-    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.5":
+    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.6":
         errors.append("active adoption contract mismatch")
     if PUBLIC_RELEASE_STABILITY != "ACTIVE_DEVELOPMENT":
         errors.append("v0.56 active release stability mismatch")
@@ -288,18 +301,14 @@ def validate_public_api_contract():
     external = PUBLIC_API_CONTRACT.get("external_machine", {})
     if external.get("binding_role") != "REFERENCE_AND_CORRELATION_ONLY_NOT_EXTERNAL_STATE_COPY":
         errors.append("external machine binding role mismatch")
-    if external.get("binding_grants_fact_authority") is not False:
-        errors.append("external machine binding fact-authority boundary mismatch")
-    if external.get("binding_grants_effect_authority") is not False:
-        errors.append("external machine binding effect-authority boundary mismatch")
+    if external.get("binding_grants_fact_authority") is not False or external.get("binding_grants_effect_authority") is not False:
+        errors.append("external machine binding authority boundary mismatch")
     if external.get("capability_reference_grants_authority") is not False:
         errors.append("external machine capability-reference authority boundary mismatch")
     if external.get("external_state_table") != "NONE":
         errors.append("external machine parallel-state boundary mismatch")
     if external.get("executor_invocation") != "NONE_BY_THIS_FOUNDATION":
         errors.append("external machine executor-invocation boundary mismatch")
-    if external.get("postcondition_achievement_claim") != "NOT_YET_CLAIMED_PR2C":
-        errors.append("external machine PR2A postcondition claim boundary mismatch")
     external_runtime = external.get("runtime", {})
     if external_runtime.get("effect_dispatch") != "NONE" or external_runtime.get("executor_invocation") != "NONE":
         errors.append("external machine PR2A dispatch boundary mismatch")
@@ -317,8 +326,6 @@ def validate_public_api_contract():
         errors.append("machine transition parallel effect infrastructure detected")
     if transition.get("command_success_is_achievement") is not False:
         errors.append("machine transition command-success truth boundary mismatch")
-    if transition.get("postcondition_verification") != "NOT_IMPLEMENTED_PR2B_RESERVED_FOR_PR2C":
-        errors.append("machine transition PR2B postcondition boundary mismatch")
     transition_runtime = transition.get("runtime", {})
     if transition_runtime.get("effect_proposal_path") != "EXISTING_AASM_PROPOSE_EFFECT_ONLY":
         errors.append("machine transition runtime proposal path mismatch")
@@ -363,6 +370,39 @@ def validate_public_api_contract():
         errors.append("machine postcondition runtime gained effect authority")
     if post_runtime.get("parallel_truth_table") != "NONE" or post_runtime.get("parallel_effect_lifecycle") != "NONE":
         errors.append("machine postcondition runtime parallel truth/effect lifecycle detected")
+
+    physical = PUBLIC_API_CONTRACT.get("physical_authority", {})
+    if physical.get("domain_role") != "BOUNDED_EFFECT_AUTHORITY_NAMESPACE_NOT_AUTHORITY_GRANT":
+        errors.append("physical authority domain role mismatch")
+    if physical.get("lease_role") != "EXCLUSIVE_TIME_BOUNDED_DOMAIN_HOLDER_NOT_EFFECT_PERMISSION_BY_EXISTENCE":
+        errors.append("physical authority lease role mismatch")
+    if physical.get("lease_exclusivity") != "AT_MOST_ONE_ACTIVE_LEASE_PER_DOMAIN":
+        errors.append("physical authority lease exclusivity mismatch")
+    if physical.get("authority_epoch") != "STRICTLY_MONOTONIC_PER_DOMAIN":
+        errors.append("physical authority epoch boundary mismatch")
+    if physical.get("domain_existence_grants_effect_authority") is not False or physical.get("lease_existence_grants_effect_authority") is not False:
+        errors.append("physical authority foundation grants effect authority by existence")
+    if physical.get("parallel_authority_evaluator") != "NONE" or physical.get("parallel_effect_lifecycle") != "NONE":
+        errors.append("physical authority foundation introduced parallel authority/effect plane")
+    if physical.get("effect_authorization_integration") != "NOT_YET_PR3H":
+        errors.append("physical authority foundation integrated effect authorization before PR3H")
+    if physical.get("bounded_effect_capability") != "RESERVED_PR3C_PR3D":
+        errors.append("physical authority foundation overclaims bounded effect capability")
+    if physical.get("semantic_preemption") != "RESERVED_PR3G":
+        errors.append("physical authority foundation overclaims semantic preemption")
+    physical_runtime = physical.get("runtime", {})
+    if physical_runtime.get("authority") != "EXISTING_AASM_SCOPED_AUTHORITY_ONLY":
+        errors.append("physical authority runtime bypasses scoped authority")
+    if physical_runtime.get("effect_authorization_integration") != "NONE_PR3A_PR3B_FOUNDATION":
+        errors.append("physical authority runtime integrated effects early")
+    if physical_runtime.get("effect_dispatch") != "NONE":
+        errors.append("physical authority runtime gained dispatch")
+    if physical_runtime.get("machine_state_mutation") != "NONE":
+        errors.append("physical authority runtime mutates machine state")
+    if physical_runtime.get("preemptor_reference_grants_authority") is not False:
+        errors.append("physical authority preemptor reference grants authority")
+    if physical_runtime.get("parallel_authority_evaluator") != "NONE" or physical_runtime.get("parallel_effect_lifecycle") != "NONE":
+        errors.append("physical authority runtime introduced parallel authority/effect plane")
 
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 
