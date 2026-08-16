@@ -8,6 +8,8 @@ import pytest
 from jsonschema import Draft202012Validator
 
 from aasm import AASMEngine, FactAuthority, StateClaim
+from aasm.effect_capability import EffectCapability
+from aasm.effect_capability_runtime import EFFECT_CAPABILITY_CAPABILITIES
 from aasm.effects import EffectStatus
 from aasm.evidence import EvidenceRecord
 from aasm.external_machine import MachineBinding, MachineStateObservation
@@ -23,6 +25,9 @@ from aasm.external_machine_runtime import EXTERNAL_MACHINE_CAPABILITIES
 from aasm.external_machine_transition_runtime import MACHINE_TRANSITION_CAPABILITIES
 from aasm.model import ProblemSpec
 from aasm.persistence.sqlite import SQLiteStore
+from aasm.physical_authority import AuthorityDomain, AuthorityLease
+from aasm.physical_authority_runtime import PHYSICAL_AUTHORITY_CAPABILITIES
+from aasm.physical_effect_integration_runtime import PHYSICAL_EFFECT_INTEGRATION_CAPABILITIES
 from aasm.resources import ResourceRecord, TaskDemand
 from aasm.scoped_authority import Principal, ScopedAuthorityGrant, Workspace
 from aasm.state_authority_runtime import STATE_AUTHORITY_CAPABILITIES
@@ -60,24 +65,18 @@ def bootstrapped_engine(*, store=None):
     )
     _grant(engine, ROOT, "identity.register")
     engine.register_scoped_principal(
-        Principal(SENSOR, "MACHINE"),
-        workspace_id=WORKSPACE,
-        actor_principal_id=ROOT,
+        Principal(SENSOR, "MACHINE"), workspace_id=WORKSPACE, actor_principal_id=ROOT,
     )
     engine.register_scoped_principal(
-        Principal(VERIFIER, "SERVICE"),
-        workspace_id=WORKSPACE,
-        actor_principal_id=ROOT,
+        Principal(VERIFIER, "SERVICE"), workspace_id=WORKSPACE, actor_principal_id=ROOT,
     )
     engine.register_capability_contract(
         CapabilityContract(OBSERVER_CAPABILITY, "OBSERVER", "1.0.0"),
-        authority_id="policy",
-        authority_class="POLICY",
+        authority_id="policy", authority_class="POLICY",
     )
     engine.register_capability_contract(
         CapabilityContract(OPERATOR_CAPABILITY, "OPERATOR", "1.0.0"),
-        authority_id="policy",
-        authority_class="POLICY",
+        authority_id="policy", authority_class="POLICY",
     )
     _grant(
         engine,
@@ -86,6 +85,10 @@ def bootstrapped_engine(*, store=None):
         STATE_AUTHORITY_CAPABILITIES["claim_desired"],
         EXTERNAL_MACHINE_CAPABILITIES["binding_register"],
         MACHINE_TRANSITION_CAPABILITIES["transition_propose"],
+        PHYSICAL_AUTHORITY_CAPABILITIES["domain_register"],
+        PHYSICAL_AUTHORITY_CAPABILITIES["lease_grant"],
+        EFFECT_CAPABILITY_CAPABILITIES["issue"],
+        PHYSICAL_EFFECT_INTEGRATION_CAPABILITIES["bind"],
         "effect.authorize",
         "effect.execute",
     )
@@ -100,13 +103,59 @@ def bootstrapped_engine(*, store=None):
     return engine
 
 
-def prepare_transition(engine):
-    authority = FactAuthority(
+def _bind_transition_physical_authority(engine, effect_id: str):
+    domain = AuthorityDomain(
+        WORKSPACE,
+        SCOPE,
+        "postcondition-machine-control",
+        "device-a",
+        ("set-temperature",),
+        external_revision_id="device-rev-1",
+    )
+    engine.register_authority_domain(domain, actor_principal_id=ROOT)
+    lease = AuthorityLease(
+        domain.domain_id,
+        WORKSPACE,
+        SCOPE,
+        ROOT,
+        ROOT,
+        1,
+        0.0,
+        1000.0,
+        ("set-temperature",),
+        external_revision_id="device-rev-1",
+    )
+    engine.grant_authority_lease(lease, actor_principal_id=ROOT, at_time=0.0)
+    capability = EffectCapability(
+        domain.domain_id,
+        lease.lease_id,
         WORKSPACE,
         SCOPE,
         "device-a",
-        "temperature.c",
-        SENSOR,
+        ROOT,
+        ROOT,
+        ("set-temperature",),
+        {"target_c": {"minimum": 0.0, "maximum": 100.0}},
+        0.0,
+        1000.0,
+        1,
+        external_revision_id="device-rev-1",
+    )
+    engine.issue_effect_capability(capability, actor_principal_id=ROOT, at_time=0.0)
+    result = engine.bind_physical_effect_authority(
+        effect_id,
+        authority_lease_id=lease.lease_id,
+        effect_capability_id=capability.capability_id,
+        actor_principal_id=ROOT,
+        at_time=0.0,
+    )
+    assert result["effect_authority_granted"] is False
+    return domain, lease, capability, result
+
+
+def prepare_transition(engine):
+    authority = FactAuthority(
+        WORKSPACE, SCOPE, "device-a", "temperature.c", SENSOR,
         external_revision_id="device-rev-1",
     )
     engine.register_fact_authority(authority, actor_principal_id=ROOT)
@@ -140,8 +189,7 @@ def prepare_transition(engine):
     engine.record_machine_state_observation(pre_machine_observation, actor_principal_id=SENSOR)
     pre_authoritative = StateClaim(
         "AUTHORITATIVE", WORKSPACE, SCOPE, "device-a", "temperature.c", 21.5, SENSOR,
-        external_revision_id="device-rev-1",
-        source_claim_ids=(pre_observed.claim_id,),
+        external_revision_id="device-rev-1", source_claim_ids=(pre_observed.claim_id,),
     )
     engine.record_state_claim(pre_authoritative, actor_principal_id=SENSOR)
     desired = StateClaim(
@@ -158,18 +206,14 @@ def prepare_transition(engine):
         proposer_principal_id=ROOT,
         payload={"target_c": 25.0},
     )
+    _bind_transition_physical_authority(engine, proposed["transition"]["effect_id"])
     return binding, authority, pre_machine_observation, desired, proposed
 
 
 def _effect_lease(engine, effect_id: str, *, worker_id="effect-worker"):
     if not engine.list_resources():
         engine.register_resource(
-            ResourceRecord(
-                "effect-worker-resource",
-                "local",
-                capabilities=["effect.execute"],
-                capacity=4.0,
-            )
+            ResourceRecord("effect-worker-resource", "local", capabilities=["effect.execute"], capacity=4.0)
         )
         engine.register_worker(WorkerRecord(worker_id, "effect-worker-resource"))
     task = TaskDemand(
@@ -182,10 +226,7 @@ def _effect_lease(engine, effect_id: str, *, worker_id="effect-worker"):
 
 def _execute_existing_effect(engine, effect_id: str):
     engine.authorize_effect(
-        effect_id,
-        workspace_id=WORKSPACE,
-        scope_id=SCOPE,
-        actor_principal_id=ROOT,
+        effect_id, workspace_id=WORKSPACE, scope_id=SCOPE, actor_principal_id=ROOT,
     )
     lease = _effect_lease(engine, effect_id)
     result = engine.execute_effect(
@@ -212,19 +253,13 @@ def record_achieved_state(engine, binding, *, execution_id: str, value=25.0, cor
     )
     engine.record_state_claim(observed, actor_principal_id=SENSOR)
     observation = MachineStateObservation(
-        binding.binding_id,
-        observed.claim_id,
-        SENSOR,
-        OBSERVER_CAPABILITY,
-        "device-rev-1",
-        receipt_id="post-sample",
-        correlation_id=execution_id if correlate else "wrong-execution",
+        binding.binding_id, observed.claim_id, SENSOR, OBSERVER_CAPABILITY, "device-rev-1",
+        receipt_id="post-sample", correlation_id=execution_id if correlate else "wrong-execution",
     )
     engine.record_machine_state_observation(observation, actor_principal_id=SENSOR)
     authoritative = StateClaim(
         "AUTHORITATIVE", WORKSPACE, SCOPE, "device-a", "temperature.c", value, SENSOR,
-        external_revision_id="device-rev-1",
-        source_claim_ids=(observed.claim_id,),
+        external_revision_id="device-rev-1", source_claim_ids=(observed.claim_id,),
     )
     engine.record_state_claim(authoritative, actor_principal_id=SENSOR)
     return observed, observation, authoritative
@@ -260,9 +295,7 @@ def test_postcondition_verification_object_is_deterministic_and_schema_valid():
     copy = MachinePostconditionVerification.from_dict(item.to_dict())
     assert copy == item
     assert copy.fingerprint == item.fingerprint
-    schema = json.loads(
-        (Path(__file__).resolve().parents[1] / "schemas" / "machine-postcondition-verification.schema.json").read_text()
-    )
+    schema = json.loads((Path(__file__).resolve().parents[1] / "schemas" / "machine-postcondition-verification.schema.json").read_text())
     Draft202012Validator(schema).validate(item.to_dict())
 
 
@@ -332,19 +365,15 @@ def test_authoritative_claim_must_derive_from_supplied_correlated_observation():
     engine = bootstrapped_engine()
     binding, _, _, _, proposed = prepare_transition(engine)
     _, effect, _ = _execute_existing_effect(engine, proposed["transition"]["effect_id"])
-    _, observation, authoritative = record_achieved_state(
-        engine, binding, execution_id=effect.execution_id, value=25.0,
-    )
+    _, observation, authoritative = record_achieved_state(engine, binding, execution_id=effect.execution_id, value=25.0)
     other_observed = StateClaim(
         "OBSERVED", WORKSPACE, SCOPE, "device-a", "temperature.c", 25.0, SENSOR,
-        external_revision_id="device-rev-1",
-        metadata={"sample": "other"},
+        external_revision_id="device-rev-1", metadata={"sample": "other"},
     )
     engine.record_state_claim(other_observed, actor_principal_id=SENSOR)
     other_authoritative = StateClaim(
         "AUTHORITATIVE", WORKSPACE, SCOPE, "device-a", "temperature.c", 25.0, SENSOR,
-        external_revision_id="device-rev-1", source_claim_ids=(other_observed.claim_id,),
-        metadata={"sample": "other"},
+        external_revision_id="device-rev-1", source_claim_ids=(other_observed.claim_id,), metadata={"sample": "other"},
     )
     engine.record_state_claim(other_authoritative, actor_principal_id=SENSOR)
     with pytest.raises(ValueError, match="must derive from OBSERVED claim correlated"):
@@ -361,9 +390,7 @@ def test_exact_matching_authoritative_state_verifies_without_mutating_effect_tru
     engine = bootstrapped_engine()
     binding, authority, _, _, proposed = prepare_transition(engine)
     _, effect, _ = _execute_existing_effect(engine, proposed["transition"]["effect_id"])
-    _, observation, authoritative = record_achieved_state(
-        engine, binding, execution_id=effect.execution_id, value=25.0,
-    )
+    _, observation, authoritative = record_achieved_state(engine, binding, execution_id=effect.execution_id, value=25.0)
     before_claims = set(engine.state_authority_report()["claims"])
     before_authorities = deepcopy(engine.state_authority_report()["authorities"])
     before_machine_state = engine.snapshot.state
@@ -400,9 +427,7 @@ def test_exact_mismatch_is_durable_evidence_not_effect_failure_or_state_rewrite(
     engine = bootstrapped_engine()
     binding, _, _, _, proposed = prepare_transition(engine)
     _, effect, _ = _execute_existing_effect(engine, proposed["transition"]["effect_id"])
-    _, observation, authoritative = record_achieved_state(
-        engine, binding, execution_id=effect.execution_id, value=24.9,
-    )
+    _, observation, authoritative = record_achieved_state(engine, binding, execution_id=effect.execution_id, value=24.9)
     result = engine.verify_machine_transition_postconditions(
         proposed["transition"]["transition_id"],
         achieved_state_claim_ids=(authoritative.claim_id,),
@@ -419,9 +444,7 @@ def test_postcondition_verification_requires_scoped_verifier_authority():
     engine = bootstrapped_engine()
     binding, _, _, _, proposed = prepare_transition(engine)
     _, effect, _ = _execute_existing_effect(engine, proposed["transition"]["effect_id"])
-    _, observation, authoritative = record_achieved_state(
-        engine, binding, execution_id=effect.execution_id, value=25.0,
-    )
+    _, observation, authoritative = record_achieved_state(engine, binding, execution_id=effect.execution_id, value=25.0)
     with pytest.raises(PermissionError, match="machine.postcondition.verify"):
         engine.verify_machine_transition_postconditions(
             proposed["transition"]["transition_id"],
@@ -438,9 +461,7 @@ def test_postcondition_verification_is_idempotent_and_sqlite_replay_safe(tmp_pat
     machine_id = engine.snapshot.machine_id
     binding, _, _, _, proposed = prepare_transition(engine)
     _, effect, _ = _execute_existing_effect(engine, proposed["transition"]["effect_id"])
-    _, observation, authoritative = record_achieved_state(
-        engine, binding, execution_id=effect.execution_id, value=25.0,
-    )
+    _, observation, authoritative = record_achieved_state(engine, binding, execution_id=effect.execution_id, value=25.0)
     first = engine.verify_machine_transition_postconditions(
         proposed["transition"]["transition_id"],
         achieved_state_claim_ids=(authoritative.claim_id,),
