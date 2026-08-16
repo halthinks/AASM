@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import MISSING, fields, is_dataclass
-import inspect
 import json
 from pathlib import Path
-from typing import Any
 
 import pytest
 from jsonschema import Draft202012Validator
 
-import aasm.effects as effects_module
 from aasm import AASMEngine, FactAuthority, StateClaim
 from aasm.effects import EffectStatus
 from aasm.evidence import EvidenceRecord
@@ -31,9 +27,11 @@ from aasm.external_machine_runtime import EXTERNAL_MACHINE_CAPABILITIES
 from aasm.external_machine_transition_runtime import MACHINE_TRANSITION_CAPABILITIES
 from aasm.model import ProblemSpec
 from aasm.persistence.sqlite import SQLiteStore
+from aasm.resources import ResourceRecord, TaskDemand
 from aasm.scoped_authority import Principal, ScopedAuthorityGrant, Workspace
 from aasm.state_authority_runtime import STATE_AUTHORITY_CAPABILITIES
 from aasm.typed_protocol import CapabilityContract
+from aasm.workers import WorkerRecord
 
 
 WORKSPACE = "workspace-a"
@@ -173,143 +171,48 @@ def prepare_transition(engine):
     return binding, authority, pre_machine_observation, desired, proposed
 
 
-def _request_value(request: Any, name: str, default: str = "fixture"):
-    if request is None:
-        return default
-    if isinstance(request, dict):
-        return request.get(name, default)
-    return getattr(request, name, default)
-
-
-def _success_result(request: Any, status: str = "SUCCEEDED"):
-    result_cls = getattr(effects_module, "EffectExecutionResult", None)
-    if result_cls is None:
-        class FlexibleResult(dict):
-            def __getattr__(self, name):
-                try:
-                    return self[name]
-                except KeyError:
-                    raise AttributeError(name) from None
-            def to_dict(self):
-                return dict(self)
-        return FlexibleResult(
-            status=status,
-            success=status == "SUCCEEDED",
-            output={"ack": True},
-            result={"ack": True},
-            receipt={"ack": True},
-            receipt_id="receipt-success",
-            external_receipt_id="receipt-success",
-            error=None,
+def _effect_lease(engine, effect_id: str, *, worker_id="effect-worker"):
+    if not engine.list_resources():
+        engine.register_resource(
+            ResourceRecord(
+                "effect-worker-resource",
+                "local",
+                capabilities=["effect.execute"],
+                capacity=4.0,
+            )
         )
-
-    values = {
-        "status": status,
-        "success": status == "SUCCEEDED",
-        "succeeded": status == "SUCCEEDED",
-        "unknown": status == "UNKNOWN",
-        "output": {"ack": True},
-        "result": {"ack": True},
-        "payload": {"ack": True},
-        "receipt": {"ack": True},
-        "receipt_id": "receipt-success",
-        "external_receipt_id": "receipt-success",
-        "error": None,
-        "error_message": "",
-        "execution_id": _request_value(request, "execution_id", "execution-success"),
-        "effect_id": _request_value(request, "effect_id", "effect-fixture"),
-        "request_id": _request_value(request, "request_id", "request-fixture"),
-        "request_fingerprint": _request_value(request, "fingerprint", "f" * 64),
-        "metadata": {},
-        "evidence": (),
-        "time_ms": 1,
-        "completed_at": 1.0,
-    }
-    if is_dataclass(result_cls):
-        kwargs = {}
-        for field in fields(result_cls):
-            if field.name in values:
-                kwargs[field.name] = values[field.name]
-                continue
-            if field.default is not MISSING or field.default_factory is not MISSING:
-                continue
-            text = str(field.type)
-            if "bool" in text:
-                kwargs[field.name] = False
-            elif "int" in text:
-                kwargs[field.name] = 0
-            elif "float" in text:
-                kwargs[field.name] = 0.0
-            elif "dict" in text or "Mapping" in text:
-                kwargs[field.name] = {}
-            elif "tuple" in text or "Sequence" in text:
-                kwargs[field.name] = ()
-            else:
-                kwargs[field.name] = f"fixture-{field.name}"
-        return result_cls(**kwargs)
-
-    signature = inspect.signature(result_cls)
-    kwargs = {}
-    for name, param in signature.parameters.items():
-        if name in values:
-            kwargs[name] = values[name]
-        elif param.default is inspect._empty:
-            kwargs[name] = f"fixture-{name}"
-    return result_cls(**kwargs)
+        engine.register_worker(WorkerRecord(worker_id, "effect-worker-resource"))
+    task = TaskDemand(
+        f"effect-task-{effect_id[-16:]}",
+        required_capabilities=["effect.execute"],
+        metadata={"effect_id": effect_id},
+    )
+    return engine.claim_task(task, worker_id, lease_seconds=600.0)
 
 
-class FlexibleExecutor:
-    def __init__(self, status="SUCCEEDED"):
-        self.status = status
-        self.calls = []
-
-    def __call__(self, *args, **kwargs):
-        self.calls.append((args, kwargs))
-        request = args[0] if args else kwargs.get("request") or kwargs.get("dispatch_request")
-        return _success_result(request, self.status)
-
-    def execute(self, *args, **kwargs):
-        return self(*args, **kwargs)
-
-
-def _execute_existing_effect(engine, effect_id: str, *, status="SUCCEEDED"):
+def _execute_existing_effect(engine, effect_id: str):
     engine.authorize_effect(
         effect_id,
         workspace_id=WORKSPACE,
         scope_id=SCOPE,
         actor_principal_id=ROOT,
     )
-    method = engine.execute_effect
-    signature = inspect.signature(method)
-    executor = FlexibleExecutor(status)
-    kwargs = {}
-    for name, param in signature.parameters.items():
-        if name == "effect_id":
-            continue
-        if name == "workspace_id":
-            kwargs[name] = WORKSPACE
-        elif name == "scope_id":
-            kwargs[name] = SCOPE
-        elif name in {"actor_principal_id", "principal_id"}:
-            kwargs[name] = ROOT
-        elif name in {"executor", "effect_executor", "callback"}:
-            kwargs[name] = executor
-        elif name == "execution_id":
-            kwargs[name] = "execution-success"
-        elif name == "worker_id":
-            kwargs[name] = "effect-worker"
-        elif name in {"at_time", "now", "now_ts"}:
-            kwargs[name] = 10.0
-        elif name == "lease_seconds":
-            kwargs[name] = 60
-        elif param.default is inspect._empty:
-            raise AssertionError(f"unmapped required execute_effect parameter: {name}; signature={signature}")
-    result = method(effect_id, **kwargs)
+    lease = _effect_lease(engine, effect_id)
+    result = engine.execute_effect(
+        effect_id,
+        lambda spec, key: {"ack": True, "idempotency_key": key},
+        workspace_id=WORKSPACE,
+        scope_id=SCOPE,
+        actor_principal_id=ROOT,
+        owner_worker_id="effect-worker",
+        task_lease_id=lease["lease_id"],
+    )
     record = engine.store.load_effect(engine.snapshot.machine_id, effect_id)
-    assert record.status == status
-    if status == "SUCCEEDED":
-        assert record.execution_id
-    return result, record, executor
+    assert record.status == EffectStatus.SUCCEEDED.value
+    assert record.execution_id
+    assert record.ownership is not None
+    assert record.ownership["task_lease_id"] == lease["lease_id"]
+    return result, record, lease
 
 
 def record_achieved_state(engine, binding, *, execution_id: str, value=25.0, correlate=True):
@@ -375,13 +278,14 @@ def test_postcondition_verification_object_is_deterministic_and_schema_valid():
 
 def test_proposed_or_authorized_effect_cannot_be_treated_as_achieved():
     engine = bootstrapped_engine()
-    binding, _, _, _, proposed = prepare_transition(engine)
+    _, _, _, _, proposed = prepare_transition(engine)
     transition_id = proposed["transition"]["transition_id"]
+    old_observation_id = next(iter(engine.external_machine_report()["observations"]))
     with pytest.raises(ValueError, match="must be SUCCEEDED"):
         engine.verify_machine_transition_postconditions(
             transition_id,
             achieved_state_claim_ids=(proposed["transition"]["expected_state_claim_ids"][0],),
-            machine_observation_ids=(next(iter(engine.external_machine_report()["observations"])),),
+            machine_observation_ids=(old_observation_id,),
             verifier_principal_id=VERIFIER,
         )
     engine.authorize_effect(
@@ -391,14 +295,14 @@ def test_proposed_or_authorized_effect_cannot_be_treated_as_achieved():
         engine.verify_machine_transition_postconditions(
             transition_id,
             achieved_state_claim_ids=(proposed["transition"]["expected_state_claim_ids"][0],),
-            machine_observation_ids=(next(iter(engine.external_machine_report()["observations"])),),
+            machine_observation_ids=(old_observation_id,),
             verifier_principal_id=VERIFIER,
         )
 
 
 def test_succeeded_effect_alone_is_insufficient_without_correlated_authoritative_observation():
     engine = bootstrapped_engine()
-    binding, _, pre_observation, _, proposed = prepare_transition(engine)
+    _, _, pre_observation, _, proposed = prepare_transition(engine)
     _, effect, _ = _execute_existing_effect(engine, proposed["transition"]["effect_id"])
     assert effect.status == EffectStatus.SUCCEEDED.value
     with pytest.raises(ValueError, match="correlation_id must equal existing effect execution_id"):
