@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/authority-preemption.schema.json",
+  "title": "AASM Authority Preemption",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "preemption_id", "contract_id", "contract_version", "domain_id", "authority_lease_id",
+    "authority_lease_fingerprint", "workspace_id", "scope_id", "preemptor_principal_id",
+    "preempted_holder_principal_id", "authority_epoch", "required_next_epoch", "preempted_at",
+    "reason_code", "metadata", "fingerprint"
+  ],
+  "properties": {
+    "preemption_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.authority.preemption.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "domain_id": {"type": "string", "minLength": 1},
+    "authority_lease_id": {"type": "string", "minLength": 1},
+    "authority_lease_fingerprint": {"type": "string", "minLength": 32},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "preemptor_principal_id": {"type": "string", "minLength": 1},
+    "preempted_holder_principal_id": {"type": "string", "minLength": 1},
+    "authority_epoch": {"type": "integer", "minimum": 1},
+    "required_next_epoch": {"type": "integer", "minimum": 2},
+    "preempted_at": {"type": "number"},
+    "reason_code": {"type": "string", "minLength": 1},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 32}
+  }
+}
