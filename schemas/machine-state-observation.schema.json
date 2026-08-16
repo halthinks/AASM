@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/machine-state-observation.schema.json",
+  "title": "AASM Machine State Observation v1",
+  "type": "object",
+  "required": [
+    "observation_id", "contract_id", "contract_version", "binding_id", "state_claim_id",
+    "observer_principal_id", "observer_capability_id", "external_revision_id",
+    "receipt_id", "correlation_id", "metadata", "fingerprint"
+  ],
+  "properties": {
+    "observation_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.machine.state-observation.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "binding_id": {"type": "string", "minLength": 1},
+    "state_claim_id": {"type": "string", "minLength": 1},
+    "observer_principal_id": {"type": "string", "minLength": 1},
+    "observer_capability_id": {"type": "string", "minLength": 1},
+    "external_revision_id": {"type": "string", "minLength": 1},
+    "receipt_id": {"type": "string"},
+    "correlation_id": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
