@@ -52,7 +52,7 @@ def main():
     require(root / "src/aasm/__init__.py", ["public_v56"])
     require(root / "src/aasm/public_v56.py", [
         '__version__ = "0.56.1"',
-        '"contract_version": "0.32.4"',
+        '"contract_version": "0.32.5"',
         'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
         "SOLVER_OUTCOME_V2_CONTRACT_ID",
         "SOLVER_RUNTIME_PROVENANCE_CONTRACT_ID",
@@ -73,8 +73,13 @@ def main():
         "MACHINE_TRANSITION_CONTRACT_ID",
         "MachineTransitionIntent",
         "machine_transition_runtime_contract",
+        "MACHINE_POSTCONDITION_VERIFICATION_CONTRACT_ID",
+        "MachinePostconditionVerification",
+        "machine_postcondition_runtime_contract",
     ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
+        "MachinePostconditionExecutionCorrelationMixin",
+        "MachinePostconditionRuntimeMixin",
         "MachineTransitionRuntimeMixin",
         "ExternalMachineRuntimeMixin",
         "StateAuthorityRuntimeMixin",
@@ -170,6 +175,44 @@ def main():
         "self.propose_effect(",
         "_authorize_external_machine_action(",
     ])
+    require(root / "src/aasm/external_machine_postcondition.py", [
+        'MACHINE_POSTCONDITION_VERIFICATION_CONTRACT_ID = "aasm.machine.postcondition-verification.v1"',
+        '"effect_status_requirement": "EXISTING_AASM_EFFECT_MUST_BE_SUCCEEDED"',
+        '"unknown_effect": "BLOCKED_USE_EXISTING_EFFECT_RECONCILIATION"',
+        '"achieved_source": "PR1_DURABLE_AUTHORITATIVE_STATE_CLAIMS_ONLY"',
+        '"observation_correlation": "PR2A_MACHINE_STATE_OBSERVATION_CORRELATION_ID_MUST_EQUAL_EXISTING_EFFECT_EXECUTION_ID"',
+        '"comparison": "EXACT_CANONICAL_VALUE_EQUALITY_ONLY_NO_TOLERANCE_IN_THIS_FOUNDATION"',
+        '"effect_success_is_achievement": False',
+        '"verification_mints_fact_authority": False',
+        '"verification_mints_state_claim": False',
+        '"verification_mutates_effect_outcome": False',
+        '"parallel_truth_table": "NONE"',
+        '"parallel_effect_lifecycle": "NONE"',
+        '"freshness_semantics": "NOT_YET_CLAIMED_PR4"',
+        '"calibration_semantics": "NOT_YET_CLAIMED_PR4"',
+    ])
+    require(root / "src/aasm/external_machine_postcondition_runtime.py", [
+        'MACHINE_POSTCONDITION_RUNTIME_CONTRACT_ID = "aasm.machine.postcondition-verification.runtime.v1"',
+        '"effect_source": "EXISTING_AASM_EFFECT_RECORD_ONLY"',
+        '"transition_source": "EXISTING_PR2B_MACHINE_TRANSITION_ONLY"',
+        '"achieved_source": "EXISTING_PR1_AUTHORITATIVE_STATE_CLAIMS_ONLY"',
+        '"observation_source": "EXISTING_PR2A_MACHINE_STATE_OBSERVATIONS_ONLY"',
+        '"effect_status_mutation": "NONE"',
+        '"state_claim_creation": "NONE"',
+        '"fact_authority_creation": "NONE"',
+        '"machine_state_mutation": "NONE"',
+        '"parallel_effect_lifecycle": "NONE"',
+        "self.store.load_effect(",
+        "machine_transition_report",
+        "machine_state_observation_report",
+        "state_claim_report",
+    ])
+    require(root / "src/aasm/external_machine_postcondition_execution_correlation.py", [
+        "effect.status == EffectStatus.UNKNOWN.value",
+        "effect.status != EffectStatus.SUCCEEDED.value",
+        "effect.execution_id",
+        "observation.correlation_id != execution_id",
+    ])
 
     for schema in (
         "solver-outcome-v2.schema.json",
@@ -182,6 +225,7 @@ def main():
         "machine-binding.schema.json",
         "machine-state-observation.schema.json",
         "machine-transition.schema.json",
+        "machine-postcondition-verification.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -210,6 +254,7 @@ def main():
         "check_state_authority_contracts.py",
         "check_external_machine_contracts.py",
         "check_machine_transition_contracts.py",
+        "check_machine_postcondition_contracts.py",
     ):
         run_script(root, script)
 
@@ -242,6 +287,8 @@ def main():
         "0.56.1",
         "check_v561_provenance.py",
         "tests/test_v561_solver_provenance_real.py",
+        "check_machine_postcondition_contracts.py",
+        "tests/test_machine_postcondition.py",
         "context='aasm/v56'",
     ])
     require(root / ".github/workflows/v561.yml", [
@@ -266,6 +313,12 @@ def main():
         "tests/test_machine_transition.py",
         "context='aasm/machine-transition'",
     ])
+    require(root / ".github/workflows/machine-postcondition.yml", [
+        "Machine Postcondition Verification",
+        "check_machine_postcondition_contracts.py",
+        "tests/test_machine_postcondition.py",
+        "context='aasm/machine-postcondition'",
+    ])
     require(root / ".github/workflows/release.yml", [
         "workflow_dispatch:",
         "confirm_release:",
@@ -273,13 +326,14 @@ def main():
         "aasm/state-authority",
         "aasm/external-machine",
         "aasm/machine-transition",
+        "aasm/machine-postcondition",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
     ])
     forbid(root / ".github/workflows/release.yml", ["workflow_run:"])
 
-    print("0.56.1 development-target contracts + adoption 0.32.4 + v0.56.0 published identity: PASS")
+    print("0.56.1 development-target contracts + adoption 0.32.5 + v0.56.0 published identity: PASS")
     return 0
 
 
