@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 import os
 import subprocess
@@ -12,7 +14,7 @@ def _fail(message: str, *, path: Path | None = None) -> None:
     raise SystemExit(message)
 
 
-def require(path, tokens):
+def require(path: Path | str, tokens) -> None:
     path = Path(path)
     text = path.read_text(encoding="utf-8")
     missing = [token for token in tokens if token not in text]
@@ -20,7 +22,7 @@ def require(path, tokens):
         _fail(f"missing required source-contract tokens: {missing}", path=path)
 
 
-def forbid(path, tokens):
+def forbid(path: Path | str, tokens) -> None:
     path = Path(path)
     text = path.read_text(encoding="utf-8")
     present = [token for token in tokens if token in text]
@@ -37,7 +39,7 @@ def run_script(root: Path, name: str) -> None:
         _fail(f"nested source-contract checker failed: {name}", path=root / "scripts" / name)
 
 
-def main():
+def main() -> int:
     root = Path(__file__).resolve().parents[1]
     with (root / "pyproject.toml").open("rb") as handle:
         project = tomllib.load(handle)["project"]
@@ -49,215 +51,36 @@ def main():
     if set(project.get("license-files", [])) != {"LICENSE", "NOTICE", "LICENSE_POLICY.md"}:
         _fail("license file set drift", path=root / "pyproject.toml")
 
-    require(root / "src/aasm/__init__.py", ["public_v56"])
+    # Root identity: frozen v0.56 base plus stable additive active overlay.
+    require(root / "src/aasm/__init__.py", ["public_v56", "public_active"])
     require(root / "src/aasm/public_v56.py", [
         '__version__ = "0.56.1"',
         '"contract_version": "0.32.6"',
         'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
-        "SOLVER_OUTCOME_V2_CONTRACT_ID",
-        "SOLVER_RUNTIME_PROVENANCE_CONTRACT_ID",
-        "SOLVER_EXECUTION_PROFILE_CONTRACT_ID",
-        "SolverRuntimeProvenance",
-        "solver_provenance_runtime_contract",
-        '"interrupted_provenance_v2": "DORMANT_NON_AUTHORITATIVE_NOT_EXPOSED"',
-        "FACT_AUTHORITY_CONTRACT_ID",
-        "STATE_CLAIM_CONTRACT_ID",
-        "FactAuthority",
-        "StateClaim",
-        "state_authority_runtime_contract",
-        "MACHINE_BINDING_CONTRACT_ID",
-        "MACHINE_STATE_OBSERVATION_CONTRACT_ID",
-        "MachineBinding",
-        "MachineStateObservation",
-        "external_machine_runtime_contract",
-        "MACHINE_TRANSITION_CONTRACT_ID",
-        "MachineTransitionIntent",
-        "machine_transition_runtime_contract",
-        "MACHINE_POSTCONDITION_VERIFICATION_CONTRACT_ID",
-        "MachinePostconditionVerification",
-        "machine_postcondition_runtime_contract",
-        "AUTHORITY_DOMAIN_CONTRACT_ID",
-        "AUTHORITY_LEASE_CONTRACT_ID",
-        "AuthorityDomain",
-        "AuthorityLease",
         "physical_authority_runtime_contract",
     ])
+    require(root / "src/aasm/public_active.py", [
+        '"contract_version": "0.32.7"',
+        "EFFECT_CAPABILITY_CONTRACT_ID",
+        "EffectCapability",
+        "EffectCapabilityUse",
+        "AuthorityPreemption",
+        "effect_capability_runtime_contract",
+        "physical_control_fencing_runtime_contract",
+        '"effect_capability"',
+        '"physical_control_fencing"',
+    ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
+        "PhysicalPreemptionRecoveryGuardMixin",
+        "PhysicalControlFencingRuntimeMixin",
+        "EffectCapabilityRevocationGuardMixin",
+        "EffectCapabilityRuntimeMixin",
         "PhysicalAuthorityRuntimeMixin",
         "MachinePostconditionExecutionCorrelationMixin",
-        "MachinePostconditionRuntimeMixin",
-        "MachineTransitionRuntimeMixin",
-        "ExternalMachineRuntimeMixin",
-        "StateAuthorityRuntimeMixin",
-        "SolverProvenanceRuntimeMixin",
-        "SolverOutcomeV2RuntimeMixin",
         "V55FoundationEngine",
     ])
-    require(root / "src/aasm/solver_outcome_v2.py", [
-        'SOLVER_OUTCOME_V2_CONTRACT_ID = "aasm.solver.outcome.v2"',
-        '"authoritative_detailed_status": "normalized_status"',
-        '"legacy_projection": "V2_TO_V1_ONE_WAY_EXPLICITLY_LOSSY_WHERE_REQUIRED"',
-        '"truth_authority": "NONE"',
-    ])
-    require(root / "src/aasm/provider_status_v2.py", [
-        'PROVIDER_STATUS_MAP_CONTRACT_ID = "aasm.solver.provider-status-map.v1"',
-        '"fuzzy_matching": "FORBIDDEN"',
-        '"substring_inference": "FORBIDDEN"',
-    ])
-    require(root / "src/aasm/solver_provenance.py", [
-        'SOLVER_EXECUTION_PROFILE_CONTRACT_ID = "aasm.solver.execution-profile.v1"',
-        'SOLVER_RUNTIME_PROVENANCE_CONTRACT_ID = "aasm.solver.runtime-provenance.v1"',
-        'SOLVER_PROFILE_EVALUATION_CONTRACT_ID = "aasm.solver.profile-evaluation.v1"',
-        '"effective_options": "ADAPTER_OBSERVED_ACTUAL_CONFIGURATION_REQUIRED"',
-        '"worker_thread_counts": "FIRST_CLASS_EXPLICIT_OR_UNKNOWN"',
-        '"reproducibility": "NOT_CLAIMED_BY_PROVENANCE_ALONE"',
-        '"truth_authority": "NONE"',
-        '"policy_authority": "NONE"',
-    ])
-    require(root / "src/aasm/_runtime_v56_provenance.py", [
-        'SOLVER_PROVENANCE_RUNTIME_CONTRACT_ID = "aasm.solver.runtime-provenance.runtime.v1"',
-        '"effective_configuration_source": "AASM_PROVIDER_ADAPTER_OBSERVATION_NOT_CALLER_ASSERTION"',
-        '"parallel_provenance_table": "NONE"',
-        '"provenance_grants_reproducibility": False',
-        "record_convex_solver_runtime_provenance",
-        "evaluate_solver_runtime_profile",
-    ])
-    require(root / "src/aasm/solver_execution_observation.py", [
-        "aasm.optimization.pysat-cadical",
-        "aasm.optimization.ortools-cp-sat",
-        "aasm.optimization.highs",
-        "aasm.optimization.cvxpy",
-        "UNAVAILABLE_FROM_CURRENT_ADAPTER",
-        "BACKEND_SPECIFIC_NOT_EXPOSED_BY_CURRENT_CVXPY_ADAPTER",
-    ])
-    require(root / "src/aasm/state_authority.py", [
-        'FACT_AUTHORITY_CONTRACT_ID = "aasm.fact.authority.v1"',
-        'STATE_CLAIM_CONTRACT_ID = "aasm.state.claim.v1"',
-        '"aggregation_grants_authority": False',
-        '"fact_authority_grants_effect_authority": False',
-        '"machine_state_mutation": "NONE_BY_THIS_CONTRACT"',
-    ])
-    require(root / "src/aasm/state_authority_runtime.py", [
-        'STATE_AUTHORITY_RUNTIME_CONTRACT_ID = "aasm.state.authority.runtime.v1"',
-        '"parallel_truth_table": "NONE"',
-        '"machine_state_mutation": "NONE"',
-        '"effect_authority": "NONE"',
-        "authorize_scoped_request",
-        "add_evidence_guarded",
-    ])
-    require(root / "src/aasm/external_machine.py", [
-        'MACHINE_BINDING_CONTRACT_ID = "aasm.machine.binding.v1"',
-        'MACHINE_STATE_OBSERVATION_CONTRACT_ID = "aasm.machine.state-observation.v1"',
-        '"binding_grants_fact_authority": False',
-        '"binding_grants_effect_authority": False',
-        '"external_state_table": "NONE"',
-        '"postcondition_achievement_claim": "NOT_YET_CLAIMED_PR2C"',
-    ])
-    require(root / "src/aasm/external_machine_runtime.py", [
-        'EXTERNAL_MACHINE_RUNTIME_CONTRACT_ID = "aasm.machine.external.runtime.v1"',
-        '"state_observation_source": "EXISTING_PR1_DURABLE_OBSERVED_STATE_CLAIM"',
-        '"effect_dispatch": "NONE"',
-        '"executor_invocation": "NONE"',
-        '"machine_state_mutation": "NONE"',
-        "capability_report",
-        "state_claim_report",
-        "authorize_scoped_request",
-    ])
-    require(root / "src/aasm/external_machine_transition.py", [
-        'MACHINE_TRANSITION_CONTRACT_ID = "aasm.machine.transition.v1"',
-        '"expected_prestate": "EXACT_DURABLE_AUTHORITATIVE_STATE_CLAIMS_REQUIRED"',
-        '"target_state": "EXACT_DURABLE_DESIRED_STATE_CLAIMS_REQUIRED"',
-        '"effect_proposal": "EXISTING_AASM_PROPOSE_EFFECT_AND_EFFECT_INTENT_ONLY"',
-        '"parallel_dispatcher": "NONE"',
-        '"command_success_is_achievement": False',
-        '"postcondition_verification": "NOT_IMPLEMENTED_PR2B_RESERVED_FOR_PR2C"',
-    ])
-    require(root / "src/aasm/external_machine_transition_runtime.py", [
-        'MACHINE_TRANSITION_RUNTIME_CONTRACT_ID = "aasm.machine.transition.runtime.v1"',
-        '"effect_proposal_path": "EXISTING_AASM_PROPOSE_EFFECT_ONLY"',
-        '"effect_dispatch": "NOT_PERFORMED_USE_EXISTING_EXECUTE_EFFECT"',
-        '"effect_ownership": "NOT_CREATED_BY_THIS_RUNTIME"',
-        '"transition_status_store": "NONE_DERIVE_FROM_EXISTING_EFFECT_RECORD"',
-        "self.propose_effect(",
-        "_authorize_external_machine_action(",
-    ])
-    require(root / "src/aasm/external_machine_postcondition.py", [
-        'MACHINE_POSTCONDITION_VERIFICATION_CONTRACT_ID = "aasm.machine.postcondition-verification.v1"',
-        '"effect_status_requirement": "EXISTING_AASM_EFFECT_MUST_BE_SUCCEEDED"',
-        '"unknown_effect": "BLOCKED_USE_EXISTING_EFFECT_RECONCILIATION"',
-        '"achieved_source": "PR1_DURABLE_AUTHORITATIVE_STATE_CLAIMS_ONLY"',
-        '"observation_correlation": "PR2A_MACHINE_STATE_OBSERVATION_CORRELATION_ID_MUST_EQUAL_EXISTING_EFFECT_EXECUTION_ID"',
-        '"comparison": "EXACT_CANONICAL_VALUE_EQUALITY_ONLY_NO_TOLERANCE_IN_THIS_FOUNDATION"',
-        '"effect_success_is_achievement": False',
-        '"verification_mints_fact_authority": False',
-        '"verification_mints_state_claim": False',
-        '"verification_mutates_effect_outcome": False',
-        '"parallel_truth_table": "NONE"',
-        '"parallel_effect_lifecycle": "NONE"',
-        '"freshness_semantics": "NOT_YET_CLAIMED_PR4"',
-        '"calibration_semantics": "NOT_YET_CLAIMED_PR4"',
-    ])
-    require(root / "src/aasm/external_machine_postcondition_runtime.py", [
-        'MACHINE_POSTCONDITION_RUNTIME_CONTRACT_ID = "aasm.machine.postcondition-verification.runtime.v1"',
-        '"effect_source": "EXISTING_AASM_EFFECT_RECORD_ONLY"',
-        '"transition_source": "EXISTING_PR2B_MACHINE_TRANSITION_ONLY"',
-        '"achieved_source": "EXISTING_PR1_AUTHORITATIVE_STATE_CLAIMS_ONLY"',
-        '"observation_source": "EXISTING_PR2A_MACHINE_STATE_OBSERVATIONS_ONLY"',
-        '"effect_status_mutation": "NONE"',
-        '"state_claim_creation": "NONE"',
-        '"fact_authority_creation": "NONE"',
-        '"machine_state_mutation": "NONE"',
-        '"parallel_effect_lifecycle": "NONE"',
-        "self.store.load_effect(",
-        "machine_transition_report",
-        "machine_state_observation_report",
-        "state_claim_report",
-    ])
-    require(root / "src/aasm/external_machine_postcondition_execution_correlation.py", [
-        "effect.status == EffectStatus.UNKNOWN.value",
-        "effect.status != EffectStatus.SUCCEEDED.value",
-        "effect.execution_id",
-        "observation.correlation_id != execution_id",
-    ])
-    require(root / "src/aasm/physical_authority.py", [
-        'AUTHORITY_DOMAIN_CONTRACT_ID = "aasm.authority.domain.v1"',
-        'AUTHORITY_LEASE_CONTRACT_ID = "aasm.authority.lease.v1"',
-        '"lease_exclusivity": "AT_MOST_ONE_ACTIVE_LEASE_PER_DOMAIN"',
-        '"authority_epoch": "STRICTLY_MONOTONIC_PER_DOMAIN"',
-        '"domain_existence_grants_effect_authority": False',
-        '"lease_existence_grants_effect_authority": False',
-        '"effect_authorization_integration": "NOT_YET_PR3H"',
-        '"bounded_effect_capability": "RESERVED_PR3C_PR3D"',
-        '"semantic_preemption": "RESERVED_PR3G"',
-    ])
-    require(root / "src/aasm/physical_authority_runtime.py", [
-        'PHYSICAL_AUTHORITY_RUNTIME_CONTRACT_ID = "aasm.physical.authority.runtime.v1"',
-        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"',
-        '"effect_authorization_integration": "NONE_PR3A_PR3B_FOUNDATION"',
-        '"effect_dispatch": "NONE"',
-        '"machine_state_mutation": "NONE"',
-        "self.authorize_scoped_request(",
-        "expected_epoch = max_epoch + 1",
-        "_intervals_overlap(",
-    ])
 
-    for schema in (
-        "solver-outcome-v2.schema.json",
-        "provider-status-map.schema.json",
-        "solver-execution-profile.schema.json",
-        "solver-runtime-provenance.schema.json",
-        "solver-profile-evaluation.schema.json",
-        "fact-authority.schema.json",
-        "state-claim.schema.json",
-        "machine-binding.schema.json",
-        "machine-state-observation.schema.json",
-        "machine-transition.schema.json",
-        "machine-postcondition-verification.schema.json",
-        "authority-domain.schema.json",
-        "authority-lease.schema.json",
-    ):
-        require(root / "schemas" / schema, ['"$schema"', "2020-12"])
-
+    # Frozen parents stay intact.
     require(root / "src/aasm/public_v55.py", ['__version__ = "0.55.0"', '"contract_version": "0.31.0"'])
     require(root / "src/aasm/public_v54.py", ['__version__ = "0.54.0"', '"contract_version": "0.30.0"'])
     require(root / "src/aasm/semantic_evolution.py", [
@@ -265,9 +88,9 @@ def main():
         'PROBLEM_REVISION_CONTRACT_ID = "aasm.problem.revision.v1"',
         'PROBLEM_DELTA_CONTRACT_ID = "aasm.problem.delta.v1"',
     ])
-    require(root / "src/aasm/solver_formulation.py", ['SOLVER_FORMULATION_CONTRACT_ID = "aasm.solver.formulation.v1"'])
     require(root / "src/aasm/solver_learning.py", ['"truth_authority": "NONE"', '"policy_authority": "NONE"'])
 
+    # Every semantic layer keeps its own detailed source firewall.
     for script in (
         "check_v52_contracts.py",
         "check_v53_contracts.py",
@@ -285,9 +108,28 @@ def main():
         "check_machine_transition_contracts.py",
         "check_machine_postcondition_contracts.py",
         "check_physical_authority_contracts.py",
+        "check_effect_capability_contracts.py",
+        "check_physical_control_fencing_contracts.py",
     ):
         run_script(root, script)
 
+    # Required schemas for all active external-reality / PR-3 surfaces.
+    for schema in (
+        "fact-authority.schema.json",
+        "state-claim.schema.json",
+        "machine-binding.schema.json",
+        "machine-state-observation.schema.json",
+        "machine-transition.schema.json",
+        "machine-postcondition-verification.schema.json",
+        "authority-domain.schema.json",
+        "authority-lease.schema.json",
+        "effect-capability.schema.json",
+        "effect-capability-use.schema.json",
+        "authority-preemption.schema.json",
+    ):
+        require(root / "schemas" / schema, ['"$schema"', "2020-12"])
+
+    # Published identity remains separate from the development/adoption surface.
     require(root / "README.md", [
         "Current release — v0.56.0",
         "Next release / cumulative release:** v0.56.1",
@@ -302,61 +144,29 @@ def main():
     require(root / "docs/RELEASE_0.56.1.md", [
         "Development Candidate",
         "UNRELEASED DEVELOPMENT TARGET",
-        "CVXPY",
         "published release:       0.56.0",
     ])
     forbid(root / "docs/RELEASE_0.56.1.md", ["targeted for v0.56.2", "Next cumulative release: **v0.56.2"])
-
     require(root / "docs/VERSIONING.md", [
         "Package SemVer identifies deliberately published AASM distributions",
         "Git SHA",
         "New implementation modules must use stable semantic names",
     ])
+
+    # Cumulative and deliberate release gates must include every admitted authority layer.
     require(root / ".github/workflows/v56.yml", [
         "AASM v0.56 Development Qualification",
-        "0.56.1",
-        "check_v561_provenance.py",
-        "tests/test_v561_solver_provenance_real.py",
-        "check_machine_postcondition_contracts.py",
-        "tests/test_machine_postcondition.py",
-        "check_physical_authority_contracts.py",
-        "tests/test_physical_authority.py",
+        "check_effect_capability_contracts.py",
+        "tests/test_effect_capability.py",
+        "check_physical_control_fencing_contracts.py",
+        "tests/test_physical_control_fencing.py",
+        "tests/test_physical_preemption_recovery.py",
+        "0.32.7",
         "context='aasm/v56'",
     ])
-    require(root / ".github/workflows/v561.yml", [
-        "AASM 0.56.1 Execution Provenance Qualification",
-        "context='aasm/v56-provenance'",
-    ])
-    require(root / ".github/workflows/state-authority.yml", [
-        "State Authority",
-        "check_state_authority_contracts.py",
-        "tests/test_state_authority.py",
-        "context='aasm/state-authority'",
-    ])
-    require(root / ".github/workflows/external-machine.yml", [
-        "External Machine Binding",
-        "check_external_machine_contracts.py",
-        "tests/test_external_machine.py",
-        "context='aasm/external-machine'",
-    ])
-    require(root / ".github/workflows/machine-transition.yml", [
-        "Machine Transition Proposal",
-        "check_machine_transition_contracts.py",
-        "tests/test_machine_transition.py",
-        "context='aasm/machine-transition'",
-    ])
-    require(root / ".github/workflows/machine-postcondition.yml", [
-        "Machine Postcondition Verification",
-        "check_machine_postcondition_contracts.py",
-        "tests/test_machine_postcondition.py",
-        "context='aasm/machine-postcondition'",
-    ])
-    require(root / ".github/workflows/physical-authority.yml", [
-        "Physical Authority Foundation",
-        "check_physical_authority_contracts.py",
-        "tests/test_physical_authority.py",
-        "context='aasm/physical-authority'",
-    ])
+    require(root / ".github/workflows/effect-capability.yml", ["context='aasm/effect-capability'"])
+    require(root / ".github/workflows/physical-control-fencing.yml", ["context='aasm/physical-control-fencing'"])
+    require(root / ".github/workflows/physical-preemption-recovery.yml", ["context='aasm/physical-preemption-recovery'"])
     require(root / ".github/workflows/release.yml", [
         "workflow_dispatch:",
         "confirm_release:",
@@ -366,13 +176,31 @@ def main():
         "aasm/machine-transition",
         "aasm/machine-postcondition",
         "aasm/physical-authority",
+        "aasm/effect-capability",
+        "aasm/physical-control-fencing",
+        "aasm/physical-preemption-recovery",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
     ])
     forbid(root / ".github/workflows/release.yml", ["workflow_run:"])
 
-    print("0.56.1 development-target contracts + adoption 0.32.6 + v0.56.0 published identity: PASS")
+    # Execute the active public contract as the final source-level assertion.
+    env = os.environ.copy()
+    src = str(root / "src")
+    env["PYTHONPATH"] = src if not env.get("PYTHONPATH") else src + os.pathsep + env["PYTHONPATH"]
+    code = (
+        "import aasm; "
+        "r=aasm.validate_public_api_contract(); assert r['valid'], r; "
+        "c=aasm.public_api_contract(); assert c['runtime_version']=='0.56.1'; "
+        "assert c['contract_version']=='0.32.7'; "
+        "assert 'effect_capability' in c and 'physical_control_fencing' in c"
+    )
+    completed = subprocess.run([sys.executable, "-c", code], cwd=root, env=env)
+    if completed.returncode != 0:
+        _fail("active public contract execution failed")
+
+    print("0.56.1 development target + active adoption 0.32.7 + PR-3A/G source/release contracts: PASS")
     return 0
 
 
