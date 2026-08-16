@@ -74,6 +74,22 @@ Prefer additive changes. When a breaking change is necessary, describe:
 - why compatibility cannot reasonably be preserved
 - any migration path available
 
+## Development and release identity
+
+AASM does **not** assign a new package version to every feature merge or architecture milestone.
+
+- Git commit SHA identifies exact unreleased source.
+- Named roadmap milestones/capabilities identify architecture work.
+- Schema, protocol, ABI, and machine-contract versions evolve independently when their compatibility semantics require it.
+- Package SemVer identifies a deliberately published, qualified distribution.
+- Published tags and release artifacts are immutable.
+
+Do not add new implementation-generation modules such as `runtime_v57.py`, `public_v57.py`, or `_runtime_v57_feature.py`. New implementation belongs under stable semantic module names. Existing version-numbered modules are historical/compatibility surfaces and will be consolidated deliberately behind stable facades rather than removed by mass rename.
+
+Ordinary development commits must not change the package version. Version changes are explicit release operations and are checked by the repository version-policy gate.
+
+See [`docs/VERSIONING.md`](docs/VERSIONING.md) for the full policy and migration rules.
+
 ## Tests
 
 Run:
@@ -93,6 +109,8 @@ Add persistent checkpoint store
 Reject unauthorized plan mutation
 Document quorum authority semantics
 ```
+
+Release-version commits are exceptional and should use an explicit release-oriented summary such as `Prepare AASM release X.Y.Z` or `Release AASM X.Y.Z` so the release policy is auditable.
 
 ## Code style
 
