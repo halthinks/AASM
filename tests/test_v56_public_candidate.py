@@ -9,7 +9,7 @@ def test_v56_is_active_v0561_and_v55_remains_frozen_parent():
     assert report["valid"] is True, report
     assert public_v56.__version__ == "0.56.1"
     assert public_v56.PUBLIC_RELEASE_STABILITY == "ACTIVE_DEVELOPMENT"
-    assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.2"
+    assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.3"
     assert public_v56.PUBLIC_API_CONTRACT["runtime_version"] == "0.56.1"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
@@ -17,19 +17,21 @@ def test_v56_is_active_v0561_and_v55_remains_frozen_parent():
     assert public_v56.AASMEngine is not public_v55.AASMEngine
 
 
-def test_v56_active_engine_exposes_outcome_provenance_and_state_authority_runtime():
+def test_v56_active_engine_exposes_outcome_provenance_state_authority_and_external_machine_runtime():
     for method in (
         "solver_outcome_v2_runtime_contract_report", "record_solver_outcome_v2", "solver_outcome_v2_report",
         "solver_provenance_runtime_contract_report", "register_solver_execution_profile", "record_solver_runtime_provenance",
         "record_convex_solver_runtime_provenance", "evaluate_solver_runtime_profile", "solver_provenance_report",
         "state_authority_contract_report", "register_fact_authority", "revoke_fact_authority",
         "record_state_claim", "state_claim_report", "state_authority_report",
+        "external_machine_contract_report", "register_machine_binding", "record_machine_state_observation",
+        "machine_binding_report", "machine_state_observation_report", "external_machine_report",
     ):
         assert callable(getattr(public_v56.AASMEngine, method))
         assert method in public_v56.SUPPORTED_ENGINE_METHODS
 
 
-def test_v56_release_preserves_truthful_status_provenance_and_state_authority_boundaries():
+def test_v56_release_preserves_truthful_status_provenance_state_authority_and_external_machine_boundaries():
     contract = public_v56.public_api_contract()
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -55,9 +57,20 @@ def test_v56_release_preserves_truthful_status_provenance_and_state_authority_bo
     assert state_authority["runtime"]["parallel_truth_table"] == "NONE"
     assert state_authority["runtime"]["machine_state_mutation"] == "NONE"
     assert state_authority["runtime"]["effect_authority"] == "NONE"
+    external = contract["external_machine"]
+    assert external["binding_role"] == "REFERENCE_AND_CORRELATION_ONLY_NOT_EXTERNAL_STATE_COPY"
+    assert external["binding_grants_fact_authority"] is False
+    assert external["binding_grants_effect_authority"] is False
+    assert external["capability_reference_grants_authority"] is False
+    assert external["external_state_table"] == "NONE"
+    assert external["executor_invocation"] == "NONE_BY_THIS_FOUNDATION"
+    assert external["postcondition_achievement_claim"] == "NOT_YET_CLAIMED_PR2C"
+    assert external["runtime"]["effect_dispatch"] == "NONE"
+    assert external["runtime"]["executor_invocation"] == "NONE"
+    assert external["runtime"]["machine_state_mutation"] == "NONE"
 
 
-def test_v56_release_import_registry_contains_status_provenance_and_state_authority_contracts():
+def test_v56_release_import_registry_contains_status_provenance_state_authority_and_external_machine_contracts():
     for name in (
         "ProviderTermination", "SolverEvidenceGrade", "LegacyStatusProjection", "SolverOutcomeV2",
         "ProviderStatusRule", "ProviderStatusMap", "ProviderStatusMapping", "normalize_optimization_result_v2",
@@ -66,6 +79,8 @@ def test_v56_release_import_registry_contains_status_provenance_and_state_author
         "evaluate_solver_execution_profile", "solver_provenance_contract", "solver_provenance_runtime_contract",
         "FactAuthority", "StateClaim", "STATE_CLAIM_KINDS", "state_authority_contract",
         "state_authority_runtime_contract", "STATE_AUTHORITY_CAPABILITIES",
+        "MachineBinding", "MachineStateObservation", "external_machine_contract",
+        "external_machine_runtime_contract", "EXTERNAL_MACHINE_CAPABILITIES",
     ):
         assert hasattr(public_v56, name)
         assert name in public_v56.SUPPORTED_PUBLIC_IMPORTS
