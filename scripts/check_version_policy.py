@@ -15,6 +15,10 @@ RELEASE_COMMIT_PREFIXES = (
     "Release AASM ",
     "Prepare AASM release ",
 )
+ROADMAP_POLICY_BOUNDARIES = (
+    "## Future capability milestones",
+    "## Unified merged dependency graph",
+)
 
 
 def run_git(*args: str) -> str:
@@ -91,9 +95,12 @@ def check_package_version_change(base: str) -> tuple[str, str] | None:
 
 def check_roadmap() -> list[str]:
     roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
-    marker = "## Future capability milestones"
-    if marker not in roadmap:
-        return ["ROADMAP.md is missing the 'Future capability milestones' policy boundary"]
+    marker = next((candidate for candidate in ROADMAP_POLICY_BOUNDARIES if candidate in roadmap), None)
+    if marker is None:
+        return [
+            "ROADMAP.md is missing a recognized future-capability policy boundary: "
+            + " or ".join(ROADMAP_POLICY_BOUNDARIES)
+        ]
     future = roadmap.split(marker, 1)[1]
     return [match.group(0) for match in FUTURE_VERSION_HEADING_RE.finditer(future)]
 
