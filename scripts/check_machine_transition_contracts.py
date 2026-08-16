@@ -4,10 +4,7 @@ import json
 from pathlib import Path
 
 from aasm import public_api_contract, validate_public_api_contract
-from aasm.external_machine_transition import (
-    MACHINE_TRANSITION_CONTRACT_ID,
-    machine_transition_contract,
-)
+from aasm.external_machine_transition import MACHINE_TRANSITION_CONTRACT_ID, machine_transition_contract
 from aasm.external_machine_transition_runtime import (
     MACHINE_TRANSITION_CAPABILITIES,
     MACHINE_TRANSITION_RUNTIME_CONTRACT_ID,
@@ -92,11 +89,7 @@ def main() -> None:
     )
     require_tokens(
         ROOT / "src/aasm/external_machine_runtime.py",
-        (
-            "def _authorize_external_machine_action(",
-            "self.authorize_scoped_request(",
-            "AuthorityRequest(",
-        ),
+        ("def _authorize_external_machine_action(", "self.authorize_scoped_request(", "AuthorityRequest("),
     )
     forbid_tokens(
         ROOT / "src/aasm/external_machine_transition_runtime.py",
@@ -118,15 +111,15 @@ def main() -> None:
         ROOT / "tests/test_machine_transition.py",
         (
             "test_valid_transition_creates_only_existing_proposed_effect_intent_with_exact_claim_conditions",
-            "test_transition_proposal_does_not_grant_effect_authority_and_existing_authorize_effect_remains_authority_boundary",
+            "test_transition_proposal_does_not_grant_physical_or_effect_authority",
             "test_transition_proposal_is_idempotent_and_does_not_duplicate_effect_or_transition",
             "test_sqlite_restart_reconstructs_machine_transition_and_existing_effect_binding",
         ),
     )
 
-    # This specialized PR-2B gate owns PR-2B semantics, not the global
-    # adoption revision. The cumulative v0.56 gate owns the exact current
-    # adoption-contract identity.
+    # PR-2B remains proposal-only. PR-3H is a dependent physical-effect layer:
+    # the transition proposal still does not authorize or dispatch anything,
+    # and the active engine may add stronger downstream preconditions.
     public = validate_public_api_contract()
     require(public["valid"], f"active public contract invalid: {public['errors']}")
     contract = public_api_contract()
@@ -135,8 +128,12 @@ def main() -> None:
     require(contract["machine_transition"]["runtime"]["effect_dispatch"] == "NOT_PERFORMED_USE_EXISTING_EXECUTE_EFFECT", "public PR-2B gained dispatch")
     require(contract["machine_transition"]["runtime"]["effect_ownership"] == "NOT_CREATED_BY_THIS_RUNTIME", "public PR-2B gained ownership")
     require(contract["machine_transition"]["runtime"]["transition_status_store"] == "NONE_DERIVE_FROM_EXISTING_EFFECT_RECORD", "public parallel transition status introduced")
+    if "physical_effect_integration" in contract:
+        integration = contract["physical_effect_integration"]
+        require(integration["runtime"]["machine_transition_binding"] == "MANDATORY_BEFORE_AUTHORIZATION_OR_NEW_DISPATCH", "PR-3H no longer fences machine transitions")
+        require(integration["binding_existence_grants_effect_authority"] is False, "PR-3H binding grants effect authority")
 
-    print("machine transition uses existing EffectIntent proposal path and preserves no-authorization/no-dispatch boundary: PASS")
+    print("machine transition remains proposal-only while the active PR-3H layer independently fences physical authorization/dispatch: PASS")
 
 
 if __name__ == "__main__":
