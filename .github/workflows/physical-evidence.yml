@@ -25,12 +25,22 @@ jobs:
           cache: pip
       - name: Install S3 physical evidence qualification dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Compile S3 state-conflict foundation
-        run: python -m compileall -q src/aasm/state_conflict.py src/aasm/state_conflict_runtime.py tests/test_state_conflict.py scripts/check_state_conflict_contracts.py
+      - name: Compile cumulative S3 physical evidence foundation
+        run: |
+          python -m compileall -q \
+            src/aasm/state_conflict.py src/aasm/state_conflict_runtime.py \
+            src/aasm/event_causality.py src/aasm/event_causality_runtime.py \
+            src/aasm/observation_freshness.py src/aasm/observation_freshness_runtime.py \
+            tests/test_state_conflict.py tests/test_causal_freshness.py \
+            scripts/check_state_conflict_contracts.py scripts/check_causal_freshness_contracts.py
       - name: Check S3 state-conflict source contracts
         run: python scripts/check_state_conflict_contracts.py
+      - name: Check S3 causal identity and freshness source contracts
+        run: python scripts/check_causal_freshness_contracts.py
       - name: Run S3 state-conflict adversarial, TextPCB-derived, and replay fixtures
         run: pytest -q tests/test_state_conflict.py
+      - name: Run S3 causal/freshness embedded, TextPCB-derived, and replay fixtures
+        run: pytest -q tests/test_causal_freshness.py
       - name: Publish cumulative S3 physical evidence qualification
         if: always()
         env:
@@ -41,7 +51,7 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S3 physical evidence state-conflict foundation passed'
+            description='S3 conflict+causality+freshness physical evidence passed'
           else
             state=failure
             description='S3 physical evidence qualification failed'
