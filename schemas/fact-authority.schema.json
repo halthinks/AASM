@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/fact-authority.schema.json",
+  "title": "AASM Fact Authority v1",
+  "type": "object",
+  "required": [
+    "authority_id",
+    "contract_id",
+    "contract_version",
+    "workspace_id",
+    "scope_id",
+    "subject_id",
+    "state_namespace",
+    "authority_principal_id",
+    "valid_from",
+    "expires_at",
+    "problem_revision_id",
+    "external_revision_id",
+    "metadata",
+    "fingerprint"
+  ],
+  "properties": {
+    "authority_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.fact.authority.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "subject_id": {"type": "string", "minLength": 1},
+    "state_namespace": {"type": "string", "minLength": 1},
+    "authority_principal_id": {"type": "string", "minLength": 1},
+    "valid_from": {"type": "number", "minimum": 0},
+    "expires_at": {"type": ["number", "null"], "exclusiveMinimum": 0},
+    "problem_revision_id": {"type": "string"},
+    "external_revision_id": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
