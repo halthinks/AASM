@@ -1,14 +1,15 @@
 # AASM Governed Semantic Evolution — Execution Ledger
 
 **Status projection date:** 2026-08-15  
-**Baseline:** released v0.55.0 at tag `v0.55.0` / commit `dd9360858be8755a5639162a7d388d867c1b01e6`  
+**Baseline:** released v0.56.0 at tag `v0.56.0` / commit `551b2f4780acaeb93384b454f6f474f6ebd1b30e`  
 **Doctrine:** `docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md`  
 **Roadmap:** `docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md`  
+**Cumulative v0.56 release discipline:** `docs/roadmaps/V056_CUMULATIVE_RELEASE_DISCIPLINE.md`  
 **Source lock:** `docs/source_material/SOURCE_LOCK_MANIFEST.md`
 
 This is the canonical mutable progress ledger. It may advance or refine work items, but locked requirements may not disappear. When an item is split, the parent row remains and points to its children.
 
-Dormant or interrupted source code for a future release does **not** advance a ledger row by itself. A future row advances only when that release is resumed in sequence and its contract/runtime/test/gate evidence is deliberately qualified. This rule applies to the interrupted v0.56 files that existed before v0.55 was actually released.
+Dormant or interrupted source code for a future release does **not** advance a ledger row by itself. A future row advances only when that release is resumed in sequence and its contract/runtime/test/gate evidence is deliberately qualified.
 
 ## Status vocabulary
 
@@ -32,11 +33,11 @@ Dormant or interrupted source code for a future release does **not** advance a l
 | 55.3-C | 0.55 | Deterministic quadratic/conic IR | RELEASED | continuous engineering representation with explicit numerical policy | `src/aasm/continuous_ir.py`; canonical decimals; quadratic/SOC; tolerance/provider-binding schemas | 55.2, 55.3 | deterministic serialization; quadratic + SOC feasibility checks; tolerance binding | structural representation and assignment validation only; convexity/global optimality proof not claimed | released in `v0.55.0` |
 | 55.4 | 0.55 | Shared objective-vector IR | RELEASED | semantic objectives ↔ optimization objectives; true lexicographic priorities | `src/aasm/decision_vector_ir.py`; hard floors + explicit objective priority; exact-linear compiler to v0.52 finite engine | 55.1, 55.2, 55.3 | hard-floor exclusion before objectives; priority-order fixtures; unsupported named/nonlinear compilation fails closed | `scalarization = NONE`; only exactly representable linear objectives compile | released in `v0.55.0` |
 | 55.5 | 0.55 | Portable semantic-evolution archive | RELEASED | portable replay/export without hosted-only state | `aasm.semantic-evolution.archive.v1`; event history + canonical snapshot + derived projections + root hash | 55.1-55.4 | byte-stable round trip; section/root tamper rejection; existing-reducer replay equality; root-derived archive ID | archived events are replay input; snapshot is comparison evidence; sequence is ordering, not machine version | released in `v0.55.0` |
-| 56.1 | 0.56 | Solver outcome v2 | GATED | normalized fine-grained solver outcomes with truthful provider termination/incumbent/bound/proof distinctions | `src/aasm/solver_outcome_v2.py`; `src/aasm/provider_status_v2.py`; `src/aasm/_runtime_v56_solver_outcome.py`; `schemas/solver-outcome-v2.schema.json`; `schemas/provider-status-map.schema.json`; additive `public_v56` candidate | released 55.2/55.3 | 33 focused contract/runtime/adversarial fixtures; independently validated incumbents; explicit lossy v2→v1 projection; exact native CaDiCaL/PySAT, OR-Tools CP-SAT, and HiGHS status qualification; full repository CI | `0.56.0.dev0` qualification candidate only; root package remains released v0.55.0; provider optimal status is not proof certification | exact-head `aasm/v56-status-v2` PASS at `86cf9199…`; **PAUSE before 56.2** |
-| 56.2 | 0.56 | Execution profile + runtime provenance | SOURCE_LOCKED | evidence-grade deterministic execution | future release requirement; interrupted provenance files are dormant and excluded from v0.55 qualification | 55.3, 56.1 | effective-option/env/provider/adapter identity fixtures required | no v0.56 reproducibility claim yet | **PAUSED; resume only after explicit continuation from gated 56.1** |
-| 56.3 | 0.56 | Reproducibility certification | SOURCE_LOCKED | truthful reproducibility claim levels | future release requirement; dormant interrupted tests do not count as qualification | 56.2 | semantic/assignment/objective/proof equivalence reruns required | none released | follow provenance after deliberate 56.2 implementation |
-| 56.4 | 0.56 | Generic knowledge applicability/application | SOURCE_LOCKED | durable applicability-scoped learned constraints beyond solver learning | generalize v0.48/v0.53 mechanisms | 55.1, 56.1 | poisoned/cross-revision/cross-scope reuse attacks | solver-learning subset already real | design without second knowledge store |
-| 56.5 | 0.56 | Integrated core/conflict pipeline | SOURCE_LOCKED | raw → normalized → minimized → independently rechecked external requirement core | reuse `conflict_minimization.py` | 55.1, 55.3, 56.1 | irrelevant-assumption/core oracle fixtures | generic minimizer exists; real pipeline incomplete | integrate after truthful outcome/formulation lineage |
+| 56.1 | 0.56.0 | Solver outcome v2 | RELEASED | normalized fine-grained solver outcomes with truthful provider termination/incumbent/bound/proof distinctions | `src/aasm/solver_outcome_v2.py`; `src/aasm/provider_status_v2.py`; `src/aasm/_runtime_v56_solver_outcome.py`; schemas; active `public_v56` / `runtime_v56` | released 55.2/55.3 | exhaustive roadmap terminal-class corpus; independently validated incumbents; explicit lossy v2→v1 projection; exact native CaDiCaL/PySAT, OR-Tools CP-SAT, and HiGHS status qualification; full CI and inherited gates | detailed status is authoritative for new v0.56 features; normalization grants no truth; provider OPTIMAL is not independent proof | released in `v0.56.0` at `551b2f47…`; `aasm/v56` + immutable release verified |
+| 56.2 | 0.56.1 | Execution profile + runtime provenance | SOURCE_LOCKED | evidence-grade deterministic execution | future cumulative patch; dormant interrupted provenance files do not count as delivery | 55.3, RELEASED 56.1 | effective-option/env/provider/adapter identity fixtures required | no reproducibility claim from provenance alone | next work package; must finish through immutable `v0.56.1` before 56.3 |
+| 56.3 | 0.56.2 | Reproducibility certification | SOURCE_LOCKED | truthful reproducibility claim levels | future cumulative patch; dormant interrupted tests do not count as qualification | 56.2 | semantic/assignment/objective/proof equivalence reruns required | none released | follow immutable v0.56.1 provenance boundary |
+| 56.4 | 0.56.3 | Generic knowledge applicability/application | SOURCE_LOCKED | durable applicability-scoped learned constraints beyond solver learning | generalize v0.48/v0.53 mechanisms | 55.1, 56.1 | poisoned/cross-revision/cross-scope reuse attacks | solver-learning subset already real | design without second knowledge store |
+| 56.5 | 0.56.4 | Integrated core/conflict pipeline | SOURCE_LOCKED | raw → normalized → minimized → independently rechecked external requirement core | reuse `conflict_minimization.py` | 55.1, 55.3, 56.1 | irrelevant-assumption/core oracle fixtures | generic minimizer exists; real pipeline incomplete | integrate after truthful outcome/formulation lineage |
 | 57.1 | 0.57 | External machine binding | SOURCE_LOCKED | AASM supervises TextPCB state machine without mirroring truth | planned `aasm.machine.binding.v1` | 55.1, v0.54 effects | stale observed revision, out-of-band change | none yet | build over EffectIntent |
 | 57.2 | 0.57 | Revision-safe machine transition | SOURCE_LOCKED | transition intent/receipt/expected state | planned `aasm.machine.transition.v1` -> v0.54 EffectIntent | 57.1, v0.54 ownership | no call before ownership; stale prestate rejects; UNKNOWN blocks retry | effect ownership already real | no second effect lifecycle |
 | 57.3 | 0.57 | Artifact revision lineage | SOURCE_LOCKED | CAD/PCB/CAE artifacts are immutable revisioned outputs | planned | 55.1, 57.1 | tamper/parent lineage/stale artifact tests | existing artifact backend only | add canonical lineage |
@@ -84,40 +85,53 @@ Release publication additionally passed:
 - remote GitHub release asset byte verification;
 - SHA-256 manifest publication.
 
-Earlier foundation evidence remains useful history:
+## Verified exact-head v0.56.0 / 56.1 release evidence
 
-- CI run `31906265347` at `45ef002a600d0e208c1c5ffb476415de48a820c5` covered initial 55.1 contract and 55.2 admission foundations.
-- CI run `31906790298` at `053e10824f0ea9f685f529974c368af938b1d35b` covered durable 55.1 runtime, SQLite restart/resume, truth-maintenance integration, and stale two-host commit fencing.
+Release commit: `551b2f4780acaeb93384b454f6f474f6ebd1b30e`  
+Tag: `v0.56.0`  
+GitHub release workflow: `31916382216` — **SUCCESS**
 
-## Verified exact-head v0.56 / 56.1 qualification evidence
+Exact-SHA required statuses all passed:
 
-Qualification implementation head: `86cf91990f729763f97687957657ce35bc186393`  
-Dedicated status-v2 workflow: `31914353260` — **SUCCESS**  
-Full repository CI workflow: `31914353204` — **SUCCESS**
+- `aasm/ci-summary`
+- `aasm/formal-assurance`
+- `aasm/semantic-solver-rc`
+- `aasm/proof-claims`
+- `aasm/solution-pools`
+- `aasm/optimization`
+- `aasm/scoped-authority`
+- `aasm/solver-learning`
+- `aasm/v54` parent compatibility
+- `aasm/v55` parent compatibility
+- `aasm/v56` active release qualification
+- `aasm/release`
 
-Exact-head evidence includes:
+56.1 release evidence additionally includes:
 
-- `aasm/v56-status-v2` PASS;
-- `aasm/ci-summary` PASS;
-- all focused Solver Outcome v2 contract/runtime/adversarial fixtures PASS;
-- real CaDiCaL/PySAT, OR-Tools CP-SAT, and HiGHS native status identity/mapping qualification PASS;
-- Python 3.11 / 3.12 / 3.13 full test suites PASS;
-- reproducible wheel/sdist smoke PASS;
-- PostgreSQL integration, Compose, hierarchical scopes, adapter conformance, and LangGraph integration PASS;
-- all inherited v0.55/v0.54/formal/solver/proof/scoped-authority gates on the same head remained green.
+- complete normalized terminal-status corpus, including time/node/iteration/solution/memory/user-interrupt/model-invalid/numerical/provider-unavailable/unsupported/stale/unbounded classes;
+- independent source-model incumbent and objective validation before any accepted incumbent outcome;
+- explicit lossy v2→v1 compatibility projection;
+- exact native CaDiCaL/PySAT, OR-Tools CP-SAT, and HiGHS status identity/mapping qualification;
+- Python 3.11 / 3.12 / 3.13 full suites;
+- reproducible wheel/sdist builds;
+- PostgreSQL, Compose, hierarchical scopes, adapter conformance, and LangGraph integration;
+- immutable GitHub tag/release creation;
+- clean-install public-contract exercise;
+- remote release-asset byte verification;
+- SHA-256 release manifest publication.
 
-This evidence qualifies **56.1 only**. It does not advance 56.2 or 56.3 and does not constitute a v0.56 package release.
+This completes work package **56.1**. It does not advance 56.2 or 56.3.
 
 ## Immediate builder queue
 
-1. **PAUSED HERE by explicit execution boundary.** 56.1 is GATED; do not advance 56.2 automatically.
-2. On explicit resume, begin **56.2 Execution profile + runtime provenance** from the gated 56.1 contracts and released v0.55 parent boundary.
-3. Keep 56.3 reproducibility certification SOURCE_LOCKED until 56.2 is implemented and gated.
-4. Only after 56.1–56.3 are deliberately gated should 56.4 generic knowledge applicability and 56.5 integrated core/conflict pipeline advance.
+1. Treat `v0.56.0` / `551b2f47…` as the immutable released boundary for 56.1.
+2. Begin **56.2 Execution Profiles + Runtime Provenance** only from this released boundary.
+3. Complete 56.2 through active cumulative `v0.56.1`, exact-head gates, immutable release/tag/assets, and ledger `RELEASED` before 56.3 begins.
+4. Keep 56.3 reproducibility certification SOURCE_LOCKED until 56.2 is released.
 5. Keep TextPCB as a demanding consumer/conformance target; do not move TextPCB-specific types into the kernel.
 
 ## Completion discipline
 
-A row advances to `TESTED` only with reproducible tests. It advances to `GATED` only when the declared release gate executes those claims on exact head. It advances to `RELEASED` only when the active package/public surface and release documentation expose the capability without exceeding the evidence.
+A row advances to `TESTED` only with reproducible tests. It advances to `GATED` only when the declared release gate executes those claims on exact head. It advances to `RELEASED` only when the active package/public surface and immutable GitHub release expose the capability without exceeding the evidence.
 
-Dormant source, interrupted work, local experiments, or unqualified future-version files never count as `RELEASED` and do not permit skipping the declared sequence.
+Under `docs/roadmaps/V056_CUMULATIVE_RELEASE_DISCIPLINE.md`, each v0.56 work package must become a clean cumulative patch release before the next package begins. Dormant source, interrupted work, local experiments, or unqualified future-version files never count as delivered capability.
