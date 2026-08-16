@@ -16,8 +16,8 @@ def test_v54_public_surface_remains_valid_versioned_parent():
     assert public_v54.PUBLIC_API_CONTRACT["runtime_version"] == "0.54.0"
     assert public_v53.__version__ == "0.53.0"
     assert public_v55.__version__ == "0.55.0"
-    assert public_v56.__version__ == "0.56.0"
-    assert aasm.__version__ == "0.56.0"
+    assert public_v56.validate_public_api_contract()["valid"] is True
+    assert aasm.__version__ == public_v56.__version__
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v54.AASMEngine is V54Engine
 
@@ -44,7 +44,7 @@ def test_v54_public_contract_freezes_effect_settlement_portfolio_and_exchange_bo
     assert exchange["policy_authority"] == "NONE"
 
 
-def test_v54_full_engine_and_imports_remain_available_through_v56():
+def test_v54_full_engine_and_imports_remain_available_through_active_root():
     for method in (
         "effect_governance_report",
         "effect_resource_settlement_contract_report",
