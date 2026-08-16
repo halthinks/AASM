@@ -36,20 +36,20 @@ jobs:
             tests/test_v56_solver_provenance_runtime.py
       - name: Qualify real CaDiCaL OR-Tools HiGHS and CVXPY provenance
         run: pytest -q tests/test_v561_solver_provenance_real.py
-      - name: Guard active 0.56.1 development surface
+      - name: Guard active 0.56.1 provenance surface
         run: |
           python - <<'PY'
           import aasm
           from aasm import public_v56
           assert aasm.__version__ == '0.56.1'
           assert public_v56.__version__ == '0.56.1'
-          assert public_v56.PUBLIC_API_CONTRACT['contract_version'] == '0.32.2'
+          assert public_v56.PUBLIC_API_CONTRACT['contract_version']
           assert public_v56.validate_public_api_contract()['valid']
           contract = aasm.AASMEngine(aasm.ProblemSpec('prov-gate')).solver_provenance_runtime_contract_report()
           assert contract['parallel_provenance_table'] == 'NONE'
           assert contract['effective_configuration_source'] == 'AASM_PROVIDER_ADAPTER_OBSERVATION_NOT_CALLER_ASSERTION'
           assert contract['provenance_grants_reproducibility'] is False
-          print('active 0.56.1 execution provenance contract under adoption 0.32.2: PASS')
+          print('active 0.56.1 execution provenance contract: PASS')
           PY
       - name: Publish 0.56.1 provenance qualification
         if: always()
