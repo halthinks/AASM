@@ -151,7 +151,7 @@ def main():
         "AASM v0.56.0",
         "Latest immutable published release",
         "Current development target on `main`:** 0.56.1",
-        "published release:       0.56.0",
+        "latest published package: 0.56.0",
     ])
     require(root / "docs/RELEASE_0.56.1.md", [
         "Development Candidate",
