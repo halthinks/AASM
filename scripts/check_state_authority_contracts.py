@@ -98,7 +98,8 @@ def main() -> None:
     public = validate_public_api_contract()
     require(public["valid"], f"active public contract invalid: {public['errors']}")
     contract = public_api_contract()
-    require(contract["contract_version"] == "0.32.2", "active adoption contract did not advance for state authority")
+    require(contract["runtime_version"] == "0.56.1", "state authority is no longer composed into active runtime")
+    require("state_authority" in contract, "state authority disappeared from active public contract")
     require(contract["state_authority"]["runtime"]["parallel_truth_table"] == "NONE", "public state-authority truth boundary drift")
     require(contract["state_authority"]["runtime"]["effect_authority"] == "NONE", "public state-authority effect boundary drift")
 
