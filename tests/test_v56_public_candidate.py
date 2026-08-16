@@ -9,7 +9,7 @@ def test_v56_is_active_v0561_and_v55_remains_frozen_parent():
     assert report["valid"] is True, report
     assert public_v56.__version__ == "0.56.1"
     assert public_v56.PUBLIC_RELEASE_STABILITY == "ACTIVE_DEVELOPMENT"
-    assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.3"
+    assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.4"
     assert public_v56.PUBLIC_API_CONTRACT["runtime_version"] == "0.56.1"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
@@ -17,7 +17,7 @@ def test_v56_is_active_v0561_and_v55_remains_frozen_parent():
     assert public_v56.AASMEngine is not public_v55.AASMEngine
 
 
-def test_v56_active_engine_exposes_outcome_provenance_state_authority_and_external_machine_runtime():
+def test_v56_active_engine_exposes_outcome_provenance_state_authority_external_machine_and_transition_runtime():
     for method in (
         "solver_outcome_v2_runtime_contract_report", "record_solver_outcome_v2", "solver_outcome_v2_report",
         "solver_provenance_runtime_contract_report", "register_solver_execution_profile", "record_solver_runtime_provenance",
@@ -26,12 +26,14 @@ def test_v56_active_engine_exposes_outcome_provenance_state_authority_and_extern
         "record_state_claim", "state_claim_report", "state_authority_report",
         "external_machine_contract_report", "register_machine_binding", "record_machine_state_observation",
         "machine_binding_report", "machine_state_observation_report", "external_machine_report",
+        "machine_transition_contract_report", "propose_machine_transition", "machine_transition_report",
+        "machine_transitions_report",
     ):
         assert callable(getattr(public_v56.AASMEngine, method))
         assert method in public_v56.SUPPORTED_ENGINE_METHODS
 
 
-def test_v56_release_preserves_truthful_status_provenance_state_authority_and_external_machine_boundaries():
+def test_v56_release_preserves_truthful_status_provenance_state_authority_external_machine_and_transition_boundaries():
     contract = public_v56.public_api_contract()
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -68,9 +70,24 @@ def test_v56_release_preserves_truthful_status_provenance_state_authority_and_ex
     assert external["runtime"]["effect_dispatch"] == "NONE"
     assert external["runtime"]["executor_invocation"] == "NONE"
     assert external["runtime"]["machine_state_mutation"] == "NONE"
+    transition = contract["machine_transition"]
+    assert transition["expected_prestate"] == "EXACT_DURABLE_AUTHORITATIVE_STATE_CLAIMS_REQUIRED"
+    assert transition["target_state"] == "EXACT_DURABLE_DESIRED_STATE_CLAIMS_REQUIRED"
+    assert transition["effect_proposal"] == "EXISTING_AASM_PROPOSE_EFFECT_AND_EFFECT_INTENT_ONLY"
+    assert transition["effect_authorization"] == "EXISTING_AASM_AUTHORIZE_EFFECT_ONLY_NOT_PERFORMED_BY_THIS_CONTRACT"
+    assert transition["effect_dispatch"] == "EXISTING_AASM_EXECUTE_EFFECT_ONLY_NOT_PERFORMED_BY_THIS_CONTRACT"
+    assert transition["parallel_dispatcher"] == "NONE"
+    assert transition["parallel_effect_store"] == "NONE"
+    assert transition["command_success_is_achievement"] is False
+    assert transition["postcondition_verification"] == "NOT_IMPLEMENTED_PR2B_RESERVED_FOR_PR2C"
+    assert transition["runtime"]["effect_proposal_path"] == "EXISTING_AASM_PROPOSE_EFFECT_ONLY"
+    assert transition["runtime"]["effect_dispatch"] == "NOT_PERFORMED_USE_EXISTING_EXECUTE_EFFECT"
+    assert transition["runtime"]["effect_ownership"] == "NOT_CREATED_BY_THIS_RUNTIME"
+    assert transition["runtime"]["transition_status_store"] == "NONE_DERIVE_FROM_EXISTING_EFFECT_RECORD"
+    assert transition["runtime"]["machine_state_mutation"] == "NONE"
 
 
-def test_v56_release_import_registry_contains_status_provenance_state_authority_and_external_machine_contracts():
+def test_v56_release_import_registry_contains_status_provenance_state_authority_external_machine_and_transition_contracts():
     for name in (
         "ProviderTermination", "SolverEvidenceGrade", "LegacyStatusProjection", "SolverOutcomeV2",
         "ProviderStatusRule", "ProviderStatusMap", "ProviderStatusMapping", "normalize_optimization_result_v2",
@@ -81,6 +98,8 @@ def test_v56_release_import_registry_contains_status_provenance_state_authority_
         "state_authority_runtime_contract", "STATE_AUTHORITY_CAPABILITIES",
         "MachineBinding", "MachineStateObservation", "external_machine_contract",
         "external_machine_runtime_contract", "EXTERNAL_MACHINE_CAPABILITIES",
+        "MachineTransitionIntent", "machine_transition_contract", "machine_transition_runtime_contract",
+        "MACHINE_TRANSITION_CAPABILITIES",
     ):
         assert hasattr(public_v56, name)
         assert name in public_v56.SUPPORTED_PUBLIC_IMPORTS
