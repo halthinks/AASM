@@ -120,7 +120,10 @@ jobs:
             aasm/external-machine \
             aasm/machine-transition \
             aasm/machine-postcondition \
-            aasm/physical-authority; do
+            aasm/physical-authority \
+            aasm/effect-capability \
+            aasm/physical-control-fencing \
+            aasm/physical-preemption-recovery; do
             state=""
             for _ in $(seq 1 90); do
               state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" --jq "[.statuses[] | select(.context == \"$context\")][0].state // \"\"")"
