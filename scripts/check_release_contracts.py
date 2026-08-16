@@ -52,7 +52,7 @@ def main():
     require(root / "src/aasm/__init__.py", ["public_v56"])
     require(root / "src/aasm/public_v56.py", [
         '__version__ = "0.56.1"',
-        '"contract_version": "0.32.5"',
+        '"contract_version": "0.32.6"',
         'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
         "SOLVER_OUTCOME_V2_CONTRACT_ID",
         "SOLVER_RUNTIME_PROVENANCE_CONTRACT_ID",
@@ -76,8 +76,14 @@ def main():
         "MACHINE_POSTCONDITION_VERIFICATION_CONTRACT_ID",
         "MachinePostconditionVerification",
         "machine_postcondition_runtime_contract",
+        "AUTHORITY_DOMAIN_CONTRACT_ID",
+        "AUTHORITY_LEASE_CONTRACT_ID",
+        "AuthorityDomain",
+        "AuthorityLease",
+        "physical_authority_runtime_contract",
     ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
+        "PhysicalAuthorityRuntimeMixin",
         "MachinePostconditionExecutionCorrelationMixin",
         "MachinePostconditionRuntimeMixin",
         "MachineTransitionRuntimeMixin",
@@ -213,6 +219,27 @@ def main():
         "effect.execution_id",
         "observation.correlation_id != execution_id",
     ])
+    require(root / "src/aasm/physical_authority.py", [
+        'AUTHORITY_DOMAIN_CONTRACT_ID = "aasm.authority.domain.v1"',
+        'AUTHORITY_LEASE_CONTRACT_ID = "aasm.authority.lease.v1"',
+        '"lease_exclusivity": "AT_MOST_ONE_ACTIVE_LEASE_PER_DOMAIN"',
+        '"authority_epoch": "STRICTLY_MONOTONIC_PER_DOMAIN"',
+        '"domain_existence_grants_effect_authority": False',
+        '"lease_existence_grants_effect_authority": False',
+        '"effect_authorization_integration": "NOT_YET_PR3H"',
+        '"bounded_effect_capability": "RESERVED_PR3C_PR3D"',
+        '"semantic_preemption": "RESERVED_PR3G"',
+    ])
+    require(root / "src/aasm/physical_authority_runtime.py", [
+        'PHYSICAL_AUTHORITY_RUNTIME_CONTRACT_ID = "aasm.physical.authority.runtime.v1"',
+        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"',
+        '"effect_authorization_integration": "NONE_PR3A_PR3B_FOUNDATION"',
+        '"effect_dispatch": "NONE"',
+        '"machine_state_mutation": "NONE"',
+        "self.authorize_scoped_request(",
+        "expected_epoch = max_epoch + 1",
+        "_intervals_overlap(",
+    ])
 
     for schema in (
         "solver-outcome-v2.schema.json",
@@ -226,6 +253,8 @@ def main():
         "machine-state-observation.schema.json",
         "machine-transition.schema.json",
         "machine-postcondition-verification.schema.json",
+        "authority-domain.schema.json",
+        "authority-lease.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -255,6 +284,7 @@ def main():
         "check_external_machine_contracts.py",
         "check_machine_transition_contracts.py",
         "check_machine_postcondition_contracts.py",
+        "check_physical_authority_contracts.py",
     ):
         run_script(root, script)
 
@@ -289,6 +319,8 @@ def main():
         "tests/test_v561_solver_provenance_real.py",
         "check_machine_postcondition_contracts.py",
         "tests/test_machine_postcondition.py",
+        "check_physical_authority_contracts.py",
+        "tests/test_physical_authority.py",
         "context='aasm/v56'",
     ])
     require(root / ".github/workflows/v561.yml", [
@@ -319,6 +351,12 @@ def main():
         "tests/test_machine_postcondition.py",
         "context='aasm/machine-postcondition'",
     ])
+    require(root / ".github/workflows/physical-authority.yml", [
+        "Physical Authority Foundation",
+        "check_physical_authority_contracts.py",
+        "tests/test_physical_authority.py",
+        "context='aasm/physical-authority'",
+    ])
     require(root / ".github/workflows/release.yml", [
         "workflow_dispatch:",
         "confirm_release:",
@@ -327,13 +365,14 @@ def main():
         "aasm/external-machine",
         "aasm/machine-transition",
         "aasm/machine-postcondition",
+        "aasm/physical-authority",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
     ])
     forbid(root / ".github/workflows/release.yml", ["workflow_run:"])
 
-    print("0.56.1 development-target contracts + adoption 0.32.5 + v0.56.0 published identity: PASS")
+    print("0.56.1 development-target contracts + adoption 0.32.6 + v0.56.0 published identity: PASS")
     return 0
 
 
