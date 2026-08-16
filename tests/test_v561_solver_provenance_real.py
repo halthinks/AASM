@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import pytest
 
 from aasm.convex_optimization import ConvexOptimizationRequest, reference_convex_models, solve_convex_request, validate_convex_result
@@ -7,6 +8,11 @@ from aasm.optimization import OptimizationRequest, reference_optimization_models
 from aasm.solver_execution_observation import execution_observation_for_convex, execution_observation_for_optimization
 from aasm.solver_outcome_v2 import normalize_optimization_result_v2
 from aasm.solver_provenance import SolverExecutionProfile, SolverRuntimeProvenance, build_solver_runtime_provenance, evaluate_solver_execution_profile
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("AASM_REQUIRE_V561_PROVIDERS") != "1",
+    reason="real v0.56.1 provenance providers are exercised by the dedicated provenance gate",
+)
 
 
 def _provenance_from_native(request, result):
@@ -78,29 +84,15 @@ def test_real_cvxpy_backend_provenance_captures_selected_backend_without_fabrica
         required_worker_count=1,
     )
     provenance = SolverRuntimeProvenance(
-        execution_id="real-cvxpy",
-        source_result_id=result.result_id,
-        source_result_fingerprint=result.fingerprint,
-        source_outcome_id="",
-        source_outcome_fingerprint="",
-        profile_id=profile.profile_id,
-        profile_fingerprint=profile.fingerprint,
-        model_fingerprint=result.model_fingerprint,
-        provider_id=result.solver.provider_id,
-        provider_implementation=result.solver.implementation,
-        provider_version=result.solver.version,
-        adapter_id=observation.adapter_id,
-        adapter_version=observation.adapter_version,
-        solver_command=(result.solver.implementation, result.solver.backend_solver),
-        requested_options=profile.requested_options,
-        effective_options=observation.effective_options,
-        worker_count=observation.worker_count,
-        thread_count=observation.thread_count,
-        environment_fingerprint=observation.environment_fingerprint,
-        platform_identity=observation.platform_identity,
-        library_identity=observation.library_identity,
-        build_fingerprint=observation.build_fingerprint,
-        metadata=observation.metadata,
+        execution_id="real-cvxpy", source_result_id=result.result_id, source_result_fingerprint=result.fingerprint,
+        source_outcome_id="", source_outcome_fingerprint="", profile_id=profile.profile_id, profile_fingerprint=profile.fingerprint,
+        model_fingerprint=result.model_fingerprint, provider_id=result.solver.provider_id,
+        provider_implementation=result.solver.implementation, provider_version=result.solver.version,
+        adapter_id=observation.adapter_id, adapter_version=observation.adapter_version,
+        solver_command=(result.solver.implementation, result.solver.backend_solver), requested_options=profile.requested_options,
+        effective_options=observation.effective_options, worker_count=observation.worker_count, thread_count=observation.thread_count,
+        environment_fingerprint=observation.environment_fingerprint, platform_identity=observation.platform_identity,
+        library_identity=observation.library_identity, build_fingerprint=observation.build_fingerprint, metadata=observation.metadata,
     )
     evaluation = evaluate_solver_execution_profile(profile, provenance)
     assert evaluation.compliant is True, evaluation.to_dict()
