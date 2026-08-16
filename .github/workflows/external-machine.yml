@@ -1,0 +1,48 @@
+name: External Machine Binding
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  external_machine:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install external machine dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile stable external machine surface
+        run: python -m compileall -q src/aasm/external_machine.py src/aasm/external_machine_runtime.py tests/test_external_machine.py scripts/check_external_machine_contracts.py
+      - name: Validate external machine source contracts
+        run: python scripts/check_external_machine_contracts.py
+      - name: Run external machine adversarial and replay tests
+        run: pytest -q tests/test_external_machine.py
+      - name: Publish External Machine status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='machine binding, observed-state correlation, no-authority and no-dispatch boundaries passed'
+          else
+            state=failure
+            description='external machine binding qualification failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" -f context='aasm/external-machine' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
