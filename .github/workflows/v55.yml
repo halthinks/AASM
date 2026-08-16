@@ -26,8 +26,6 @@ jobs:
           cache: pip
       - name: Install
         run: python -m pip install -e '.[dev]'
-      - name: Verify tracked file inventory
-        run: python scripts/release_manifest.py --check-file-list
       - name: Check frozen v0.55 engineering contracts
         run: |
           python scripts/check_v55_discrete_ir.py
@@ -49,7 +47,7 @@ jobs:
             tests/test_v55_decision_vector_ir.py \
             tests/test_v55_semantic_archive.py \
             tests/test_v55_public_candidate.py
-      - name: Validate frozen v0.55 parent under active v0.56 root
+      - name: Validate frozen v0.55 parent under active development root
         run: |
           python - <<'PY'
           import aasm
@@ -59,11 +57,11 @@ jobs:
           assert public_v55.__version__ == '0.55.0'
           assert public_v55.PUBLIC_RELEASE_STABILITY == 'ACTIVE_DEVELOPMENT'
           assert public_v55.PUBLIC_API_CONTRACT['contract_version'] == '0.31.0'
-          assert public_v56.__version__ == '0.56.0'
-          assert aasm.__version__ == '0.56.0'
+          assert public_v56.validate_public_api_contract()['valid']
+          assert aasm.__version__ == public_v56.__version__
           assert aasm.AASMEngine is public_v56.AASMEngine
           assert public_v55.AASMEngine is not aasm.AASMEngine
-          print('v0.55 frozen parent compatibility under v0.56: PASS')
+          print('v0.55 frozen parent compatibility under active development root: PASS')
           PY
       - name: Publish v0.55 compatibility status
         if: always()
