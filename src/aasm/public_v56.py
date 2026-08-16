@@ -30,6 +30,22 @@ from .external_machine import (
     MachineStateObservation,
     external_machine_contract,
 )
+from .external_machine_postcondition import (
+    MACHINE_POSTCONDITION_VERIFICATION_CONTRACT_ID,
+    MACHINE_POSTCONDITION_VERIFICATION_CONTRACT_VERSION,
+    MACHINE_POSTCONDITION_VERIFICATION_STABILITY,
+    POSTCONDITION_VERDICTS,
+    MachinePostconditionVerification,
+    machine_postcondition_verification_contract,
+)
+from .external_machine_postcondition_runtime import (
+    MACHINE_POSTCONDITION_CAPABILITIES,
+    MACHINE_POSTCONDITION_RUNTIME_CONTRACT_ID,
+    MACHINE_POSTCONDITION_RUNTIME_CONTRACT_VERSION,
+    MACHINE_POSTCONDITION_RUNTIME_STABILITY,
+    machine_postcondition_runtime_contract,
+    project_machine_postcondition_evidence,
+)
 from .external_machine_runtime import (
     EXTERNAL_MACHINE_CAPABILITIES,
     EXTERNAL_MACHINE_RUNTIME_CONTRACT_ID,
@@ -118,7 +134,9 @@ _NEW_ENGINE_METHODS = [
     "external_machine_contract_report", "register_machine_binding", "record_machine_state_observation",
     "machine_binding_report", "machine_state_observation_report", "external_machine_report",
     "machine_transition_contract_report", "propose_machine_transition", "machine_transition_report",
-    "machine_transitions_report",
+    "machine_transitions_report", "machine_postcondition_contract_report",
+    "verify_machine_transition_postconditions", "machine_postcondition_verification_report",
+    "machine_postconditions_report",
 ]
 
 _NEW_IMPORTS = [
@@ -159,19 +177,24 @@ _NEW_IMPORTS = [
     "MachineTransitionIntent", "machine_transition_contract", "MACHINE_TRANSITION_RUNTIME_CONTRACT_ID",
     "MACHINE_TRANSITION_RUNTIME_CONTRACT_VERSION", "MACHINE_TRANSITION_RUNTIME_STABILITY",
     "MACHINE_TRANSITION_CAPABILITIES", "project_machine_transition_evidence", "machine_transition_runtime_contract",
+    "MACHINE_POSTCONDITION_VERIFICATION_CONTRACT_ID", "MACHINE_POSTCONDITION_VERIFICATION_CONTRACT_VERSION",
+    "MACHINE_POSTCONDITION_VERIFICATION_STABILITY", "POSTCONDITION_VERDICTS", "MachinePostconditionVerification",
+    "machine_postcondition_verification_contract", "MACHINE_POSTCONDITION_RUNTIME_CONTRACT_ID",
+    "MACHINE_POSTCONDITION_RUNTIME_CONTRACT_VERSION", "MACHINE_POSTCONDITION_RUNTIME_STABILITY",
+    "MACHINE_POSTCONDITION_CAPABILITIES", "project_machine_postcondition_evidence", "machine_postcondition_runtime_contract",
 ]
 
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_ENGINE_METHODS", []), *_NEW_ENGINE_METHODS]))
 SUPPORTED_CLI_COMMANDS = list(getattr(_v55, "SUPPORTED_CLI_COMMANDS", []))
 SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([
     *getattr(_v55, "SUPPORTED_INSPECTION_SURFACES", []),
-    "solver-outcome-v2", "solver-provenance", "state-authority", "external-machine", "machine-transition",
+    "solver-outcome-v2", "solver-provenance", "state-authority", "external-machine", "machine-transition", "machine-postcondition",
 ]))
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_PUBLIC_IMPORTS", []), *_NEW_IMPORTS]))
 
 PUBLIC_API_CONTRACT = deepcopy(_v55.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.32.4", "runtime_version": __version__, "release_stability": PUBLIC_RELEASE_STABILITY,
+    "contract_version": "0.32.5", "runtime_version": __version__, "release_stability": PUBLIC_RELEASE_STABILITY,
     "supported_imports": SUPPORTED_PUBLIC_IMPORTS, "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
     "supported_cli_commands": SUPPORTED_CLI_COMMANDS, "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
 })
@@ -196,6 +219,10 @@ PUBLIC_API_CONTRACT["machine_transition"] = {
     **machine_transition_contract(),
     "runtime": machine_transition_runtime_contract(),
 }
+PUBLIC_API_CONTRACT["machine_postcondition"] = {
+    **machine_postcondition_verification_contract(),
+    "runtime": machine_postcondition_runtime_contract(),
+}
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
 
@@ -217,10 +244,11 @@ def validate_public_api_contract():
         errors.append(f"missing v0.56 engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
         errors.append("v0.56 runtime version mismatch")
-    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.4":
+    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.5":
         errors.append("active adoption contract mismatch")
     if PUBLIC_RELEASE_STABILITY != "ACTIVE_DEVELOPMENT":
         errors.append("v0.56 active release stability mismatch")
+
     outcome = PUBLIC_API_CONTRACT.get("solver_outcome_v2", {})
     if outcome.get("authoritative_detailed_status") != "normalized_status":
         errors.append("solver outcome v2 authoritative status boundary mismatch")
@@ -228,6 +256,7 @@ def validate_public_api_contract():
         errors.append("solver outcome v2 legacy compatibility projection mismatch")
     if outcome.get("provider_status_map", {}).get("substring_inference") != "FORBIDDEN":
         errors.append("provider status mapping substring-inference boundary mismatch")
+
     provenance = PUBLIC_API_CONTRACT.get("solver_provenance", {})
     if provenance.get("runtime_provenance_contract_id") != SOLVER_RUNTIME_PROVENANCE_CONTRACT_ID:
         errors.append("solver provenance contract mismatch")
@@ -239,6 +268,7 @@ def validate_public_api_contract():
         errors.append("solver provenance reproducibility claim boundary mismatch")
     if provenance.get("truth_authority") != "NONE" or provenance.get("policy_authority") != "NONE":
         errors.append("solver provenance authority boundary mismatch")
+
     state_authority = PUBLIC_API_CONTRACT.get("state_authority", {})
     if state_authority.get("claim_kinds") != list(STATE_CLAIM_KINDS):
         errors.append("state authority claim-kind boundary mismatch")
@@ -254,6 +284,7 @@ def validate_public_api_contract():
         errors.append("state authority machine-state mutation boundary mismatch")
     if state_authority.get("runtime", {}).get("effect_authority") != "NONE":
         errors.append("state authority runtime effect-authority boundary mismatch")
+
     external = PUBLIC_API_CONTRACT.get("external_machine", {})
     if external.get("binding_role") != "REFERENCE_AND_CORRELATION_ONLY_NOT_EXTERNAL_STATE_COPY":
         errors.append("external machine binding role mismatch")
@@ -268,12 +299,13 @@ def validate_public_api_contract():
     if external.get("executor_invocation") != "NONE_BY_THIS_FOUNDATION":
         errors.append("external machine executor-invocation boundary mismatch")
     if external.get("postcondition_achievement_claim") != "NOT_YET_CLAIMED_PR2C":
-        errors.append("external machine postcondition claim boundary mismatch")
+        errors.append("external machine PR2A postcondition claim boundary mismatch")
     external_runtime = external.get("runtime", {})
     if external_runtime.get("effect_dispatch") != "NONE" or external_runtime.get("executor_invocation") != "NONE":
         errors.append("external machine PR2A dispatch boundary mismatch")
     if external_runtime.get("machine_state_mutation") != "NONE":
         errors.append("external machine machine-state mutation boundary mismatch")
+
     transition = PUBLIC_API_CONTRACT.get("machine_transition", {})
     if transition.get("effect_proposal") != "EXISTING_AASM_PROPOSE_EFFECT_AND_EFFECT_INTENT_ONLY":
         errors.append("machine transition proposal path mismatch")
@@ -286,7 +318,7 @@ def validate_public_api_contract():
     if transition.get("command_success_is_achievement") is not False:
         errors.append("machine transition command-success truth boundary mismatch")
     if transition.get("postcondition_verification") != "NOT_IMPLEMENTED_PR2B_RESERVED_FOR_PR2C":
-        errors.append("machine transition postcondition boundary mismatch")
+        errors.append("machine transition PR2B postcondition boundary mismatch")
     transition_runtime = transition.get("runtime", {})
     if transition_runtime.get("effect_proposal_path") != "EXISTING_AASM_PROPOSE_EFFECT_ONLY":
         errors.append("machine transition runtime proposal path mismatch")
@@ -298,6 +330,40 @@ def validate_public_api_contract():
         errors.append("machine transition parallel status boundary mismatch")
     if transition_runtime.get("machine_state_mutation") != "NONE":
         errors.append("machine transition proposal mutates machine state")
+
+    postcondition = PUBLIC_API_CONTRACT.get("machine_postcondition", {})
+    if postcondition.get("effect_status_requirement") != "EXISTING_AASM_EFFECT_MUST_BE_SUCCEEDED":
+        errors.append("machine postcondition effect-status boundary mismatch")
+    if postcondition.get("unknown_effect") != "BLOCKED_USE_EXISTING_EFFECT_RECONCILIATION":
+        errors.append("machine postcondition UNKNOWN boundary mismatch")
+    if postcondition.get("achieved_source") != "PR1_DURABLE_AUTHORITATIVE_STATE_CLAIMS_ONLY":
+        errors.append("machine postcondition achieved-state boundary mismatch")
+    if postcondition.get("observation_correlation") != "PR2A_MACHINE_STATE_OBSERVATION_CORRELATION_ID_MUST_EQUAL_EXISTING_EFFECT_EXECUTION_ID":
+        errors.append("machine postcondition execution-correlation boundary mismatch")
+    if postcondition.get("comparison") != "EXACT_CANONICAL_VALUE_EQUALITY_ONLY_NO_TOLERANCE_IN_THIS_FOUNDATION":
+        errors.append("machine postcondition comparison boundary mismatch")
+    if postcondition.get("effect_success_is_achievement") is not False:
+        errors.append("effect success incorrectly grants achievement")
+    if postcondition.get("verification_mints_fact_authority") is not False or postcondition.get("verification_mints_state_claim") is not False:
+        errors.append("machine postcondition verification mints authority/state")
+    if postcondition.get("verification_mutates_effect_outcome") is not False or postcondition.get("verification_mutates_machine_state") is not False:
+        errors.append("machine postcondition verification mutates authoritative state")
+    if postcondition.get("verification_grants_effect_authority") is not False:
+        errors.append("machine postcondition verification grants effect authority")
+    if postcondition.get("parallel_truth_table") != "NONE" or postcondition.get("parallel_effect_lifecycle") != "NONE":
+        errors.append("machine postcondition parallel truth/effect lifecycle detected")
+    post_runtime = postcondition.get("runtime", {})
+    if post_runtime.get("effect_source") != "EXISTING_AASM_EFFECT_RECORD_ONLY":
+        errors.append("machine postcondition runtime effect source mismatch")
+    if post_runtime.get("state_claim_creation") != "NONE" or post_runtime.get("fact_authority_creation") != "NONE":
+        errors.append("machine postcondition runtime creates authority/state")
+    if post_runtime.get("effect_status_mutation") != "NONE" or post_runtime.get("machine_state_mutation") != "NONE":
+        errors.append("machine postcondition runtime mutates effect/machine state")
+    if post_runtime.get("effect_authority") != "NONE":
+        errors.append("machine postcondition runtime gained effect authority")
+    if post_runtime.get("parallel_truth_table") != "NONE" or post_runtime.get("parallel_effect_lifecycle") != "NONE":
+        errors.append("machine postcondition runtime parallel truth/effect lifecycle detected")
+
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 
 
