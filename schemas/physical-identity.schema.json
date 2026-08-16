@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/physical-identity.schema.json",
+  "title": "AASM Physical Identity v1",
+  "type": "object",
+  "required": [
+    "identity_id", "contract_id", "contract_version", "workspace_id", "scope_id", "subject_id",
+    "identity_namespace", "stable_id", "problem_revision_id", "external_revision_id", "identity_class",
+    "instance_id", "assembly_revision_id", "hardware_revision_id", "software_revision_id",
+    "configuration_revision_id", "attributes", "logical_context_fingerprint", "fingerprint"
+  ],
+  "properties": {
+    "identity_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.physical.identity.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "subject_id": {"type": "string", "minLength": 1},
+    "identity_namespace": {"type": "string", "minLength": 1},
+    "stable_id": {"type": "string", "minLength": 1},
+    "problem_revision_id": {"type": "string"},
+    "external_revision_id": {"type": "string"},
+    "identity_class": {"enum": ["DEVICE", "ASSEMBLY", "SENSOR", "ACTUATOR", "COMPUTE_NODE", "TOOL_INSTANCE", "PROJECT_INSTANCE"]},
+    "instance_id": {"type": "string", "minLength": 1},
+    "assembly_revision_id": {"type": "string"},
+    "hardware_revision_id": {"type": "string"},
+    "software_revision_id": {"type": "string"},
+    "configuration_revision_id": {"type": "string"},
+    "attributes": {"type": "object", "additionalProperties": {"type": "string"}},
+    "logical_context_fingerprint": {"type": "string", "minLength": 16},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
