@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
   statuses: write
 
 jobs:
@@ -19,43 +19,6 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - name: Apply one-time current-root compatibility maintenance
-        if: github.event_name == 'push'
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          targets = [
-              "tests/test_v39_typed_capabilities.py",
-              "tests/test_v40_hierarchical_memory.py",
-              "tests/test_v42_reference_domains.py",
-              "tests/test_v44_optimization.py",
-              "tests/test_v45_public.py",
-              "tests/test_v46_public.py",
-              "tests/test_v47_public.py",
-              "tests/test_v48_public.py",
-          ]
-          for name in targets:
-              path = Path(name)
-              text = path.read_text(encoding="utf-8")
-              text = text.replace('assert __version__ == "0.55.0"', 'assert __version__ == "0.56.0"')
-              text = text.replace("assert __version__=='0.55.0'", "assert __version__=='0.56.0'")
-              text = text.replace('assert report["contract"]["contract_version"] == "0.31.0"', 'assert report["contract"]["contract_version"] == "0.32.0"')
-              text = text.replace("assert report['contract']['contract_version']=='0.31.0'", "assert report['contract']['contract_version']=='0.32.0'")
-              path.write_text(text, encoding="utf-8")
-          readme = Path("README.md")
-          text = readme.read_text(encoding="utf-8")
-          text = text.replace("**Next cumulative release:**", "**Next release / cumulative release:**")
-          readme.write_text(text, encoding="utf-8")
-          PY
-          if ! git diff --quiet -- README.md tests/test_v39_typed_capabilities.py tests/test_v40_hierarchical_memory.py tests/test_v42_reference_domains.py tests/test_v44_optimization.py tests/test_v45_public.py tests/test_v46_public.py tests/test_v47_public.py tests/test_v48_public.py; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add README.md tests/test_v39_typed_capabilities.py tests/test_v40_hierarchical_memory.py tests/test_v42_reference_domains.py tests/test_v44_optimization.py tests/test_v45_public.py tests/test_v46_public.py tests/test_v47_public.py tests/test_v48_public.py
-            git commit -m 'Advance historical current-root compatibility assertions to v0.56'
-            git push origin HEAD:main
-          fi
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
