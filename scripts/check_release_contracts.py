@@ -59,17 +59,23 @@ def main() -> int:
         "physical_authority_runtime_contract",
     ])
     require(root / "src/aasm/public_active.py", [
-        '"contract_version": "0.32.7"',
+        '"contract_version": "0.32.8"',
         "EFFECT_CAPABILITY_CONTRACT_ID",
         "EffectCapability",
         "EffectCapabilityUse",
         "AuthorityPreemption",
+        "PHYSICAL_EFFECT_AUTHORITY_BINDING_CONTRACT_ID",
+        "PhysicalEffectAuthorityBinding",
+        "PHYSICAL_EFFECT_INTEGRATION_RUNTIME_CONTRACT_ID",
         "effect_capability_runtime_contract",
         "physical_control_fencing_runtime_contract",
+        "physical_effect_integration_runtime_contract",
         '"effect_capability"',
         '"physical_control_fencing"',
+        '"physical_effect_integration"',
     ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
+        "PhysicalEffectIntegrationBoundaryMixin",
         "PhysicalPreemptionRecoveryGuardMixin",
         "PhysicalControlFencingRuntimeMixin",
         "EffectCapabilityRevocationGuardMixin",
@@ -77,6 +83,26 @@ def main() -> int:
         "PhysicalAuthorityRuntimeMixin",
         "MachinePostconditionExecutionCorrelationMixin",
         "V55FoundationEngine",
+    ])
+    require(root / "src/aasm/physical_effect_binding.py", [
+        'PHYSICAL_EFFECT_AUTHORITY_BINDING_CONTRACT_ID = "aasm.effect.physical-authority-binding.v1"',
+        '"authorization_recheck": "MANDATORY_AT_EXISTING_AUTHORIZE_EFFECT_BOUNDARY"',
+        '"execution_recheck": "MANDATORY_AT_EXISTING_EXECUTE_EFFECT_BOUNDARY"',
+        '"prior_use_validation_is_authorization": False',
+        '"parallel_dispatcher": "NONE"',
+    ])
+    require(root / "src/aasm/physical_effect_integration_runtime.py", [
+        'PHYSICAL_EFFECT_INTEGRATION_RUNTIME_CONTRACT_ID = "aasm.effect.physical-authority-integration.runtime.v1"',
+        '"effect_authority": "EXISTING_V53_EFFECT_AUTHORIZE_AND_EFFECT_EXECUTE_REMAIN_REQUIRED"',
+        '"machine_transition_binding": "MANDATORY_BEFORE_AUTHORIZATION_OR_NEW_DISPATCH"',
+        '"task_lease": "EXISTING_V54_TASKLEASE_UNCHANGED"',
+        '"ownership": "EXISTING_V54_EFFECT_OWNERSHIP_UNCHANGED"',
+        '"unknown_and_reconciliation": "EXISTING_V54_UNKNOWN_AND_RECONCILIATION_UNCHANGED"',
+    ])
+    require(root / "src/aasm/physical_effect_integration_boundary.py", [
+        "owner_worker_id: str | None = None",
+        "task_lease_id: str | None = None",
+        'boundary="EXECUTE"',
     ])
 
     require(root / "src/aasm/public_v55.py", ['__version__ = "0.55.0"', '"contract_version": "0.31.0"'])
@@ -107,6 +133,7 @@ def main() -> int:
         "check_physical_authority_contracts.py",
         "check_effect_capability_contracts.py",
         "check_physical_control_fencing_contracts.py",
+        "check_physical_effect_integration_contracts.py",
     ):
         run_script(root, script)
 
@@ -122,6 +149,7 @@ def main() -> int:
         "effect-capability.schema.json",
         "effect-capability-use.schema.json",
         "authority-preemption.schema.json",
+        "physical-effect-authority-binding.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -155,12 +183,19 @@ def main() -> int:
         "check_physical_control_fencing_contracts.py",
         "tests/test_physical_control_fencing.py",
         "tests/test_physical_preemption_recovery.py",
-        "0.32.7",
+        "check_physical_effect_integration_contracts.py",
+        "tests/test_physical_effect_integration.py",
+        "0.32.8",
         "context='aasm/v56'",
     ])
     require(root / ".github/workflows/effect-capability.yml", ["context='aasm/effect-capability'"])
     require(root / ".github/workflows/physical-control-fencing.yml", ["context='aasm/physical-control-fencing'"])
     require(root / ".github/workflows/physical-preemption-recovery.yml", ["context='aasm/physical-preemption-recovery'"])
+    require(root / ".github/workflows/physical-effect-integration.yml", [
+        "check_physical_effect_integration_contracts.py",
+        "tests/test_physical_effect_integration.py",
+        "context='aasm/physical-effect-integration'",
+    ])
     require(root / ".github/workflows/release.yml", [
         "workflow_dispatch:",
         "confirm_release:",
@@ -173,6 +208,7 @@ def main() -> int:
         "aasm/effect-capability",
         "aasm/physical-control-fencing",
         "aasm/physical-preemption-recovery",
+        "aasm/physical-effect-integration",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
@@ -186,14 +222,14 @@ def main() -> int:
         "import aasm; "
         "r=aasm.validate_public_api_contract(); assert r['valid'], r; "
         "c=aasm.public_api_contract(); assert c['runtime_version']=='0.56.1'; "
-        "assert c['contract_version']=='0.32.7'; "
-        "assert 'effect_capability' in c and 'physical_control_fencing' in c"
+        "assert c['contract_version']=='0.32.8'; "
+        "assert 'effect_capability' in c and 'physical_control_fencing' in c and 'physical_effect_integration' in c"
     )
     completed = subprocess.run([sys.executable, "-c", code], cwd=root, env=env)
     if completed.returncode != 0:
         _fail("active public contract execution failed")
 
-    print("0.56.1 development target + active adoption 0.32.7 + PR-3A/G source/release contracts: PASS")
+    print("0.56.1 development target + active adoption 0.32.8 + PR-3A/H source/release contracts: PASS")
     return 0
 
 
