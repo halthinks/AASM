@@ -370,7 +370,7 @@ def run_claim_gate_audit(root: Path | None = None) -> dict[str, Any]:
         "native_solver_portfolio": [("README.md", "Optimization Backends"), (".github/workflows/optimization.yml", "test_v46_advanced_optimization_real.py")],
         "cross_run_governance": [("README.md", "Cross-Run Knowledge"), (".github/workflows/cross-run.yml", "test_v48_cross_run_knowledge.py")],
         "project_wide_apache": [("README.md", "LICENSE_POLICY.md"), ("LICENSE_POLICY.md", "prior AASM versions are not designated MIT-only")],
-        "rc_gate": [("ROADMAP.md", "Semantic Solver Release Candidate")],
+        "rc_gate": [(".github/workflows/rc.yml", "Run dependency-neutral RC assurance"), (".github/workflows/rc.yml", "context='aasm/semantic-solver-rc'")],
     }
     results: dict[str, Any] = {}
     for claim, requirements in claims.items():
