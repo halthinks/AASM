@@ -15,11 +15,7 @@ from aasm.scoped_authority import Principal, ScopedAuthorityGrant, Workspace
 from aasm.state_authority import FactAuthority, StateClaim
 from aasm.state_authority_runtime import STATE_AUTHORITY_CAPABILITIES
 from aasm.state_conflict import StateConflict, state_conflict_contract, state_conflict_reasons
-from aasm.state_conflict_runtime import (
-    STATE_CONFLICT_CAPABILITIES,
-    StateConflictRuntimeMixin,
-    state_conflict_runtime_contract,
-)
+from aasm.state_conflict_runtime import STATE_CONFLICT_CAPABILITIES, state_conflict_runtime_contract
 
 
 WORKSPACE = "workspace-a"
@@ -29,8 +25,7 @@ SENSOR = "sensor-a"
 DETECTOR = "conflict-detector"
 
 
-class StateConflictEngine(StateConflictRuntimeMixin, ActiveEngine):
-    """Pre-admission S3 composition. ActiveEngine remains unchanged until the gate passes."""
+StateConflictEngine = ActiveEngine
 
 
 def _grant(engine, subject: str, *capabilities: str):
