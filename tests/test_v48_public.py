@@ -21,7 +21,7 @@ from aasm.runtime_v55 import AASMEngine as V55Engine
 
 
 def test_v48_public_contract_remains_active_under_v55_composition():
-    assert __version__ == "0.55.0"
+    assert __version__ == "0.56.0"
     assert AASMEngine is V55Engine
     assert issubclass(V55Engine, V54Engine)
     assert issubclass(V54Engine, V53Engine)

@@ -6,7 +6,7 @@
 
 **Truthful Solver Outcomes + Governed Semantic Evolution + Engineering Mathematical IR**
 
-**Next cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance
+**Next release / cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, external engineering tools, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 
