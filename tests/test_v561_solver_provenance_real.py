@@ -38,6 +38,10 @@ def _provenance_from_native(request, result):
         environment_fingerprint=observation.environment_fingerprint,
         platform_identity=observation.platform_identity, library_identity=observation.library_identity,
         build_fingerprint=observation.build_fingerprint,
+        formulation_id=observation.formulation_id, formulation_fingerprint=observation.formulation_fingerprint,
+        problem_revision_id=observation.problem_revision_id, problem_revision_fingerprint=observation.problem_revision_fingerprint,
+        numeric_policy_id=observation.numeric_policy_id, numeric_policy_fingerprint=observation.numeric_policy_fingerprint,
+        metadata=observation.metadata,
     )
     return profile, provenance, observation
 
