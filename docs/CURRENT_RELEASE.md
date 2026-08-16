@@ -1,84 +1,98 @@
-# AASM v0.56.0 — Truthful Solver Outcomes
+# AASM v0.56.1 — Execution Profiles + Runtime Provenance
 
-AASM v0.56.0 is the active public package/runtime and advances the adoption contract to `aasm.adoption.v1 / 0.32.0`.
+AASM v0.56.1 is the active cumulative v0.56 public package/runtime and advances the adoption contract to `aasm.adoption.v1 / 0.32.1`.
 
-The stable remote wire-protocol compatibility surface remains **`aasm.remote.v1 / 0.19.0`**. That protocol version is intentionally independent of the package/runtime release version.
+The stable remote wire protocol remains **`aasm.remote.v1 / 0.19.0`** and is independent of the package version.
 
 ```text
 active public surface: public_v56
 active runtime: runtime_v56.AASMEngine
-parent public surface: public_v55
-parent runtime: runtime_v55.AASMEngine
-remote wire protocol: aasm.remote.v1 / 0.19.0
+parent immutable releases: v0.56.0, v0.55.0
 
-truthful solver evidence:
+truthful solver outcomes (56.1):
   aasm.solver.outcome.v2
   aasm.solver.status.v2
   aasm.solver.termination.v2
-  aasm.solver.evidence-grade.v1
-  aasm.solver.status-v1-projection.v1
   aasm.solver.provider-status-map.v1
-  aasm.solver.outcome-v2.runtime.v1
+
+execution provenance (56.2):
+  aasm.solver.execution-profile.v1
+  aasm.solver.runtime-provenance.v1
+  aasm.solver.profile-evaluation.v1
+  aasm.solver.runtime-provenance.runtime.v1
 ```
 
-v0.56.0 is the first cumulative release in the v0.56 family. It completes work package **56.1 — Normalized Solver Outcome v2**. Later v0.56.x patch releases may add the remaining v0.56 work packages without reopening or weakening the v0.56.0 status contract.
+v0.56.1 preserves the complete v0.56.0 Solver Outcome v2 contract and adds work package **56.2 — Execution Profiles + Runtime Provenance**.
 
-## Authoritative detailed solver outcome
+## Provider-observed execution configuration
 
-New v0.56 solver-facing features use `SolverOutcomeV2.normalized_status` as the authoritative detailed status. The older v1 optimization status is preserved and fingerprint-bound for compatibility, but projection from v2 to v1 is one-way and explicitly lossy where v1 cannot preserve the distinction.
+A caller may choose an execution profile, but the caller may not assert the configuration that actually ran. For qualified providers AASM reconstructs the exact durable request/result and derives the effective configuration from the provider adapter.
 
-The release distinguishes, among others:
+Runtime provenance records:
 
-- `OPTIMAL` from `FEASIBLE_NOT_PROVEN_OPTIMAL`;
-- timeout/node/iteration/solution/memory/objective/user-interrupt termination with and without incumbents;
-- `MODEL_INVALID` from `INFEASIBLE`;
-- `NUMERICAL_FAILURE` from generic `UNKNOWN`;
-- `PROVIDER_UNAVAILABLE` and `UNSUPPORTED_FEATURE` from internal errors;
-- `STALE_RESULT` as a first-class fail-closed state;
-- `UNBOUNDED` and `INFEASIBLE_OR_UNBOUNDED` from ordinary infeasibility.
+- provider ID, implementation, and version;
+- adapter ID and version;
+- exact solver command identity;
+- requested options and effective options as separate fields;
+- worker and thread counts, or explicit unknown where unavailable;
+- platform identity and environment fingerprint;
+- library/backend identity;
+- build fingerprint;
+- exact model fingerprint;
+- optional formulation ID/fingerprint;
+- optional problem revision ID/fingerprint;
+- optional numeric/tolerance-policy ID/fingerprint;
+- provider-status-map ID/fingerprint where applicable;
+- durable dependency/evidence lineage.
 
-## Independent incumbent admission
+## Strict execution profiles
 
-A nonempty assignment cannot become a v0.56 `*_WITH_INCUMBENT`, `SAT`, `OPTIMAL`, or `FEASIBLE_NOT_PROVEN_OPTIMAL` outcome merely because a provider returned values. AASM revalidates the assignment against the exact durable `OptimizationRequest` and model, including objective-value consistency where applicable, before the incumbent is accepted.
+A strict profile may require exact effective options, worker/thread counts, provider/adapter versions, environment, formulation, problem revision, and numeric policy. Any mismatch becomes an explicit `SolverProfileEvaluation` deviation rather than disappearing into logs.
 
-The resulting local validation is durable Evidence derived from the exact source result. Outcome normalization itself grants no truth authority.
+## Real provider qualification
 
-## Provider status mapping
-
-Provider status translation is versioned and exact. Substring/fuzzy inference is forbidden.
-
-The v0.56.0 qualification corpus includes real provider identity/status checks for:
+The v0.56.1 gate exercises real provenance capture for:
 
 - CaDiCaL through PySAT;
 - OR-Tools CP-SAT;
-- HiGHS.
+- HiGHS;
+- CVXPY with an actually selected installed backend.
 
-Raw native status names/codes are preserved. Unknown future provider statuses remain `UNKNOWN`; AASM does not guess their meaning from text fragments.
+If the current AASM adapter cannot observe a backend thread count, the field is `null` and the provenance contains an explicit diagnostic. AASM does not invent deterministic configuration.
 
-## Proof and optimality boundary
+## Durability and authority
 
-A provider `OPTIMAL` status plus an independently validated incumbent remains a provider optimality claim. It is **not** independently proved optimal merely by normalization. Proof certification remains the stronger v0.50 proof/checker boundary and requires its own checked certificate.
+Execution profiles, runtime provenance, and profile evaluations are stored as ordinary AASM Evidence through the existing event/reducer path. They survive SQLite restart/replay. There is no provenance side table or alternate truth store.
 
-Likewise, negative provider status does not silently become proof-grade infeasibility.
+```text
+profile truth authority      = NONE
+provenance truth authority   = NONE
+provenance policy authority  = NONE
+provenance proves reproducibility = false
+```
 
-## Durability and replay
+Provenance answers **what execution configuration produced this result**. It does not by itself prove that another execution will reproduce the same result. That stronger claim remains work package 56.3.
 
-Solver Outcome v2 records are stored through the existing AASM Evidence/event/reducer path. There is no parallel result table or alternate truth store. Outcome records bind the exact durable request/result/model/provider identities and survive SQLite restart/replay through the existing machine history.
+## Interrupted provenance-v2 experiment
 
-## Exact release boundary
+Earlier interrupted `solver_provenance_v2` / reproducibility files remain dormant and non-authoritative. They are not exposed by the v0.56.1 public contract and do not constitute released capability. The authoritative 56.2 contracts are the roadmap-mandated v1 contracts listed above.
 
-The dedicated `aasm/v56` gate checks:
+## Release qualification
 
-- authoritative Solver Outcome v2 contracts and schemas;
-- exhaustive roadmap-mandated terminal-class fixtures;
-- independent incumbent-validation attacks;
-- explicit lossy v2→v1 projection;
-- exact provider-status mapping and ambiguity rejection;
-- real CaDiCaL/PySAT, OR-Tools CP-SAT, and HiGHS qualification;
-- active `public_v56` / released `public_v55` parent compatibility.
+The cumulative `aasm/v56` gate retains all v0.56.0 Solver Outcome v2 checks and adds 56.2 provenance checks. Independent `aasm/v56-provenance` qualification covers:
 
-Repository-wide release publication remains gated by ordinary AASM CI, formal assurance, Semantic Solver RC, proof, solution-pool, optimization, scoped-authority, solver-learning, v0.54/v0.55 parent gates, and the active v0.56 gate on the same exact SHA.
+- source contracts and JSON schemas;
+- requested/effective option separation;
+- adapter/provider/platform/library identity;
+- worker/thread counts;
+- formulation/problem/numeric-policy binding;
+- caller-override rejection;
+- SQLite restart/replay;
+- real CaDiCaL, OR-Tools, HiGHS, and CVXPY provider observations;
+- explicit no-reproducibility/no-authority claim ceilings.
 
-Next cumulative release: **v0.56.1 — Execution Profiles + Runtime Provenance**.
+Repository release publication additionally requires ordinary CI, formal assurance, Semantic Solver RC, proof claims, solution pools, optimization, scoped authority, solver learning, v0.54/v0.55 parent compatibility, cumulative `aasm/v56`, and `aasm/v56-provenance` on the same exact SHA.
+
+Next cumulative release: **v0.56.2 — Reproducibility Certification (56.3)**.
 
 AASM remains an `0.x` active-development project. License: Apache-2.0 project-wide under `LICENSE`, `NOTICE`, and `LICENSE_POLICY.md`.
