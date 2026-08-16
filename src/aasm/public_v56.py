@@ -8,6 +8,12 @@ for _name in dir(_v55):
     if not _name.startswith("_"):
         globals()[_name] = getattr(_v55, _name)
 
+from ._runtime_v56_provenance import (
+    SOLVER_PROVENANCE_RUNTIME_CONTRACT_ID,
+    SOLVER_PROVENANCE_RUNTIME_CONTRACT_VERSION,
+    SOLVER_PROVENANCE_RUNTIME_STABILITY,
+    solver_provenance_runtime_contract,
+)
 from ._runtime_v56_solver_outcome import (
     SOLVER_OUTCOME_V2_RUNTIME_CONTRACT_ID,
     SOLVER_OUTCOME_V2_RUNTIME_CONTRACT_VERSION,
@@ -15,50 +21,45 @@ from ._runtime_v56_solver_outcome import (
     solver_outcome_v2_runtime_contract,
 )
 from .provider_status_v2 import (
-    PROVIDER_STATUS_MAP_CONTRACT_ID,
-    PROVIDER_STATUS_MAP_CONTRACT_VERSION,
-    ProviderStatusMap,
-    ProviderStatusMapping,
-    ProviderStatusRule,
-    default_provider_status_map,
-    highs_status_map,
-    map_provider_status,
-    map_provider_termination,
-    ortools_cp_sat_status_map,
-    provider_status_map_contract,
-    pysat_cadical_status_map,
+    PROVIDER_STATUS_MAP_CONTRACT_ID, PROVIDER_STATUS_MAP_CONTRACT_VERSION,
+    ProviderStatusMap, ProviderStatusMapping, ProviderStatusRule,
+    default_provider_status_map, highs_status_map, map_provider_status, map_provider_termination,
+    ortools_cp_sat_status_map, provider_status_map_contract, pysat_cadical_status_map,
 )
 from .runtime_v56 import AASMEngine
+from .solver_execution_observation import (
+    SOLVER_EXECUTION_OBSERVATION_CONTRACT_ID, SOLVER_EXECUTION_OBSERVATION_CONTRACT_VERSION,
+    SolverExecutionObservation, execution_observation_for_convex, execution_observation_for_optimization,
+    runtime_environment_fingerprint, runtime_platform_identity,
+)
 from .solver_outcome_v2 import (
-    SOLVER_EVIDENCE_GRADE_CONTRACT_ID,
-    SOLVER_LEGACY_PROJECTION_CONTRACT_ID,
-    SOLVER_OUTCOME_V2_CONTRACT_ID,
-    SOLVER_OUTCOME_V2_CONTRACT_VERSION,
-    SOLVER_STATUS_V2_CONTRACT_ID,
-    SOLVER_STATUS_V2_CONTRACT_VERSION,
-    SOLVER_TERMINATION_V2_CONTRACT_ID,
-    INCUMBENT_VALIDATION_STATUSES,
-    NORMALIZED_STATUSES,
-    LegacyStatusProjection,
-    ProviderTermination,
-    SolverEvidenceGrade,
-    SolverOutcomeV2,
-    legacy_termination,
-    normalize_optimization_result_v2,
-    project_v2_to_legacy_status,
+    SOLVER_EVIDENCE_GRADE_CONTRACT_ID, SOLVER_LEGACY_PROJECTION_CONTRACT_ID,
+    SOLVER_OUTCOME_V2_CONTRACT_ID, SOLVER_OUTCOME_V2_CONTRACT_VERSION,
+    SOLVER_STATUS_V2_CONTRACT_ID, SOLVER_STATUS_V2_CONTRACT_VERSION,
+    SOLVER_TERMINATION_V2_CONTRACT_ID, INCUMBENT_VALIDATION_STATUSES, NORMALIZED_STATUSES,
+    LegacyStatusProjection, ProviderTermination, SolverEvidenceGrade, SolverOutcomeV2,
+    legacy_termination, normalize_optimization_result_v2, project_v2_to_legacy_status,
     solver_outcome_v2_contract,
+)
+from .solver_provenance import (
+    SOLVER_EXECUTION_PROFILE_CONTRACT_ID, SOLVER_EXECUTION_PROFILE_CONTRACT_VERSION,
+    SOLVER_PROFILE_EVALUATION_CONTRACT_ID, SOLVER_PROFILE_EVALUATION_CONTRACT_VERSION,
+    SOLVER_RUNTIME_PROVENANCE_CONTRACT_ID, SOLVER_RUNTIME_PROVENANCE_CONTRACT_VERSION,
+    DETERMINISM_POLICIES, SolverExecutionProfile, SolverProfileEvaluation, SolverRuntimeProvenance,
+    build_solver_runtime_provenance, evaluate_solver_execution_profile, solver_provenance_contract,
 )
 
 
-__version__ = "0.56.0"
+__version__ = "0.56.1"
 PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"
 REMOTE_PROTOCOL_NAME = _v55.REMOTE_PROTOCOL_NAME
 REMOTE_PROTOCOL_VERSION = _v55.REMOTE_PROTOCOL_VERSION
 
 _NEW_ENGINE_METHODS = [
-    "solver_outcome_v2_runtime_contract_report",
-    "record_solver_outcome_v2",
-    "solver_outcome_v2_report",
+    "solver_outcome_v2_runtime_contract_report", "record_solver_outcome_v2", "solver_outcome_v2_report",
+    "solver_provenance_runtime_contract_report", "register_solver_execution_profile",
+    "record_solver_runtime_provenance", "record_convex_solver_runtime_provenance",
+    "evaluate_solver_runtime_profile", "solver_provenance_report",
 ]
 
 _NEW_IMPORTS = [
@@ -67,34 +68,43 @@ _NEW_IMPORTS = [
     "SOLVER_TERMINATION_V2_CONTRACT_ID", "SOLVER_EVIDENCE_GRADE_CONTRACT_ID",
     "SOLVER_LEGACY_PROJECTION_CONTRACT_ID", "NORMALIZED_STATUSES", "INCUMBENT_VALIDATION_STATUSES",
     "ProviderTermination", "SolverEvidenceGrade", "LegacyStatusProjection", "SolverOutcomeV2",
-    "legacy_termination", "project_v2_to_legacy_status", "normalize_optimization_result_v2",
-    "solver_outcome_v2_contract", "PROVIDER_STATUS_MAP_CONTRACT_ID", "PROVIDER_STATUS_MAP_CONTRACT_VERSION",
-    "ProviderStatusRule", "ProviderStatusMap", "ProviderStatusMapping", "map_provider_status",
-    "map_provider_termination", "ortools_cp_sat_status_map", "highs_status_map",
-    "pysat_cadical_status_map", "default_provider_status_map", "provider_status_map_contract",
+    "legacy_termination", "project_v2_to_legacy_status", "normalize_optimization_result_v2", "solver_outcome_v2_contract",
+    "PROVIDER_STATUS_MAP_CONTRACT_ID", "PROVIDER_STATUS_MAP_CONTRACT_VERSION", "ProviderStatusRule", "ProviderStatusMap",
+    "ProviderStatusMapping", "map_provider_status", "map_provider_termination", "ortools_cp_sat_status_map",
+    "highs_status_map", "pysat_cadical_status_map", "default_provider_status_map", "provider_status_map_contract",
     "SOLVER_OUTCOME_V2_RUNTIME_CONTRACT_ID", "SOLVER_OUTCOME_V2_RUNTIME_CONTRACT_VERSION",
     "SOLVER_OUTCOME_V2_RUNTIME_STABILITY", "solver_outcome_v2_runtime_contract",
+    "SOLVER_EXECUTION_PROFILE_CONTRACT_ID", "SOLVER_EXECUTION_PROFILE_CONTRACT_VERSION",
+    "SOLVER_RUNTIME_PROVENANCE_CONTRACT_ID", "SOLVER_RUNTIME_PROVENANCE_CONTRACT_VERSION",
+    "SOLVER_PROFILE_EVALUATION_CONTRACT_ID", "SOLVER_PROFILE_EVALUATION_CONTRACT_VERSION",
+    "DETERMINISM_POLICIES", "SolverExecutionProfile", "SolverRuntimeProvenance", "SolverProfileEvaluation",
+    "build_solver_runtime_provenance", "evaluate_solver_execution_profile", "solver_provenance_contract",
+    "SOLVER_EXECUTION_OBSERVATION_CONTRACT_ID", "SOLVER_EXECUTION_OBSERVATION_CONTRACT_VERSION",
+    "SolverExecutionObservation", "execution_observation_for_optimization", "execution_observation_for_convex",
+    "runtime_platform_identity", "runtime_environment_fingerprint",
+    "SOLVER_PROVENANCE_RUNTIME_CONTRACT_ID", "SOLVER_PROVENANCE_RUNTIME_CONTRACT_VERSION",
+    "SOLVER_PROVENANCE_RUNTIME_STABILITY", "solver_provenance_runtime_contract",
 ]
 
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_ENGINE_METHODS", []), *_NEW_ENGINE_METHODS]))
 SUPPORTED_CLI_COMMANDS = list(getattr(_v55, "SUPPORTED_CLI_COMMANDS", []))
-SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_INSPECTION_SURFACES", []), "solver-outcome-v2"]))
+SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_INSPECTION_SURFACES", []), "solver-outcome-v2", "solver-provenance"]))
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_PUBLIC_IMPORTS", []), *_NEW_IMPORTS]))
 
 PUBLIC_API_CONTRACT = deepcopy(_v55.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.32.0",
-    "runtime_version": __version__,
-    "release_stability": PUBLIC_RELEASE_STABILITY,
-    "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
-    "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
-    "supported_cli_commands": SUPPORTED_CLI_COMMANDS,
-    "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
+    "contract_version": "0.32.1", "runtime_version": __version__, "release_stability": PUBLIC_RELEASE_STABILITY,
+    "supported_imports": SUPPORTED_PUBLIC_IMPORTS, "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
+    "supported_cli_commands": SUPPORTED_CLI_COMMANDS, "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
 })
 PUBLIC_API_CONTRACT["solver_outcome_v2"] = {
-    **solver_outcome_v2_contract(),
-    "provider_status_map": provider_status_map_contract(),
-    "runtime": solver_outcome_v2_runtime_contract(),
+    **solver_outcome_v2_contract(), "provider_status_map": provider_status_map_contract(), "runtime": solver_outcome_v2_runtime_contract(),
+}
+PUBLIC_API_CONTRACT["solver_provenance"] = {
+    **solver_provenance_contract(), "runtime": solver_provenance_runtime_contract(),
+    "execution_observation_contract_id": SOLVER_EXECUTION_OBSERVATION_CONTRACT_ID,
+    "provider_fixtures": ["cadical/pysat", "ortools-cp-sat", "highs", "cvxpy"],
+    "interrupted_provenance_v2": "DORMANT_NON_AUTHORITATIVE_NOT_EXPOSED",
 }
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
@@ -117,8 +127,8 @@ def validate_public_api_contract():
         errors.append(f"missing v0.56 engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
         errors.append("v0.56 runtime version mismatch")
-    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.0":
-        errors.append("v0.56 adoption contract mismatch")
+    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.1":
+        errors.append("v0.56.1 adoption contract mismatch")
     if PUBLIC_RELEASE_STABILITY != "ACTIVE_DEVELOPMENT":
         errors.append("v0.56 active release stability mismatch")
     outcome = PUBLIC_API_CONTRACT.get("solver_outcome_v2", {})
@@ -128,10 +138,17 @@ def validate_public_api_contract():
         errors.append("solver outcome v2 legacy compatibility projection mismatch")
     if outcome.get("provider_status_map", {}).get("substring_inference") != "FORBIDDEN":
         errors.append("provider status mapping substring-inference boundary mismatch")
-    if outcome.get("runtime", {}).get("parallel_result_table") != "NONE":
-        errors.append("solver outcome runtime parallel-result boundary mismatch")
-    if outcome.get("truth_authority") != "NONE":
-        errors.append("solver outcome v2 authority boundary mismatch")
+    provenance = PUBLIC_API_CONTRACT.get("solver_provenance", {})
+    if provenance.get("runtime_provenance_contract_id") != SOLVER_RUNTIME_PROVENANCE_CONTRACT_ID:
+        errors.append("solver provenance contract mismatch")
+    if provenance.get("effective_options") != "ADAPTER_OBSERVED_ACTUAL_CONFIGURATION_REQUIRED":
+        errors.append("solver provenance effective-option boundary mismatch")
+    if provenance.get("runtime", {}).get("parallel_provenance_table") != "NONE":
+        errors.append("solver provenance parallel-table boundary mismatch")
+    if provenance.get("runtime", {}).get("provenance_grants_reproducibility") is not False:
+        errors.append("solver provenance reproducibility claim boundary mismatch")
+    if provenance.get("truth_authority") != "NONE" or provenance.get("policy_authority") != "NONE":
+        errors.append("solver provenance authority boundary mismatch")
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 
 
