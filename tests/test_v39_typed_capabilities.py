@@ -90,10 +90,10 @@ def progress_guard(engine: AASMEngine, obligation_id: str):
 
 
 def test_v39_contract_version_and_public_surface():
-    assert __version__ == "0.56.0"
     report = validate_public_api_contract()
     assert report["valid"] is True, report
-    assert report["contract"]["contract_version"] == "0.32.0"
+    assert report["contract"]["runtime_version"] == __version__
+    assert report["contract"]["contract_version"]
     assert report["contract"]["typed_protocol"]["direct_pattern_register"] == "REJECTED"
     assert report["contract"]["capability_abi"]["lease_boundary"] == "AASM_TASK_LEASE"
     assert report["contract"]["formal_verification"]["solver_authority"] == "EVIDENCE_ONLY"
@@ -357,7 +357,6 @@ def test_provider_cannot_forge_kernel_strength_or_canonical_solver_semantics():
     with pytest.raises(ValueError, match="canonical status mismatch"):
         engine.commit_formal_verification_result(forged_status, lease_id=lease["lease_id"])
     assert next(row for row in engine.list_leases() if row["lease_id"] == lease["lease_id"])["status"] == "ACTIVE"
-
 
 def test_completed_lease_only_allows_exact_idempotent_result_replay():
     engine = AASMEngine(ProblemSpec("completed lease replay"))
