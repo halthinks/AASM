@@ -15,12 +15,8 @@ from aasm.external_machine_postcondition import (
     MachinePostconditionVerification,
     machine_postcondition_verification_contract,
 )
-from aasm.external_machine_postcondition_execution_correlation import (
-    MachinePostconditionExecutionCorrelationMixin,
-)
 from aasm.external_machine_postcondition_runtime import (
     MACHINE_POSTCONDITION_CAPABILITIES,
-    MachinePostconditionRuntimeMixin,
     machine_postcondition_runtime_contract,
 )
 from aasm.external_machine_runtime import EXTERNAL_MACHINE_CAPABILITIES
@@ -42,13 +38,7 @@ VERIFIER = "verifier-a"
 OBSERVER_CAPABILITY = "machine.observe"
 OPERATOR_CAPABILITY = "machine.operate"
 
-
-class PostconditionEngine(
-    MachinePostconditionExecutionCorrelationMixin,
-    MachinePostconditionRuntimeMixin,
-    AASMEngine,
-):
-    pass
+PostconditionEngine = AASMEngine
 
 
 def _grant(engine, subject: str, *capabilities: str):
