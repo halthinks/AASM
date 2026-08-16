@@ -4,7 +4,7 @@ import aasm
 from aasm import public_v54, public_v55, public_v56
 
 
-def test_v55_surface_remains_frozen_parent_under_active_v56_root():
+def test_v55_surface_remains_frozen_parent_under_active_root():
     report = public_v55.validate_public_api_contract()
     assert report["valid"] is True, report
     assert public_v55.__version__ == "0.55.0"
@@ -12,8 +12,8 @@ def test_v55_surface_remains_frozen_parent_under_active_v56_root():
     assert public_v55.PUBLIC_API_CONTRACT["contract_version"] == "0.31.0"
     assert public_v55.PUBLIC_API_CONTRACT["runtime_version"] == "0.55.0"
     assert public_v54.__version__ == "0.54.0"
-    assert public_v56.__version__ == "0.56.0"
-    assert aasm.__version__ == "0.56.0"
+    assert public_v56.validate_public_api_contract()["valid"] is True
+    assert aasm.__version__ == public_v56.__version__
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v55.AASMEngine is not aasm.AASMEngine
 
