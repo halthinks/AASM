@@ -16,7 +16,6 @@ from aasm.event_causality import (
 )
 from aasm.event_causality_runtime import (
     EVENT_CAUSALITY_CAPABILITIES,
-    EventCausalityRuntimeMixin,
     event_causality_runtime_contract,
 )
 from aasm.evidence import EvidenceRecord
@@ -29,7 +28,6 @@ from aasm.observation_freshness import (
 )
 from aasm.observation_freshness_runtime import (
     OBSERVATION_FRESHNESS_CAPABILITIES,
-    ObservationFreshnessRuntimeMixin,
     observation_freshness_runtime_contract,
 )
 from aasm.persistence.sqlite import SQLiteStore
@@ -48,8 +46,7 @@ OBSERVER_CAPABILITY = "machine.observe"
 OPERATOR_CAPABILITY = "machine.operate"
 
 
-class TemporalEvidenceEngine(ObservationFreshnessRuntimeMixin, EventCausalityRuntimeMixin, ActiveEngine):
-    """Pre-admission S3 causal/freshness composition."""
+TemporalEvidenceEngine = ActiveEngine
 
 
 def _grant(engine, subject: str, *capabilities: str):
