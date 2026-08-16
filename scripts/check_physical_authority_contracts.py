@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from aasm import public_api_contract, validate_public_api_contract
 from aasm.physical_authority import (
     AUTHORITY_DOMAIN_CONTRACT_ID,
     AUTHORITY_LEASE_CONTRACT_ID,
@@ -115,8 +116,13 @@ def main() -> None:
         ),
     )
     require_tokens(
+        ROOT / "src/aasm/runtime_v56_foundation.py",
+        ("PhysicalAuthorityRuntimeMixin", "MachinePostconditionRuntimeMixin", "V55FoundationEngine"),
+    )
+    require_tokens(
         ROOT / "tests/test_physical_authority.py",
         (
+            "PhysicalAuthorityEngine = AASMEngine",
             "test_authority_lease_epoch_is_strictly_monotonic_and_intervals_cannot_overlap",
             "test_revocation_is_append_only_closes_effective_interval_and_next_epoch_can_begin",
             "test_authority_domain_or_lease_never_grants_existing_effect_authority",
@@ -125,7 +131,21 @@ def main() -> None:
         ),
     )
 
-    print("physical authority domain/lease foundation preserves scoped authority, exclusivity, epochs, revocation, and no-effect-authority boundary: PASS")
+    public = validate_public_api_contract()
+    require(public["valid"], f"active public contract invalid: {public['errors']}")
+    contract = public_api_contract()
+    require(contract["contract_version"] == "0.32.6", "active adoption contract did not advance for PR-3A/3B")
+    require("physical_authority" in contract, "physical authority missing from active public contract")
+    active = contract["physical_authority"]
+    require(active["domain_existence_grants_effect_authority"] is False, "public domain existence became effect authority")
+    require(active["lease_existence_grants_effect_authority"] is False, "public lease existence became effect authority")
+    require(active["effect_authorization_integration"] == "NOT_YET_PR3H", "public physical authority integrated effects early")
+    require(active["runtime"]["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY", "public runtime bypassed scoped authority")
+    require(active["runtime"]["effect_authorization_integration"] == "NONE_PR3A_PR3B_FOUNDATION", "public runtime integrated effects early")
+    require(active["runtime"]["effect_dispatch"] == "NONE", "public physical authority gained dispatch")
+    require(active["runtime"]["preemptor_reference_grants_authority"] is False, "public preemptor reference grants authority")
+
+    print("physical authority domain/lease foundation is active at adoption 0.32.6 and preserves scoped authority, exclusivity, epochs, revocation, and no-effect-authority boundary: PASS")
 
 
 if __name__ == "__main__":
