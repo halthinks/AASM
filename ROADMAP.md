@@ -3,10 +3,10 @@
 AASM's latest immutable public release is **v0.56.0 — Truthful Solver Outcomes + Governed Semantic Evolution + Engineering Mathematical IR**.
 
 **Current development package on `main`:** `0.56.1`  
-**Current active adoption contract:** `aasm.adoption.v1 / 0.32.8`  
-**Qualified development boundary:** PR-1, PR-2, and the complete PR-3 / PHY-01 physical-authority program including PR-3H  
-**Exact U3 qualification head:** `b910549677ec6f84a32e39ad625c131f68d4348c` — all 21 release-required custom contexts green  
-**Immediate unfinished boundary:** **U4 / S3 — Reality Identity, Time, Artifact Lineage, and Observation Epistemics**, beginning with `aasm.state.conflict.v1`
+**Current active adoption contract:** `aasm.adoption.v1 / 0.32.10`  
+**Qualified development boundary:** PR-1, PR-2, complete PR-3 / PHY-01, plus S3 state conflict, causal event identity, and observation freshness  
+**Exact S3 temporal qualification head:** `4e7d8b87babd2a519a57baedebf09cf2578f02ac` — all 22 current release-required custom contexts green  
+**Immediate unfinished boundary:** **U4 / S3 physical identity + calibration + source trust**
 
 Package SemVer is not an architecture-progress counter. Exact unreleased identity is the Git SHA. Future capabilities below are milestone identities, not reserved package versions. See [`docs/VERSIONING.md`](docs/VERSIONING.md).
 
@@ -63,6 +63,9 @@ The active 0.56.1 development line has additionally qualified:
 - **PR-1 / authoritative state:** `FactAuthority`; `DESIRED | PREDICTED | OBSERVED | AUTHORITATIVE` state claims; no consensus/transport authority laundering.
 - **PR-2 / external-machine supervision:** machine binding, transition proposal through existing `EffectIntent`, execution-correlated postcondition verification, and `SUCCEEDED != achieved state`.
 - **PR-3 / PHY-01 physical authority and effect-boundary integration:** authority domains, exclusive leases/epochs, bounded effect capabilities, non-amplifying delegation, stale-command fencing, semantic preemption, crash-safe preemption recovery, and mandatory current authority/capability rechecks at the inherited `authorize_effect` and `execute_effect` boundaries.
+- **S3 state conflict:** immutable expectation-vs-actual conflict Evidence over existing state claims, exact portable JSON/revision comparison, no claim/truth overwrite, and TextPCB-style out-of-band project revision fixtures.
+- **S3 causal event identity:** source node + boot epoch + local sequence identity, explicit integer-nanosecond clock coordinates, portable 63-bit bounds, and no replacement of the AASM replay event log.
+- **S3 observation freshness:** explicit `FRESH | STALE | UNKNOWN` assessments bound to an exact observation/claim/causal event/policy context, with explicit receipt fallback and no authority elevation or universal admission.
 
 PR-3H preserves the existing scoped `effect.authorize`, resource reservations, Worker/TaskLease path, durable `EffectOwnership`, dispatch, `UNKNOWN`, and reconciliation. A prior capability-use validation record remains Evidence only and cannot become a reusable bearer token.
 
@@ -79,8 +82,13 @@ RELEASED/GATED AASM SUBSTRATE
         |       PR-3A-G ----------------------------------------- GATED
         |       PR-3H effect-boundary integration --------------- GATED
         |
+        +--> U4/S3 state conflict ------------------------------- GATED
+        |       causal event identity --------------------------- GATED
+        |       observation freshness --------------------------- GATED
+        |       physical identity/calibration/source trust ------- NEXT
+        |
         v
-U4  Reality identity + time + artifact lineage + observation epistemics ---- NEXT
+U4  Reality identity + time + artifact lineage + observation epistemics ---- ACTIVE
         |\
         | +--> TextPCB artifact/entity/revision qualification
         | +--> portable identity/serialization constraints active
@@ -133,18 +141,20 @@ The integration reuses the existing v0.54 `EffectIntent`, scoped `effect.authori
 
 ### U4 — Reality Identity, Time, Artifact Lineage, and Observation Epistemics
 
-**Status: ACTIVE / NEXT.**
+**Status: ACTIVE.**
+
+Current exact qualification boundary: `4e7d8b87babd2a519a57baedebf09cf2578f02ac`, adoption `0.32.10`, with all 22 current release-required custom contexts green.
 
 This merges the old external-machine artifact/entity work with the physical/distributed evidence program.
 
 Required contracts/seams:
 
-- `aasm.state.conflict.v1` / expectation violation — **first active slice**;
-- `aasm.event.causality.v1`;
-- `aasm.observation.freshness.v1`;
-- `aasm.physical.identity.v1`;
-- `aasm.calibration.v1`;
-- `aasm.source.trust.v1`;
+- `aasm.state.conflict.v1` / expectation violation — **GATED**;
+- `aasm.event.causality.v1` — **GATED**;
+- `aasm.observation.freshness.v1` — **GATED**;
+- `aasm.physical.identity.v1` — **NEXT**;
+- `aasm.calibration.v1` — **NEXT, coupled to physical identity**;
+- `aasm.source.trust.v1` — **NEXT, coupled to identity/calibration without replacing FactAuthority/scoped authority**;
 - `aasm.execution.environment.v1` and qualification level;
 - `aasm.observation.lifecycle.v1`;
 - `aasm.observation.fusion.v1`;
@@ -153,7 +163,9 @@ Required contracts/seams:
 
 TextPCB qualification must exercise project/artifact revisions, stable requirement/net/component/entity references, generated board/CAD artifacts, stale DRC/ERC or solver feedback, ambiguous entity evolution, and out-of-band external changes without copying TextPCB project truth into AASM.
 
-Portable constraint active in U4: all new IDs, enumerations, causal references, revisions, fingerprints, and state transitions must have canonical language-independent representations suitable for the future machine/kernel IR.
+Embedded/physical qualification must exercise reboot epochs, out-of-order receipt, local causal sequence, clock quality/uncertainty, identity changes, calibration state, stale/uncalibrated observations, and source-trust changes without allowing transport metadata to mint authority.
+
+Portable constraint active in U4: all new IDs, enumerations, causal references, revisions, fingerprints, bounded integers, and state transitions must have canonical language-independent representations suitable for the future machine/kernel IR.
 
 **Gates:** `aasm/physical-evidence`, `aasm/artifact-lineage`.
 
@@ -280,18 +292,23 @@ The hosted-foundation review succeeds only if a private hosted fabric can consum
 
 ## Immediate builder queue
 
-1. **U4/S3 state conflict:** implement `aasm.state.conflict.v1` as durable Evidence over existing state claims; preserve both expectation and actual histories; no authority elevation or truth overwrite.
-2. Establish `aasm/physical-evidence` as the cumulative S3 gate, initially covering state conflict and later causality/freshness/physical identity/calibration/trust/environment/observation lifecycle/fusion.
-3. Add a TextPCB-derived out-of-band project/revision conflict fixture immediately; no TextPCB kernel type.
-4. Implement causal event identity and observation freshness with explicit node/boot-epoch/sequence/source-time/receipt-time/clock-quality semantics.
-5. Implement artifact revision and entity-evolution contracts under the separate cumulative `aasm/artifact-lineage` gate.
-6. Apply canonical portable identity/serialization rules to every U4 object now so later Rust does not require contract redesign.
-7. Add physical identity/calibration/source-trust/environment qualification and observation lifecycle/fusion.
-8. Proceed to U5 engineering quantity/rule/safety/uncertainty semantics with TextPCB engineering fixtures and explicit portable invariant classification.
-9. Implement U6 `RefinementLoop`/Experiment/VerificationPlan/KnowledgeApplication using existing `ProblemDelta`, Evidence, scoped authority, resources, obligations, effects, and semantic dependencies.
-10. Freeze U7 portable machine/kernel contracts and differential vectors before writing the broad Rust kernel.
-11. Implement U8 Rust `std`, qualify against Python traces, then U9 `no_std`/real-time/executor profiles.
-12. Complete TextPCB + embedded qualification and permanent stress corpus before claiming vertically complete engineering/physical conformance.
+1. **U4/S3 physical identity:** implement `aasm.physical.identity.v1` as stable device/assembly/configuration identity Evidence, never as authority by existence.
+2. Implement `aasm.calibration.v1` bound to exact physical identity + applicable signal/measurement namespace + validity/revision; calibration status must not mutate source observations or mint FactAuthority.
+3. Implement `aasm.source.trust.v1` as governed source-trust Evidence consumed by explicit admission/verification policy; do not create a second authority evaluator or let trust score/reputation vote truth.
+4. Expand `aasm/physical-evidence` with forged identity, wrong-assembly, stale calibration, calibration mismatch, trust downgrade/revocation, TextPCB tool/project-source fixtures, and deterministic replay.
+5. Implement `aasm.execution.environment.v1` / qualification levels so MODEL/SIM/SIL/HIL/BENCH/PHYSICAL/OPERATIONAL evidence cannot be laundered across environments.
+6. Implement `aasm.observation.lifecycle.v1` and `aasm.observation.fusion.v1` over existing observations/Evidence; fusion never votes truth.
+7. Implement artifact revision and entity-evolution contracts under the separate cumulative `aasm/artifact-lineage` gate.
+8. Continue applying canonical portable identity/serialization/bounded-integer rules to every U4 object so later Rust does not require contract redesign.
+9. Proceed to U5 engineering quantity/rule/safety/uncertainty semantics with TextPCB engineering fixtures and explicit portable invariant classification.
+10. Implement U6 `RefinementLoop`/Experiment/VerificationPlan/KnowledgeApplication using existing `ProblemDelta`, Evidence, scoped authority, resources, obligations, effects, and semantic dependencies.
+11. Freeze U7 portable machine/kernel contracts and differential vectors before writing the broad Rust kernel.
+12. Implement U8 Rust `std`, qualify against Python traces, then U9 `no_std`/real-time/executor profiles.
+13. Complete TextPCB + embedded qualification and permanent stress corpus before claiming vertically complete engineering/physical conformance.
+
+## Future capability milestones
+
+Future capability names above are architecture/program identities only. They do not reserve package versions.
 
 ## Release discipline
 
