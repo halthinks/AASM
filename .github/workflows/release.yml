@@ -115,7 +115,8 @@ jobs:
             aasm/v54 \
             aasm/v55 \
             aasm/v56 \
-            aasm/v56-provenance; do
+            aasm/v56-provenance \
+            aasm/state-authority; do
             state=""
             for _ in $(seq 1 90); do
               state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" --jq "[.statuses[] | select(.context == \"$context\")][0].state // \"\"")"
