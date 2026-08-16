@@ -1,271 +1,73 @@
-# AASM 0.56.1 Development Candidate — Provenance + Governed External Reality
+# AASM 0.56.1 Development Candidate — Provenance + Governed External Reality + Physical Authority
 
 **Status:** UNRELEASED DEVELOPMENT TARGET  
-**Active milestones:** `execution-profiles-runtime-provenance`, `authoritative-state-claims`, `external-machine-supervision`  
+**Active milestones:** `execution-profiles-runtime-provenance`, `authoritative-state-claims`, `external-machine-supervision`, `physical-authority-capabilities`  
 **Historical provenance work-package label:** 56.2  
-**Physical integration programs:** PR-1 / PHY-02 and PR-2A/2B/2C / PHY-03  
+**Physical integration programs:** PR-1 / PHY-02, PR-2 / PHY-03, and PR-3A/3B / PHY-01 foundation  
 **Parent published release:** v0.56.0 / Solver Outcome v2  
-**Candidate adoption contract:** `aasm.adoption.v1 / 0.32.5`
+**Candidate adoption contract:** `aasm.adoption.v1 / 0.32.6`
 
 This document describes the current 0.56.1 candidate scope on `main`. It is **not evidence that v0.56.1 has been published**. The latest immutable published release remains v0.56.0 until an explicit release operation passes all exact-head gates and creates the corresponding tag/assets.
 
-The candidate now contains four additive foundations:
+The package version remains `0.56.1`. Semantic/adoption contracts continue to advance independently; the active adoption contract is now `0.32.6`.
 
-1. evidence-grade solver execution profiles/runtime provenance, including real-provider qualification for CaDiCaL/PySAT, OR-Tools CP-SAT, HiGHS, and CVXPY;
-2. governed fact authority plus explicit `DESIRED`, `PREDICTED`, `OBSERVED`, and `AUTHORITATIVE` state claims;
-3. external-machine binding and durable correlation of machine observations to existing PR-1 `OBSERVED` state claims; and
-4. external-machine transition proposal and observation-backed postcondition verification over the **existing v0.54 Effect lifecycle**.
+## Qualified candidate foundations
 
-The package version remains `0.56.1`. The independent adoption contract advanced additively to `0.32.5`. Package SemVer, Git development identity, architecture milestones, and semantic contract identity remain distinct planes under [`VERSIONING.md`](VERSIONING.md).
+The active candidate now contains:
 
-## Candidate contracts
+1. truthful Solver Outcome v2 compatibility plus evidence-grade execution provenance;
+2. PR-1 governed fact authority and explicit `DESIRED`, `PREDICTED`, `OBSERVED`, `AUTHORITATIVE` state claims;
+3. PR-2 external-machine binding, revision-safe transition proposals over the existing Effect plane, and observation-backed postcondition verification; and
+4. **PR-3A/3B physical-authority foundation:** bounded authority domains plus exclusive, revocable, epoch-bearing authority leases.
 
-### Solver execution provenance
+## Active semantic contracts
 
-- `aasm.solver.execution-profile.v1`
-- `aasm.solver.runtime-provenance.v1`
-- `aasm.solver.profile-evaluation.v1`
-- runtime `aasm.solver.runtime-provenance.runtime.v1`
-- internal provider observation bridge `aasm.solver.execution-observation.internal.v1`
-
-### Governed state authority — PR-1
+### PR-1 — authoritative state
 
 - `aasm.fact.authority.v1`
 - `aasm.state.claim.v1`
-- runtime `aasm.state.authority.runtime.v1`
+- `aasm.state.authority.runtime.v1`
 
-### External machine binding — PR-2A
+### PR-2 — external reality supervision
 
 - `aasm.machine.binding.v1`
 - `aasm.machine.state-observation.v1`
-- runtime `aasm.machine.external.runtime.v1`
-
-### Machine transition proposal — PR-2B
-
+- `aasm.machine.external.runtime.v1`
 - `aasm.machine.transition.v1`
-- runtime `aasm.machine.transition.runtime.v1`
-
-### Postcondition verification — PR-2C
-
+- `aasm.machine.transition.runtime.v1`
 - `aasm.machine.postcondition-verification.v1`
-- runtime `aasm.machine.postcondition-verification.runtime.v1`
+- `aasm.machine.postcondition-verification.runtime.v1`
 
-Contract identity is independent from package SemVer. These contracts can be qualified without allocating another package number.
+### PR-3A/3B — physical authority foundation
+
+- `aasm.authority.domain.v1`
+- `aasm.authority.lease.v1`
+- `aasm.physical.authority.runtime.v1`
 
 ## PR-1 — Governed State Authority
 
-AASM distinguishes four state-claim kinds:
+AASM distinguishes:
 
 ```text
-DESIRED
-    intent / target only
-
-PREDICTED
-    model or simulation expectation only
-
-OBSERVED
-    empirical/source Evidence only
-
-AUTHORITATIVE
-    explicitly admitted fact under matching FactAuthority
+DESIRED       intent / target only
+PREDICTED     model or simulation expectation only
+OBSERVED      empirical/source Evidence only
+AUTHORITATIVE explicitly admitted fact under matching FactAuthority
 ```
 
-A `FactAuthority` binds an exact workspace, scope, subject, state namespace, authority principal, validity interval, and optional problem/external revision. An `AUTHORITATIVE` claim requires a durable source claim and an active matching `FactAuthority`.
+Observation existence, observation agreement, prediction, or desired state do not create authority. `FactAuthority` does not create effect authority. Recording a state claim does not mutate AASM's core machine state.
 
-The state-authority firewall guarantees:
-
-```text
-observation existence != authority
-observation agreement != authority
-prediction != observation
-desired state != observed state
-FactAuthority != effect authority
-StateClaim != effect authority
-state-claim recording != core AASM machine-state mutation
-```
-
-Dedicated qualification context:
+Qualification context:
 
 ```text
 aasm/state-authority
 ```
 
-## PR-2A — External Machine Binding
+## PR-2 — External Machine Supervision
 
-PR-2A lets AASM reference and correlate an authoritative external machine without copying that machine into a second truth store.
+PR-2 supervises an external authoritative state machine without copying its truth into a second AASM state table.
 
-A `MachineBinding` binds workspace/scope, external machine identity, semantic subject identity, supported state namespaces, typed OBSERVER/OPERATOR capability references, exact external revision identity, and optional problem/fact-authority references.
-
-A `MachineStateObservation` binds that machine reference to an already-durable PR-1 `StateClaim` whose kind is exactly `OBSERVED`.
-
-The capability references describe semantic interfaces. They **do not grant authority**.
-
-PR-2A guarantees:
-
-```text
-MachineBinding != external state copy
-MachineBinding != FactAuthority
-MachineBinding != effect authority
-observer capability reference != observation authority
-operator capability reference != actuator authority
-MachineStateObservation != FactAuthority
-MachineStateObservation requires existing OBSERVED StateClaim
-machine binding/observation != core AASM machine-state mutation
-```
-
-PR-2A performs no effect dispatch and invokes no executor.
-
-Dedicated qualification context:
-
-```text
-aasm/external-machine
-```
-
-## PR-2B — Machine Transition Proposal over the Existing Effect Plane
-
-PR-2B does **not** create another dispatcher, effect store, ownership model, or transition lifecycle.
-
-A `MachineTransitionIntent` requires:
-
-- an existing durable `MachineBinding`;
-- exact external revision agreement;
-- exact durable `AUTHORITATIVE` pre-state claims;
-- exact durable `DESIRED` target-state claims;
-- target namespaces covered by the authoritative pre-state;
-- separate scoped `machine.transition.propose` authority; and
-- deterministic operation/payload identity.
-
-The runtime lowers the transition proposal into the existing v0.54 effect path:
-
-```text
-MachineTransitionIntent
-        |
-        v
-existing EffectSpec
-        |
-        v
-existing propose_effect()
-        |
-        v
-existing EffectIntent / PROPOSED
-```
-
-PR-2B intentionally does **not** perform:
-
-```text
-authorize_effect
-execute_effect
-effect ownership creation
-reconciliation
-postcondition verification
-```
-
-Those remain the authority of the existing effect subsystem. Transition reporting derives status from the existing `EffectRecord`; there is no parallel transition status table.
-
-The transition proposal itself grants no effect authority.
-
-Dedicated qualification context:
-
-```text
-aasm/machine-transition
-```
-
-## PR-2C — Command Success Is Not Achieved State
-
-PR-2C closes the external-reality truth gap:
-
-> **An existing effect reaching `SUCCEEDED` does not prove that the requested external state was achieved.**
-
-Postcondition verification consumes already-governed records:
-
-```text
-PR-2B MachineTransitionIntent
-        +
-existing v0.54 EffectRecord / execution_id
-        +
-PR-2A MachineStateObservation
-        +
-PR-1 AUTHORITATIVE StateClaim
-```
-
-The existing effect must be `SUCCEEDED`. `UNKNOWN` remains blocked behind the existing effect reconciliation path. Failed, cancelled, proposed, authorized, or running effects cannot support an achievement verdict.
-
-### Execution correlation
-
-The supplied post-effect observation must satisfy:
-
-```text
-MachineStateObservation.correlation_id
-    ==
-existing EffectRecord.execution_id
-```
-
-This prevents an unrelated or old matching observation from being accepted merely because its value equals the target.
-
-That correlation is **not** being misrepresented as full freshness or distributed-clock semantics. Those remain later work.
-
-### Independently authoritative achieved state
-
-The achieved-state input must already be a PR-1 `AUTHORITATIVE` claim. PR-2C cannot create a `FactAuthority` or `StateClaim`.
-
-The authoritative claim must derive from an `OBSERVED` source claim referenced by one of the supplied PR-2A machine observations for the same binding/revision.
-
-Therefore neither of these alone is sufficient:
-
-```text
-effect SUCCEEDED
-```
-
-or:
-
-```text
-correlated OBSERVED value
-```
-
-Achievement verification requires independent authoritative-state admission.
-
-### Comparison semantics
-
-This foundation deliberately supports only:
-
-```text
-EXACT_CANONICAL_VALUE_EQUALITY
-```
-
-The durable verdict is:
-
-```text
-VERIFIED
-or
-MISMATCH
-```
-
-A mismatch is Evidence. It does not rewrite the observed state and does not retroactively mutate the existing effect from `SUCCEEDED` to `FAILED`.
-
-### PR-2C firewall
-
-```text
-Effect SUCCEEDED != achieved state
-postcondition verification != FactAuthority creation
-postcondition verification != StateClaim creation
-postcondition verification != effect outcome mutation
-postcondition verification != core machine-state mutation
-postcondition verification != effect authority
-verification Evidence != parallel truth table
-verification Evidence != parallel effect lifecycle
-```
-
-Dedicated qualification context:
-
-```text
-aasm/machine-postcondition
-```
-
-The qualification suite executes the underlying effect through the genuine v0.54 resource/worker/`TaskDemand`/`TaskLease`/ownership/dispatch path. PR-2C is therefore tested after a governed external-effect attempt rather than against a fabricated terminal `EffectRecord`.
-
-## Existing Effect Lifecycle Remains Authoritative for Execution
-
-The complete path is:
+The governed path is:
 
 ```text
 AUTHORITATIVE pre-state + DESIRED target
@@ -274,7 +76,7 @@ AUTHORITATIVE pre-state + DESIRED target
 MachineTransitionIntent
         |
         v
-existing EffectIntent / PROPOSED
+existing propose_effect() / EffectIntent
         |
         v
 existing authorize_effect()
@@ -283,56 +85,155 @@ existing authorize_effect()
 existing TaskLease + execute_effect()
         |
         +-- durable dispatch request
-        +-- durable ownership Evidence before executor call
+        +-- durable ownership Evidence
         +-- SUCCEEDED / FAILED / UNKNOWN / CANCELLED
         |
         v
 if UNKNOWN -> existing Effect reconciliation
         |
         v
-PR-2A post-execution OBSERVED correlation
+correlated post-effect OBSERVED state
         |
         v
-PR-1 AUTHORITATIVE achieved-state admission
+independent PR-1 AUTHORITATIVE admission
         |
         v
 PR-2C VERIFIED | MISMATCH
 ```
 
-No PR-2 component introduces a second executor, dispatcher, ownership record, reconciliation plane, authority evaluator, or truth store.
+The key invariant remains:
 
-## Shared durability rule
+> **`EffectStatus.SUCCEEDED` does not prove that the desired physical/external state was achieved.**
 
-Solver profiles, provenance, fact authorities, state claims, machine bindings, observation correlations, machine transition intents, and postcondition verifications use existing AASM durability/evidence paths where appropriate. Existing effects remain governed by the existing Effect store/lifecycle.
+Postcondition observations must correlate to the exact existing `EffectRecord.execution_id`, and achieved state must already be an independently governed `AUTHORITATIVE` claim derived from a supplied correlated observation.
 
-## Claim ceilings
+The current comparison is exact canonical equality only. Freshness, calibration, tolerance, uncertainty, and distributed-clock semantics remain outside PR-2.
 
-The 0.56.1 candidate does **not** yet claim:
-
-- tolerance-aware or unit-aware postcondition comparison;
-- measurement uncertainty envelopes;
-- general observation freshness semantics;
-- distributed clock-quality or causal-order semantics beyond explicit execution correlation;
-- sensor calibration lifecycle or calibration compensation;
-- physical identity / assembly / configuration provenance;
-- safety-envelope or degraded-autonomy policy;
-- bounded revocable physical effect capabilities or authority epochs;
-- automatic actuation authority from a machine binding or OPERATOR capability reference;
-- automatic FactAuthority or authoritative-state creation from executor success;
-- reproducibility from provenance alone.
-
-The postcondition contract explicitly records:
+Qualification contexts:
 
 ```text
-freshness_semantics:   NOT_YET_CLAIMED_PR4
-calibration_semantics: NOT_YET_CLAIMED_PR4
+aasm/external-machine
+aasm/machine-transition
+aasm/machine-postcondition
 ```
 
-These are intentional boundaries, not missing implicit behavior.
+## PR-3A — Authority Domain
+
+`AuthorityDomain` creates a stable semantic namespace for bounded physical/effect authority. It binds:
+
+```text
+workspace
+scope
+domain name
+subject
+permitted effect classes
+preemptor principal references
+problem revision
+external revision
+```
+
+An authority domain is **not** an authority grant. Its existence does not permit any effect and does not bypass AASM scoped authority.
+
+Domain invariants include:
+
+```text
+domain existence != effect authority
+resource availability != authority
+FactAuthority != effect authority
+preemptor reference != preemption authority
+parallel authority evaluator = NONE
+parallel effect lifecycle = NONE
+```
+
+## PR-3B — Exclusive Revocable Authority Lease
+
+`AuthorityLease` binds:
+
+```text
+domain
+workspace/scope
+holder principal
+issuer principal
+authority epoch
+valid_from / expires_at
+permitted effect classes
+problem/external revision
+revocation generation
+```
+
+The foundation enforces:
+
+```text
+lease effect classes ⊆ domain effect classes
+one non-overlapping effective lease interval per domain
+next lease epoch = prior maximum epoch + 1
+holder/issuer must be known principals
+actor granting lease == issuer
+bound revision identity must match domain
+revocation is append-only
+revocation closes the effective lease interval
+revocation does not rewrite effect history
+```
+
+Most importantly:
+
+> **A valid `AuthorityLease` still does not grant existing `effect.authorize`.**
+
+The adversarial suite proves this directly: a lease holder without the separate existing scoped `effect.authorize` permission is denied by the existing Effect authorization boundary.
+
+This is deliberate. PR-3A/3B establish authority structure; they do not prematurely connect that structure to actuation.
+
+Qualification context:
+
+```text
+aasm/physical-authority
+```
+
+The PR-3A/3B exact qualification head is:
+
+```text
+74d3c0b2f37e9563a8b1371836956bff35c1c360
+```
+
+On that head, all required inherited and current contexts are green, including full CI, formal assurance, cumulative v0.56, all PR-1/PR-2 gates, and `aasm/physical-authority`.
+
+## PR-3 claim ceiling
+
+The **whole PR-3 / PHY-01 program is not complete**. PR-3A/3B are a qualified child slice.
+
+The candidate does **not** yet claim:
+
+- `aasm.effect.capability.v1` bounded effect capabilities;
+- operation/bound/sub-scope capability delegation;
+- child-right non-amplification enforcement;
+- stale capability-epoch fencing at the Effect boundary;
+- revocation-generation fencing for commands;
+- semantic preemption;
+- safety-controller epoch advancement;
+- PR-3H integration with existing `authorize_effect` / `execute_effect`;
+- automatic actuation authority from `AuthorityDomain` or `AuthorityLease`;
+- physical observation freshness/calibration/tolerance semantics.
+
+The active contracts explicitly preserve these seams:
+
+```text
+bounded_effect_capability:         RESERVED_PR3C_PR3D
+semantic_preemption:               RESERVED_PR3G
+effect_authorization_integration:  NOT_YET_PR3H
+```
+
+## No parallel control plane
+
+Across PR-1, PR-2, and PR-3A/3B, AASM still has exactly one authoritative permission/execution path:
+
+- existing scoped authority evaluates permissions;
+- existing resource/worker/TaskLease mechanisms govern execution resources;
+- existing v0.54 EffectIntent/authorization/ownership/dispatch/reconciliation remain authoritative for effects;
+- Evidence/event/reducer paths provide semantic durability and replay.
+
+No second authority evaluator, dispatcher, ownership model, effect lifecycle, or external truth table has been introduced.
 
 ## Release criterion
-
-This candidate may become a published package release only through the deliberate release process defined in [`VERSIONING.md`](VERSIONING.md) and [`RELEASE_PROCESS.md`](RELEASE_PROCESS.md).
 
 The deliberate release path requires the inherited exact-head gates plus:
 
@@ -341,15 +242,16 @@ aasm/state-authority
 aasm/external-machine
 aasm/machine-transition
 aasm/machine-postcondition
+aasm/physical-authority
 ```
 
-Until then:
+Until a deliberate package release occurs:
 
 ```text
 package target on main: 0.56.1
-adoption contract:       aasm.adoption.v1 / 0.32.5
+adoption contract:       aasm.adoption.v1 / 0.32.6
 published release:       0.56.0
 exact development state: Git SHA
 ```
 
-Subsequent architecture work is tracked by named milestones rather than reserving `v0.56.2`, `v0.57`, or another package number in advance.
+The next active implementation slice is **PR-3C/3D — bounded effect capability**, followed by delegation/stale-command fencing/preemption and only then PR-3H Effect integration.
