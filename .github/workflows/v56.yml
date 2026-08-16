@@ -88,6 +88,10 @@ jobs:
         run: |
           python scripts/check_state_conflict_contracts.py
           pytest -q tests/test_state_conflict.py
+      - name: Check S3 causal identity and freshness physical evidence foundation
+        run: |
+          python scripts/check_causal_freshness_contracts.py
+          pytest -q tests/test_causal_freshness.py
       - name: Validate cumulative development source contract
         run: python scripts/check_release_contracts.py
       - name: Guard active 0.56.1 development root and additive authority boundaries
@@ -96,7 +100,7 @@ jobs:
           import aasm
           from aasm import public_v55, public_v56
           active=aasm.validate_public_api_contract(); assert active['valid'], active
-          assert aasm.__version__=='0.56.1'; assert aasm.PUBLIC_API_CONTRACT['contract_version']=='0.32.9'
+          assert aasm.__version__=='0.56.1'; assert aasm.PUBLIC_API_CONTRACT['contract_version']=='0.32.10'
           assert public_v56.__version__=='0.56.1'; assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.6'
           assert public_v55.__version__=='0.55.0'; assert aasm.AASMEngine is public_v56.AASMEngine
           engine=aasm.AASMEngine(aasm.ProblemSpec('v56-gate'))
@@ -149,7 +153,22 @@ jobs:
           assert conflict['fact_authority_creation']=='NONE'; assert conflict['effect_authority']=='NONE'
           assert conflict['observation_authority_elevation']=='NONE'
           assert conflict['parallel_truth_table']=='NONE'; assert conflict['parallel_dependency_graph']=='NONE'
-          print('cumulative 0.56.1 development contract + active adoption 0.32.9 PR-3 + S3 state-conflict boundaries: PASS')
+          causal=engine.event_causality_contract_report()
+          assert causal['core_aasm_event_log']=='UNCHANGED_AND_REMAINS_REPLAY_LEDGER'
+          assert causal['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
+          assert causal['ingest_order']=='MAY_DIFFER_FROM_SOURCE_SEQUENCE'
+          assert causal['same_node_boot_order']=='SEQUENCE_DEFINES_LOCAL_ORDER_INDEPENDENT_OF_INGEST_ORDER'
+          assert causal['fact_authority_creation']=='NONE'; assert causal['effect_authority']=='NONE'
+          assert causal['parallel_event_ledger']=='NONE'; assert causal['parallel_truth_table']=='NONE'
+          freshness=engine.observation_freshness_contract_report()
+          assert freshness['observation_source']=='EXISTING_MACHINE_STATE_OBSERVATION_ONLY'
+          assert freshness['claim_source']=='EXISTING_DURABLE_OBSERVED_STATE_CLAIM_ONLY'
+          assert freshness['causal_source']=='EXACT_DURABLE_CAUSAL_EVENT_ID_AND_FINGERPRINT'
+          assert freshness['reference_time_source']=='EXPLICIT_CALLER_POLICY_INPUT_NOT_HOST_NOW'
+          assert freshness['fact_authority_creation']=='NONE'; assert freshness['effect_authority']=='NONE'
+          assert freshness['observation_authority_elevation']=='NONE'; assert freshness['universal_admission']=='NONE'
+          assert freshness['parallel_observation_store']=='NONE'; assert freshness['parallel_truth_table']=='NONE'
+          print('cumulative 0.56.1 development contract + active adoption 0.32.10 PR-3 + S3 conflict/causality/freshness boundaries: PASS')
           PY
       - name: Publish cumulative v0.56 development qualification
         if: always()
@@ -159,5 +178,5 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative external-reality+physical-effect+S3-conflict qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
+          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative external-reality+physical-effect+S3-temporal qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='aasm/v56' -f description="$description" -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
