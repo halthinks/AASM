@@ -1,15 +1,15 @@
 # AASM Governed Semantic Evolution — Execution Ledger
 
-**Status projection date:** 2026-08-16  
-**Latest immutable release:** `v0.56.0` at commit `551b2f4780acaeb93384b454f6f474f6ebd1b30e`  
-**Current development target:** `0.56.1` on `main`; exact unreleased identity is Git SHA  
-**Current adoption contract:** `aasm.adoption.v1 / 0.32.5`  
-**Doctrine:** `docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md`  
-**Physical/distributed reconciliation:** `docs/architecture/GOVERNED_PHYSICAL_DISTRIBUTED_REALITY_RECONCILIATION.md`  
-**Physical integration plan:** `docs/implementation/GOVERNED_PHYSICAL_REALITY_INTEGRATION_PLAN.md`  
-**Roadmap:** `ROADMAP.md` and `docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md`  
-**Version/release policy:** `docs/VERSIONING.md`  
-**Historical v0.56 work-package release plan:** `docs/roadmaps/V056_CUMULATIVE_RELEASE_DISCIPLINE.md` — retained for provenance, superseded for future package allocation  
+**Status projection date:** 2026-08-16
+**Latest immutable release:** `v0.56.0` at commit `551b2f4780acaeb93384b454f6f474f6ebd1b30e`
+**Current development target:** `0.56.1` on `main`; exact unreleased identity is Git SHA
+**Current adoption contract:** `aasm.adoption.v1 / 0.32.7`
+**Doctrine:** `docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md`
+**Physical/distributed reconciliation:** `docs/architecture/GOVERNED_PHYSICAL_DISTRIBUTED_REALITY_RECONCILIATION.md`
+**Physical integration plan:** `docs/implementation/GOVERNED_PHYSICAL_REALITY_INTEGRATION_PLAN.md`
+**Roadmap:** `ROADMAP.md` and `docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md`
+**Version/release policy:** `docs/VERSIONING.md`
+**Historical v0.56 work-package release plan:** `docs/roadmaps/V056_CUMULATIVE_RELEASE_DISCIPLINE.md` — retained for provenance, superseded for future package allocation
 **Source lock:** `docs/source_material/SOURCE_LOCK_MANIFEST.md`
 
 This is the canonical mutable progress ledger. It may advance or refine work items, but locked requirements may not disappear. When an item is split, the parent row remains and points to its children.
@@ -74,9 +74,9 @@ These are the durable seams exposed by the Embedded/Physical review. They extend
 
 | ID | Milestone | Capability | Status | Existing substrate / landed work | Missing semantic elevation / next boundary |
 |---|---|---|---|---|---|
-| PHY-01 | `physical-authority-capabilities` / PR-3 | Authority domains, leases/epochs, bounded revocable effect capabilities, semantic preemption | DESIGNED | scoped grants/delegation/deny/expiry; typed capability ABI; effect authority evidence | exclusive authority-domain ownership, epoch freshness, capability non-amplification, explicit preemption/revocation semantics |
-| PHY-02 | `authoritative-state-claims` / PR-1 | Desired / predicted / observed / authoritative state separation + fact authority | GATED | `aasm.fact.authority.v1`; `aasm.state.claim.v1`; `aasm.state.authority.runtime.v1`; `state_authority.py`; `state_authority_runtime.py`; schemas; active `public_v56`; existing Evidence + scoped authority only | PR-1 boundary complete: observation/consensus cannot create authority, fact authority grants no effect authority, claims do not mutate core machine state; PR-2 external-machine semantics are now qualified on top |
-| PHY-03 | `postcondition-verification` / PR-2 | Command ≠ achievement; machine binding, transition attempt, correlated observation and postcondition verifier | GATED | `aasm.machine.binding.v1`; `aasm.machine.state-observation.v1`; `aasm.machine.transition.v1`; `aasm.machine.postcondition-verification.v1`; their runtime mixins/schemas; existing v0.54 EffectIntent/Ownership/Reconciliation/UNKNOWN; active `public_v56` | PR-2 boundary complete: successful governed dispatch/ACK cannot establish achieved state; verification requires correlated post-effect observation plus independently authoritative state; exact equality only; PR-4 owns freshness/clock/calibration/tolerance semantics |
+| PHY-01 | `physical-authority-capabilities` / PR-3 | Authority domains, leases/epochs, bounded revocable effect capabilities, semantic preemption | RUNTIME_LANDED | PR-3A/3B `aasm.authority.domain.v1` + `aasm.authority.lease.v1`, PR-3C/3D `aasm.effect.capability.v1`, PR-3E/F `aasm.effect.capability-use.v1`, and PR-3G `aasm.authority.preemption.v1` are active and independently gated; existing scoped authority and Effect lifecycle remain authoritative | PR-3H integration into existing `authorize_effect` / `execute_effect` is still required before the PR-3 / PHY-01 parent can be GATED |
+| PHY-02 | `authoritative-state-claims` / PR-1 | Desired / predicted / observed / authoritative state separation + fact authority | GATED | `aasm.fact.authority.v1`; `aasm.state.claim.v1`; `aasm.state.authority.runtime.v1`; `state_authority.py`; `state_authority_runtime.py`; schemas; active public surface; existing Evidence + scoped authority only | PR-1 boundary complete: observation/consensus cannot create authority, fact authority grants no effect authority, claims do not mutate core machine state; PR-2 external-machine semantics are qualified on top |
+| PHY-03 | `postcondition-verification` / PR-2 | Command ≠ achievement; machine binding, transition attempt, correlated observation and postcondition verifier | GATED | `aasm.machine.binding.v1`; `aasm.machine.state-observation.v1`; `aasm.machine.transition.v1`; `aasm.machine.postcondition-verification.v1`; runtime mixins/schemas; existing v0.54 EffectIntent/Ownership/Reconciliation/UNKNOWN; active public surface | PR-2 boundary complete: successful governed dispatch/ACK cannot establish achieved state; verification requires correlated post-effect observation plus independently authoritative state; exact equality only; PR-4 owns freshness/clock/calibration/tolerance semantics |
 | PHY-04 | `temporal-causal-semantics` / PR-4 | sequence, causal relation, leases/deadlines, observation age, clock quality | DESIGNED | event order, timestamps, lease expiration in existing subsystems | explicit causal/partial-order contract; monotonic device epochs; clock-quality/freshness semantics |
 | PHY-05 | `physical-identity-trust` / PR-4 | device/component identity, calibration lifecycle, trust boundary, attestation | DESIGNED | external refs, environment fingerprints, measurement authority, runtime provenance | physical assembly/sensor/calibration identity; validity ranges/expiry; trust claims; secure-boot/firmware attestation hooks |
 | PHY-06 | `degraded-autonomy-safety` / PR-5 | degraded modes, safety envelopes, semantic preemption, hybrid discrete/continuous guards | DESIGNED | machine states/obligations, continuous IR, effects, scoped authority | degradation policy, continuous safety envelope, hybrid state contract, emergency/local authority rules |
@@ -90,16 +90,16 @@ These are the durable seams exposed by the Embedded/Physical review. They extend
 
 ### v0.55.0
 
-Release commit: `dd9360858be8755a5639162a7d388d867c1b01e6`  
-Tag: `v0.55.0`  
+Release commit: `dd9360858be8755a5639162a7d388d867c1b01e6`
+Tag: `v0.55.0`
 GitHub release workflow: `31912974049` — **SUCCESS**
 
 The release passed the exact-head CI/formal/semantic-solver/proof/solution-pool/optimization/scoped-authority/solver-learning/v0.54-parent/v0.55 gates, reproducible wheel/sdist build, clean install, immutable tag targeting, and remote asset SHA-256 verification.
 
 ### v0.56.0 — work package 56.1
 
-Release commit: `551b2f4780acaeb93384b454f6f474f6ebd1b30e`  
-Tag: `v0.56.0`  
+Release commit: `551b2f4780acaeb93384b454f6f474f6ebd1b30e`
+Tag: `v0.56.0`
 GitHub release workflow: `31916382216` — **SUCCESS**
 
 The release passed the exact-head inherited gates plus `aasm/v56`, reproducible package build, PostgreSQL/Compose/scopes/adapter/LangGraph integration, clean-install public contract exercise, immutable tag/release creation, and remote asset byte/SHA-256 verification.
@@ -167,19 +167,49 @@ The PR-2 qualification specifically proved:
 
 This evidence qualifies **57.1 / PR-2A**, **57.2 / PR-2B–2C**, and **PHY-03 / PR-2** as **GATED**, not **RELEASED**.
 
+### PR-3A–G / PHY-01 partial qualification
+
+The physical-authority, bounded capability, stale-command fencing, semantic preemption, and preemption-recovery child slices were qualified together on exact development head:
+
+```text
+9425fbdd22f664f3a2cb5db73dcf45c5b77a0673
+```
+
+All 20 required commit-status contexts were **success** on that exact implementation head, including full CI, formal assurance, semantic-solver RC, cumulative v0.56, provenance, state/external-machine gates, and the four PR-3 gates:
+
+- `aasm/physical-authority`
+- `aasm/effect-capability`
+- `aasm/physical-control-fencing`
+- `aasm/physical-preemption-recovery`
+
+The PR-3A–G qualification proves:
+
+- exclusive non-overlapping authority leases with monotonic domain epochs;
+- append-only lease revocation and time-correct effective intervals;
+- bounded operation allow-lists and named closed numeric intervals;
+- delegation cannot amplify operations, bounds, validity, scope, revisions, epoch, or delegation depth;
+- parent capability fingerprint/revocation-generation changes fence descendants;
+- point-in-time capability-use validation rejects stale lease/capability/epoch/revocation-generation/holder/scope/revision/operation/bounds;
+- capability-use validation is Evidence only and is not a reusable authorization token;
+- semantic preemption requires both listed preemptor identity and existing scoped preemption authority;
+- preemption uses the canonical authority-lease revocation path and advances the required next epoch;
+- crash recovery repairs the two-write case where semantic preemption became durable before canonical lease revocation;
+- no PR-3A–G object grants `effect.authorize` merely by existing;
+- no second authority evaluator, dispatcher, resource ledger, Effect ownership model, or Effect lifecycle was introduced.
+
+These child slices are **GATED**, not **RELEASED**. The **PR-3 / PHY-01 parent remains incomplete and is not GATED** because PR-3H has not yet connected those checks to the existing Effect authorization/execution boundaries.
+
 ## Immediate builder queue
 
 1. Keep `v0.56.0` / `551b2f47…` as the immutable published boundary. Do not publish 0.56.1 automatically.
-2. Preserve PR-1 / PHY-02 and PR-2 / PHY-03 claim ceilings; do not widen state claims, bindings, transition proposals, observations, or postcondition verification into actuator authority.
-3. Begin **PR-3 / PHY-01 — physical authority + bounded effect capabilities** on top of existing scoped authority and the existing Effect authorization/execution path. Do **not** build a second authority evaluator or dispatcher.
-4. PR-3A: land a stable `AuthorityDomain` contract that names the bounded physical/effect authority namespace without granting authority by existence.
-5. PR-3B: land exclusive/revocable `AuthorityLease` semantics with explicit holder, workspace/scope/domain, authority epoch/generation, validity interval, and durable evidence/replay.
-6. PR-3C/3D: add authority epoch freshness and bounded effect capability semantics; stale epochs and out-of-bounds capability use must fail closed.
-7. PR-3E/3F/3G: delegation must never amplify authority; stale-command fencing and revocation/preemption must be explicit and replayable.
-8. PR-3H: integrate those contracts into the **existing** `authorize_effect` / `execute_effect` path so physical-effect authority is checked without replacing v0.54 ownership, TaskLease, resource governance, or reconciliation.
-9. After PR-3 is qualified, proceed to PR-4 temporal/causal/physical-identity/calibration/observation-epistemics semantics; do not smuggle those semantics into PR-3.
-10. Reconcile dormant reproducibility/provenance-v2 source separately before any 56.3 admission; dormant code remains non-authoritative.
-11. Keep TextPCB as a demanding consumer/conformance target; do not move TextPCB-specific types into the kernel.
+2. Preserve PR-1 / PHY-02, PR-2 / PHY-03, and PR-3A–G claim ceilings; do not turn evidence or capability existence into actuator authority.
+3. **PR-3H is next:** integrate the current authority lease, capability identity/fingerprint, epoch, effective revocation generation, holder, operation/bounds, workspace/scope/subject, and problem/external revision checks into the **existing** `authorize_effect` / `execute_effect` path.
+4. PR-3H must recheck at the actual authorization and execution boundaries. An earlier `EffectCapabilityUse` validation record must never become a reusable bearer token.
+5. PR-3H must preserve v0.54 `EffectIntent`, TaskLease/resource governance, durable `EffectOwnership`, external dispatch, `UNKNOWN`, and reconciliation. No second dispatcher or authority system is allowed.
+6. Only after PR-3H independently qualifies may the PR-3 / PHY-01 parent advance to `GATED`.
+7. After PR-3, proceed to PR-4 temporal/causal/physical-identity/calibration/observation-epistemics semantics; do not smuggle those semantics into PR-3H.
+8. Reconcile dormant reproducibility/provenance-v2 source separately before any 56.3 admission; dormant code remains non-authoritative.
+9. Keep TextPCB as a demanding consumer/conformance target; do not move TextPCB-specific types into the kernel.
 
 ## Completion discipline
 
