@@ -14,13 +14,13 @@ def test_v56_base_is_frozen_and_active_overlay_advances_adoption_only():
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.7"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.8"
     assert aasm.AASMEngine is public_active.AASMEngine
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v56.AASMEngine is not public_v55.AASMEngine
 
 
-def test_active_engine_exposes_external_reality_and_full_pre_pr3h_physical_control_surface():
+def test_active_engine_exposes_external_reality_and_full_pr3_physical_control_surface():
     for method in (
         "solver_outcome_v2_runtime_contract_report", "record_solver_outcome_v2", "solver_outcome_v2_report",
         "solver_provenance_runtime_contract_report", "register_solver_execution_profile", "record_solver_runtime_provenance",
@@ -39,7 +39,8 @@ def test_active_engine_exposes_external_reality_and_full_pre_pr3h_physical_contr
         "revoke_effect_capability", "effect_capability_report", "effect_capabilities_report",
         "physical_control_fencing_contract_report", "validate_effect_capability_use",
         "preempt_authority_lease", "effect_capability_use_report", "authority_preemption_report",
-        "physical_control_fencing_report",
+        "physical_control_fencing_report", "physical_effect_integration_contract_report",
+        "bind_physical_effect_authority", "physical_effect_binding_report", "physical_effect_integration_report",
     ):
         assert callable(getattr(aasm.AASMEngine, method)), method
         assert method in aasm.SUPPORTED_ENGINE_METHODS
@@ -47,7 +48,7 @@ def test_active_engine_exposes_external_reality_and_full_pre_pr3h_physical_contr
 
 def test_active_contract_preserves_external_reality_and_physical_control_firewalls():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] == "0.32.7"
+    assert contract["contract_version"] == "0.32.8"
 
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -91,6 +92,7 @@ def test_active_contract_preserves_external_reality_and_physical_control_firewal
     capability = contract["effect_capability"]
     assert capability["capability_existence_grants_effect_authority"] is False
     assert capability["effect_authorization_integration"] == "NOT_YET_PR3H"
+    assert capability["dependent_effect_integration"] == "aasm.effect.physical-authority-integration.runtime.v1"
     assert capability["parallel_authority_evaluator"] == "NONE"
     assert capability["parallel_effect_lifecycle"] == "NONE"
     assert capability["runtime"]["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"
@@ -103,6 +105,7 @@ def test_active_contract_preserves_external_reality_and_physical_control_firewal
     assert fencing["use_validation_grants_effect_authority"] is False
     assert fencing["preemption_grants_effect_authority"] is False
     assert fencing["effect_authorization_integration"] == "NONE_PR3E_PR3F_PR3G_FOUNDATION"
+    assert fencing["dependent_effect_integration"] == "aasm.effect.physical-authority-integration.runtime.v1"
     assert fencing["effect_dispatch"] == "NONE"
     assert fencing["parallel_authority_evaluator"] == "NONE"
     assert fencing["parallel_effect_lifecycle"] == "NONE"
@@ -111,8 +114,25 @@ def test_active_contract_preserves_external_reality_and_physical_control_firewal
     assert fencing["authority_preemption"]["identity_reference_grants_authority"] is False
     assert fencing["authority_preemption"]["preemption_grants_new_effect_authority"] is False
 
+    integration = contract["physical_effect_integration"]
+    assert integration["binding_existence_grants_effect_authority"] is False
+    assert integration["prior_use_validation_is_authorization"] is False
+    assert integration["authorization_recheck"] == "MANDATORY_AT_EXISTING_AUTHORIZE_EFFECT_BOUNDARY"
+    assert integration["execution_recheck"] == "MANDATORY_AT_EXISTING_EXECUTE_EFFECT_BOUNDARY"
+    runtime = integration["runtime"]
+    assert runtime["effect_authority"] == "EXISTING_V53_EFFECT_AUTHORIZE_AND_EFFECT_EXECUTE_REMAIN_REQUIRED"
+    assert runtime["machine_transition_binding"] == "MANDATORY_BEFORE_AUTHORIZATION_OR_NEW_DISPATCH"
+    assert runtime["task_lease"] == "EXISTING_V54_TASKLEASE_UNCHANGED"
+    assert runtime["resource_governance"] == "EXISTING_V54_RESOURCE_RESERVATIONS_UNCHANGED"
+    assert runtime["ownership"] == "EXISTING_V54_EFFECT_OWNERSHIP_UNCHANGED"
+    assert runtime["unknown_and_reconciliation"] == "EXISTING_V54_UNKNOWN_AND_RECONCILIATION_UNCHANGED"
+    assert runtime["parallel_authority_evaluator"] == "NONE"
+    assert runtime["parallel_effect_store"] == "NONE"
+    assert runtime["parallel_effect_lifecycle"] == "NONE"
+    assert runtime["parallel_dispatcher"] == "NONE"
 
-def test_active_import_registry_contains_pr3_capability_and_preemption_contracts():
+
+def test_active_import_registry_contains_pr3_capability_preemption_and_effect_integration_contracts():
     for name in (
         "AuthorityDomain", "AuthorityLease", "physical_authority_contract",
         "EffectCapability", "NumericInterval", "effect_capability_contract",
@@ -120,6 +140,8 @@ def test_active_import_registry_contains_pr3_capability_and_preemption_contracts
         "EffectCapabilityUse", "effect_capability_use_contract",
         "AuthorityPreemption", "authority_preemption_contract",
         "physical_control_fencing_runtime_contract", "PHYSICAL_CONTROL_FENCING_CAPABILITIES",
+        "PhysicalEffectAuthorityBinding", "physical_effect_authority_binding_contract",
+        "physical_effect_integration_runtime_contract", "PHYSICAL_EFFECT_INTEGRATION_CAPABILITIES",
     ):
         assert hasattr(aasm, name), name
         assert name in aasm.SUPPORTED_PUBLIC_IMPORTS
