@@ -1,0 +1,116 @@
+name: One-shot PR-3C Boundary Repair
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Patch issue-boundary ordering and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/aasm/effect_capability_revocation_guard.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''from __future__ import annotations
+
+from copy import deepcopy
+
+from .effect_capability import EffectCapability
+
+
+class EffectCapabilityRevocationGuardMixin:
+    """Make revocation generation effective at revoked_at, including historical replay queries."""
+
+    def effect_capability_report(self, capability_id: str, *, at_time: float, _seen=frozenset()):
+        result = super().effect_capability_report(capability_id, at_time=at_time, _seen=_seen)
+        item = EffectCapability.from_dict(result["capability"])
+        revocation_row = result.get("revocation")
+        effective_generation = item.revocation_generation
+        if revocation_row is not None:
+            revocation = deepcopy(revocation_row["revocation"])
+            if float(at_time) >= float(revocation["revoked_at"]):
+                effective_generation = int(revocation["revocation_generation"])
+        result["effective_revocation_generation"] = effective_generation
+        return result
+
+
+__all__ = ["EffectCapabilityRevocationGuardMixin"]
+'''
+          new = '''from __future__ import annotations
+
+from copy import deepcopy
+
+from .effect_capability import EffectCapability
+from .effect_capability_runtime import EFFECT_CAPABILITY_CAPABILITIES
+
+
+class EffectCapabilityRevocationGuardMixin:
+    """Boundary guards for time-correct revocation and fail-closed root issuance."""
+
+    def issue_effect_capability(
+        self,
+        capability,
+        *,
+        actor_principal_id: str,
+        at_time: float,
+        evidence_ids=(),
+        reason: str = "bounded effect capability issued",
+    ):
+        item = capability if isinstance(capability, EffectCapability) else EffectCapability.from_dict(capability)
+        if actor_principal_id != item.issuer_principal_id:
+            self._authorize_effect_capability_action(
+                actor_principal_id=actor_principal_id,
+                workspace_id=item.workspace_id,
+                scope_id=item.scope_id,
+                capability=EFFECT_CAPABILITY_CAPABILITIES["issue"],
+                at_time=at_time,
+                metadata={"capability_id": item.capability_id, "nonissuer_attempt": True},
+                derived_from=tuple(evidence_ids),
+            )
+            raise PermissionError("effect capability actor must equal issuer_principal_id")
+        return super().issue_effect_capability(
+            item,
+            actor_principal_id=actor_principal_id,
+            at_time=at_time,
+            evidence_ids=evidence_ids,
+            reason=reason,
+        )
+
+    def effect_capability_report(self, capability_id: str, *, at_time: float, _seen=frozenset()):
+        result = super().effect_capability_report(capability_id, at_time=at_time, _seen=_seen)
+        item = EffectCapability.from_dict(result["capability"])
+        revocation_row = result.get("revocation")
+        effective_generation = item.revocation_generation
+        if revocation_row is not None:
+            revocation = deepcopy(revocation_row["revocation"])
+            if float(at_time) >= float(revocation["revoked_at"]):
+                effective_generation = int(revocation["revocation_generation"])
+        result["effective_revocation_generation"] = effective_generation
+        return result
+
+
+__all__ = ["EffectCapabilityRevocationGuardMixin"]
+'''
+          if old not in text:
+              raise SystemExit('expected guard source not found; refusing blind repair')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          Path('.github/workflows/one-time-pr3c-boundary-repair.yml').unlink()
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Harden PR-3C issuance boundary ordering'
+          git push origin HEAD:main
