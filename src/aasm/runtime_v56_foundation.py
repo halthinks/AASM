@@ -14,6 +14,7 @@ from .physical_effect_integration_boundary import PhysicalEffectIntegrationBound
 from .physical_preemption_recovery_guard import PhysicalPreemptionRecoveryGuardMixin
 from .runtime_v55_foundation import AASMEngine as V55FoundationEngine
 from .state_authority_runtime import StateAuthorityRuntimeMixin
+from .state_conflict_runtime import StateConflictRuntimeMixin
 
 
 class AASMEngine(
@@ -27,12 +28,13 @@ class AASMEngine(
     MachinePostconditionRuntimeMixin,
     MachineTransitionRuntimeMixin,
     ExternalMachineRuntimeMixin,
+    StateConflictRuntimeMixin,
     StateAuthorityRuntimeMixin,
     SolverProvenanceRuntimeMixin,
     SolverOutcomeV2RuntimeMixin,
     V55FoundationEngine,
 ):
-    """Active v0.56 development runtime with governed external reality and bounded physical effects."""
+    """Active v0.56 development runtime with governed external reality, bounded physical effects, and S3 conflict evidence."""
 
 
 __all__ = ["AASMEngine"]
