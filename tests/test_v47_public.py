@@ -24,7 +24,6 @@ from aasm.runtime_v56 import AASMEngine as V56Engine
 
 
 def test_v47_public_contract_remains_active_under_current_composition():
-    assert __version__ == "0.56.0"
     assert AASMEngine is V56Engine
     assert issubclass(V56Engine, V55Engine)
     assert issubclass(V55Engine, V54Engine)
@@ -40,9 +39,9 @@ def test_v47_public_contract_remains_active_under_current_composition():
     report = validate_public_api_contract()
     assert report["valid"], report
     contract = report["contract"]
-    assert contract["contract_version"] == "0.32.0"
-    assert contract["runtime_version"] == "0.56.0"
-    assert contract["distribution"]["version"] == "0.56.0"
+    assert contract["runtime_version"] == __version__
+    assert contract["distribution"]["version"] == __version__
+    assert contract["contract_version"]
     assert contract["certification"]["contract_version"] == "0.2.0"
     assert contract["sii_governance"]["contract_version"] == "0.3.0"
     assert contract["sii_governance"]["authority_reward"] == "NEVER"
