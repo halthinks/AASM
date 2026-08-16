@@ -124,7 +124,8 @@ jobs:
             aasm/effect-capability \
             aasm/physical-control-fencing \
             aasm/physical-preemption-recovery \
-            aasm/physical-effect-integration; do
+            aasm/physical-effect-integration \
+            aasm/physical-evidence; do
             state=""
             for _ in $(seq 1 90); do
               state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" --jq "[.statuses[] | select(.context == \"$context\")][0].state // \"\"")"
