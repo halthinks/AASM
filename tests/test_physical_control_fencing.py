@@ -9,8 +9,7 @@ from jsonschema import Draft202012Validator
 
 from aasm import AASMEngine
 from aasm.effect_capability import EffectCapability
-from aasm.effect_capability_revocation_guard import EffectCapabilityRevocationGuardMixin
-from aasm.effect_capability_runtime import EFFECT_CAPABILITY_CAPABILITIES, EffectCapabilityRuntimeMixin
+from aasm.effect_capability_runtime import EFFECT_CAPABILITY_CAPABILITIES
 from aasm.effect_capability_use import EffectCapabilityUse, effect_capability_use_contract
 from aasm.evidence import EvidenceRecord
 from aasm.model import ProblemSpec
@@ -19,7 +18,6 @@ from aasm.physical_authority import AuthorityDomain, AuthorityLease
 from aasm.physical_authority_runtime import PHYSICAL_AUTHORITY_CAPABILITIES
 from aasm.physical_control_fencing_runtime import (
     PHYSICAL_CONTROL_FENCING_CAPABILITIES,
-    PhysicalControlFencingRuntimeMixin,
     physical_control_fencing_runtime_contract,
 )
 from aasm.physical_preemption import AuthorityPreemption, authority_preemption_contract
@@ -35,17 +33,7 @@ PREEMPTOR = "safety-controller"
 UNLISTED = "unlisted-controller"
 
 
-if callable(getattr(AASMEngine, "effect_capability_report", None)):
-    class ControlFencingEngine(PhysicalControlFencingRuntimeMixin, AASMEngine):
-        pass
-else:
-    class ControlFencingEngine(
-        PhysicalControlFencingRuntimeMixin,
-        EffectCapabilityRevocationGuardMixin,
-        EffectCapabilityRuntimeMixin,
-        AASMEngine,
-    ):
-        pass
+ControlFencingEngine = AASMEngine
 
 
 def _grant(engine, subject: str, *capabilities: str):
