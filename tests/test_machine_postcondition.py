@@ -77,7 +77,7 @@ def bootstrapped_engine(*, store=None):
         actor_principal_id=ROOT,
     )
     engine.register_scoped_principal(
-        Principal(VERIFIER, "VERIFIER"),
+        Principal(VERIFIER, "SERVICE"),
         workspace_id=WORKSPACE,
         actor_principal_id=ROOT,
     )
