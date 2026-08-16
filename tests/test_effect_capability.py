@@ -9,10 +9,8 @@ from jsonschema import Draft202012Validator
 
 from aasm import AASMEngine
 from aasm.effect_capability import EffectCapability, NumericInterval, effect_capability_contract
-from aasm.effect_capability_revocation_guard import EffectCapabilityRevocationGuardMixin
 from aasm.effect_capability_runtime import (
     EFFECT_CAPABILITY_CAPABILITIES,
-    EffectCapabilityRuntimeMixin,
     effect_capability_runtime_contract,
 )
 from aasm.effects import EffectSpec
@@ -32,12 +30,7 @@ CHILD = "controller-b"
 OTHER = "controller-c"
 
 
-class EffectCapabilityEngine(
-    EffectCapabilityRevocationGuardMixin,
-    EffectCapabilityRuntimeMixin,
-    AASMEngine,
-):
-    pass
+EffectCapabilityEngine = AASMEngine
 
 
 def _grant(engine, subject: str, *capabilities: str):
