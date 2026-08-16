@@ -1,24 +1,39 @@
 # AASM — Algorithmic Agent State Machine
 
-**Durable deterministic control for agents, tools, models, humans, formal systems, native solvers, engineering workflows, governed memory, and cross-run knowledge.**
+**Durable deterministic control for agents, tools, models, humans, formal systems, native solvers, engineering workflows, governed memory, external authoritative state machines, and cross-run knowledge.**
 
 ## Current release — v0.56.0
 
 **Truthful Solver Outcomes + Governed Semantic Evolution + Engineering Mathematical IR**
 
-**Next release / cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance
+**Next release / cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority
 
-AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, external engineering tools, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
+**Current development package on `main`:** `0.56.1`  
+**Current active adoption contract on `main`:** `aasm.adoption.v1 / 0.32.7`  
+**Qualified development boundary:** PR-1 + PR-2 + PR-3A through PR-3G  
+**Next unfinished boundary:** PR-3H — integrate bounded physical-effect authority into the existing Effect authorization/execution path  
+**Latest fully qualified pre-documentation implementation head:** `9425fbdd22f664f3a2cb5db73dcf45c5b77a0673`
 
-v0.56.0 makes solver outcome semantics truthful enough for later refinement and knowledge application: detailed status, termination, incumbent validation, bounds/gaps, evidence grade, raw provider status/code, and explicit lossy compatibility projection are governed separately. It preserves and extends all released v0.55 semantic-evolution, formulation, engineering-IR, and archive capabilities.
+AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, external engineering tools, physical/external state machines, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
+
+The latest immutable published release remains **v0.56.0**. Development on `main` has advanced materially beyond that published boundary without pretending the development target is already released. The active `0.56.1` candidate now combines execution provenance, explicit state/fact authority, external-machine supervision, postcondition verification, exclusive authority leases, bounded effect capabilities, stale-command fencing, semantic preemption, and crash-safe preemption recovery.
+
+The governing rule remains:
+
+> **Information may move through AASM. Authority does not hitchhike with it.**
+
+Reasoning, memory, solver output, sensor agreement, simulation, external-tool state, and prior-run knowledge can support governed decisions. None of them acquire authority merely because they were transported, repeated, cached, aggregated, translated, or executed.
 
 AASM's declared project license is **Apache License, Version 2.0 (`Apache-2.0`) across the project**. Previously granted MIT permissions remain valid for their recipients. See [`LICENSE`](LICENSE), [`NOTICE`](NOTICE), and [`LICENSE_POLICY.md`](LICENSE_POLICY.md).
 
-## Current release contracts
+## Current release and development contracts
 
 ```text
-package / public surface: 0.56.0
-aasm.adoption.v1 / 0.32.0
+latest published package / public surface: 0.56.0
+released adoption contract:                 aasm.adoption.v1 / 0.32.0
+
+current development package on main:        0.56.1
+active development adoption contract:       aasm.adoption.v1 / 0.32.7
 
 v0.56 truthful solver evidence:
   aasm.solver.outcome.v2
@@ -28,6 +43,43 @@ v0.56 truthful solver evidence:
   aasm.solver.status-v1-projection.v1
   aasm.solver.provider-status-map.v1
   aasm.solver.outcome-v2.runtime.v1
+
+v0.56.1 execution provenance:
+  aasm.solver.execution-profile.v1
+  aasm.solver.runtime-provenance.v1
+  aasm.solver.profile-evaluation.v1
+  aasm.solver.runtime-provenance.runtime.v1
+
+PR-1 governed state authority:
+  aasm.fact.authority.v1
+  aasm.state.claim.v1
+  aasm.state.authority.runtime.v1
+
+PR-2 governed external reality:
+  aasm.machine.binding.v1
+  aasm.machine.state-observation.v1
+  aasm.machine.external.runtime.v1
+  aasm.machine.transition.v1
+  aasm.machine.transition.runtime.v1
+  aasm.machine.postcondition-verification.v1
+  aasm.machine.postcondition-verification.runtime.v1
+
+PR-3A/3B physical authority:
+  aasm.authority.domain.v1
+  aasm.authority.lease.v1
+  aasm.physical.authority.runtime.v1
+
+PR-3C/3D bounded effect capability:
+  aasm.effect.capability.v1
+  aasm.effect.capability.runtime.v1
+
+PR-3E/3F stale-command fencing:
+  aasm.effect.capability-use.v1
+
+PR-3G semantic preemption:
+  aasm.authority.preemption.v1
+  aasm.physical.control-fencing.runtime.v1
+  crash-safe preemption recovery over canonical AuthorityLease revocation
 
 parent v0.55 semantic evolution:
   aasm.external.reference.v1
@@ -51,7 +103,7 @@ parent v0.55 engineering IR:
   governed decision-vector IR
   portable semantic-evolution archive
 
-parent v0.54 execution/solver contracts remain public:
+parent v0.54 execution/solver contracts remain authoritative:
   aasm.effect.intent.v1
   aasm.effect.dispatch-request.v1
   aasm.effect.ownership.v1
@@ -61,12 +113,18 @@ parent v0.54 execution/solver contracts remain public:
   aasm.solver.portfolio.v1
   aasm.solver.exchange.v1
 
+PR-3H status:
+  NOT IMPLEMENTED
+  must integrate with existing authorize_effect / execute_effect
+  must recheck capability/lease/epoch/revocation/bounds at effect boundaries
+  must not create a second authority evaluator, dispatcher, ownership model, or effect lifecycle
+
 license: Apache-2.0
 ```
 
 ## Why AASM exists
 
-The failure mode AASM targets is architectural: useful reasoning, solver output, memory, cached results, model confidence, external-tool state, or prior-run success gets mistaken for authority.
+The failure mode AASM targets is architectural: useful reasoning, solver output, memory, cached results, model confidence, external-tool state, sensor output, or prior-run success gets mistaken for authority.
 
 AASM separates those concerns:
 
@@ -84,6 +142,169 @@ proposal / observation / solver output / external receipt
 ```
 
 Performance state may improve performance. Evidence may support a decision. Neither silently becomes truth or authority.
+
+AASM's deeper direction is a governed reasoning and supervisory-control kernel over external authoritative state machines, typed engineering artifacts, heterogeneous solvers, verification/refinement loops, and reusable cross-run knowledge. This extends the original deterministic agent-state-machine purpose; it does not replace it.
+
+## v0.56.1 development — Governed external reality and physical control
+
+### PR-1 — desired, predicted, observed, and authoritative state are different
+
+The active development runtime distinguishes:
+
+```text
+DESIRED       requested/target state
+PREDICTED     model/simulation expectation
+OBSERVED      empirical/source observation
+AUTHORITATIVE explicitly admitted fact under matching FactAuthority
+```
+
+Observation existence is not authority. Observation agreement is not authority. `FactAuthority` does not create effect authority. State claims do not directly mutate core machine state.
+
+### PR-2 — supervise external machines without copying their truth
+
+AASM now has a governed external-machine path that preserves the existing Effect plane:
+
+```text
+AUTHORITATIVE pre-state + DESIRED target
+        |
+        v
+MachineTransitionIntent
+        |
+        v
+existing propose_effect() / EffectIntent
+        |
+        v
+existing authorize_effect()
+        |
+        v
+existing TaskLease + execute_effect()
+        |
+        +-- durable dispatch request
+        +-- durable ownership Evidence
+        +-- SUCCEEDED / FAILED / UNKNOWN / CANCELLED
+        |
+        v
+if UNKNOWN -> existing Effect reconciliation
+        |
+        v
+correlated post-effect OBSERVED state
+        |
+        v
+independent AUTHORITATIVE admission
+        |
+        v
+VERIFIED | MISMATCH
+```
+
+The central invariant is explicit:
+
+> **Command success is not achieved state.**
+
+`EffectStatus.SUCCEEDED` proves the existing Effect lifecycle reached its success state. It does not prove that physical or external reality now matches the desired state. Postcondition verification requires separately governed correlated observation and independently admitted authoritative state.
+
+### PR-3A/3B — authority domains and exclusive authority leases
+
+`AuthorityDomain` names a bounded physical/effect authority namespace without granting authority by existence.
+
+`AuthorityLease` adds:
+
+- explicit holder and issuer;
+- workspace/scope/domain identity;
+- explicit permitted effect classes;
+- validity interval;
+- strict monotonic authority epoch;
+- revision binding;
+- append-only revocation generation;
+- at-most-one-active-lease semantics for a domain.
+
+A lease still does **not** grant existing `effect.authorize` by existence.
+
+### PR-3C/3D — bounded effect capabilities
+
+`EffectCapability` is derived from an active authority lease and can only preserve or narrow authority.
+
+It binds:
+
+- holder and issuer;
+- exact domain and lease identity;
+- exact authority epoch;
+- workspace/scope/subject;
+- problem/external revision;
+- allowed operation set;
+- named closed numeric bounds;
+- validity interval;
+- delegation depth;
+- parent capability fingerprint/generation where delegated.
+
+Delegation must fail closed on amplification:
+
+```text
+child operations        ⊆ parent operations
+child bounds            ⊆ parent bounds
+child validity          ⊆ parent validity
+child scope/revision    = parent scope/revision
+child authority epoch   = parent authority epoch
+child delegation depth  < parent delegation depth
+```
+
+Capability existence still does not automatically grant Effect authorization.
+
+### PR-3E/3F — stale-command fencing
+
+Capability use is revalidated against current durable authority state. A previously valid use cannot be replayed as a reusable authorization token after revocation, preemption, epoch advancement, holder change, capability mismatch, scope/revision mismatch, or bound violation.
+
+The current capability-use object is intentionally a **point-in-time stale-command fence**, not a second Effect authorization system.
+
+### PR-3G — semantic preemption with crash recovery
+
+A listed preemptor identity alone is not enough. Preemption requires both:
+
+```text
+authority-domain preemptor identity
+        +
+existing scoped physical.authority.preempt permission
+```
+
+Successful preemption:
+
+1. durably records preemption Evidence;
+2. uses the canonical existing `AuthorityLease` revocation representation;
+3. invalidates capabilities tied to the preempted lease/epoch;
+4. requires the next lease epoch to advance monotonically;
+5. never rewrites prior Effect history;
+6. never grants the preemptor new Effect authority merely because preemption occurred.
+
+A crash between durable preemption Evidence and canonical lease-revocation Evidence is repaired deterministically on retry.
+
+### PR-3H — next active implementation boundary
+
+PR-3H remains deliberately unfinished. It must connect the already-landed physical authority/capability/fencing semantics into the existing Effect authorization and execution boundaries.
+
+The required architecture is:
+
+```text
+EffectIntent
+   |
+   v
+existing scoped effect authorization
+   +
+active AuthorityLease
+   +
+active bounded EffectCapability
+   +
+exact holder / operation / numeric bounds
+   +
+current authority epoch
+   +
+current revocation generation
+   +
+current scope / problem revision / external revision
+   |
+   v
+existing Effect ownership / dispatch / reconciliation
+```
+
+PR-3H must **not** create a parallel authority evaluator, scheduler, dispatcher, Effect store, ownership primitive, or reconciliation path.
 
 ## v0.56 — Truthful Solver Outcomes
 
@@ -378,9 +599,9 @@ derived projections grant truth    = false
 
 Durable event sequence numbers are ordering provenance. They are **not** machine-state version counters; replayed machine version is checked against the persisted canonical snapshot version.
 
-## v0.56 claim ceilings
+## Current claim ceilings
 
-AASM is explicit about what this release does not prove:
+AASM is explicit about what the published release and current development surface do not prove:
 
 ```text
 solver outcome normalization truth authority
@@ -412,26 +633,51 @@ continuous optimality proof
 
 decision-vector scalarization
   = NONE
+
+observation agreement
+  != fact authority
+
+AuthorityDomain existence
+  != effect authority
+
+AuthorityLease existence
+  != effect authority
+
+EffectCapability existence
+  != effect authority
+
+point-in-time capability-use validation
+  != reusable effect authorization
+
+semantic preemption
+  != new effect authority
+
+EffectStatus.SUCCEEDED
+  != achieved physical/external state
+
+PR-3H effect-boundary integration
+  = NOT YET IMPLEMENTED
 ```
 
 ## Core architecture
 
 ```text
-                              AASM
-                               |
-                    canonical durable state
-                               |
-      +-----------+------------+------------+-----------+
-      |           |            |            |           |
-      v           v            v            v           v
-  reasoning     memory       solvers      effects     external
-      |           |            |            |         machines
-      |           |            |            |           |
-      +-----------+------------+------------+-----------+
-                               |
-                         Evidence/events
-                               |
-                  deterministic reducer + policy
+                                     AASM
+                                      |
+                           canonical durable state
+                                      |
+      +-----------+-----------+-------+--------+--------------+
+      |           |           |       |        |              |
+      v           v           v       v        v              v
+  reasoning     memory      solvers  effects  authority   external machines
+      |           |           |       |        |              |
+      +-----------+-----------+-------+--------+--------------+
+                                      |
+                                Evidence/events
+                                      |
+                         deterministic reducer + policy
+                                      |
+                      verification / reconciliation / refinement
 ```
 
 Three persistent graphs remain central:
@@ -444,7 +690,7 @@ AASM's AVATAR/CDCL-inspired architecture uses conditional activation, durable co
 
 ## Engineering / TextPCB direction
 
-v0.56 continues to shape AASM for demanding external engineering state machines without baking PCB or CAD types into the kernel.
+AASM continues to shape a domain-neutral supervisory kernel for demanding external engineering state machines without baking PCB or CAD types into the kernel.
 
 The public seams now support:
 
@@ -461,12 +707,16 @@ discrete / scheduling / continuous IR
         ↓
 truthful solver outcome
         ↓
-external verification / execution evidence
+external machine binding + authoritative-state claims
         ↓
-revision-safe re-evaluation
+governed Effect proposal / ownership / dispatch
+        ↓
+correlated observation + postcondition verification
+        ↓
+revision-safe re-evaluation / refinement
 ```
 
-The kernel remains domain neutral. PCB/CAD/CAE-specific semantics belong in adapters and conformance packages.
+The kernel remains domain neutral. PCB/CAD/CAE-specific semantics belong in adapters and conformance packages. TextPCB is a demanding consumer and qualification target, not kernel logic.
 
 ## Quick start
 
@@ -499,34 +749,64 @@ engine = AASMEngine(ProblemSpec("governed engineering task"))
 print(engine.snapshot.machine_id)
 ```
 
-Inspect the active adoption contract:
+Inspect the active development adoption contract on `main`:
 
 ```python
 import aasm
 
 report = aasm.validate_public_api_contract()
 assert report["valid"]
-assert aasm.__version__ == "0.56.0"
-print(aasm.public_api_contract()["contract_version"])
+assert aasm.__version__ == "0.56.1"
+assert aasm.public_api_contract()["contract_version"] == "0.32.7"
 ```
+
+If you need the immutable published package contract rather than the development branch, use the `v0.56.0` release/tag.
 
 ## Verification
 
 AASM uses independent, exact-head gates rather than treating documentation as evidence of implementation.
 
-The v0.56-specific gate verifies:
+The implementation head `9425fbdd22f664f3a2cb5db73dcf45c5b77a0673` qualified the active `0.56.1 / 0.32.7` candidate across **20 direct required contexts**:
 
 ```text
-tracked file inventory
-Solver Outcome v2 contracts and schemas
-all roadmap-mandated terminal classes
-independent incumbent validation
-lossy v2→v1 compatibility projection
-exact provider status mapping
-real CaDiCaL / OR-Tools / HiGHS status identity
-active public v0.56 surface
-released v0.55 parent compatibility
+aasm/ci-summary                         PASS
+aasm/formal-assurance                   PASS
+aasm/semantic-solver-rc                 PASS
+aasm/proof-claims                       PASS
+aasm/solution-pools                     PASS
+aasm/optimization                       PASS
+aasm/scoped-authority                   PASS
+aasm/solver-learning                    PASS
+aasm/v54                                PASS
+aasm/v55                                PASS
+aasm/v56                                PASS
+aasm/v56-provenance                     PASS
+aasm/state-authority                    PASS
+aasm/external-machine                   PASS
+aasm/machine-transition                 PASS
+aasm/machine-postcondition              PASS
+aasm/physical-authority                 PASS
+aasm/effect-capability                  PASS
+aasm/physical-control-fencing           PASS
+aasm/physical-preemption-recovery       PASS
 ```
+
+The cumulative v0.56 gate on that head passed:
+
+- Solver Outcome v2 contracts and terminal-class fixtures;
+- real CaDiCaL / OR-Tools / HiGHS status identity;
+- execution-profile/runtime-provenance fixtures;
+- PR-1 state authority;
+- PR-2 external-machine binding, transition, observation correlation, and postcondition verification;
+- PR-3A/3B authority domains and exclusive/revocable leases;
+- PR-3C/3D bounded effect capabilities and non-amplifying delegation;
+- PR-3E/3F stale-command fencing;
+- PR-3G semantic preemption and canonical lease revocation;
+- crash recovery between durable preemption Evidence and lease-revocation Evidence;
+- cumulative source/release contracts;
+- active adoption contract `0.32.7`.
+
+The main CI matrix on the same head passed Python **3.11, 3.12, and 3.13**, reproducible development-wheel smoke, PostgreSQL integration, Compose full-stack smoke, hierarchical scopes, LangGraph integration, and adapter conformance.
 
 ### Reproducible release evidence
 
@@ -563,6 +843,7 @@ v0.53  scoped authority and durable solver learning
 v0.54  effect ownership + deterministic solver portfolio/exchange
 v0.55  governed semantic evolution + engineering IR + portable archive
 v0.56  truthful solver outcomes + exact provider status mapping
+v0.56.1 development  execution provenance + governed external reality + PR-3A–G physical control foundations
 ```
 
 Historical release documentation remains under `docs/RELEASE_*.md` and the architecture/roadmap documents.
@@ -571,12 +852,15 @@ Historical release documentation remains under `docs/RELEASE_*.md` and the archi
 
 Start with:
 
-- [`docs/CURRENT_RELEASE.md`](docs/CURRENT_RELEASE.md) — active v0.56 contract and boundaries;
+- [`docs/CURRENT_RELEASE.md`](docs/CURRENT_RELEASE.md) — immutable published v0.56.0 boundary plus current `main` development state;
+- [`docs/RELEASE_0.56.1.md`](docs/RELEASE_0.56.1.md) — active 0.56.1 development candidate and claim ceilings;
 - [`docs/RELEASE_0.56.md`](docs/RELEASE_0.56.md) — v0.56 release summary;
 - [`docs/RELEASE_0.55.md`](docs/RELEASE_0.55.md) — parent v0.55 release summary;
 - [`docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md`](docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md) — semantic-evolution architecture;
-- [`docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md`](docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md) — implementation sequence;
+- [`docs/architecture/GOVERNED_PHYSICAL_DISTRIBUTED_REALITY_RECONCILIATION.md`](docs/architecture/GOVERNED_PHYSICAL_DISTRIBUTED_REALITY_RECONCILIATION.md) — physical/distributed architecture reconciliation;
 - [`docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md`](docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md) — canonical execution ledger;
+- [`docs/implementation/GOVERNED_PHYSICAL_REALITY_INTEGRATION_PLAN.md`](docs/implementation/GOVERNED_PHYSICAL_REALITY_INTEGRATION_PLAN.md) — physical-reality integration plan;
+- [`docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md`](docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md) — implementation sequence;
 - [`WHY_AASM.md`](WHY_AASM.md) — project motivation;
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — broader architecture;
 - [`docs/FORMAL_CALCULUS.md`](docs/FORMAL_CALCULUS.md) — calculus background;
@@ -585,9 +869,12 @@ Start with:
 
 ## Project status
 
-AASM is an experimental `0.x` project. Public contracts are versioned and aggressively tested, but interfaces may still evolve between minor releases. Claims in the README are intended to stay below the evidence available from code, tests, and release gates.
+AASM is an experimental `0.x` project. Public contracts are versioned and aggressively tested, but interfaces may still evolve between minor releases. Claims in the README are intended to stay below the evidence available from code, tests, and exact-head qualification gates.
 
-**Current release:** `0.56.0`  
-**Adoption contract:** `aasm.adoption.v1 / 0.32.0`  
+**Current immutable release:** `0.56.0`  
+**Current development target on `main`:** `0.56.1`  
+**Released adoption contract:** `aasm.adoption.v1 / 0.32.0`  
+**Active development adoption contract:** `aasm.adoption.v1 / 0.32.7`  
+**PR-3 status:** `PR-3A through PR-3G GATED; PR-3H NOT YET IMPLEMENTED`  
 **License:** Apache-2.0  
 **Repository:** https://github.com/halthinks/AASM
