@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
-from aasm import AASMEngine as ActiveEngine
+from aasm import AASMEngine
 from aasm.effect_capability import EffectCapability
 from aasm.effect_capability_runtime import EFFECT_CAPABILITY_CAPABILITIES
 from aasm.effects import EffectSpec, EffectStatus
@@ -19,7 +19,6 @@ from aasm.physical_effect_binding import (
     PhysicalEffectAuthorityBinding,
     physical_effect_authority_binding_contract,
 )
-from aasm.physical_effect_integration_boundary import PhysicalEffectIntegrationBoundaryMixin
 from aasm.physical_effect_integration_runtime import (
     PHYSICAL_EFFECT_INTEGRATION_CAPABILITIES,
     physical_effect_integration_runtime_contract,
@@ -36,10 +35,6 @@ HOLDER = "controller-a"
 PREEMPTOR = "safety-controller"
 
 
-class PhysicalEffectIntegrationEngine(PhysicalEffectIntegrationBoundaryMixin, ActiveEngine):
-    pass
-
-
 def _grant(engine, subject: str, *capabilities: str):
     return engine.admit_scoped_authority_grant(
         ScopedAuthorityGrant(subject, ROOT, WORKSPACE, SCOPE, tuple(capabilities))
@@ -47,7 +42,7 @@ def _grant(engine, subject: str, *capabilities: str):
 
 
 def bootstrapped_engine():
-    engine = PhysicalEffectIntegrationEngine(ProblemSpec("PR-3H physical effect integration"))
+    engine = AASMEngine(ProblemSpec("PR-3H physical effect integration"))
     trust = engine.add_evidence(
         EvidenceRecord("trust_anchor", "PR-3H fixture root", source="fixture.root-of-trust"),
         reason="PR-3H fixture trust anchor",
@@ -390,8 +385,6 @@ def test_ordinary_unbound_effect_preserves_existing_behavior():
 def test_binding_does_not_replace_scoped_effect_authority():
     engine = bootstrapped_engine(); _, lease, capability = setup_authority(engine)
     record = propose_physical_effect(engine); bind_effect(engine, record, lease, capability)
-    # Binding is durable semantic Evidence only; existing scoped effect authority
-    # remains a separate later decision.
     current = engine.store.load_effect(engine.snapshot.machine_id, record.spec.effect_id)
     assert current.status == EffectStatus.PROPOSED.value
     assert current.authorization_id is None
