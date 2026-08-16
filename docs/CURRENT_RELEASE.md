@@ -1,17 +1,22 @@
 # AASM v0.56.0 — Truthful Solver Outcomes
 
 **Latest immutable published release:** v0.56.0  
-**Current development target on `main`:** 0.56.1 — Execution Profiles + Runtime Provenance  
-**Released adoption contract:** `aasm.adoption.v1 / 0.32.0`
+**Current development target on `main`:** 0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority  
+**Released adoption contract:** `aasm.adoption.v1 / 0.32.0`  
+**Active development adoption contract on `main`:** `aasm.adoption.v1 / 0.32.7`  
+**Current qualified physical-control boundary:** PR-3A through PR-3G  
+**Next unfinished boundary:** PR-3H — Effect authorization/execution integration
 
-AASM v0.56.0 is the latest published GitHub package/runtime release. Unreleased `main` may expose the 0.56.1 development target and its candidate contracts, but that does **not** make v0.56.1 a published release. Exact unreleased source identity is the Git commit SHA.
+AASM v0.56.0 is the latest published GitHub package/runtime release. Unreleased `main` now exposes the broader 0.56.1 development target and active adoption contract `0.32.7`, but that does **not** make v0.56.1 a published release. Exact unreleased source identity is the Git commit SHA.
 
 The stable remote wire protocol remains **`aasm.remote.v1 / 0.19.0`** and is independent of package SemVer.
 
 ```text
 latest published package: 0.56.0
 published public surface: public_v56 / 0.32.0 at the v0.56.0 tag
-current development target: 0.56.1 / 0.32.1 on main
+current development target: 0.56.1 / 0.32.7 on main
+qualified implementation head before documentation-only updates:
+  9425fbdd22f664f3a2cb5db73dcf45c5b77a0673
 parent published release: v0.55.0
 ```
 
@@ -70,14 +75,126 @@ provider claim != independent proof
 
 ## Current development after v0.56.0
 
-`main` currently develops **Execution Profiles + Runtime Provenance** under the already-established 0.56.1 target. Candidate contracts include:
+`main` currently develops the coherent **0.56.1** candidate. It is no longer provenance-only.
+
+### Execution profile + runtime provenance
+
+Active contracts include:
 
 - `aasm.solver.execution-profile.v1`
 - `aasm.solver.runtime-provenance.v1`
 - `aasm.solver.profile-evaluation.v1`
 - runtime `aasm.solver.runtime-provenance.runtime.v1`
 
-These are development/candidate capabilities until the selected release scope passes the exact-head qualification process and an explicit release operation publishes an immutable tag and artifacts.
+### PR-1 — governed state authority
+
+Active contracts include:
+
+- `aasm.fact.authority.v1`
+- `aasm.state.claim.v1`
+- runtime `aasm.state.authority.runtime.v1`
+
+AASM keeps `DESIRED`, `PREDICTED`, `OBSERVED`, and `AUTHORITATIVE` state semantically distinct. Observation existence or agreement does not mint authority.
+
+### PR-2 — governed external reality
+
+Active contracts include:
+
+- `aasm.machine.binding.v1`
+- `aasm.machine.state-observation.v1`
+- `aasm.machine.external.runtime.v1`
+- `aasm.machine.transition.v1`
+- `aasm.machine.transition.runtime.v1`
+- `aasm.machine.postcondition-verification.v1`
+- `aasm.machine.postcondition-verification.runtime.v1`
+
+PR-2 supervises external authoritative state without creating a second external-truth table. Machine-transition proposals lower into the existing v0.54 Effect path. `EffectStatus.SUCCEEDED` does not by itself prove achieved physical/external state.
+
+### PR-3A/3B — authority domains and leases
+
+Active contracts include:
+
+- `aasm.authority.domain.v1`
+- `aasm.authority.lease.v1`
+- runtime `aasm.physical.authority.runtime.v1`
+
+Authority domains name bounded physical/effect authority namespaces. Authority leases establish exclusive time-bounded holders, strict monotonic epochs, revision binding, and append-only revocation. Domain or lease existence does not automatically grant `effect.authorize`.
+
+### PR-3C/3D — bounded effect capabilities
+
+Active contracts include:
+
+- `aasm.effect.capability.v1`
+- runtime `aasm.effect.capability.runtime.v1`
+
+Capabilities are derived from active authority leases and must preserve or narrow operation sets, numeric bounds, validity, scope/revision identity, authority epoch, and delegation depth. Delegation cannot amplify authority.
+
+### PR-3E/3F — stale-command fencing
+
+Active capability-use semantics require exact current capability identity, lease identity, holder, authority epoch, revocation generation, scope/revision identity, operation, and numeric bounds.
+
+Previously valid capability-use Evidence is not a reusable authorization token.
+
+### PR-3G — semantic preemption + crash recovery
+
+Active contracts include:
+
+- `aasm.authority.preemption.v1`
+- runtime `aasm.physical.control-fencing.runtime.v1`
+
+Semantic preemption requires both authority-domain preemptor identity and existing scoped `physical.authority.preempt` permission. It uses canonical `AuthorityLease` revocation, invalidates stale capability authority, advances the required next epoch monotonically, and never rewrites Effect history or grants new Effect authority by existence.
+
+Crash recovery repairs the narrow failure window where preemption Evidence became durable before canonical lease-revocation Evidence.
+
+### PR-3H — not yet implemented
+
+PR-3H is the next active boundary. It must integrate the already-landed lease/capability/epoch/revocation/bounds checks into the **existing** `authorize_effect` / `execute_effect` path.
+
+It must not create:
+
+- a second authority evaluator;
+- a second scheduler;
+- a second Effect dispatcher;
+- a second ownership model;
+- a second reconciliation path;
+- a parallel Effect truth store.
+
+The existing v0.54 Effect lifecycle remains authoritative.
+
+## Exact-head qualification
+
+The implementation head:
+
+```text
+9425fbdd22f664f3a2cb5db73dcf45c5b77a0673
+```
+
+qualified the active `0.56.1 / 0.32.7` candidate with all required direct contexts green, including:
+
+- `aasm/ci-summary`
+- `aasm/formal-assurance`
+- `aasm/semantic-solver-rc`
+- `aasm/proof-claims`
+- `aasm/solution-pools`
+- `aasm/optimization`
+- `aasm/scoped-authority`
+- `aasm/solver-learning`
+- `aasm/v54`
+- `aasm/v55`
+- `aasm/v56`
+- `aasm/v56-provenance`
+- `aasm/state-authority`
+- `aasm/external-machine`
+- `aasm/machine-transition`
+- `aasm/machine-postcondition`
+- `aasm/physical-authority`
+- `aasm/effect-capability`
+- `aasm/physical-control-fencing`
+- `aasm/physical-preemption-recovery`
+
+The main CI matrix passed Python 3.11, 3.12, and 3.13, reproducible development-wheel smoke, PostgreSQL integration, Compose full-stack smoke, hierarchical scopes, LangGraph integration, and adapter conformance.
+
+These are development/candidate capabilities until the selected release scope passes the deliberate release process and an explicit release operation publishes an immutable tag and artifacts.
 
 See [`RELEASE_0.56.1.md`](RELEASE_0.56.1.md) for the candidate scope and [`VERSIONING.md`](VERSIONING.md) for the development/release identity policy.
 
