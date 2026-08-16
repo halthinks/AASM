@@ -3,7 +3,7 @@
 **Status projection date:** 2026-08-16  
 **Latest immutable release:** `v0.56.0` at commit `551b2f4780acaeb93384b454f6f474f6ebd1b30e`  
 **Current development target:** `0.56.1` on `main`; exact unreleased identity is Git SHA  
-**Current adoption contract:** `aasm.adoption.v1 / 0.32.2`  
+**Current adoption contract:** `aasm.adoption.v1 / 0.32.5`  
 **Doctrine:** `docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md`  
 **Physical/distributed reconciliation:** `docs/architecture/GOVERNED_PHYSICAL_DISTRIBUTED_REALITY_RECONCILIATION.md`  
 **Physical integration plan:** `docs/implementation/GOVERNED_PHYSICAL_REALITY_INTEGRATION_PLAN.md`  
@@ -50,8 +50,8 @@ Dormant or interrupted source code does not advance a row by itself. A row advan
 | 56.3 | `reproducibility-certification` | Reproducibility certification | SOURCE_LOCKED | truthful semantic/assignment/objective/proof reproduction claims | dormant `reproducibility.py`, `_runtime_v56_reproducibility.py`, and `solver_provenance_v2.py` work exists but is not active/admitted | qualified 56.2 | no active public/gate evidence yet; dormant source is insufficient | none beyond existing provenance ceiling | reconcile dormant v2 provenance with active provenance contract before admission |
 | 56.4 | `knowledge-applicability-application` | Generic knowledge applicability/application | SOURCE_LOCKED | applicability-scoped learned constraints beyond solver learning | generalize v0.48/v0.53 mechanisms; no second knowledge store | 55.1; 56.1; solver learning | poisoned/cross-revision/cross-scope reuse corpus required | solver-learning subset already real | design explicit applicability/application contracts |
 | 56.5 | `integrated-core-conflict-pipeline` | Integrated core/conflict pipeline | SOURCE_LOCKED | raw → normalized → minimized → independently rechecked requirement core | `conflict_minimization.py` exists as reusable primitive | 55.1; 55.3; 56.1 | irrelevant assumption/core-oracle fixtures | generic minimizer exists; integrated solver/domain pipeline not claimed | integrate after lineage + truthful outcomes |
-| 57.1 | `external-machine-supervision` / PR-2A | External machine binding | DESIGNED | supervise an external authoritative state machine without mirroring truth | contract designed as `aasm.machine.binding.v1`; PR-1 fact/state authority now available | v0.54 effects; 55.1 revisions; PR-1 | stale observed revision/out-of-band change tests required | none yet | next implementation slice: bind machine identity/observer/executor without second truth store |
-| 57.2 | `external-machine-supervision` / PR-2B–2C | Revision-safe transition, state observation, postcondition verification | DESIGNED | expected pre-state/revision, postcondition observation, receipt correlation | designed `aasm.machine.transition.v1` / `aasm.machine.state-observation.v1`; existing `EffectSpec` pre/postconditions and v0.54 ownership/reconciliation; PR-1 claims available | 57.1; effects; PR-1 | no call before ownership; stale prestate; ACK-without-achievement; UNKNOWN/reconcile | effect ownership is real; achieved-transition semantics not yet generic | add observation-backed postcondition verifier; no second effect lifecycle |
+| 57.1 | `external-machine-supervision` / PR-2A | External machine binding | GATED | supervise an external authoritative state machine without mirroring truth | `aasm.machine.binding.v1`; `aasm.machine.state-observation.v1`; `aasm.machine.external.runtime.v1`; `external_machine.py`; `external_machine_runtime.py`; schemas; active `public_v56` | v0.54 effects; 55.1 revisions; PR-1 | exact-head `aasm/external-machine`; subject/namespace/revision/capability laundering rejection; SQLite replay; binding references cannot mint fact/effect authority | reference/correlation only; no external truth copy, executor invocation, effect authority, or core machine-state mutation | preserve as PR-2A boundary; PR-2B/2C now qualified on top |
+| 57.2 | `external-machine-supervision` / PR-2B–2C | Revision-safe transition, state observation, postcondition verification | GATED | expected authoritative pre-state/revision, desired target state, post-effect observation, execution correlation, independently authoritative achieved state | `aasm.machine.transition.v1`; `aasm.machine.transition.runtime.v1`; `aasm.machine.postcondition-verification.v1`; `aasm.machine.postcondition-verification.runtime.v1`; existing v0.54 `EffectIntent`/ownership/reconciliation; active `public_v56` | 57.1; effects; PR-1 | exact-head `aasm/machine-transition`, `aasm/machine-postcondition`, cumulative `aasm/v56`, and full CI; real resource→worker→TaskDemand→TaskLease→ownership→dispatch path; stale prestate/correlation, ACK-without-achievement, non-authoritative observation, mismatch, idempotency, SQLite replay | `SUCCEEDED` is not achieved state; exact canonical equality only; no freshness/calibration/tolerance semantics; no second dispatcher/effect lifecycle or authority minting | preserve; next dependency is PR-3 physical authority/capabilities and PR-4 temporal/identity/calibration semantics |
 | 57.3 | `external-machine-supervision` | Artifact revision lineage | DESIGNED | immutable CAD/PCB/CAE/physical outputs | designed `aasm.artifact.revision.v1`; artifact backends exist but canonical lineage contract not active | 55.1; 57.1 | tamper/parent/stale artifact fixtures | artifact existence is not authoritative acceptance | implement canonical artifact lineage |
 | 57.4 | `external-machine-supervision` | Entity evolution | DESIGNED | persistent semantic identity across topology/tool/world-model changes | designed `aasm.entity.evolution.v1` | 57.3 | ambiguous mapping blocks hard reuse | none yet | genericize beyond CAD |
 | 58.1 | `governed-refinement-verification-planning` | Governed refinement proposal/loop | DESIGNED | solve→verify→diagnose→refine→re-solve without evaluator self-mutation | designed `aasm.refinement.proposal.v1` / `aasm.refinement.loop.v1`; ProblemDelta and Evidence substrates released | 55.1; 56.4; 57.x | stale/self-authorized/no-progress/oscillation attacks | evaluator proposes only; existing authority commits | implement as composition, not new truth/scheduler |
@@ -75,8 +75,8 @@ These are the durable seams exposed by the Embedded/Physical review. They extend
 | ID | Milestone | Capability | Status | Existing substrate / landed work | Missing semantic elevation / next boundary |
 |---|---|---|---|---|---|
 | PHY-01 | `physical-authority-capabilities` / PR-3 | Authority domains, leases/epochs, bounded revocable effect capabilities, semantic preemption | DESIGNED | scoped grants/delegation/deny/expiry; typed capability ABI; effect authority evidence | exclusive authority-domain ownership, epoch freshness, capability non-amplification, explicit preemption/revocation semantics |
-| PHY-02 | `authoritative-state-claims` / PR-1 | Desired / predicted / observed / authoritative state separation + fact authority | GATED | `aasm.fact.authority.v1`; `aasm.state.claim.v1`; `aasm.state.authority.runtime.v1`; `state_authority.py`; `state_authority_runtime.py`; schemas; active `public_v56`; existing Evidence + scoped authority only | PR-1 boundary complete: observation/consensus cannot create authority, fact authority grants no effect authority, claims do not mutate core machine state; next dependency is PR-2 machine/postcondition semantics |
-| PHY-03 | `postcondition-verification` / PR-2 | Command ≠ achievement; postcondition verifier and transition-attempt lifecycle | DESIGNED | `EffectSpec` pre/postconditions; durable EffectIntent/Ownership/Reconciliation/UNKNOWN; PR-1 state claims | machine binding, correlated state observation, freshness/revision checks, observation-backed postcondition verification and authoritative achieved-state admission |
+| PHY-02 | `authoritative-state-claims` / PR-1 | Desired / predicted / observed / authoritative state separation + fact authority | GATED | `aasm.fact.authority.v1`; `aasm.state.claim.v1`; `aasm.state.authority.runtime.v1`; `state_authority.py`; `state_authority_runtime.py`; schemas; active `public_v56`; existing Evidence + scoped authority only | PR-1 boundary complete: observation/consensus cannot create authority, fact authority grants no effect authority, claims do not mutate core machine state; PR-2 external-machine semantics are now qualified on top |
+| PHY-03 | `postcondition-verification` / PR-2 | Command ≠ achievement; machine binding, transition attempt, correlated observation and postcondition verifier | GATED | `aasm.machine.binding.v1`; `aasm.machine.state-observation.v1`; `aasm.machine.transition.v1`; `aasm.machine.postcondition-verification.v1`; their runtime mixins/schemas; existing v0.54 EffectIntent/Ownership/Reconciliation/UNKNOWN; active `public_v56` | PR-2 boundary complete: successful governed dispatch/ACK cannot establish achieved state; verification requires correlated post-effect observation plus independently authoritative state; exact equality only; PR-4 owns freshness/clock/calibration/tolerance semantics |
 | PHY-04 | `temporal-causal-semantics` / PR-4 | sequence, causal relation, leases/deadlines, observation age, clock quality | DESIGNED | event order, timestamps, lease expiration in existing subsystems | explicit causal/partial-order contract; monotonic device epochs; clock-quality/freshness semantics |
 | PHY-05 | `physical-identity-trust` / PR-4 | device/component identity, calibration lifecycle, trust boundary, attestation | DESIGNED | external refs, environment fingerprints, measurement authority, runtime provenance | physical assembly/sensor/calibration identity; validity ranges/expiry; trust claims; secure-boot/firmware attestation hooks |
 | PHY-06 | `degraded-autonomy-safety` / PR-5 | degraded modes, safety envelopes, semantic preemption, hybrid discrete/continuous guards | DESIGNED | machine states/obligations, continuous IR, effects, scoped authority | degradation policy, continuous safety envelope, hybrid state contract, emergency/local authority rules |
@@ -108,10 +108,26 @@ This immutable release completes **56.1 Solver Outcome v2**. It does not imply r
 
 ## Current development qualification evidence
 
+### PR-1 / PHY-02 qualification
+
 A post-PR-1 exact-head qualification snapshot was captured on development commit:
 
 ```text
 04b8f3325c1698b3fb7b24421636ee9380fecc2a
+```
+
+The direct commit-status contexts were all **success** on that exact head, including full CI, formal assurance, semantic solver RC, v0.54/v0.55 parent gates, cumulative v0.56, provenance, and state authority.
+
+The dedicated state-authority qualification exercised contract/source checks, schema validation, authority-denial behavior, no-consensus-authority, expiry/revocation, source-principal impersonation, namespace/revision laundering, no core-machine-state mutation, SQLite restart, and exact replay.
+
+This evidence qualifies PR-1 / PHY-02 as **GATED**, not **RELEASED**.
+
+### PR-2 / 57.1–57.2 / PHY-03 qualification
+
+The complete external-machine supervision chain was qualified on exact development head:
+
+```text
+c3f68539bc19b189b42cb8d67b8f2c98a519fe22
 ```
 
 The following direct commit-status contexts were all **success** on that exact head:
@@ -129,23 +145,41 @@ The following direct commit-status contexts were all **success** on that exact h
 - `aasm/v56`
 - `aasm/v56-provenance`
 - `aasm/state-authority`
+- `aasm/external-machine`
+- `aasm/machine-transition`
+- `aasm/machine-postcondition`
 
-The generic CI matrix on that head passed Python 3.11, 3.12, and 3.13 plus reproducible wheel smoke, PostgreSQL integration, Compose smoke, hierarchical scopes, LangGraph integration, and adapter conformance.
+The generic CI matrix passed Python 3.11, 3.12, and 3.13, reproducible wheel smoke, PostgreSQL integration, Compose full-stack smoke, hierarchical scopes, LangGraph integration, and adapter conformance.
 
-The dedicated state-authority qualification exercised contract/source checks, schema validation, authority-denial behavior, no-consensus-authority, expiry/revocation, source-principal impersonation, namespace/revision laundering, no core-machine-state mutation, SQLite restart, and exact replay.
+The PR-2 qualification specifically proved:
 
-This evidence qualifies PR-1 / PHY-02 as **GATED**, not **RELEASED**.
+- external machine binding is reference/correlation only and cannot mint fact or effect authority;
+- machine observations require already-durable PR-1 `OBSERVED` claims and exact binding/revision/subject/namespace agreement;
+- transition proposals lower into the existing v0.54 `propose_effect()` / `EffectIntent` path and cannot authorize or dispatch effects themselves;
+- a genuine external-effect attempt uses the existing resource → worker → `TaskDemand` → active `TaskLease` → ownership → dispatch path;
+- `EffectStatus.SUCCEEDED` and executor/ACK success cannot establish achieved external state;
+- postcondition observations must correlate to the exact existing `EffectRecord.execution_id`;
+- achieved state must already be an independently admitted PR-1 `AUTHORITATIVE` claim derived from the supplied correlated observation;
+- exact match produces `VERIFIED`, mismatch produces durable `MISMATCH` Evidence, and neither mutates the existing effect outcome or authoritative state;
+- `UNKNOWN` remains exclusively on the existing effect reconciliation path;
+- SQLite restart/replay and idempotent verification are preserved;
+- no parallel dispatcher, effect lifecycle, truth table, or authority evaluator was introduced.
+
+This evidence qualifies **57.1 / PR-2A**, **57.2 / PR-2B–2C**, and **PHY-03 / PR-2** as **GATED**, not **RELEASED**.
 
 ## Immediate builder queue
 
 1. Keep `v0.56.0` / `551b2f47…` as the immutable published boundary. Do not publish 0.56.1 automatically.
-2. Preserve PR-1 / PHY-02 as the authoritative-state foundation; do not widen it into effect authority.
-3. Begin **PR-2A / 57.1** with stable `MachineBinding` and external state-observation semantics using PR-1 state claims, `ExternalReference`/revisions, and existing Evidence.
-4. Implement **PR-2B** transition-attempt semantics by binding expected pre-state/revision and requested postconditions to the existing `EffectIntent` / ownership path. Do not add a second dispatcher.
-5. Implement **PR-2C / PHY-03** postcondition verification so successful dispatch/ACK can never itself establish achieved state. `UNKNOWN` remains on the existing effect reconciliation path.
-6. Only after PR-2 is qualified, proceed to PR-3 authority domains/epochs/bounded effect capabilities and then PR-4 temporal/identity/calibration semantics.
-7. Reconcile dormant reproducibility/provenance-v2 source separately before any 56.3 admission; dormant code is still non-authoritative.
-8. Keep TextPCB as a demanding consumer/conformance target; do not move TextPCB-specific types into the kernel.
+2. Preserve PR-1 / PHY-02 and PR-2 / PHY-03 claim ceilings; do not widen state claims, bindings, transition proposals, observations, or postcondition verification into actuator authority.
+3. Begin **PR-3 / PHY-01 — physical authority + bounded effect capabilities** on top of existing scoped authority and the existing Effect authorization/execution path. Do **not** build a second authority evaluator or dispatcher.
+4. PR-3A: land a stable `AuthorityDomain` contract that names the bounded physical/effect authority namespace without granting authority by existence.
+5. PR-3B: land exclusive/revocable `AuthorityLease` semantics with explicit holder, workspace/scope/domain, authority epoch/generation, validity interval, and durable evidence/replay.
+6. PR-3C/3D: add authority epoch freshness and bounded effect capability semantics; stale epochs and out-of-bounds capability use must fail closed.
+7. PR-3E/3F/3G: delegation must never amplify authority; stale-command fencing and revocation/preemption must be explicit and replayable.
+8. PR-3H: integrate those contracts into the **existing** `authorize_effect` / `execute_effect` path so physical-effect authority is checked without replacing v0.54 ownership, TaskLease, resource governance, or reconciliation.
+9. After PR-3 is qualified, proceed to PR-4 temporal/causal/physical-identity/calibration/observation-epistemics semantics; do not smuggle those semantics into PR-3.
+10. Reconcile dormant reproducibility/provenance-v2 source separately before any 56.3 admission; dormant code remains non-authoritative.
+11. Keep TextPCB as a demanding consumer/conformance target; do not move TextPCB-specific types into the kernel.
 
 ## Completion discipline
 
