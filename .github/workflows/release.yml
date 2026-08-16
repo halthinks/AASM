@@ -123,7 +123,8 @@ jobs:
             aasm/physical-authority \
             aasm/effect-capability \
             aasm/physical-control-fencing \
-            aasm/physical-preemption-recovery; do
+            aasm/physical-preemption-recovery \
+            aasm/physical-effect-integration; do
             state=""
             for _ in $(seq 1 90); do
               state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" --jq "[.statuses[] | select(.context == \"$context\")][0].state // \"\"")"
