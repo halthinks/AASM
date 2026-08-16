@@ -1,0 +1,316 @@
+name: Atomic PR-3C/3D Capability Admission
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  statuses: write
+
+jobs:
+  admit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install complete qualification dependencies
+        run: python -m pip install -e '.[dev,optimization]'
+      - name: Re-qualify pre-admission capability surface
+        run: |
+          python scripts/check_effect_capability_contracts.py
+          pytest -q tests/test_effect_capability.py
+      - name: Admit capability surface atomically
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new, *, required=True):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              if old not in text:
+                  if required: raise SystemExit(f'{path}: required admission anchor missing: {old[:120]!r}')
+                  return
+              p.write_text(text.replace(old,new),encoding='utf-8')
+
+          def insert_before(path, anchor, block):
+              p=Path(path); text=p.read_text(encoding='utf-8')
+              if block.strip() in text: return
+              if anchor not in text: raise SystemExit(f'{path}: insertion anchor missing: {anchor[:120]!r}')
+              p.write_text(text.replace(anchor,block+anchor,1),encoding='utf-8')
+
+          # Active runtime composition.
+          replace('src/aasm/runtime_v56_foundation.py',
+              'from .external_machine_postcondition_execution_correlation import MachinePostconditionExecutionCorrelationMixin\n',
+              'from .effect_capability_revocation_guard import EffectCapabilityRevocationGuardMixin\nfrom .effect_capability_runtime import EffectCapabilityRuntimeMixin\nfrom .external_machine_postcondition_execution_correlation import MachinePostconditionExecutionCorrelationMixin\n')
+          replace('src/aasm/runtime_v56_foundation.py',
+              'class AASMEngine(\n    PhysicalAuthorityRuntimeMixin,\n',
+              'class AASMEngine(\n    EffectCapabilityRevocationGuardMixin,\n    EffectCapabilityRuntimeMixin,\n    PhysicalAuthorityRuntimeMixin,\n')
+          replace('src/aasm/runtime_v56_foundation.py',
+              '"""Active v0.56 development runtime with governed external reality and physical-authority foundations."""',
+              '"""Active v0.56 development runtime with governed external reality and bounded physical authority."""')
+
+          # Public imports.
+          insert_before('src/aasm/public_v56.py', 'from .external_machine import (', '''from .effect_capability import (
+    EFFECT_CAPABILITY_CONTRACT_ID,
+    EFFECT_CAPABILITY_CONTRACT_VERSION,
+    EFFECT_CAPABILITY_STABILITY,
+    EffectCapability,
+    NumericInterval,
+    effect_capability_contract,
+    numeric_bounds_subset,
+)
+from .effect_capability_runtime import (
+    EFFECT_CAPABILITY_CAPABILITIES,
+    EFFECT_CAPABILITY_RUNTIME_CONTRACT_ID,
+    EFFECT_CAPABILITY_RUNTIME_CONTRACT_VERSION,
+    EFFECT_CAPABILITY_RUNTIME_STABILITY,
+    effect_capability_runtime_contract,
+    project_effect_capability_evidence,
+)
+''')
+          replace('src/aasm/public_v56.py','"contract_version": "0.32.6"','"contract_version": "0.32.7"')
+          replace('src/aasm/public_v56.py','PUBLIC_API_CONTRACT.get("contract_version") != "0.32.6"','PUBLIC_API_CONTRACT.get("contract_version") != "0.32.7"')
+          insert_before('src/aasm/public_v56.py','SUPPORTED_ENGINE_METHODS =', '''_NEW_ENGINE_METHODS.extend([
+    "effect_capability_contract_report", "issue_effect_capability", "delegate_effect_capability",
+    "revoke_effect_capability", "effect_capability_report", "effect_capabilities_report",
+])
+_NEW_IMPORTS.extend([
+    "EFFECT_CAPABILITY_CONTRACT_ID", "EFFECT_CAPABILITY_CONTRACT_VERSION", "EFFECT_CAPABILITY_STABILITY",
+    "NumericInterval", "EffectCapability", "numeric_bounds_subset", "effect_capability_contract",
+    "EFFECT_CAPABILITY_RUNTIME_CONTRACT_ID", "EFFECT_CAPABILITY_RUNTIME_CONTRACT_VERSION",
+    "EFFECT_CAPABILITY_RUNTIME_STABILITY", "EFFECT_CAPABILITY_CAPABILITIES",
+    "project_effect_capability_evidence", "effect_capability_runtime_contract",
+])
+
+''')
+          replace('src/aasm/public_v56.py',
+              'PUBLIC_API_CONTRACT["physical_authority"] = {**physical_authority_contract(), "runtime": physical_authority_runtime_contract()}\n',
+              'PUBLIC_API_CONTRACT["physical_authority"] = {**physical_authority_contract(), "runtime": physical_authority_runtime_contract()}\nPUBLIC_API_CONTRACT["effect_capability"] = {**effect_capability_contract(), "runtime": effect_capability_runtime_contract()}\n')
+          insert_before('src/aasm/public_v56.py','    return {"valid": not errors, "errors": errors, "contract": public_api_contract()}\n', '''    effect_cap = PUBLIC_API_CONTRACT.get("effect_capability", {})
+    if effect_cap.get("authority_source") != "EXISTING_ACTIVE_AUTHORITY_LEASE_REQUIRED":
+        errors.append("effect capability authority-source mismatch")
+    if effect_cap.get("operation_bound") != "CAPABILITY_OPERATIONS_SUBSET_OF_LEASE_OR_PARENT":
+        errors.append("effect capability operation-bound mismatch")
+    if effect_cap.get("numeric_bound") != "NAMED_CLOSED_NUMERIC_INTERVALS_ONLY" or effect_cap.get("numeric_units") != "NOT_INTERPRETED_UNTIL_QUANTITY_CONTRACT":
+        errors.append("effect capability numeric-bound claim mismatch")
+    if effect_cap.get("delegation") != "CHILD_RIGHTS_MUST_BE_SUBSET_AND_DEPTH_MUST_DECREASE":
+        errors.append("effect capability delegation boundary mismatch")
+    if effect_cap.get("capability_existence_grants_effect_authority") is not False:
+        errors.append("effect capability existence grants effect authority")
+    if effect_cap.get("effect_authorization_integration") != "NOT_YET_PR3H":
+        errors.append("effect capability integrated Effect authorization before PR3H")
+    if effect_cap.get("semantic_preemption") != "RESERVED_PR3G":
+        errors.append("effect capability overclaims semantic preemption")
+    if effect_cap.get("parallel_authority_evaluator") != "NONE" or effect_cap.get("parallel_effect_lifecycle") != "NONE":
+        errors.append("effect capability introduced parallel authority/effect plane")
+    effect_cap_runtime = effect_cap.get("runtime", {})
+    if effect_cap_runtime.get("authority") != "EXISTING_AASM_SCOPED_AUTHORITY_ONLY":
+        errors.append("effect capability runtime bypasses scoped authority")
+    if effect_cap_runtime.get("lease_source") != "EXISTING_PR3A_PR3B_AUTHORITY_LEASE_ONLY":
+        errors.append("effect capability runtime bypasses AuthorityLease")
+    if effect_cap_runtime.get("effect_authorization_integration") != "NONE_PR3C_PR3D_FOUNDATION":
+        errors.append("effect capability runtime integrated Effects before PR3H")
+    if effect_cap_runtime.get("effect_dispatch") != "NONE" or effect_cap_runtime.get("machine_state_mutation") != "NONE":
+        errors.append("effect capability runtime gained dispatch/state mutation")
+    if effect_cap_runtime.get("parallel_authority_evaluator") != "NONE" or effect_cap_runtime.get("parallel_effect_lifecycle") != "NONE":
+        errors.append("effect capability runtime introduced parallel authority/effect plane")
+
+''')
+
+          # Tests use actual active engine after admission.
+          p=Path('tests/test_effect_capability.py'); text=p.read_text(encoding='utf-8')
+          start='class EffectCapabilityEngine(\n    EffectCapabilityRevocationGuardMixin,\n    EffectCapabilityRuntimeMixin,\n    AASMEngine,\n):\n    pass\n'
+          if start in text:
+              text=text.replace(start,'EffectCapabilityEngine = AASMEngine\n')
+          p.write_text(text,encoding='utf-8')
+
+          # Specialized PR-3A/3B checker owns its semantics, not global adoption revision.
+          p=Path('scripts/check_physical_authority_contracts.py'); text=p.read_text(encoding='utf-8')
+          text=text.replace('    require(contract["contract_version"] == "0.32.6", "active adoption contract did not advance for PR-3A/3B")\n','')
+          p.write_text(text,encoding='utf-8')
+
+          # Effect-capability checker now validates active public exposure without owning future global revisions.
+          p=Path('scripts/check_effect_capability_contracts.py'); text=p.read_text(encoding='utf-8')
+          if 'from aasm import public_api_contract, validate_public_api_contract' not in text:
+              text=text.replace('from pathlib import Path\n\n','from pathlib import Path\n\nfrom aasm import public_api_contract, validate_public_api_contract\n')
+          marker='    print("bounded effect capability foundation preserves lease/epoch/revision/scope/operation/bounds/delegation/revocation non-amplification and no-effect-authority boundary: PASS")\n'
+          active='''    require_tokens(
+        ROOT / "src/aasm/runtime_v56_foundation.py",
+        ("EffectCapabilityRevocationGuardMixin", "EffectCapabilityRuntimeMixin", "PhysicalAuthorityRuntimeMixin"),
+    )
+    public = validate_public_api_contract()
+    require(public["valid"], f"active public contract invalid: {public['errors']}")
+    contract = public_api_contract()
+    require("effect_capability" in contract, "effect capability missing from active public contract")
+    active = contract["effect_capability"]
+    require(active["capability_existence_grants_effect_authority"] is False, "public capability existence became effect authority")
+    require(active["effect_authorization_integration"] == "NOT_YET_PR3H", "public capability integrated Effect authorization early")
+    require(active["runtime"]["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY", "public capability runtime bypassed scoped authority")
+    require(active["runtime"]["effect_authorization_integration"] == "NONE_PR3C_PR3D_FOUNDATION", "public capability runtime integrated Effects early")
+    require(active["runtime"]["effect_dispatch"] == "NONE", "public capability runtime gained dispatch")
+
+'''
+          if active.strip() not in text:
+              if marker not in text: raise SystemExit('effect capability checker print anchor missing')
+              text=text.replace(marker,active+marker)
+          p.write_text(text,encoding='utf-8')
+
+          # Active candidate tests/adoption identity.
+          replace('tests/test_v56_public_candidate.py','"0.32.6"','"0.32.7"')
+          replace('tests/test_v56_public_candidate.py',
+              '        "AuthorityDomain", "AuthorityLease", "physical_authority_contract",\n        "physical_authority_runtime_contract", "PHYSICAL_AUTHORITY_CAPABILITIES",\n',
+              '        "AuthorityDomain", "AuthorityLease", "physical_authority_contract",\n        "physical_authority_runtime_contract", "PHYSICAL_AUTHORITY_CAPABILITIES",\n        "NumericInterval", "EffectCapability", "effect_capability_contract",\n        "effect_capability_runtime_contract", "EFFECT_CAPABILITY_CAPABILITIES",\n')
+          replace('tests/test_v56_public_candidate.py',
+              '        "authority_domain_report", "authority_lease_report", "physical_authority_report",\n',
+              '        "authority_domain_report", "authority_lease_report", "physical_authority_report",\n        "effect_capability_contract_report", "issue_effect_capability", "delegate_effect_capability",\n        "revoke_effect_capability", "effect_capability_report", "effect_capabilities_report",\n')
+          insert_before('tests/test_v56_public_candidate.py','\n\ndef test_v56_release_import_registry_contains_external_reality_and_physical_authority_contracts():', '''
+    effect_cap = contract["effect_capability"]
+    assert effect_cap["authority_source"] == "EXISTING_ACTIVE_AUTHORITY_LEASE_REQUIRED"
+    assert effect_cap["operation_bound"] == "CAPABILITY_OPERATIONS_SUBSET_OF_LEASE_OR_PARENT"
+    assert effect_cap["numeric_units"] == "NOT_INTERPRETED_UNTIL_QUANTITY_CONTRACT"
+    assert effect_cap["delegation"] == "CHILD_RIGHTS_MUST_BE_SUBSET_AND_DEPTH_MUST_DECREASE"
+    assert effect_cap["capability_existence_grants_effect_authority"] is False
+    assert effect_cap["effect_authorization_integration"] == "NOT_YET_PR3H"
+    assert effect_cap["semantic_preemption"] == "RESERVED_PR3G"
+    assert effect_cap["runtime"]["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"
+    assert effect_cap["runtime"]["effect_authorization_integration"] == "NONE_PR3C_PR3D_FOUNDATION"
+    assert effect_cap["runtime"]["effect_dispatch"] == "NONE"
+    assert effect_cap["runtime"]["parallel_authority_evaluator"] == "NONE"
+    assert effect_cap["runtime"]["parallel_effect_lifecycle"] == "NONE"
+''')
+
+          # Cumulative source contract.
+          replace('scripts/check_release_contracts.py','0.32.6','0.32.7')
+          insert_before('scripts/check_release_contracts.py','    for schema in (', '''    require(root / "src/aasm/effect_capability.py", [
+        'EFFECT_CAPABILITY_CONTRACT_ID = "aasm.effect.capability.v1"',
+        '"numeric_units": "NOT_INTERPRETED_UNTIL_QUANTITY_CONTRACT"',
+        '"capability_existence_grants_effect_authority": False',
+        '"effect_authorization_integration": "NOT_YET_PR3H"',
+    ])
+    require(root / "src/aasm/effect_capability_runtime.py", [
+        'EFFECT_CAPABILITY_RUNTIME_CONTRACT_ID = "aasm.effect.capability.runtime.v1"',
+        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"',
+        '"effect_authorization_integration": "NONE_PR3C_PR3D_FOUNDATION"',
+        '"effect_dispatch": "NONE"',
+        "numeric_bounds_subset(",
+        "parent_revocation_generation",
+    ])
+    require(root / "src/aasm/effect_capability_revocation_guard.py", [
+        "EffectCapabilityRevocationGuardMixin",
+        'result["effective_revocation_generation"] = effective_generation',
+    ])
+
+''')
+          replace('scripts/check_release_contracts.py',
+              '        "authority-lease.schema.json",\n',
+              '        "authority-lease.schema.json",\n        "effect-capability.schema.json",\n')
+          replace('scripts/check_release_contracts.py',
+              '        "check_physical_authority_contracts.py",\n',
+              '        "check_physical_authority_contracts.py",\n        "check_effect_capability_contracts.py",\n')
+          insert_before('scripts/check_release_contracts.py','    require(root / ".github/workflows/release.yml", [', '''    require(root / ".github/workflows/effect-capability.yml", [
+        "Bounded Effect Capability",
+        "check_effect_capability_contracts.py",
+        "tests/test_effect_capability.py",
+        "context='aasm/effect-capability'",
+    ])
+''')
+          replace('scripts/check_release_contracts.py',
+              '        "aasm/physical-authority",\n',
+              '        "aasm/physical-authority",\n        "aasm/effect-capability",\n')
+
+          # Cumulative workflow + exact adoption guard.
+          replace('.github/workflows/v56.yml','0.32.6','0.32.7')
+          insert_before('.github/workflows/v56.yml','      - name: Validate cumulative development source contract\n', '''      - name: Check bounded effect capability contracts and adversarial fixtures
+        run: |
+          python scripts/check_effect_capability_contracts.py
+          pytest -q tests/test_effect_capability.py
+''')
+          insert_before('.github/workflows/v56.yml',"          print('cumulative 0.56.1 development contract + adoption 0.32.7 PR-3A/3B boundaries: PASS')\n", '''          effectcap=engine.effect_capability_contract_report()
+          assert effectcap['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
+          assert effectcap['lease_source']=='EXISTING_PR3A_PR3B_AUTHORITY_LEASE_ONLY'
+          assert effectcap['capability_existence_grants_effect_authority'] is False
+          assert effectcap['effect_authorization_integration']=='NONE_PR3C_PR3D_FOUNDATION'
+          assert effectcap['effect_dispatch']=='NONE'; assert effectcap['machine_state_mutation']=='NONE'
+          assert effectcap['parallel_authority_evaluator']=='NONE'; assert effectcap['parallel_effect_lifecycle']=='NONE'
+''')
+          replace('.github/workflows/v56.yml',
+              "print('cumulative 0.56.1 development contract + adoption 0.32.7 PR-3A/3B boundaries: PASS')",
+              "print('cumulative 0.56.1 development contract + adoption 0.32.7 PR-3C/3D boundaries: PASS')")
+          replace('.github/workflows/v56.yml',
+              "description='0.56.1 cumulative outcome+provenance+external-reality+physical-authority qualification passed'",
+              "description='0.56.1 cumulative external-reality+physical-authority+bounded-capability qualification passed'")
+
+          # Deliberate release prerequisite.
+          replace('.github/workflows/release.yml',
+              '            aasm/physical-authority; do\n',
+              '            aasm/physical-authority \\\n            aasm/effect-capability; do\n')
+
+          # Candidate identity and child-slice description.
+          replace('docs/RELEASE_0.56.1.md','0.32.6','0.32.7')
+          insert_before('docs/RELEASE_0.56.1.md','## No parallel control plane\n', '''## PR-3C/3D — Bounded Effect Capability
+
+The active candidate now includes `aasm.effect.capability.v1` and `aasm.effect.capability.runtime.v1`.
+
+A bounded effect capability is derived from an existing active PR-3A/3B `AuthorityLease` and binds operation allow-lists, named closed numeric intervals, validity, exact scope/subject/revision, authority epoch, delegation depth, and revocation-generation lineage.
+
+Delegated children must be equal or narrower in every inherited authority dimension. They cannot add operations, widen or drop parent numeric constraints, extend validity, escape scope/revision/epoch, or retain non-decreasing delegation depth. Parent revocation-generation changes and AuthorityLease revocation fence descendants without rewriting capability history.
+
+Numeric bounds are deliberately unit-agnostic in this slice: `numeric_units = NOT_INTERPRETED_UNTIL_QUANTITY_CONTRACT`.
+
+A valid capability still does **not** grant existing `effect.authorize`; PR-3H remains the only planned integration point with the existing Effect authorization/execution path.
+
+Qualification context:
+
+```text
+aasm/effect-capability
+```
+
+''')
+          replace('docs/RELEASE_0.56.1.md',
+              'aasm/physical-authority\n```',
+              'aasm/physical-authority\naasm/effect-capability\n```')
+          replace('docs/RELEASE_0.56.1.md',
+              'The next active implementation slice is **PR-3C/3D — bounded effect capability**, followed by delegation/stale-command fencing/preemption and only then PR-3H Effect integration.',
+              'The next active implementation slice after this admission is **PR-3E/F/G — stale-command fencing and semantic preemption**, followed by PR-3H integration with the existing Effect authorization/execution path.')
+
+          # Self-delete all temporary workflows.
+          for temp in (
+              '.github/workflows/one-time-pr3c-boundary-repair.yml',
+              '.github/workflows/one-time-pr3c-boundary-repair-v2.yml',
+              '.github/workflows/one-time-pr3c-capability-admission.yml',
+          ):
+              Path(temp).unlink(missing_ok=True)
+          PY
+      - name: Qualify admitted active surface before commit
+        run: |
+          python -m compileall -q src/aasm/runtime_v56_foundation.py src/aasm/public_v56.py src/aasm/effect_capability.py src/aasm/effect_capability_runtime.py src/aasm/effect_capability_revocation_guard.py
+          python scripts/check_effect_capability_contracts.py
+          python scripts/check_physical_authority_contracts.py
+          python scripts/check_machine_postcondition_contracts.py
+          pytest -q tests/test_effect_capability.py tests/test_physical_authority.py tests/test_v56_public_candidate.py
+          python scripts/check_release_contracts.py
+      - name: Commit exact admitted tree and publish capability status
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Admit bounded effect capability foundation'
+          git push origin HEAD:main
+          commit_sha="$(git rev-parse HEAD)"
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$commit_sha" \
+            -f state=success -f context='aasm/effect-capability' \
+            -f description='bounded effect capability active-surface qualification passed' \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
