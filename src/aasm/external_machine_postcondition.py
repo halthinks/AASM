@@ -131,7 +131,7 @@ def machine_postcondition_verification_contract() -> dict[str, Any]:
         "failed_or_cancelled_effect": "BLOCKED_NO_ACHIEVEMENT_CLAIM",
         "target_source": "PR2B_DURABLE_DESIRED_STATE_CLAIMS",
         "achieved_source": "PR1_DURABLE_AUTHORITATIVE_STATE_CLAIMS_ONLY",
-        "observation_correlation": "PR2A_MACHINE_STATE_OBSERVATION_MUST_REFERENCE_AUTHORITATIVE_SOURCE_OBSERVED_CLAIM",
+        "observation_correlation": "PR2A_MACHINE_STATE_OBSERVATION_CORRELATION_ID_MUST_EQUAL_EXISTING_EFFECT_EXECUTION_ID",
         "comparison": "EXACT_CANONICAL_VALUE_EQUALITY_ONLY_NO_TOLERANCE_IN_THIS_FOUNDATION",
         "verdicts": list(POSTCONDITION_VERDICTS),
         "effect_success_is_achievement": False,
