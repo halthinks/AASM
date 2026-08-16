@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from ._runtime_v56_provenance import SolverProvenanceRuntimeMixin
 from ._runtime_v56_solver_outcome import SolverOutcomeV2RuntimeMixin
+from .effect_capability_revocation_guard import EffectCapabilityRevocationGuardMixin
 from .effect_capability_runtime import EffectCapabilityRuntimeMixin
 from .external_machine_postcondition_execution_correlation import MachinePostconditionExecutionCorrelationMixin
 from .external_machine_postcondition_runtime import MachinePostconditionRuntimeMixin
@@ -17,6 +18,7 @@ from .state_authority_runtime import StateAuthorityRuntimeMixin
 class AASMEngine(
     PhysicalPreemptionRecoveryGuardMixin,
     PhysicalControlFencingRuntimeMixin,
+    EffectCapabilityRevocationGuardMixin,
     EffectCapabilityRuntimeMixin,
     PhysicalAuthorityRuntimeMixin,
     MachinePostconditionExecutionCorrelationMixin,
