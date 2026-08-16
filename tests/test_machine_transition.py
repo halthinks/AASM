@@ -103,13 +103,7 @@ def prepare_machine(engine, *, namespace="temperature.c"):
     )
     engine.register_machine_binding(binding, actor_principal_id=ROOT)
     observed = StateClaim(
-        "OBSERVED",
-        WORKSPACE,
-        SCOPE,
-        "device-a",
-        namespace,
-        21.5,
-        SENSOR,
+        "OBSERVED", WORKSPACE, SCOPE, "device-a", namespace, 21.5, SENSOR,
         external_revision_id="device-rev-1",
     )
     engine.record_state_claim(observed, actor_principal_id=SENSOR)
@@ -125,25 +119,13 @@ def prepare_machine(engine, *, namespace="temperature.c"):
         actor_principal_id=SENSOR,
     )
     authoritative = StateClaim(
-        "AUTHORITATIVE",
-        WORKSPACE,
-        SCOPE,
-        "device-a",
-        namespace,
-        21.5,
-        SENSOR,
+        "AUTHORITATIVE", WORKSPACE, SCOPE, "device-a", namespace, 21.5, SENSOR,
         external_revision_id="device-rev-1",
         source_claim_ids=(observed.claim_id,),
     )
     engine.record_state_claim(authoritative, actor_principal_id=SENSOR)
     desired = StateClaim(
-        "DESIRED",
-        WORKSPACE,
-        SCOPE,
-        "device-a",
-        namespace,
-        25.0,
-        ROOT,
+        "DESIRED", WORKSPACE, SCOPE, "device-a", namespace, 25.0, ROOT,
         external_revision_id="device-rev-1",
     )
     engine.record_state_claim(desired, actor_principal_id=ROOT)
@@ -184,24 +166,13 @@ def test_machine_transition_contract_reuses_existing_effect_lifecycle_and_never_
 
 def test_machine_transition_intent_is_deterministic_and_schema_valid():
     item = MachineTransitionIntent(
-        WORKSPACE,
-        SCOPE,
-        "binding-1",
-        "set-temperature",
-        ("claim-pre",),
-        ("claim-target",),
-        "device-rev-1",
-        "effect-1",
-        "effect-intent-1",
-        "a" * 64,
-        ROOT,
+        WORKSPACE, SCOPE, "binding-1", "set-temperature", ("claim-pre",), ("claim-target",),
+        "device-rev-1", "effect-1", "effect-intent-1", "a" * 64, ROOT,
     )
     copy = MachineTransitionIntent.from_dict(item.to_dict())
     assert copy == item
     assert copy.fingerprint == item.fingerprint
-    schema = json.loads(
-        (Path(__file__).resolve().parents[1] / "schemas" / "machine-transition.schema.json").read_text()
-    )
+    schema = json.loads((Path(__file__).resolve().parents[1] / "schemas" / "machine-transition.schema.json").read_text())
     Draft202012Validator(schema).validate(item.to_dict())
 
 
@@ -245,13 +216,7 @@ def test_transition_rejects_binding_revision_and_namespace_laundering_before_eff
         propose(engine, binding, authoritative, desired, external_revision_id="device-rev-2")
 
     unrelated = StateClaim(
-        "DESIRED",
-        WORKSPACE,
-        SCOPE,
-        "device-a",
-        "humidity.relative",
-        40.0,
-        ROOT,
+        "DESIRED", WORKSPACE, SCOPE, "device-a", "humidity.relative", 40.0, ROOT,
         external_revision_id="device-rev-1",
     )
     engine.record_state_claim(unrelated, actor_principal_id=ROOT)
@@ -308,33 +273,37 @@ def test_valid_transition_creates_only_existing_proposed_effect_intent_with_exac
     assert engine.replay().canonical_hash() == engine.snapshot.canonical_hash()
 
 
-def test_transition_proposal_does_not_grant_effect_authority_and_existing_authorize_effect_remains_authority_boundary():
+def test_transition_proposal_does_not_grant_physical_or_effect_authority():
     engine = bootstrapped_engine()
     binding, _, authoritative, desired = prepare_machine(engine)
     result = propose(engine, binding, authoritative, desired)
     effect_id = result["transition"]["effect_id"]
-    with pytest.raises(PermissionError, match="effect.authorize"):
+
+    with pytest.raises(PermissionError, match="physical authority binding"):
         engine.authorize_effect(
             effect_id,
             workspace_id=WORKSPACE,
             scope_id=SCOPE,
             actor_principal_id=ROOT,
         )
-    assert engine.store.load_effect(engine.snapshot.machine_id, effect_id).status == EffectStatus.PROPOSED.value
+    current = engine.store.load_effect(engine.snapshot.machine_id, effect_id)
+    assert current.status == EffectStatus.PROPOSED.value
+    assert current.authorization_id is None
 
     _grant(engine, ROOT, "effect.authorize")
-    authorized = engine.authorize_effect(
-        effect_id,
-        workspace_id=WORKSPACE,
-        scope_id=SCOPE,
-        actor_principal_id=ROOT,
-    )
-    assert authorized.status == EffectStatus.AUTHORIZED.value
-    report = engine.machine_transition_report(result["transition"]["transition_id"])
-    assert report["effect"]["effect_status"] == EffectStatus.AUTHORIZED.value
-    assert report["effect"]["status_source"] == "EXISTING_AASM_EFFECT_RECORD"
-    assert report["effect"]["dispatch_request"] is None
-    assert report["effect"]["ownership"] is None
+    with pytest.raises(PermissionError, match="physical authority binding"):
+        engine.authorize_effect(
+            effect_id,
+            workspace_id=WORKSPACE,
+            scope_id=SCOPE,
+            actor_principal_id=ROOT,
+        )
+    current = engine.store.load_effect(engine.snapshot.machine_id, effect_id)
+    assert current.status == EffectStatus.PROPOSED.value
+    assert current.authorization_id is None
+    assert current.dispatch_request is None
+    assert current.ownership is None
+    assert engine.physical_effect_integration_report()["bindings"] == {}
 
 
 def test_transition_proposal_is_idempotent_and_does_not_duplicate_effect_or_transition():
