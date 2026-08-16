@@ -42,7 +42,6 @@ def main():
     with (root / "pyproject.toml").open("rb") as handle:
         project = tomllib.load(handle)["project"]
 
-    # 0.56.1 is the current development target on main. It is not a published-release claim.
     if str(project["version"]) != "0.56.1":
         _fail(f"unexpected development package target: {project['version']}", path=root / "pyproject.toml")
     if project.get("license") != "Apache-2.0":
@@ -50,11 +49,10 @@ def main():
     if set(project.get("license-files", [])) != {"LICENSE", "NOTICE", "LICENSE_POLICY.md"}:
         _fail("license file set drift", path=root / "pyproject.toml")
 
-    # Active development public surface. Contract identity may advance independently of package SemVer.
     require(root / "src/aasm/__init__.py", ["public_v56"])
     require(root / "src/aasm/public_v56.py", [
         '__version__ = "0.56.1"',
-        '"contract_version": "0.32.2"',
+        '"contract_version": "0.32.3"',
         'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
         "SOLVER_OUTCOME_V2_CONTRACT_ID",
         "SOLVER_RUNTIME_PROVENANCE_CONTRACT_ID",
@@ -67,8 +65,14 @@ def main():
         "FactAuthority",
         "StateClaim",
         "state_authority_runtime_contract",
+        "MACHINE_BINDING_CONTRACT_ID",
+        "MACHINE_STATE_OBSERVATION_CONTRACT_ID",
+        "MachineBinding",
+        "MachineStateObservation",
+        "external_machine_runtime_contract",
     ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
+        "ExternalMachineRuntimeMixin",
         "StateAuthorityRuntimeMixin",
         "SolverProvenanceRuntimeMixin",
         "SolverOutcomeV2RuntimeMixin",
@@ -126,6 +130,24 @@ def main():
         "authorize_scoped_request",
         "add_evidence_guarded",
     ])
+    require(root / "src/aasm/external_machine.py", [
+        'MACHINE_BINDING_CONTRACT_ID = "aasm.machine.binding.v1"',
+        'MACHINE_STATE_OBSERVATION_CONTRACT_ID = "aasm.machine.state-observation.v1"',
+        '"binding_grants_fact_authority": False',
+        '"binding_grants_effect_authority": False',
+        '"external_state_table": "NONE"',
+        '"postcondition_achievement_claim": "NOT_YET_CLAIMED_PR2C"',
+    ])
+    require(root / "src/aasm/external_machine_runtime.py", [
+        'EXTERNAL_MACHINE_RUNTIME_CONTRACT_ID = "aasm.machine.external.runtime.v1"',
+        '"state_observation_source": "EXISTING_PR1_DURABLE_OBSERVED_STATE_CLAIM"',
+        '"effect_dispatch": "NONE"',
+        '"executor_invocation": "NONE"',
+        '"machine_state_mutation": "NONE"',
+        "capability_report",
+        "state_claim_report",
+        "authorize_scoped_request",
+    ])
 
     for schema in (
         "solver-outcome-v2.schema.json",
@@ -135,10 +157,11 @@ def main():
         "solver-profile-evaluation.schema.json",
         "fact-authority.schema.json",
         "state-claim.schema.json",
+        "machine-binding.schema.json",
+        "machine-state-observation.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
-    # Frozen parent releases remain intact while the active root develops additively.
     require(root / "src/aasm/public_v55.py", ['__version__ = "0.55.0"', '"contract_version": "0.31.0"'])
     require(root / "src/aasm/public_v54.py", ['__version__ = "0.54.0"', '"contract_version": "0.30.0"'])
     require(root / "src/aasm/semantic_evolution.py", [
@@ -162,10 +185,10 @@ def main():
         "check_v56_solver_outcome.py",
         "check_v561_provenance.py",
         "check_state_authority_contracts.py",
+        "check_external_machine_contracts.py",
     ):
         run_script(root, script)
 
-    # Published identity and development identity must remain visibly distinct.
     require(root / "README.md", [
         "Current release — v0.56.0",
         "Next release / cumulative release:** v0.56.1",
@@ -207,18 +230,25 @@ def main():
         "tests/test_state_authority.py",
         "context='aasm/state-authority'",
     ])
+    require(root / ".github/workflows/external-machine.yml", [
+        "External Machine Binding",
+        "check_external_machine_contracts.py",
+        "tests/test_external_machine.py",
+        "context='aasm/external-machine'",
+    ])
     require(root / ".github/workflows/release.yml", [
         "workflow_dispatch:",
         "confirm_release:",
         "aasm/v56-provenance",
         "aasm/state-authority",
+        "aasm/external-machine",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
     ])
     forbid(root / ".github/workflows/release.yml", ["workflow_run:"])
 
-    print("0.56.1 development-target contracts + adoption 0.32.2 + v0.56.0 published identity: PASS")
+    print("0.56.1 development-target contracts + adoption 0.32.3 + v0.56.0 published identity: PASS")
     return 0
 
 
