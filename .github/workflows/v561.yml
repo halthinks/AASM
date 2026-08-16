@@ -1,0 +1,62 @@
+name: AASM v0.56.1 Execution Provenance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: aasm-v561-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  provenance:
+    runs-on: ubuntu-24.04
+    env:
+      AASM_REQUIRE_V561_PROVIDERS: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install provenance and real provider dependencies
+        run: python -m pip install -e '.[dev,optimization]'
+      - name: Check v0.56.1 provenance contracts and schemas
+        run: python scripts/check_v561_provenance.py
+      - name: Run dependency-neutral provenance and replay fixtures
+        run: |
+          pytest -q \
+            tests/test_v56_solver_provenance.py \
+            tests/test_v56_solver_provenance_runtime.py
+      - name: Qualify real CaDiCaL OR-Tools HiGHS and CVXPY provenance
+        run: pytest -q tests/test_v561_solver_provenance_real.py
+      - name: Guard released v0.56.0 root during v0.56.1 qualification
+        run: |
+          python - <<'PY'
+          import aasm
+          from aasm import public_v56
+          assert aasm.__version__ == '0.56.0'
+          assert public_v56.__version__ == '0.56.0'
+          assert public_v56.validate_public_api_contract()['valid']
+          contract = aasm.AASMEngine(aasm.ProblemSpec('prov-gate')).solver_provenance_runtime_contract_report()
+          assert contract['parallel_provenance_table'] == 'NONE'
+          assert contract['effective_configuration_source'] == 'AASM_PROVIDER_ADAPTER_OBSERVATION_NOT_CALLER_ASSERTION'
+          assert contract['provenance_grants_reproducibility'] is False
+          print('v0.56.1 provenance candidate; released root remains v0.56.0: PASS')
+          PY
+      - name: Publish v0.56.1 provenance qualification
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then state=success; description='v0.56.1 execution provenance qualification passed'; else state=failure; description='v0.56.1 execution provenance qualification failed'; fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='aasm/v56-provenance' -f description="$description" -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
