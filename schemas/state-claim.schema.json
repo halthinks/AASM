@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/state-claim.schema.json",
+  "title": "AASM State Claim v1",
+  "type": "object",
+  "required": [
+    "claim_id",
+    "contract_id",
+    "contract_version",
+    "claim_kind",
+    "workspace_id",
+    "scope_id",
+    "subject_id",
+    "state_namespace",
+    "value",
+    "source_principal_id",
+    "problem_revision_id",
+    "external_revision_id",
+    "source_claim_ids",
+    "evidence_ids",
+    "metadata",
+    "fingerprint"
+  ],
+  "properties": {
+    "claim_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.state.claim.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "claim_kind": {"enum": ["DESIRED", "PREDICTED", "OBSERVED", "AUTHORITATIVE"]},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "subject_id": {"type": "string", "minLength": 1},
+    "state_namespace": {"type": "string", "minLength": 1},
+    "value": {},
+    "source_principal_id": {"type": "string", "minLength": 1},
+    "problem_revision_id": {"type": "string"},
+    "external_revision_id": {"type": "string"},
+    "source_claim_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "evidence_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"claim_kind": {"const": "AUTHORITATIVE"}}, "required": ["claim_kind"]},
+      "then": {"properties": {"source_claim_ids": {"minItems": 1}}}
+    }
+  ],
+  "additionalProperties": false
+}
