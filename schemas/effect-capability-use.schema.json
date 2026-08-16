@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/effect-capability-use.schema.json",
+  "title": "AASM Effect Capability Use Fence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "use_id", "contract_id", "contract_version", "capability_id", "capability_fingerprint",
+    "authority_lease_id", "authority_lease_fingerprint", "domain_id", "workspace_id", "scope_id",
+    "subject_id", "actor_principal_id", "operation", "numeric_parameters", "authority_epoch",
+    "capability_revocation_generation", "at_time", "problem_revision_id", "external_revision_id",
+    "metadata", "fingerprint"
+  ],
+  "properties": {
+    "use_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.effect.capability-use.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "capability_id": {"type": "string", "minLength": 1},
+    "capability_fingerprint": {"type": "string", "minLength": 32},
+    "authority_lease_id": {"type": "string", "minLength": 1},
+    "authority_lease_fingerprint": {"type": "string", "minLength": 32},
+    "domain_id": {"type": "string", "minLength": 1},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "subject_id": {"type": "string", "minLength": 1},
+    "actor_principal_id": {"type": "string", "minLength": 1},
+    "operation": {"type": "string", "minLength": 1},
+    "numeric_parameters": {"type": "object", "additionalProperties": {"type": "number"}},
+    "authority_epoch": {"type": "integer", "minimum": 1},
+    "capability_revocation_generation": {"type": "integer", "minimum": 0},
+    "at_time": {"type": "number"},
+    "problem_revision_id": {"type": "string"},
+    "external_revision_id": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 32}
+  }
+}
