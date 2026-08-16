@@ -1,0 +1,52 @@
+name: AASM S3 Physical Evidence Qualification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: aasm-physical-evidence-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  physical_evidence:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install S3 physical evidence qualification dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile S3 state-conflict foundation
+        run: python -m compileall -q src/aasm/state_conflict.py src/aasm/state_conflict_runtime.py tests/test_state_conflict.py scripts/check_state_conflict_contracts.py
+      - name: Check S3 state-conflict source contracts
+        run: python scripts/check_state_conflict_contracts.py
+      - name: Run S3 state-conflict adversarial, TextPCB-derived, and replay fixtures
+        run: pytest -q tests/test_state_conflict.py
+      - name: Publish cumulative S3 physical evidence qualification
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='S3 physical evidence state-conflict foundation passed'
+          else
+            state=failure
+            description='S3 physical evidence qualification failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" -f context='aasm/physical-evidence' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
