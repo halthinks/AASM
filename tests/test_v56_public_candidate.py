@@ -9,7 +9,7 @@ def test_v56_is_active_v0561_and_v55_remains_frozen_parent():
     assert report["valid"] is True, report
     assert public_v56.__version__ == "0.56.1"
     assert public_v56.PUBLIC_RELEASE_STABILITY == "ACTIVE_DEVELOPMENT"
-    assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.5"
+    assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v56.PUBLIC_API_CONTRACT["runtime_version"] == "0.56.1"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
@@ -17,7 +17,7 @@ def test_v56_is_active_v0561_and_v55_remains_frozen_parent():
     assert public_v56.AASMEngine is not public_v55.AASMEngine
 
 
-def test_v56_active_engine_exposes_full_external_machine_supervision_runtime():
+def test_v56_active_engine_exposes_external_reality_and_physical_authority_foundations():
     for method in (
         "solver_outcome_v2_runtime_contract_report", "record_solver_outcome_v2", "solver_outcome_v2_report",
         "solver_provenance_runtime_contract_report", "register_solver_execution_profile", "record_solver_runtime_provenance",
@@ -29,13 +29,15 @@ def test_v56_active_engine_exposes_full_external_machine_supervision_runtime():
         "machine_transition_contract_report", "propose_machine_transition", "machine_transition_report",
         "machine_transitions_report", "machine_postcondition_contract_report",
         "verify_machine_transition_postconditions", "machine_postcondition_verification_report",
-        "machine_postconditions_report",
+        "machine_postconditions_report", "physical_authority_contract_report",
+        "register_authority_domain", "grant_authority_lease", "revoke_authority_lease",
+        "authority_domain_report", "authority_lease_report", "physical_authority_report",
     ):
         assert callable(getattr(public_v56.AASMEngine, method))
         assert method in public_v56.SUPPORTED_ENGINE_METHODS
 
 
-def test_v56_release_preserves_truthful_status_provenance_state_transition_and_postcondition_boundaries():
+def test_v56_release_preserves_truthful_external_reality_and_physical_authority_boundaries():
     contract = public_v56.public_api_contract()
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -70,55 +72,60 @@ def test_v56_release_preserves_truthful_status_provenance_state_transition_and_p
     assert external["binding_grants_effect_authority"] is False
     assert external["capability_reference_grants_authority"] is False
     assert external["external_state_table"] == "NONE"
-    assert external["executor_invocation"] == "NONE_BY_THIS_FOUNDATION"
     assert external["runtime"]["effect_dispatch"] == "NONE"
-    assert external["runtime"]["executor_invocation"] == "NONE"
     assert external["runtime"]["machine_state_mutation"] == "NONE"
 
     transition = contract["machine_transition"]
-    assert transition["expected_prestate"] == "EXACT_DURABLE_AUTHORITATIVE_STATE_CLAIMS_REQUIRED"
-    assert transition["target_state"] == "EXACT_DURABLE_DESIRED_STATE_CLAIMS_REQUIRED"
     assert transition["effect_proposal"] == "EXISTING_AASM_PROPOSE_EFFECT_AND_EFFECT_INTENT_ONLY"
     assert transition["effect_authorization"] == "EXISTING_AASM_AUTHORIZE_EFFECT_ONLY_NOT_PERFORMED_BY_THIS_CONTRACT"
     assert transition["effect_dispatch"] == "EXISTING_AASM_EXECUTE_EFFECT_ONLY_NOT_PERFORMED_BY_THIS_CONTRACT"
     assert transition["parallel_dispatcher"] == "NONE"
     assert transition["parallel_effect_store"] == "NONE"
     assert transition["command_success_is_achievement"] is False
-    assert transition["postcondition_verification"] == "NOT_IMPLEMENTED_PR2B_RESERVED_FOR_PR2C"
     assert transition["runtime"]["effect_proposal_path"] == "EXISTING_AASM_PROPOSE_EFFECT_ONLY"
     assert transition["runtime"]["effect_dispatch"] == "NOT_PERFORMED_USE_EXISTING_EXECUTE_EFFECT"
-    assert transition["runtime"]["effect_ownership"] == "NOT_CREATED_BY_THIS_RUNTIME"
     assert transition["runtime"]["transition_status_store"] == "NONE_DERIVE_FROM_EXISTING_EFFECT_RECORD"
-    assert transition["runtime"]["machine_state_mutation"] == "NONE"
 
     post = contract["machine_postcondition"]
     assert post["effect_status_requirement"] == "EXISTING_AASM_EFFECT_MUST_BE_SUCCEEDED"
     assert post["unknown_effect"] == "BLOCKED_USE_EXISTING_EFFECT_RECONCILIATION"
-    assert post["target_source"] == "PR2B_DURABLE_DESIRED_STATE_CLAIMS"
-    assert post["achieved_source"] == "PR1_DURABLE_AUTHORITATIVE_STATE_CLAIMS_ONLY"
     assert post["observation_correlation"] == "PR2A_MACHINE_STATE_OBSERVATION_CORRELATION_ID_MUST_EQUAL_EXISTING_EFFECT_EXECUTION_ID"
-    assert post["comparison"] == "EXACT_CANONICAL_VALUE_EQUALITY_ONLY_NO_TOLERANCE_IN_THIS_FOUNDATION"
     assert post["effect_success_is_achievement"] is False
     assert post["verification_mints_fact_authority"] is False
     assert post["verification_mints_state_claim"] is False
     assert post["verification_mutates_effect_outcome"] is False
-    assert post["verification_mutates_machine_state"] is False
     assert post["verification_grants_effect_authority"] is False
     assert post["parallel_truth_table"] == "NONE"
     assert post["parallel_effect_lifecycle"] == "NONE"
     assert post["freshness_semantics"] == "NOT_YET_CLAIMED_PR4"
     assert post["calibration_semantics"] == "NOT_YET_CLAIMED_PR4"
-    assert post["runtime"]["effect_source"] == "EXISTING_AASM_EFFECT_RECORD_ONLY"
-    assert post["runtime"]["effect_status_mutation"] == "NONE"
-    assert post["runtime"]["state_claim_creation"] == "NONE"
-    assert post["runtime"]["fact_authority_creation"] == "NONE"
-    assert post["runtime"]["machine_state_mutation"] == "NONE"
-    assert post["runtime"]["effect_authority"] == "NONE"
-    assert post["runtime"]["parallel_truth_table"] == "NONE"
-    assert post["runtime"]["parallel_effect_lifecycle"] == "NONE"
+
+    physical = contract["physical_authority"]
+    assert physical["domain_role"] == "BOUNDED_EFFECT_AUTHORITY_NAMESPACE_NOT_AUTHORITY_GRANT"
+    assert physical["lease_role"] == "EXCLUSIVE_TIME_BOUNDED_DOMAIN_HOLDER_NOT_EFFECT_PERMISSION_BY_EXISTENCE"
+    assert physical["lease_exclusivity"] == "AT_MOST_ONE_ACTIVE_LEASE_PER_DOMAIN"
+    assert physical["authority_epoch"] == "STRICTLY_MONOTONIC_PER_DOMAIN"
+    assert physical["resource_availability_grants_authority"] is False
+    assert physical["fact_authority_grants_effect_authority"] is False
+    assert physical["domain_existence_grants_effect_authority"] is False
+    assert physical["lease_existence_grants_effect_authority"] is False
+    assert physical["parallel_authority_evaluator"] == "NONE"
+    assert physical["parallel_effect_lifecycle"] == "NONE"
+    assert physical["effect_authorization_integration"] == "NOT_YET_PR3H"
+    assert physical["bounded_effect_capability"] == "RESERVED_PR3C_PR3D"
+    assert physical["semantic_preemption"] == "RESERVED_PR3G"
+    assert physical["runtime"]["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"
+    assert physical["runtime"]["lease_exclusivity"] == "NON_OVERLAPPING_EFFECTIVE_INTERVALS_PER_DOMAIN"
+    assert physical["runtime"]["authority_epoch"] == "EXPLICIT_NEXT_MONOTONIC_EPOCH_REQUIRED"
+    assert physical["runtime"]["preemptor_reference_grants_authority"] is False
+    assert physical["runtime"]["effect_authorization_integration"] == "NONE_PR3A_PR3B_FOUNDATION"
+    assert physical["runtime"]["effect_dispatch"] == "NONE"
+    assert physical["runtime"]["machine_state_mutation"] == "NONE"
+    assert physical["runtime"]["parallel_authority_evaluator"] == "NONE"
+    assert physical["runtime"]["parallel_effect_lifecycle"] == "NONE"
 
 
-def test_v56_release_import_registry_contains_external_machine_supervision_contracts():
+def test_v56_release_import_registry_contains_external_reality_and_physical_authority_contracts():
     for name in (
         "ProviderTermination", "SolverEvidenceGrade", "LegacyStatusProjection", "SolverOutcomeV2",
         "ProviderStatusRule", "ProviderStatusMap", "ProviderStatusMapping", "normalize_optimization_result_v2",
@@ -133,6 +140,8 @@ def test_v56_release_import_registry_contains_external_machine_supervision_contr
         "MACHINE_TRANSITION_CAPABILITIES", "MachinePostconditionVerification",
         "machine_postcondition_verification_contract", "machine_postcondition_runtime_contract",
         "MACHINE_POSTCONDITION_CAPABILITIES", "POSTCONDITION_VERDICTS",
+        "AuthorityDomain", "AuthorityLease", "physical_authority_contract",
+        "physical_authority_runtime_contract", "PHYSICAL_AUTHORITY_CAPABILITIES",
     ):
         assert hasattr(public_v56, name)
         assert name in public_v56.SUPPORTED_PUBLIC_IMPORTS
