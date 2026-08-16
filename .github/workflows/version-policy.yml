@@ -1,0 +1,40 @@
+name: Version policy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  version-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve comparison base
+        id: base
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "sha=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enforce development/release identity policy
+        env:
+          AASM_VERSION_POLICY_BASE: ${{ steps.base.outputs.sha }}
+        run: python scripts/check_version_policy.py
