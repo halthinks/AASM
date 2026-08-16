@@ -1,0 +1,48 @@
+name: Machine Transition Proposal
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  machine_transition:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install machine transition dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile stable machine transition surface
+        run: python -m compileall -q src/aasm/external_machine_transition.py src/aasm/external_machine_transition_runtime.py tests/test_machine_transition.py scripts/check_machine_transition_contracts.py
+      - name: Validate machine transition source contracts
+        run: python scripts/check_machine_transition_contracts.py
+      - name: Run machine transition adversarial and replay tests
+        run: pytest -q tests/test_machine_transition.py
+      - name: Publish Machine Transition status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='authoritative pre-state, desired target, existing EffectIntent proposal, and no-dispatch boundary passed'
+          else
+            state=failure
+            description='machine transition proposal qualification failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" -f context='aasm/machine-transition' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
