@@ -20,6 +20,24 @@ from ._runtime_v56_solver_outcome import (
     SOLVER_OUTCOME_V2_RUNTIME_STABILITY,
     solver_outcome_v2_runtime_contract,
 )
+from .external_machine import (
+    EXTERNAL_MACHINE_STABILITY,
+    MACHINE_BINDING_CONTRACT_ID,
+    MACHINE_BINDING_CONTRACT_VERSION,
+    MACHINE_STATE_OBSERVATION_CONTRACT_ID,
+    MACHINE_STATE_OBSERVATION_CONTRACT_VERSION,
+    MachineBinding,
+    MachineStateObservation,
+    external_machine_contract,
+)
+from .external_machine_runtime import (
+    EXTERNAL_MACHINE_CAPABILITIES,
+    EXTERNAL_MACHINE_RUNTIME_CONTRACT_ID,
+    EXTERNAL_MACHINE_RUNTIME_CONTRACT_VERSION,
+    EXTERNAL_MACHINE_RUNTIME_STABILITY,
+    external_machine_runtime_contract,
+    project_external_machine_evidence,
+)
 from .provider_status_v2 import (
     PROVIDER_STATUS_MAP_CONTRACT_ID, PROVIDER_STATUS_MAP_CONTRACT_VERSION,
     ProviderStatusMap, ProviderStatusMapping, ProviderStatusRule,
@@ -82,6 +100,8 @@ _NEW_ENGINE_METHODS = [
     "evaluate_solver_runtime_profile", "solver_provenance_report",
     "state_authority_contract_report", "register_fact_authority", "revoke_fact_authority",
     "record_state_claim", "state_claim_report", "state_authority_report",
+    "external_machine_contract_report", "register_machine_binding", "record_machine_state_observation",
+    "machine_binding_report", "machine_state_observation_report", "external_machine_report",
 ]
 
 _NEW_IMPORTS = [
@@ -112,16 +132,25 @@ _NEW_IMPORTS = [
     "STATE_AUTHORITY_RUNTIME_CONTRACT_ID", "STATE_AUTHORITY_RUNTIME_CONTRACT_VERSION",
     "STATE_AUTHORITY_RUNTIME_STABILITY", "STATE_AUTHORITY_CAPABILITIES",
     "project_state_authority_evidence", "state_authority_runtime_contract",
+    "MACHINE_BINDING_CONTRACT_ID", "MACHINE_BINDING_CONTRACT_VERSION",
+    "MACHINE_STATE_OBSERVATION_CONTRACT_ID", "MACHINE_STATE_OBSERVATION_CONTRACT_VERSION",
+    "EXTERNAL_MACHINE_STABILITY", "MachineBinding", "MachineStateObservation", "external_machine_contract",
+    "EXTERNAL_MACHINE_RUNTIME_CONTRACT_ID", "EXTERNAL_MACHINE_RUNTIME_CONTRACT_VERSION",
+    "EXTERNAL_MACHINE_RUNTIME_STABILITY", "EXTERNAL_MACHINE_CAPABILITIES",
+    "project_external_machine_evidence", "external_machine_runtime_contract",
 ]
 
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_ENGINE_METHODS", []), *_NEW_ENGINE_METHODS]))
 SUPPORTED_CLI_COMMANDS = list(getattr(_v55, "SUPPORTED_CLI_COMMANDS", []))
-SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_INSPECTION_SURFACES", []), "solver-outcome-v2", "solver-provenance", "state-authority"]))
+SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([
+    *getattr(_v55, "SUPPORTED_INSPECTION_SURFACES", []),
+    "solver-outcome-v2", "solver-provenance", "state-authority", "external-machine",
+]))
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_PUBLIC_IMPORTS", []), *_NEW_IMPORTS]))
 
 PUBLIC_API_CONTRACT = deepcopy(_v55.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.32.2", "runtime_version": __version__, "release_stability": PUBLIC_RELEASE_STABILITY,
+    "contract_version": "0.32.3", "runtime_version": __version__, "release_stability": PUBLIC_RELEASE_STABILITY,
     "supported_imports": SUPPORTED_PUBLIC_IMPORTS, "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
     "supported_cli_commands": SUPPORTED_CLI_COMMANDS, "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
 })
@@ -137,6 +166,10 @@ PUBLIC_API_CONTRACT["solver_provenance"] = {
 PUBLIC_API_CONTRACT["state_authority"] = {
     **state_authority_contract(),
     "runtime": state_authority_runtime_contract(),
+}
+PUBLIC_API_CONTRACT["external_machine"] = {
+    **external_machine_contract(),
+    "runtime": external_machine_runtime_contract(),
 }
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
@@ -159,7 +192,7 @@ def validate_public_api_contract():
         errors.append(f"missing v0.56 engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
         errors.append("v0.56 runtime version mismatch")
-    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.2":
+    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.3":
         errors.append("active adoption contract mismatch")
     if PUBLIC_RELEASE_STABILITY != "ACTIVE_DEVELOPMENT":
         errors.append("v0.56 active release stability mismatch")
@@ -196,6 +229,26 @@ def validate_public_api_contract():
         errors.append("state authority machine-state mutation boundary mismatch")
     if state_authority.get("runtime", {}).get("effect_authority") != "NONE":
         errors.append("state authority runtime effect-authority boundary mismatch")
+    external = PUBLIC_API_CONTRACT.get("external_machine", {})
+    if external.get("binding_role") != "REFERENCE_AND_CORRELATION_ONLY_NOT_EXTERNAL_STATE_COPY":
+        errors.append("external machine binding role mismatch")
+    if external.get("binding_grants_fact_authority") is not False:
+        errors.append("external machine binding fact-authority boundary mismatch")
+    if external.get("binding_grants_effect_authority") is not False:
+        errors.append("external machine binding effect-authority boundary mismatch")
+    if external.get("capability_reference_grants_authority") is not False:
+        errors.append("external machine capability-reference authority boundary mismatch")
+    if external.get("external_state_table") != "NONE":
+        errors.append("external machine parallel-state boundary mismatch")
+    if external.get("executor_invocation") != "NONE_BY_THIS_FOUNDATION":
+        errors.append("external machine executor-invocation boundary mismatch")
+    if external.get("postcondition_achievement_claim") != "NOT_YET_CLAIMED_PR2C":
+        errors.append("external machine postcondition claim boundary mismatch")
+    runtime = external.get("runtime", {})
+    if runtime.get("effect_dispatch") != "NONE" or runtime.get("executor_invocation") != "NONE":
+        errors.append("external machine PR2A dispatch boundary mismatch")
+    if runtime.get("machine_state_mutation") != "NONE":
+        errors.append("external machine machine-state mutation boundary mismatch")
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 
 
