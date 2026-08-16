@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/causal-relation.schema.json",
+  "title": "AASM Causal Relation v1",
+  "type": "object",
+  "required": [
+    "relation_id", "contract_id", "contract_version", "relation",
+    "subject_event_id", "subject_event_fingerprint", "reference_event_id", "reference_event_fingerprint", "fingerprint"
+  ],
+  "properties": {
+    "relation_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.event.causality.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "relation": {"enum": ["CAUSED_BY", "HAPPENS_BEFORE", "CONCURRENT_WITH", "ORDER_UNKNOWN"]},
+    "subject_event_id": {"type": "string", "minLength": 1},
+    "subject_event_fingerprint": {"type": "string", "minLength": 16},
+    "reference_event_id": {"type": "string", "minLength": 1},
+    "reference_event_fingerprint": {"type": "string", "minLength": 16},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
