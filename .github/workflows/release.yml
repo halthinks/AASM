@@ -1,15 +1,17 @@
 name: Release
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
   workflow_dispatch:
     inputs:
       commit_sha:
         description: "Exact main commit to release; defaults to main"
         required: false
         type: string
+      confirm_release:
+        description: "I intend to create/publish this package release"
+        required: true
+        default: false
+        type: boolean
       publish_pypi:
         description: "Publish through the configured PyPI Trusted Publisher"
         required: false
@@ -24,91 +26,56 @@ permissions: {}
 
 jobs:
   release_intent:
-    if: >-
-      (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.head_branch == 'main') ||
-      github.event_name == 'workflow_dispatch'
+    if: inputs.confirm_release == true
     runs-on: ubuntu-latest
     permissions:
       contents: read
     outputs:
       ref: ${{ steps.source.outputs.ref }}
-      should_release: ${{ steps.intent.outputs.should_release }}
       version: ${{ steps.intent.outputs.version }}
       tag: ${{ steps.intent.outputs.tag }}
       commit_sha: ${{ steps.intent.outputs.commit_sha }}
     steps:
-      - name: Resolve release commit
+      - name: Resolve deliberate release commit
         id: source
         shell: bash
         env:
-          WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
           MANUAL_SHA: ${{ inputs.commit_sha }}
         run: |
           set -euo pipefail
-          if [ -n "${WORKFLOW_RUN_SHA:-}" ]; then ref="$WORKFLOW_RUN_SHA"
-          elif [ -n "${MANUAL_SHA:-}" ]; then ref="$MANUAL_SHA"
-          else ref="main"; fi
+          if [ -n "${MANUAL_SHA:-}" ]; then ref="$MANUAL_SHA"; else ref="main"; fi
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v7
         with:
           ref: ${{ steps.source.outputs.ref }}
-          fetch-depth: 2
+          fetch-depth: 0
 
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
-      - name: Resolve release intent
+      - name: Resolve release identity
         id: intent
         env:
-          EVENT_NAME: ${{ github.event_name }}
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           commit_sha="$(git rev-parse HEAD)"
+          test "$commit_sha" = "$(git rev-parse origin/main)"
           version="$(python scripts/release_artifacts.py version)"
           tag="v$version"
-          previous_version=""
-          if git cat-file -e HEAD^:pyproject.toml 2>/dev/null; then
-            git show HEAD^:pyproject.toml > /tmp/aasm-prev.toml
-            previous_version="$(python -c 'import tomllib; print(tomllib.load(open("/tmp/aasm-prev.toml","rb"))["project"]["version"])')"
-          fi
-          release_exists=false
-          if gh release view "$tag" >/dev/null 2>&1; then release_exists=true; fi
-          if [ "$EVENT_NAME" = workflow_dispatch ] || [ "$version" != "$previous_version" ] || [ "$release_exists" != true ]; then
-            should_release=true
-          else
-            should_release=false
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "release $tag already exists; published versions are immutable" >&2
+            exit 1
           fi
           echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "should_release=$should_release" >> "$GITHUB_OUTPUT"
-
-  no_release:
-    needs: release_intent
-    if: needs.release_intent.outputs.should_release != 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      statuses: write
-    steps:
-      - name: Publish no-release status
-        env:
-          GH_TOKEN: ${{ github.token }}
-          COMMIT_SHA: ${{ needs.release_intent.outputs.commit_sha }}
-        run: |
-          gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" \
-            -f state=success -f context='aasm/release' \
-            -f description='no package version change; release not required' \
-            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
   build_release:
     needs: release_intent
-    if: needs.release_intent.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -128,7 +95,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Require exact main commit and all release gates
+      - name: Require exact main commit and all qualification gates
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -136,7 +103,19 @@ jobs:
           set -euo pipefail
           commit_sha="$(git rev-parse HEAD)"
           test "$commit_sha" = "$(git rev-parse origin/main)"
-          for context in aasm/ci-summary aasm/formal-assurance aasm/semantic-solver-rc aasm/proof-claims aasm/solution-pools aasm/optimization aasm/scoped-authority aasm/solver-learning aasm/v54 aasm/v55 aasm/v56; do
+          for context in \
+            aasm/ci-summary \
+            aasm/formal-assurance \
+            aasm/semantic-solver-rc \
+            aasm/proof-claims \
+            aasm/solution-pools \
+            aasm/optimization \
+            aasm/scoped-authority \
+            aasm/solver-learning \
+            aasm/v54 \
+            aasm/v55 \
+            aasm/v56 \
+            aasm/v56-provenance; do
             state=""
             for _ in $(seq 1 90); do
               state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" --jq "[.statuses[] | select(.context == \"$context\")][0].state // \"\"")"
@@ -146,6 +125,12 @@ jobs:
             done
             test "$state" = success
           done
+
+      - name: Enforce release identity and strict tracked-file inventory
+        run: |
+          python scripts/check_version_policy.py
+          python scripts/release_manifest.py --check-file-list
+          python scripts/check_release_contracts.py
 
       - name: Build and verify two byte-identical distributions
         id: release
@@ -233,16 +218,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" dist/* --target "$COMMIT_SHA" --title "AASM $TAG" --notes-file docs/CURRENT_RELEASE.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "release $TAG already exists; refusing in-place repair" >&2
+            exit 1
           fi
+          gh release create "$TAG" dist/* --target "$COMMIT_SHA" --title "AASM $TAG" --notes-file docs/CURRENT_RELEASE.md
           verified=false
           for _ in $(seq 1 12); do
             if python scripts/release_artifacts.py verify-github-release "$TAG" dist --repository "$GITHUB_REPOSITORY" --expected-commit "$COMMIT_SHA"; then verified=true; break; fi
             sleep 5
           done
           test "$verified" = true
-          gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" -f state=success -f context='aasm/release' -f description='reproducible build and exact immutable release assets verified' -f target_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" -f state=success -f context='aasm/release' -f description='deliberate reproducible release and exact remote assets verified' -f target_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -253,7 +240,7 @@ jobs:
 
   release_failure:
     needs: [release_intent, build_release]
-    if: always() && needs.release_intent.outputs.should_release == 'true' && needs.build_release.result != 'success'
+    if: always() && needs.release_intent.result == 'success' && needs.build_release.result != 'success'
     runs-on: ubuntu-latest
     permissions:
       statuses: write
@@ -265,5 +252,5 @@ jobs:
         run: |
           gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" \
             -f state=failure -f context='aasm/release' \
-            -f description='release build/publication gate failed' \
+            -f description='explicit release build/publication gate failed' \
             -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
