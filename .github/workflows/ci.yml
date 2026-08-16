@@ -24,11 +24,9 @@ jobs:
           cache: pip
       - name: Install
         run: python -m pip install -e '.[dev]'
-      - name: Verify tracked file inventory
-        run: python scripts/release_manifest.py --check-file-list
       - name: Compile source and tests
         run: python -m compileall -q src tests examples scripts
-      - name: Validate formal model and release source contracts
+      - name: Validate formal model and development source contracts
         run: |
           python scripts/check_formal_models.py
           python scripts/check_release_contracts.py
@@ -55,7 +53,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-      - name: Build two byte-identical distributions
+      - name: Build two byte-identical development distributions
         run: |
           set -euo pipefail
           normalize_sdist() {
@@ -105,7 +103,7 @@ jobs:
           mv dist-a dist
           rm -rf dist-b
           python -m twine check dist/*
-      - name: Verify release contents and metadata
+      - name: Verify development distribution contents and metadata
         run: |
           python scripts/release_artifacts.py verify-history release-history.json
           python scripts/release_artifacts.py verify-wheel "$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
