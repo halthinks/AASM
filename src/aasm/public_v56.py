@@ -48,6 +48,26 @@ from .solver_provenance import (
     DETERMINISM_POLICIES, SolverExecutionProfile, SolverProfileEvaluation, SolverRuntimeProvenance,
     build_solver_runtime_provenance, evaluate_solver_execution_profile, solver_provenance_contract,
 )
+from .state_authority import (
+    FACT_AUTHORITY_CONTRACT_ID,
+    FACT_AUTHORITY_CONTRACT_VERSION,
+    STATE_AUTHORITY_STABILITY,
+    STATE_CLAIM_CONTRACT_ID,
+    STATE_CLAIM_CONTRACT_VERSION,
+    STATE_CLAIM_KINDS,
+    FactAuthority,
+    StateClaim,
+    fact_authority_matches_claim,
+    state_authority_contract,
+)
+from .state_authority_runtime import (
+    STATE_AUTHORITY_CAPABILITIES,
+    STATE_AUTHORITY_RUNTIME_CONTRACT_ID,
+    STATE_AUTHORITY_RUNTIME_CONTRACT_VERSION,
+    STATE_AUTHORITY_RUNTIME_STABILITY,
+    project_state_authority_evidence,
+    state_authority_runtime_contract,
+)
 
 
 __version__ = "0.56.1"
@@ -60,6 +80,8 @@ _NEW_ENGINE_METHODS = [
     "solver_provenance_runtime_contract_report", "register_solver_execution_profile",
     "record_solver_runtime_provenance", "record_convex_solver_runtime_provenance",
     "evaluate_solver_runtime_profile", "solver_provenance_report",
+    "state_authority_contract_report", "register_fact_authority", "revoke_fact_authority",
+    "record_state_claim", "state_claim_report", "state_authority_report",
 ]
 
 _NEW_IMPORTS = [
@@ -84,16 +106,22 @@ _NEW_IMPORTS = [
     "runtime_platform_identity", "runtime_environment_fingerprint",
     "SOLVER_PROVENANCE_RUNTIME_CONTRACT_ID", "SOLVER_PROVENANCE_RUNTIME_CONTRACT_VERSION",
     "SOLVER_PROVENANCE_RUNTIME_STABILITY", "solver_provenance_runtime_contract",
+    "FACT_AUTHORITY_CONTRACT_ID", "FACT_AUTHORITY_CONTRACT_VERSION", "STATE_CLAIM_CONTRACT_ID",
+    "STATE_CLAIM_CONTRACT_VERSION", "STATE_AUTHORITY_STABILITY", "STATE_CLAIM_KINDS",
+    "FactAuthority", "StateClaim", "fact_authority_matches_claim", "state_authority_contract",
+    "STATE_AUTHORITY_RUNTIME_CONTRACT_ID", "STATE_AUTHORITY_RUNTIME_CONTRACT_VERSION",
+    "STATE_AUTHORITY_RUNTIME_STABILITY", "STATE_AUTHORITY_CAPABILITIES",
+    "project_state_authority_evidence", "state_authority_runtime_contract",
 ]
 
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_ENGINE_METHODS", []), *_NEW_ENGINE_METHODS]))
 SUPPORTED_CLI_COMMANDS = list(getattr(_v55, "SUPPORTED_CLI_COMMANDS", []))
-SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_INSPECTION_SURFACES", []), "solver-outcome-v2", "solver-provenance"]))
+SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_INSPECTION_SURFACES", []), "solver-outcome-v2", "solver-provenance", "state-authority"]))
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*getattr(_v55, "SUPPORTED_PUBLIC_IMPORTS", []), *_NEW_IMPORTS]))
 
 PUBLIC_API_CONTRACT = deepcopy(_v55.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.32.1", "runtime_version": __version__, "release_stability": PUBLIC_RELEASE_STABILITY,
+    "contract_version": "0.32.2", "runtime_version": __version__, "release_stability": PUBLIC_RELEASE_STABILITY,
     "supported_imports": SUPPORTED_PUBLIC_IMPORTS, "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
     "supported_cli_commands": SUPPORTED_CLI_COMMANDS, "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
 })
@@ -105,6 +133,10 @@ PUBLIC_API_CONTRACT["solver_provenance"] = {
     "execution_observation_contract_id": SOLVER_EXECUTION_OBSERVATION_CONTRACT_ID,
     "provider_fixtures": ["cadical/pysat", "ortools-cp-sat", "highs", "cvxpy"],
     "interrupted_provenance_v2": "DORMANT_NON_AUTHORITATIVE_NOT_EXPOSED",
+}
+PUBLIC_API_CONTRACT["state_authority"] = {
+    **state_authority_contract(),
+    "runtime": state_authority_runtime_contract(),
 }
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
@@ -127,8 +159,8 @@ def validate_public_api_contract():
         errors.append(f"missing v0.56 engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
         errors.append("v0.56 runtime version mismatch")
-    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.1":
-        errors.append("v0.56.1 adoption contract mismatch")
+    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.2":
+        errors.append("active adoption contract mismatch")
     if PUBLIC_RELEASE_STABILITY != "ACTIVE_DEVELOPMENT":
         errors.append("v0.56 active release stability mismatch")
     outcome = PUBLIC_API_CONTRACT.get("solver_outcome_v2", {})
@@ -149,6 +181,21 @@ def validate_public_api_contract():
         errors.append("solver provenance reproducibility claim boundary mismatch")
     if provenance.get("truth_authority") != "NONE" or provenance.get("policy_authority") != "NONE":
         errors.append("solver provenance authority boundary mismatch")
+    state_authority = PUBLIC_API_CONTRACT.get("state_authority", {})
+    if state_authority.get("claim_kinds") != list(STATE_CLAIM_KINDS):
+        errors.append("state authority claim-kind boundary mismatch")
+    if state_authority.get("observed") != "EMPIRICAL_EVIDENCE_ONLY_NOT_AUTHORITATIVE_BY_EXISTENCE_OR_AGREEMENT":
+        errors.append("observed state claim authority boundary mismatch")
+    if state_authority.get("authoritative") != "EXPLICIT_MATCHING_FACT_AUTHORITY_AND_SOURCE_CLAIM_REQUIRED":
+        errors.append("authoritative state claim boundary mismatch")
+    if state_authority.get("fact_authority_grants_effect_authority") is not False:
+        errors.append("fact authority effect-authority boundary mismatch")
+    if state_authority.get("runtime", {}).get("parallel_truth_table") != "NONE":
+        errors.append("state authority parallel-truth-table boundary mismatch")
+    if state_authority.get("runtime", {}).get("machine_state_mutation") != "NONE":
+        errors.append("state authority machine-state mutation boundary mismatch")
+    if state_authority.get("runtime", {}).get("effect_authority") != "NONE":
+        errors.append("state authority runtime effect-authority boundary mismatch")
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 
 
