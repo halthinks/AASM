@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/machine-transition.schema.json",
+  "title": "AASM Machine Transition Intent v1",
+  "type": "object",
+  "required": [
+    "transition_id", "contract_id", "contract_version", "workspace_id", "scope_id",
+    "binding_id", "operation", "expected_state_claim_ids", "target_state_claim_ids",
+    "external_revision_id", "effect_id", "effect_intent_id", "effect_intent_fingerprint",
+    "proposer_principal_id", "resource_reservation_ids", "metadata", "fingerprint"
+  ],
+  "properties": {
+    "transition_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.machine.transition.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "binding_id": {"type": "string", "minLength": 1},
+    "operation": {"type": "string", "minLength": 1},
+    "expected_state_claim_ids": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "target_state_claim_ids": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "external_revision_id": {"type": "string", "minLength": 1},
+    "effect_id": {"type": "string", "minLength": 1},
+    "effect_intent_id": {"type": "string", "minLength": 1},
+    "effect_intent_fingerprint": {"type": "string", "minLength": 16},
+    "proposer_principal_id": {"type": "string", "minLength": 1},
+    "resource_reservation_ids": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
