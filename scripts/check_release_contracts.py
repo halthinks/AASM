@@ -156,13 +156,14 @@ def main():
         "New implementation modules must use stable semantic names",
     ])
     require(root / ".github/workflows/v56.yml", [
-        "v0.56.1",
+        "AASM v0.56 Development Qualification",
+        "0.56.1",
         "check_v561_provenance.py",
         "tests/test_v561_solver_provenance_real.py",
         "context='aasm/v56'",
     ])
     require(root / ".github/workflows/v561.yml", [
-        "AASM v0.56.1 Execution Provenance",
+        "AASM 0.56.1 Execution Provenance Qualification",
         "context='aasm/v56-provenance'",
     ])
     require(root / ".github/workflows/release.yml", [
