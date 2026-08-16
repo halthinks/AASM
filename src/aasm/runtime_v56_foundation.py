@@ -6,11 +6,13 @@ from .external_machine_postcondition_execution_correlation import MachinePostcon
 from .external_machine_postcondition_runtime import MachinePostconditionRuntimeMixin
 from .external_machine_runtime import ExternalMachineRuntimeMixin
 from .external_machine_transition_runtime import MachineTransitionRuntimeMixin
+from .physical_authority_runtime import PhysicalAuthorityRuntimeMixin
 from .runtime_v55_foundation import AASMEngine as V55FoundationEngine
 from .state_authority_runtime import StateAuthorityRuntimeMixin
 
 
 class AASMEngine(
+    PhysicalAuthorityRuntimeMixin,
     MachinePostconditionExecutionCorrelationMixin,
     MachinePostconditionRuntimeMixin,
     MachineTransitionRuntimeMixin,
@@ -20,7 +22,7 @@ class AASMEngine(
     SolverOutcomeV2RuntimeMixin,
     V55FoundationEngine,
 ):
-    """Active v0.56 development runtime with governed external-state transition and postcondition verification."""
+    """Active v0.56 development runtime with governed external reality and physical-authority foundations."""
 
 
 __all__ = ["AASMEngine"]
