@@ -52,17 +52,20 @@ jobs:
         run: pytest -q tests/test_v561_solver_provenance_real.py
       - name: Validate cumulative development source contract
         run: python scripts/check_release_contracts.py
-      - name: Guard active 0.56.1 development root and released v0.55 parent
+      - name: Guard active 0.56.1 development root, state authority, and released v0.55 parent
         run: |
           python - <<'PY'
           import aasm
           from aasm import public_v55, public_v56
           report=public_v56.validate_public_api_contract(); assert report['valid'], report
-          assert public_v56.__version__=='0.56.1'; assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.1'
+          assert public_v56.__version__=='0.56.1'; assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.2'
           assert public_v55.__version__=='0.55.0'; assert aasm.__version__=='0.56.1'; assert aasm.AASMEngine is public_v56.AASMEngine
           prov=aasm.AASMEngine(aasm.ProblemSpec('v56-gate')).solver_provenance_runtime_contract_report()
           assert prov['parallel_provenance_table']=='NONE'; assert prov['provenance_grants_reproducibility'] is False
-          print('cumulative 0.56.1 development contract: PASS')
+          state=aasm.AASMEngine(aasm.ProblemSpec('v56-state-gate')).state_authority_contract_report()
+          assert state['parallel_truth_table']=='NONE'; assert state['machine_state_mutation']=='NONE'; assert state['effect_authority']=='NONE'
+          assert state['aggregation_grants_authority'] is False
+          print('cumulative 0.56.1 development contract + adoption 0.32.2 state authority: PASS')
           PY
       - name: Publish cumulative v0.56 development qualification
         if: always()
@@ -72,5 +75,5 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative outcome+provenance development qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
+          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative outcome+provenance+state-authority development qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='aasm/v56' -f description="$description" -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
