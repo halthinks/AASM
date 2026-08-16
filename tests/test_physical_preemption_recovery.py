@@ -4,32 +4,17 @@ import pytest
 
 from aasm import AASMEngine
 from aasm.effect_capability import EffectCapability
-from aasm.effect_capability_revocation_guard import EffectCapabilityRevocationGuardMixin
-from aasm.effect_capability_runtime import EFFECT_CAPABILITY_CAPABILITIES, EffectCapabilityRuntimeMixin
+from aasm.effect_capability_runtime import EFFECT_CAPABILITY_CAPABILITIES
 from aasm.evidence import EvidenceRecord
 from aasm.model import ProblemSpec
 from aasm.physical_authority import AuthorityDomain, AuthorityLease
 from aasm.physical_authority_runtime import PHYSICAL_AUTHORITY_CAPABILITIES
-from aasm.physical_control_fencing_runtime import PHYSICAL_CONTROL_FENCING_CAPABILITIES, PhysicalControlFencingRuntimeMixin
-from aasm.physical_preemption_recovery_guard import PhysicalPreemptionRecoveryGuardMixin
+from aasm.physical_control_fencing_runtime import PHYSICAL_CONTROL_FENCING_CAPABILITIES
 from aasm.scoped_authority import Principal, ScopedAuthorityGrant, Workspace
 
 
 WORKSPACE="workspace-a"; SCOPE="root"; ROOT="root"; HOLDER="controller-a"; PREEMPTOR="safety-controller"
-
-
-if callable(getattr(AASMEngine,"effect_capability_report",None)):
-    class RecoveryEngine(PhysicalPreemptionRecoveryGuardMixin,PhysicalControlFencingRuntimeMixin,AASMEngine):
-        pass
-else:
-    class RecoveryEngine(
-        PhysicalPreemptionRecoveryGuardMixin,
-        PhysicalControlFencingRuntimeMixin,
-        EffectCapabilityRevocationGuardMixin,
-        EffectCapabilityRuntimeMixin,
-        AASMEngine,
-    ):
-        pass
+RecoveryEngine = AASMEngine
 
 
 def grant(engine,subject,*caps):
