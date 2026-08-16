@@ -24,13 +24,14 @@ def test_release_artifact_tool_verifies_current_wheel_metadata(tmp_path):
         for name in module.REQUIRED_WHEEL_MEMBERS: archive.writestr(name,"{}\n" if name.endswith(".json") else "# fixture\n")
     assert module.verify_wheel(wheel,expected_version=VERSION)["valid"] is True
 
-def test_release_workflow_is_immutable_and_version_agnostic():
+def test_release_workflow_is_immutable_deliberate_and_version_agnostic():
     workflow=(ROOT/".github"/"workflows"/"release.yml").read_text(encoding="utf-8")
-    for token in ['workflows: ["CI"]',"aasm/ci-summary","aasm/formal-assurance","compare-builds","SOURCE_DATE_EPOCH","SHA256SUMS.txt",'gh release create "$TAG"','--target "$COMMIT_SHA"','--notes-file docs/CURRENT_RELEASE.md',"verify-github-release"]: assert token in workflow
+    for token in ["workflow_dispatch:","confirm_release:","aasm/ci-summary","aasm/formal-assurance","aasm/v56-provenance","check_version_policy.py","release_manifest.py --check-file-list","compare-builds","SOURCE_DATE_EPOCH","SHA256SUMS.txt",'gh release create "$TAG"','--target "$COMMIT_SHA"','--notes-file docs/CURRENT_RELEASE.md',"verify-github-release"]: assert token in workflow
+    assert "workflow_run:" not in workflow
     assert "--clobber" not in workflow
 
-def test_release_docs_show_current_version_next_milestone_and_remote_protocol():
-    readme=(ROOT/"README.md").read_text(encoding="utf-8"); current=(ROOT/"docs"/"CURRENT_RELEASE.md").read_text(encoding="utf-8"); assert f"v{VERSION}" in readme; assert "Next release" in readme; assert "aasm.remote.v1 / 0.19.0" in current
+def test_release_docs_separate_development_target_published_release_and_remote_protocol():
+    readme=(ROOT/"README.md").read_text(encoding="utf-8"); current=(ROOT/"docs"/"CURRENT_RELEASE.md").read_text(encoding="utf-8"); candidate=(ROOT/"docs"/"RELEASE_0.56.1.md").read_text(encoding="utf-8"); assert f"v{VERSION}" in readme; assert "Current release — v0.56.0" in readme; assert "Latest immutable published release" in current; assert "UNRELEASED DEVELOPMENT TARGET" in candidate; assert "aasm.remote.v1 / 0.19.0" in current
 
 def test_release_artifact_cli_reports_project_version():
     completed=subprocess.run([sys.executable,"scripts/release_artifacts.py","version"],cwd=ROOT,check=True,text=True,capture_output=True); assert completed.stdout.strip()==VERSION
