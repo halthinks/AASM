@@ -211,7 +211,7 @@ def test_transition_proposal_requires_scoped_machine_transition_authority():
     with pytest.raises(PermissionError, match="machine.transition.propose"):
         propose(engine, binding, authoritative, desired)
     assert engine.machine_transitions_report()["transitions"] == {}
-    assert engine.store.load_effects(engine.snapshot.machine_id) == []
+    assert engine.store.list_effects(engine.snapshot.machine_id) == []
 
 
 def test_transition_requires_authoritative_prestate_and_desired_target():
@@ -235,7 +235,7 @@ def test_transition_requires_authoritative_prestate_and_desired_target():
             external_revision_id="device-rev-1",
             proposer_principal_id=ROOT,
         )
-    assert engine.store.load_effects(engine.snapshot.machine_id) == []
+    assert engine.store.list_effects(engine.snapshot.machine_id) == []
 
 
 def test_transition_rejects_binding_revision_and_namespace_laundering_before_effect_proposal():
@@ -264,7 +264,7 @@ def test_transition_rejects_binding_revision_and_namespace_laundering_before_eff
             external_revision_id="device-rev-1",
             proposer_principal_id=ROOT,
         )
-    assert engine.store.load_effects(engine.snapshot.machine_id) == []
+    assert engine.store.list_effects(engine.snapshot.machine_id) == []
 
 
 def test_valid_transition_creates_only_existing_proposed_effect_intent_with_exact_claim_conditions():
@@ -345,7 +345,7 @@ def test_transition_proposal_is_idempotent_and_does_not_duplicate_effect_or_tran
     assert second["already_proposed"] is True
     assert second["transition"]["transition_id"] == first["transition"]["transition_id"]
     assert second["transition"]["effect_id"] == first["transition"]["effect_id"]
-    assert len(engine.store.load_effects(engine.snapshot.machine_id)) == 1
+    assert len(engine.store.list_effects(engine.snapshot.machine_id)) == 1
     assert len(engine.machine_transitions_report()["transitions"]) == 1
 
 
