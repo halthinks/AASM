@@ -36,16 +36,17 @@ def test_real_rc_benchmark_measures_full_tasklease_lifecycle_without_speedup_cla
 
 
 def test_real_semantic_solver_rc_certification_passes_complete_native_portfolio():
+    contract = public_api_contract()
     report = run_semantic_solver_rc_certification(
         real=True,
         target_engine_cls=V49Engine,
-        public_contract=public_api_contract(),
+        public_contract=contract,
     )
     assert report["status"] == "PASS", report
     assert report["real_backends"] is True
     assert all(report["checks"].values())
-    assert report["freeze_manifest"]["runtime_version"] == "0.56.0"
-    assert report["freeze_manifest"]["adoption_contract_version"] == "0.32.0"
+    assert report["freeze_manifest"]["runtime_version"] == contract["runtime_version"]
+    assert report["freeze_manifest"]["adoption_contract_version"] == contract["contract_version"]
     assert report["component_status"]["optimization"] == "PASS"
     assert report["component_status"]["modeling"] == "PASS"
     assert report["component_status"]["advanced_optimization"] == "PASS"
