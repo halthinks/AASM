@@ -10,6 +10,7 @@ from .semantic_result import semantic_fingerprint
 EVENT_CAUSALITY_CONTRACT_ID = "aasm.event.causality.v1"
 EVENT_CAUSALITY_CONTRACT_VERSION = "0.1.0"
 EVENT_CAUSALITY_STABILITY = "FOUNDATION_EXPERIMENTAL"
+PORTABLE_U63_MAX = (1 << 63) - 1
 
 CLOCK_QUALITIES = (
     "UNKNOWN",
@@ -39,14 +40,19 @@ def _optional(value: str | None) -> str:
     return "" if value is None else str(value).strip()
 
 
+def _portable_int(value: int, name: str, *, minimum: int = 0) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise TypeError(f"{name} must be an integer")
+    parsed = int(value)
+    if parsed < minimum or parsed > PORTABLE_U63_MAX:
+        raise ValueError(f"{name} must be between {minimum} and {PORTABLE_U63_MAX}")
+    return parsed
+
+
 def _optional_ns(value: int | None, name: str) -> int | None:
     if value is None:
         return None
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise TypeError(f"{name} must be an integer nanosecond value")
-    if value < 0:
-        raise ValueError(f"{name} must be >= 0")
-    return int(value)
+    return _portable_int(value, name)
 
 
 @dataclass(frozen=True)
@@ -85,12 +91,8 @@ class CausalEventIdentity:
             object.__setattr__(self, name, _required(getattr(self, name), name))
         if self.contract_id != EVENT_CAUSALITY_CONTRACT_ID or self.contract_version != EVENT_CAUSALITY_CONTRACT_VERSION:
             raise ValueError("unsupported causal-event contract")
-        if isinstance(self.boot_epoch, bool) or not isinstance(self.boot_epoch, int) or self.boot_epoch < 1:
-            raise ValueError("boot_epoch must be an integer >= 1")
-        if isinstance(self.sequence, bool) or not isinstance(self.sequence, int) or self.sequence < 0:
-            raise ValueError("sequence must be an integer >= 0")
-        object.__setattr__(self, "boot_epoch", int(self.boot_epoch))
-        object.__setattr__(self, "sequence", int(self.sequence))
+        object.__setattr__(self, "boot_epoch", _portable_int(self.boot_epoch, "boot_epoch", minimum=1))
+        object.__setattr__(self, "sequence", _portable_int(self.sequence, "sequence"))
         if self.source_clock_quality not in CLOCK_QUALITIES:
             raise ValueError(f"invalid source_clock_quality: {self.source_clock_quality}")
         source_time = _optional_ns(self.source_time_ns, "source_time_ns")
@@ -225,6 +227,7 @@ def event_causality_contract() -> dict[str, Any]:
         "stability": EVENT_CAUSALITY_STABILITY,
         "clock_qualities": list(CLOCK_QUALITIES),
         "relations": list(CAUSAL_RELATIONS),
+        "portable_integer_range": f"0..{PORTABLE_U63_MAX}",
         "local_event_identity": "NODE_ID_PLUS_BOOT_EPOCH_PLUS_MONOTONIC_LOCAL_SEQUENCE",
         "event_fingerprint": "LOCAL_IDENTITY_PLUS_EXACT_OBJECT_CONTEXT_TIME_AND_REVISION_FIELDS",
         "boot_epoch": "EXPLICIT_REBOOT_FENCE_SEQUENCE_MAY_RESTART_ONLY_UNDER_NEW_BOOT_EPOCH",
@@ -238,7 +241,7 @@ def event_causality_contract() -> dict[str, Any]:
         "relation_grants_effect_authority": False,
         "event_identity_grants_authority": False,
         "event_log_role": "CAUSAL_IDENTITY_OVER_EXISTING_DURABLE_OBJECTS_NOT_SECOND_AASM_EVENT_LEDGER",
-        "portable_time": "SIGNEDNESS_FREE_NONNEGATIVE_INTEGER_NANOSECONDS",
+        "portable_time": "NONNEGATIVE_INTEGER_NANOSECONDS_WITH_63_BIT_MAXIMUM",
         "portable_identity": "EXPLICIT_ENUMS_AND_LANGUAGE_INDEPENDENT_SEMANTIC_FINGERPRINTS",
         "python_object_identity_in_identity": False,
         "host_wall_clock_in_identity": False,
@@ -251,6 +254,7 @@ __all__ = [
     "EVENT_CAUSALITY_CONTRACT_ID",
     "EVENT_CAUSALITY_CONTRACT_VERSION",
     "EVENT_CAUSALITY_STABILITY",
+    "PORTABLE_U63_MAX",
     "CLOCK_QUALITIES",
     "CLOCK_QUALITY_RANK",
     "CAUSAL_RELATIONS",
