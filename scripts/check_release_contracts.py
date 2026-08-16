@@ -51,7 +51,6 @@ def main() -> int:
     if set(project.get("license-files", [])) != {"LICENSE", "NOTICE", "LICENSE_POLICY.md"}:
         _fail("license file set drift", path=root / "pyproject.toml")
 
-    # Root identity: frozen v0.56 base plus stable additive active overlay.
     require(root / "src/aasm/__init__.py", ["public_v56", "public_active"])
     require(root / "src/aasm/public_v56.py", [
         '__version__ = "0.56.1"',
@@ -80,7 +79,6 @@ def main() -> int:
         "V55FoundationEngine",
     ])
 
-    # Frozen parents stay intact.
     require(root / "src/aasm/public_v55.py", ['__version__ = "0.55.0"', '"contract_version": "0.31.0"'])
     require(root / "src/aasm/public_v54.py", ['__version__ = "0.54.0"', '"contract_version": "0.30.0"'])
     require(root / "src/aasm/semantic_evolution.py", [
@@ -90,7 +88,6 @@ def main() -> int:
     ])
     require(root / "src/aasm/solver_learning.py", ['"truth_authority": "NONE"', '"policy_authority": "NONE"'])
 
-    # Every semantic layer keeps its own detailed source firewall.
     for script in (
         "check_v52_contracts.py",
         "check_v53_contracts.py",
@@ -113,7 +110,6 @@ def main() -> int:
     ):
         run_script(root, script)
 
-    # Required schemas for all active external-reality / PR-3 surfaces.
     for schema in (
         "fact-authority.schema.json",
         "state-claim.schema.json",
@@ -129,7 +125,6 @@ def main() -> int:
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
-    # Published identity remains separate from the development/adoption surface.
     require(root / "README.md", [
         "Current release — v0.56.0",
         "Next release / cumulative release:** v0.56.1",
@@ -144,7 +139,7 @@ def main() -> int:
     require(root / "docs/RELEASE_0.56.1.md", [
         "Development Candidate",
         "UNRELEASED DEVELOPMENT TARGET",
-        "published release:       0.56.0",
+        "published release: v0.56.0",
     ])
     forbid(root / "docs/RELEASE_0.56.1.md", ["targeted for v0.56.2", "Next cumulative release: **v0.56.2"])
     require(root / "docs/VERSIONING.md", [
@@ -153,7 +148,6 @@ def main() -> int:
         "New implementation modules must use stable semantic names",
     ])
 
-    # Cumulative and deliberate release gates must include every admitted authority layer.
     require(root / ".github/workflows/v56.yml", [
         "AASM v0.56 Development Qualification",
         "check_effect_capability_contracts.py",
@@ -185,7 +179,6 @@ def main() -> int:
     ])
     forbid(root / ".github/workflows/release.yml", ["workflow_run:"])
 
-    # Execute the active public contract as the final source-level assertion.
     env = os.environ.copy()
     src = str(root / "src")
     env["PYTHONPATH"] = src if not env.get("PYTHONPATH") else src + os.pathsep + env["PYTHONPATH"]
