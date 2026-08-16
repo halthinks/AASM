@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/state-conflict.schema.json",
+  "title": "AASM State Conflict v1",
+  "type": "object",
+  "required": [
+    "conflict_id",
+    "contract_id",
+    "contract_version",
+    "workspace_id",
+    "scope_id",
+    "subject_id",
+    "state_namespace",
+    "expectation_claim_id",
+    "expectation_claim_fingerprint",
+    "expectation_claim_kind",
+    "actual_claim_id",
+    "actual_claim_fingerprint",
+    "actual_claim_kind",
+    "expected_value",
+    "actual_value",
+    "expectation_problem_revision_id",
+    "actual_problem_revision_id",
+    "expectation_external_revision_id",
+    "actual_external_revision_id",
+    "reasons",
+    "fingerprint"
+  ],
+  "properties": {
+    "conflict_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.state.conflict.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "subject_id": {"type": "string", "minLength": 1},
+    "state_namespace": {"type": "string", "minLength": 1},
+    "expectation_claim_id": {"type": "string", "minLength": 1},
+    "expectation_claim_fingerprint": {"type": "string", "minLength": 16},
+    "expectation_claim_kind": {"enum": ["DESIRED", "PREDICTED", "AUTHORITATIVE"]},
+    "actual_claim_id": {"type": "string", "minLength": 1},
+    "actual_claim_fingerprint": {"type": "string", "minLength": 16},
+    "actual_claim_kind": {"enum": ["OBSERVED", "AUTHORITATIVE"]},
+    "expected_value": {},
+    "actual_value": {},
+    "expectation_problem_revision_id": {"type": "string"},
+    "actual_problem_revision_id": {"type": "string"},
+    "expectation_external_revision_id": {"type": "string"},
+    "actual_external_revision_id": {"type": "string"},
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["VALUE_MISMATCH", "PROBLEM_REVISION_MISMATCH", "EXTERNAL_REVISION_MISMATCH"]
+      }
+    },
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
