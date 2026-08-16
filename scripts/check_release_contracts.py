@@ -52,7 +52,7 @@ def main():
     require(root / "src/aasm/__init__.py", ["public_v56"])
     require(root / "src/aasm/public_v56.py", [
         '__version__ = "0.56.1"',
-        '"contract_version": "0.32.3"',
+        '"contract_version": "0.32.4"',
         'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
         "SOLVER_OUTCOME_V2_CONTRACT_ID",
         "SOLVER_RUNTIME_PROVENANCE_CONTRACT_ID",
@@ -70,8 +70,12 @@ def main():
         "MachineBinding",
         "MachineStateObservation",
         "external_machine_runtime_contract",
+        "MACHINE_TRANSITION_CONTRACT_ID",
+        "MachineTransitionIntent",
+        "machine_transition_runtime_contract",
     ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
+        "MachineTransitionRuntimeMixin",
         "ExternalMachineRuntimeMixin",
         "StateAuthorityRuntimeMixin",
         "SolverProvenanceRuntimeMixin",
@@ -148,6 +152,24 @@ def main():
         "state_claim_report",
         "authorize_scoped_request",
     ])
+    require(root / "src/aasm/external_machine_transition.py", [
+        'MACHINE_TRANSITION_CONTRACT_ID = "aasm.machine.transition.v1"',
+        '"expected_prestate": "EXACT_DURABLE_AUTHORITATIVE_STATE_CLAIMS_REQUIRED"',
+        '"target_state": "EXACT_DURABLE_DESIRED_STATE_CLAIMS_REQUIRED"',
+        '"effect_proposal": "EXISTING_AASM_PROPOSE_EFFECT_AND_EFFECT_INTENT_ONLY"',
+        '"parallel_dispatcher": "NONE"',
+        '"command_success_is_achievement": False',
+        '"postcondition_verification": "NOT_IMPLEMENTED_PR2B_RESERVED_FOR_PR2C"',
+    ])
+    require(root / "src/aasm/external_machine_transition_runtime.py", [
+        'MACHINE_TRANSITION_RUNTIME_CONTRACT_ID = "aasm.machine.transition.runtime.v1"',
+        '"effect_proposal_path": "EXISTING_AASM_PROPOSE_EFFECT_ONLY"',
+        '"effect_dispatch": "NOT_PERFORMED_USE_EXISTING_EXECUTE_EFFECT"',
+        '"effect_ownership": "NOT_CREATED_BY_THIS_RUNTIME"',
+        '"transition_status_store": "NONE_DERIVE_FROM_EXISTING_EFFECT_RECORD"',
+        "self.propose_effect(",
+        "_authorize_external_machine_action(",
+    ])
 
     for schema in (
         "solver-outcome-v2.schema.json",
@@ -159,6 +181,7 @@ def main():
         "state-claim.schema.json",
         "machine-binding.schema.json",
         "machine-state-observation.schema.json",
+        "machine-transition.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -186,6 +209,7 @@ def main():
         "check_v561_provenance.py",
         "check_state_authority_contracts.py",
         "check_external_machine_contracts.py",
+        "check_machine_transition_contracts.py",
     ):
         run_script(root, script)
 
@@ -236,19 +260,26 @@ def main():
         "tests/test_external_machine.py",
         "context='aasm/external-machine'",
     ])
+    require(root / ".github/workflows/machine-transition.yml", [
+        "Machine Transition Proposal",
+        "check_machine_transition_contracts.py",
+        "tests/test_machine_transition.py",
+        "context='aasm/machine-transition'",
+    ])
     require(root / ".github/workflows/release.yml", [
         "workflow_dispatch:",
         "confirm_release:",
         "aasm/v56-provenance",
         "aasm/state-authority",
         "aasm/external-machine",
+        "aasm/machine-transition",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
     ])
     forbid(root / ".github/workflows/release.yml", ["workflow_run:"])
 
-    print("0.56.1 development-target contracts + adoption 0.32.3 + v0.56.0 published identity: PASS")
+    print("0.56.1 development-target contracts + adoption 0.32.4 + v0.56.0 published identity: PASS")
     return 0
 
 
