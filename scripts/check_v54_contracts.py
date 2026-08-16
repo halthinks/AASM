@@ -93,7 +93,7 @@ def main() -> None:
     ))
     require(root / "tests/test_v54_public.py", (
         "test_v54_public_surface_remains_valid_versioned_parent",
-        "test_v54_full_engine_and_imports_remain_available_through_v56",
+        "test_v54_full_engine_and_imports_remain_available_through_active_root",
     ))
     print("v0.54 parent effect, resource settlement, portfolio, exchange, and public contracts: PASS")
 
