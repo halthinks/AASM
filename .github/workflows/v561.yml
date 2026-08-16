@@ -27,6 +27,8 @@ jobs:
           cache: pip
       - name: Install provenance and real provider dependencies
         run: python -m pip install -e '.[dev,optimization]'
+      - name: Verify tracked file inventory
+        run: python scripts/release_manifest.py --check-file-list
       - name: Check v0.56.1 provenance contracts and schemas
         run: python scripts/check_v561_provenance.py
       - name: Run dependency-neutral provenance and replay fixtures
@@ -36,19 +38,20 @@ jobs:
             tests/test_v56_solver_provenance_runtime.py
       - name: Qualify real CaDiCaL OR-Tools HiGHS and CVXPY provenance
         run: pytest -q tests/test_v561_solver_provenance_real.py
-      - name: Guard released v0.56.0 root during v0.56.1 qualification
+      - name: Guard active v0.56.1 release surface
         run: |
           python - <<'PY'
           import aasm
           from aasm import public_v56
-          assert aasm.__version__ == '0.56.0'
-          assert public_v56.__version__ == '0.56.0'
+          assert aasm.__version__ == '0.56.1'
+          assert public_v56.__version__ == '0.56.1'
+          assert public_v56.PUBLIC_API_CONTRACT['contract_version'] == '0.32.1'
           assert public_v56.validate_public_api_contract()['valid']
           contract = aasm.AASMEngine(aasm.ProblemSpec('prov-gate')).solver_provenance_runtime_contract_report()
           assert contract['parallel_provenance_table'] == 'NONE'
           assert contract['effective_configuration_source'] == 'AASM_PROVIDER_ADAPTER_OBSERVATION_NOT_CALLER_ASSERTION'
           assert contract['provenance_grants_reproducibility'] is False
-          print('v0.56.1 provenance candidate; released root remains v0.56.0: PASS')
+          print('active v0.56.1 execution provenance contract: PASS')
           PY
       - name: Publish v0.56.1 provenance qualification
         if: always()
