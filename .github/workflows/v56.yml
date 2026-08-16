@@ -62,6 +62,10 @@ jobs:
         run: |
           python scripts/check_machine_transition_contracts.py
           pytest -q tests/test_machine_transition.py
+      - name: Check machine postcondition verification contracts and adversarial fixtures
+        run: |
+          python scripts/check_machine_postcondition_contracts.py
+          pytest -q tests/test_machine_postcondition.py
       - name: Validate cumulative development source contract
         run: python scripts/check_release_contracts.py
       - name: Guard active 0.56.1 development root and additive authority boundaries
@@ -70,7 +74,7 @@ jobs:
           import aasm
           from aasm import public_v55, public_v56
           report=public_v56.validate_public_api_contract(); assert report['valid'], report
-          assert public_v56.__version__=='0.56.1'; assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.4'
+          assert public_v56.__version__=='0.56.1'; assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.5'
           assert public_v55.__version__=='0.55.0'; assert aasm.__version__=='0.56.1'; assert aasm.AASMEngine is public_v56.AASMEngine
           engine=aasm.AASMEngine(aasm.ProblemSpec('v56-gate'))
           prov=engine.solver_provenance_runtime_contract_report()
@@ -93,7 +97,16 @@ jobs:
           assert transition['machine_state_mutation']=='NONE'
           assert transition['postcondition_verification']=='NOT_IMPLEMENTED_PR2B_RESERVED_FOR_PR2C'
           assert transition['command_success_is_achievement'] is False
-          print('cumulative 0.56.1 development contract + adoption 0.32.4 PR-2B boundaries: PASS')
+          post=engine.machine_postcondition_contract_report()
+          assert post['effect_source']=='EXISTING_AASM_EFFECT_RECORD_ONLY'
+          assert post['transition_source']=='EXISTING_PR2B_MACHINE_TRANSITION_ONLY'
+          assert post['achieved_source']=='EXISTING_PR1_AUTHORITATIVE_STATE_CLAIMS_ONLY'
+          assert post['observation_source']=='EXISTING_PR2A_MACHINE_STATE_OBSERVATIONS_ONLY'
+          assert post['effect_status_mutation']=='NONE'; assert post['state_claim_creation']=='NONE'; assert post['fact_authority_creation']=='NONE'
+          assert post['machine_state_mutation']=='NONE'; assert post['effect_authority']=='NONE'
+          assert post['parallel_truth_table']=='NONE'; assert post['parallel_effect_lifecycle']=='NONE'
+          assert post['command_success_is_achievement'] is False
+          print('cumulative 0.56.1 development contract + adoption 0.32.5 PR-2C boundaries: PASS')
           PY
       - name: Publish cumulative v0.56 development qualification
         if: always()
@@ -103,5 +116,5 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative outcome+provenance+state-authority+external-machine+transition qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
+          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative outcome+provenance+state-authority+external-machine+transition+postcondition qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='aasm/v56' -f description="$description" -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
