@@ -1,0 +1,104 @@
+name: Exact-head PR-3C/3D Promotion
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  statuses: read
+
+jobs:
+  promote:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Require all exact-head qualification contexts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          commit_sha="$GITHUB_SHA"
+          contexts=(
+            aasm/ci-summary
+            aasm/formal-assurance
+            aasm/semantic-solver-rc
+            aasm/proof-claims
+            aasm/solution-pools
+            aasm/optimization
+            aasm/scoped-authority
+            aasm/solver-learning
+            aasm/v54
+            aasm/v55
+            aasm/v56
+            aasm/v56-provenance
+            aasm/state-authority
+            aasm/external-machine
+            aasm/machine-transition
+            aasm/machine-postcondition
+            aasm/physical-authority
+            aasm/effect-capability
+          )
+          for context in "${contexts[@]}"; do
+            state=""
+            for _ in $(seq 1 120); do
+              state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$commit_sha/status" --jq "[.statuses[] | select(.context == \"$context\")][0].state // \"\"")"
+              [ "$state" = success ] && break
+              if [ "$state" = failure ] || [ "$state" = error ]; then
+                echo "$context=$state" >&2
+                exit 1
+              fi
+              sleep 5
+            done
+            test "$state" = success
+            echo "$context=success"
+          done
+      - name: Promote PR-3C/3D child slice and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          sha='${{ github.sha }}'
+          ledger=Path('docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md')
+          text=ledger.read_text(encoding='utf-8')
+          text=text.replace('**Current adoption contract:** `aasm.adoption.v1 / 0.32.5`','**Current adoption contract:** `aasm.adoption.v1 / 0.32.7`')
+          phy='| PHY-01 | `physical-authority-capabilities` / PR-3 | Authority domains, leases/epochs, bounded revocable effect capabilities, semantic preemption | DESIGNED | scoped grants/delegation/deny/expiry; typed capability ABI; effect authority evidence | exclusive authority-domain ownership, epoch freshness, capability non-amplification, explicit preemption/revocation semantics |'
+          replacement='| PHY-01 | `physical-authority-capabilities` / PR-3 | Authority domains, leases/epochs, bounded revocable effect capabilities, semantic preemption | RUNTIME_LANDED | PR-3A/3B `aasm.authority.domain.v1` + `aasm.authority.lease.v1` are GATED; PR-3C/3D `aasm.effect.capability.v1` + runtime are GATED; existing scoped authority and Effect lifecycle remain authoritative | PR-3E/F/G stale-command fencing + semantic preemption, then PR-3H integration into existing Effect authorization/execution before parent can become GATED |'
+          if phy in text:
+              text=text.replace(phy,replacement)
+          elif replacement not in text:
+              raise SystemExit('PHY-01 ledger anchor drift; refusing blind promotion')
+          section='''\n### PR-3A/3B / PR-3C/3D / PHY-01 partial qualification\n\nThe physical-authority foundation and bounded effect-capability child slices were qualified through the exact-head matrix. The PR-3C/3D qualification head is:\n\n```text\n'''+sha+'''\n```\n\nAll required inherited contexts plus `aasm/physical-authority` and `aasm/effect-capability` were **success** on that exact head.\n\nQualified child properties include:\n\n- exclusive non-overlapping authority leases with strictly monotonic domain epochs;\n- append-only lease revocation and effective-interval closure;\n- bounded operation allow-lists and named closed numeric intervals;\n- child operation/bound/validity/scope/revision/epoch/delegation-depth non-amplification;\n- parent capability fingerprint + revocation-generation fencing of descendants;\n- underlying AuthorityLease revocation invalidates rooted capabilities without history rewrite;\n- capability existence still grants no `effect.authorize`;\n- no parallel authority evaluator, dispatcher, or Effect lifecycle;\n- SQLite restart and exact replay.\n\nThis advances PR-3A/3B and PR-3C/3D child slices to **GATED**. **PHY-01 / PR-3 remains incomplete and is not GATED** until PR-3E/F/G/H land and qualify.\n'''
+          anchor='\n## Immediate builder queue\n'
+          if section.strip() not in text:
+              if anchor not in text: raise SystemExit('ledger builder-queue anchor missing')
+              text=text.replace(anchor,section+anchor,1)
+          text=text.replace('3. Begin **PR-3 / PHY-01 — physical authority + bounded effect capabilities** on top of existing scoped authority and the existing Effect authorization/execution path. Do **not** build a second authority evaluator or dispatcher.','3. Continue **PR-3 / PHY-01** with PR-3E/F/G stale-command fencing, delegation completion, revocation/preemption, and authority-epoch advancement. PR-3A/3B and PR-3C/3D are qualified child slices; the parent is not complete.')
+          text=text.replace('4. PR-3A: land a stable `AuthorityDomain` contract that names the bounded physical/effect authority namespace without granting authority by existence.','4. PR-3E/F: bind command/capability use to exact current authority epoch and revocation generation; stale commands and stale delegated capabilities must fail closed.')
+          text=text.replace('5. PR-3B: land exclusive/revocable `AuthorityLease` semantics with explicit holder, workspace/scope/domain, authority epoch/generation, validity interval, and durable evidence/replay.','5. PR-3G: add explicit semantic preemption/revocation with authorized preemptors and monotonic epoch advancement; preemptor identity alone must not grant preemption authority.')
+          text=text.replace('6. PR-3C/3D: add authority epoch freshness and bounded effect capability semantics; stale epochs and out-of-bounds capability use must fail closed.','6. Preserve the qualified `aasm.effect.capability.v1` non-amplification law while adding stale-command fencing; do not add unit semantics before the quantity contract.')
+          text=text.replace('7. PR-3E/3F/3G: delegation must never amplify authority; stale-command fencing and revocation/preemption must be explicit and replayable.','7. Qualify PR-3E/F/G independently before connecting capabilities to actuation.')
+          text=text.replace('8. PR-3H: integrate those contracts into the **existing** `authorize_effect` / `execute_effect` path so physical-effect authority is checked without replacing v0.54 ownership, TaskLease, resource governance, or reconciliation.','8. PR-3H last: integrate bounded capability validation into the **existing** `authorize_effect` / `execute_effect` path without replacing v0.54 ownership, TaskLease, resource governance, UNKNOWN, or reconciliation.')
+          ledger.write_text(text,encoding='utf-8')
+
+          candidate=Path('docs/RELEASE_0.56.1.md')
+          c=candidate.read_text(encoding='utf-8').replace('0.32.6','0.32.7')
+          q='''\n## PR-3C/3D exact-head qualification\n\nThe bounded effect-capability child slice is GATED on exact development head:\n\n```text\n'''+sha+'''\n```\n\nThis GATED claim applies only to PR-3C/3D. The PR-3 / PHY-01 parent remains incomplete pending stale-command fencing, semantic preemption, and PR-3H Effect integration.\n'''
+          if q.strip() not in c:
+              anchor='\n## No parallel control plane\n'
+              if anchor not in c: raise SystemExit('candidate qualification anchor missing')
+              c=c.replace(anchor,q+anchor,1)
+          candidate.write_text(c,encoding='utf-8')
+          Path('.github/workflows/one-time-pr3cd-promote.yml').unlink()
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Promote PR-3C/3D bounded capability slice to gated'
+          git push origin HEAD:main
