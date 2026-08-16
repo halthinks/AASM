@@ -1,12 +1,16 @@
 # AASM Roadmap
 
-AASM is currently **v0.54.0 — Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery**.
+AASM's latest immutable public release is **v0.56.0 — Truthful Solver Outcomes + Governed Semantic Evolution + Engineering Mathematical IR**.
+
+`main` currently carries the already-established **0.56.1 next-release target** for Execution Profiles + Runtime Provenance. That target is development state, not a released claim, until the applicable exact-head qualification gates pass. Exact unreleased source identity is the Git commit SHA.
+
+AASM no longer allocates a new package SemVer to every architecture milestone. See [`docs/VERSIONING.md`](docs/VERSIONING.md). Future architecture is tracked by named capability milestones; package versions are assigned only at a deliberate release boundary.
 
 The roadmap is explicitly **product-backward**: known destination properties shape public contracts before implementation depth makes them expensive to add. A capability may be staged, but it may not be deferred in a way that makes the current architecture structurally incompatible with it.
 
-## Canonical post-v0.54 direction
+## Canonical direction
 
-AASM is now being built toward **governed semantic evolution**: a public deterministic governance/runtime substrate that can supervise authoritative external state machines, evolve explicit problem revisions from evidence, preserve stable requirement/artifact lineage, reuse applicability-scoped knowledge, choose evidence acquisition under governed resources, and remain replayable without hosted-only truth.
+AASM is being built toward **governed semantic evolution**: a public deterministic governance/runtime substrate that can supervise authoritative external state machines, evolve explicit problem revisions from evidence, preserve stable requirement/artifact lineage, reuse applicability-scoped knowledge, choose evidence acquisition under governed resources, and remain replayable without hosted-only truth.
 
 Canonical implementation sources:
 
@@ -61,49 +65,41 @@ Canonical implementation sources:
 - v0.51.0 Governed Solution Pools & Complete Enumeration
 - v0.52.0 Resource-Governed Multi-Objective Decisions & Pareto Solving
 - v0.53.0 Durable Cross-Run Solver Learning + Scoped Identity/Authority Hardening
-- **v0.54.0 Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery — current release**
+- v0.54.0 Certified Cross-Solver Exchange & Deterministic Portfolio Racing + Effect Ownership/UNKNOWN Recovery
+- v0.55.0 Extended Mathematical IR + Portable Semantic Evolution Archive
+- **v0.56.0 Truthful Solver Outcomes + Governed Semantic Evolution + Engineering Mathematical IR — latest immutable release**
 
-## v0.55 — Extended IR + Portable Semantic Evolution Archive
+## Future capability milestones
 
-**Active development layer.**
+Future milestones below are architecture/dependency identities, **not reserved package versions**. Several milestones may ship together. Completing one does not automatically increment package SemVer.
 
-Primary goals:
+### Active next-release scope — Execution Profiles + Runtime Provenance
 
-- stable `aasm.external.reference.v1` lineage;
-- first-class `aasm.problem.revision.v1` and `aasm.problem.delta.v1`;
-- model feature declarations and provider capability manifests;
-- generalized solver formulation/translation artifacts preserving variable/constraint/objective/external-reference mappings;
-- shared objective-vector IR without collapsing hard floors into weighted scores;
-- portable archive structurally capable of carrying future machine-binding, artifact-lineage, knowledge-application, refinement, verification-debt, and readiness history;
-- independent validation for every nontrivial lowering.
+Milestone ID: `execution-profiles-runtime-provenance`
 
-The active v0.54 package/public export remains frozen until v0.55 has its own contract/gate evidence. Current v0.55 foundation work lives additively underneath the active public surface.
-
-Hard completion criterion:
-
-> A portable archive reconstructs the same canonical observable state under the declared compatibility boundary, external requirement identity survives all supported transformations, and no supported mathematical lowering can silently change semantic identity.
-
-## v0.56 — Truthful Solver Evidence + Governed Knowledge Application
+This work is already associated with the existing 0.56.1 development target on `main`. Do not create another package version merely because subsequent architecture work begins.
 
 Primary goals:
 
-- normalized solver outcome v2 with termination/incumbent/bound/proof/evidence-grade separation;
-- named execution profiles;
+- named solver/execution profiles;
 - evidence-grade runtime provenance and reproducibility certification;
-- provider-specific status/provenance mappings;
-- generic semantic/performance knowledge applicability and explicit application authority, generalizing v0.53 solver learning without replacing it;
-- integrated raw/normalized/minimized core processing with external-reference projection.
+- provider-specific execution/provenance mappings;
+- effective configuration recorded from adapter observation rather than caller assertion;
+- exact distinction between provenance and reproducibility claims;
+- cumulative compatibility with released v0.56 solver-outcome semantics.
 
 Hard completion criterion:
 
-> Solver or imported-knowledge claims cannot exceed their normalized evidence/provenance/applicability state, and ambiguous provider outcomes fail closed rather than being promoted to stronger AASM claims.
+> Runtime claims cannot exceed their observed execution configuration and provenance evidence, and the exact-head release/compatibility/formal gates pass for the selected release scope.
 
-## v0.57 — External Machine Supervision + Artifact/Entity Lineage
+### External Machine Supervision + Artifact/Entity Lineage
+
+Milestone ID: `external-machine-supervision`
 
 Primary goals:
 
 - `aasm.machine.binding.v1`;
-- revision-safe external transition specifications compiled through existing v0.54 EffectIntent/Ownership/Reconciliation;
+- revision-safe external transition specifications compiled through existing EffectIntent/Ownership/Reconciliation;
 - external post-state observation and out-of-band change handling;
 - immutable artifact revisions;
 - semantic/tool entity evolution including explicit ambiguity;
@@ -113,7 +109,9 @@ Hard completion criterion:
 
 > AASM can supervise an authoritative external state machine without copying its truth, bypassing effect ownership, or accepting stale/out-of-band state as if it were the requested transition result.
 
-## v0.58 — Governed Refinement + Problem Deltas + Verification Planning
+### Governed Refinement + Problem Deltas + Verification Planning
+
+Milestone ID: `governed-refinement-verification-planning`
 
 Primary goals:
 
@@ -130,7 +128,9 @@ Hard completion criterion:
 
 > Evidence can drive a new canonical problem revision only through explicit applicability validation and existing authority/admission boundaries, while unaffected verified work is preserved and stale work is fenced.
 
-## v0.59 — Engineering Semantics + Production Alternative Search
+### Engineering Semantics + Production Alternative Search
+
+Milestone ID: `engineering-semantics-production-search`
 
 Primary goals:
 
@@ -144,7 +144,9 @@ Primary goals:
 
 Exact finite v0.51/v0.52 engines remain qualification oracles for scalable implementations on tractable fixtures.
 
-## v0.60 — Uncertainty, Scenarios, Temporal Properties, Readiness, and Engineering Conformance
+### Uncertainty, Scenarios, Temporal Properties, Readiness, and Engineering Conformance
+
+Milestone ID: `uncertainty-readiness-conformance`
 
 Primary goals:
 
@@ -159,20 +161,26 @@ Hard completion criterion:
 
 > TextPCB can use AASM as a supervisory control/reasoning layer with stable lineage, revision-aware verification, governed refinement, truthful solver claims, artifact/effect recovery, and explainable readiness without making AASM a second TextPCB Project Truth.
 
-## v0.61 — Permanent Cross-Capability Stress Corpus
+### Permanent Cross-Capability Stress Corpus
 
-The previous stress-corpus milestone moves here so it tests the architecture now known to be required.
+Milestone ID: `cross-capability-stress-corpus`
 
 Coverage includes forged lineage/revisions, stale solver/verifier/machine results, poisoned reusable knowledge, performance hints attempting semantic mutation, unsupported/dropped solver lowering, false statuses/proofs/completeness, tolerance abuse, core-minimization overclaim, duplicate/UNKNOWN external effects, out-of-band changes, ambiguous entity evolution, artifact tampering, quantity/rule attacks, refinement self-authorization/no-progress, resource scarcity attempting to weaken hard evidence, and false readiness.
 
-## v0.62 — Semantic Solver RC2 + Hosted-Foundation Review
+This corpus exists to qualify the architecture actually required rather than to force a package release merely because the corpus grows.
 
-This is the architectural reassessment previously planned earlier, moved until governed semantic evolution is substantially real.
+### Semantic Solver Contract Review + Hosted-Foundation Review
+
+Milestone ID: `hosted-foundation-review`
+
+This is the architectural reassessment previously assigned a future package number. It occurs only after governed semantic evolution is substantially real.
 
 Hard completion criterion:
 
 > A private hosted AASM fabric could be implemented entirely as a consumer of public contracts without introducing a second truth, authority, resource, effect, history, revision, refinement, decision-routing, or machine-control system.
 
-## After v0.62
+## Beyond the current milestone set
 
-Further public hardening may continue around provider telemetry, resource-estimate learning, richer scarcity forecasting, profile migration, formal models for semantic evolution, larger engineering conformance corpora, and hosted-fabric operational concerns. Those additions must preserve the same public authority and replay boundaries.
+Further public hardening may continue around provider telemetry, resource-estimate learning, richer scarcity forecasting, profile migration, formal models for semantic evolution, larger engineering conformance corpora, portable deterministic kernels, machine compilation, embedded execution profiles, and hosted-fabric operational concerns. Those additions must preserve the same public authority and replay boundaries.
+
+A future package version is assigned only when a coherent release scope is deliberately frozen and qualified.
