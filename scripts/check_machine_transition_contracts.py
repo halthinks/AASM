@@ -90,8 +90,6 @@ def main() -> None:
             "_authorize_external_machine_action(",
         ),
     )
-    # PR-2B deliberately reuses the PR-2A scoped-authority wrapper. Verify that
-    # wrapper still terminates at the existing AASM scoped-authority evaluator.
     require_tokens(
         ROOT / "src/aasm/external_machine_runtime.py",
         (
@@ -126,10 +124,13 @@ def main() -> None:
         ),
     )
 
+    # This specialized PR-2B gate owns PR-2B semantics, not the global
+    # adoption revision. The cumulative v0.56 gate owns the exact current
+    # adoption-contract identity.
     public = validate_public_api_contract()
     require(public["valid"], f"active public contract invalid: {public['errors']}")
     contract = public_api_contract()
-    require(contract["contract_version"] == "0.32.4", "active adoption contract did not advance for PR-2B")
+    require("machine_transition" in contract, "machine transition missing from active public contract")
     require(contract["machine_transition"]["runtime"]["effect_proposal_path"] == "EXISTING_AASM_PROPOSE_EFFECT_ONLY", "public transition proposal path drift")
     require(contract["machine_transition"]["runtime"]["effect_dispatch"] == "NOT_PERFORMED_USE_EXISTING_EXECUTE_EFFECT", "public PR-2B gained dispatch")
     require(contract["machine_transition"]["runtime"]["effect_ownership"] == "NOT_CREATED_BY_THIS_RUNTIME", "public PR-2B gained ownership")
