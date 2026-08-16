@@ -43,13 +43,13 @@ jobs:
           from aasm import public_v56
           assert aasm.__version__ == '0.56.1'
           assert public_v56.__version__ == '0.56.1'
-          assert public_v56.PUBLIC_API_CONTRACT['contract_version'] == '0.32.1'
+          assert public_v56.PUBLIC_API_CONTRACT['contract_version'] == '0.32.2'
           assert public_v56.validate_public_api_contract()['valid']
           contract = aasm.AASMEngine(aasm.ProblemSpec('prov-gate')).solver_provenance_runtime_contract_report()
           assert contract['parallel_provenance_table'] == 'NONE'
           assert contract['effective_configuration_source'] == 'AASM_PROVIDER_ADAPTER_OBSERVATION_NOT_CALLER_ASSERTION'
           assert contract['provenance_grants_reproducibility'] is False
-          print('active 0.56.1 execution provenance development contract: PASS')
+          print('active 0.56.1 execution provenance contract under adoption 0.32.2: PASS')
           PY
       - name: Publish 0.56.1 provenance qualification
         if: always()
