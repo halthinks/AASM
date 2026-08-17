@@ -102,8 +102,7 @@ def main() -> None:
     # adoption contract.
     for active_source, label in (
         (foundation, "runtime_v56_foundation"),
-        (public, "active public overlay"),
-        (package_init, "package root"),
+        (public, "qualified 0.32.15 parent"),
     ):
         require("from .quantity" not in active_source, f"quantity was prematurely imported by {label}")
         require("aasm.quantity.v1" not in active_source, f"quantity was prematurely claimed by {label}")

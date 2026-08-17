@@ -51,7 +51,7 @@ def main() -> int:
     if set(project.get("license-files", [])) != {"LICENSE", "NOTICE", "LICENSE_POLICY.md"}:
         _fail("license file set drift", path=root / "pyproject.toml")
 
-    require(root / "src/aasm/__init__.py", ["public_v56", "public_active", "public_active_entity_evolution"])
+    require(root / "src/aasm/__init__.py", ["public_v56", "public_active", "public_active_entity_evolution", "public_active_engineering_quantity"])
     require(root / "src/aasm/public_v56.py", [
         '__version__ = "0.56.1"',
         '"contract_version": "0.32.6"',
@@ -106,6 +106,21 @@ def main() -> int:
         "entity_evolution_runtime_contract",
         '"entity-evolution"',
         '"record_entity_evolution"',
+    ])
+    require(root / "src/aasm/public_active_engineering_quantity.py", [
+        '"contract_version": "0.32.16"',
+        "QUANTITY_CONTRACT_ID",
+        "Quantity",
+        "quantity_contract",
+        '"engineering-quantity"',
+        '"public_admission": "QUALIFIED"',
+        '"engine_state_integration": "NONE_SEMANTIC_VALUE_FOUNDATION_ONLY"',
+    ])
+    require(root / "src/aasm/quantity.py", [
+        'QUANTITY_CONTRACT_ID = "aasm.quantity.v1"',
+        '"PRE_ADMISSION_ONLY"',
+        '"NONE_HIDDEN_OR_MUTABLE"',
+        '"UNCHANGED_NOT_REINTERPRETED_BY_QUANTITY_FOUNDATION"',
     ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
         "PhysicalEffectIntegrationBoundaryMixin",
@@ -272,6 +287,8 @@ def main() -> int:
         "check_observation_processing_contracts.py",
         "check_artifact_lineage_contracts.py",
         "check_entity_evolution_contracts.py",
+        "check_quantity_contracts.py",
+        "check_quantity_public.py",
     ):
         run_script(root, script)
 
@@ -304,6 +321,7 @@ def main() -> int:
         "observation-disposition.schema.json",
         "artifact-revision.schema.json",
         "entity-evolution.schema.json",
+        "quantity.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -343,7 +361,11 @@ def main() -> int:
         "tests/test_artifact_lineage_runtime.py",
         "tests/test_entity_evolution.py",
         "tests/test_entity_evolution_public.py",
-        "0.32.15",
+        "check_quantity_contracts.py",
+        "check_quantity_public.py",
+        "tests/test_quantity_foundation.py",
+        "tests/test_quantity_public.py",
+        "0.32.16",
         "context='aasm/v56'",
     ])
     require(root / ".github/workflows/identity-calibration-trust.yml", [
@@ -393,6 +415,7 @@ def main() -> int:
         "aasm/observation-epistemics",
         "aasm/artifact-lineage",
         "aasm/entity-evolution",
+        "aasm/engineering-quantity",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
@@ -406,14 +429,14 @@ def main() -> int:
         "import aasm; "
         "r=aasm.validate_public_api_contract(); assert r['valid'], r; "
         "c=aasm.public_api_contract(); assert c['runtime_version']=='0.56.1'; "
-        "assert c['contract_version']=='0.32.15'; "
-        "assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust','execution_environment','observation_processing','artifact_lineage','entity_evolution'))"
+        "assert c['contract_version']=='0.32.16'; "
+        "assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust','execution_environment','observation_processing','artifact_lineage','entity_evolution','engineering_quantity'))"
     )
     completed = subprocess.run([sys.executable, "-c", code], cwd=root, env=env)
     if completed.returncode != 0:
         _fail("active public contract execution failed")
 
-    print("0.56.1 development target + active adoption 0.32.15 + PR-3 + S3 observation/artifact/entity source/release contracts: PASS")
+    print("0.56.1 development target + active adoption 0.32.16 + PR-3 + S3 + S4 quantity source/release contracts: PASS")
     return 0
 
 
