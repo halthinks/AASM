@@ -14,13 +14,13 @@ def test_v56_base_is_frozen_and_active_overlay_advances_adoption_only():
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.10"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.11"
     assert aasm.AASMEngine is public_active.AASMEngine
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v56.AASMEngine is not public_v55.AASMEngine
 
 
-def test_active_engine_exposes_external_reality_physical_control_and_s3_temporal_surface():
+def test_active_engine_exposes_external_reality_physical_control_and_s3_reality_surface():
     for method in (
         "solver_outcome_v2_runtime_contract_report", "record_solver_outcome_v2", "solver_outcome_v2_report",
         "solver_provenance_runtime_contract_report", "register_solver_execution_profile", "record_solver_runtime_provenance",
@@ -47,6 +47,10 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_temporal
         "record_causal_relation", "causal_event_report", "causal_relation_report", "event_causality_report",
         "observation_freshness_contract_report", "assess_machine_observation_freshness",
         "observation_freshness_assessment_report", "observation_freshness_report",
+        "physical_identity_contract_report", "record_physical_identity", "physical_identity_report", "physical_identities_report",
+        "calibration_contract_report", "record_calibration", "revoke_calibration", "calibration_report", "calibrations_report",
+        "source_trust_contract_report", "record_source_trust", "revoke_source_trust",
+        "source_trust_report", "source_trust_assertions_report",
     ):
         assert callable(getattr(aasm.AASMEngine, method)), method
         assert method in aasm.SUPPORTED_ENGINE_METHODS
@@ -54,7 +58,7 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_temporal
 
 def test_active_contract_preserves_external_reality_physical_control_and_s3_firewalls():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] == "0.32.10"
+    assert contract["contract_version"] == "0.32.11"
 
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -91,34 +95,23 @@ def test_active_contract_preserves_external_reality_physical_control_and_s3_fire
     assert physical["lease_existence_grants_effect_authority"] is False
     assert physical["parallel_authority_evaluator"] == "NONE"
     assert physical["parallel_effect_lifecycle"] == "NONE"
-    assert physical["effect_authorization_integration"] == "NOT_YET_PR3H"
     assert physical["runtime"]["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"
     assert physical["runtime"]["effect_dispatch"] == "NONE"
 
     capability = contract["effect_capability"]
     assert capability["capability_existence_grants_effect_authority"] is False
-    assert capability["effect_authorization_integration"] == "NOT_YET_PR3H"
     assert capability["dependent_effect_integration"] == "aasm.effect.physical-authority-integration.runtime.v1"
-    assert capability["parallel_authority_evaluator"] == "NONE"
-    assert capability["parallel_effect_lifecycle"] == "NONE"
     assert capability["runtime"]["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"
     assert capability["runtime"]["non_amplification"] == "OPERATIONS_BOUNDS_VALIDITY_SCOPE_REVISION_EPOCH_AND_DEPTH_FAIL_CLOSED"
-    assert capability["runtime"]["effect_authorization_integration"] == "NONE_PR3C_PR3D_FOUNDATION"
     assert capability["runtime"]["effect_dispatch"] == "NONE"
 
     fencing = contract["physical_control_fencing"]
     assert fencing["use_validation"] == "POINT_IN_TIME_ONLY_REQUIRES_RECHECK_AT_PR3H_EFFECT_BOUNDARIES"
     assert fencing["use_validation_grants_effect_authority"] is False
     assert fencing["preemption_grants_effect_authority"] is False
-    assert fencing["effect_authorization_integration"] == "NONE_PR3E_PR3F_PR3G_FOUNDATION"
-    assert fencing["dependent_effect_integration"] == "aasm.effect.physical-authority-integration.runtime.v1"
-    assert fencing["effect_dispatch"] == "NONE"
     assert fencing["parallel_authority_evaluator"] == "NONE"
     assert fencing["parallel_effect_lifecycle"] == "NONE"
     assert fencing["effect_capability_use"]["validation_is_reusable_authorization_token"] is False
-    assert fencing["effect_capability_use"]["required_recheck"] == "PR3H_MUST_RECHECK_AT_EFFECT_AUTHORIZATION_AND_EXECUTION_BOUNDARIES"
-    assert fencing["authority_preemption"]["identity_reference_grants_authority"] is False
-    assert fencing["authority_preemption"]["preemption_grants_new_effect_authority"] is False
 
     integration = contract["physical_effect_integration"]
     assert integration["binding_existence_grants_effect_authority"] is False
@@ -145,27 +138,16 @@ def test_active_contract_preserves_external_reality_physical_control_and_s3_fire
     assert conflict["conflict_grants_effect_authority"] is False
     assert conflict["conflict_mutates_machine_state"] is False
     assert conflict["conflict_mutates_state_claims"] is False
-    assert conflict["host_wall_clock_in_identity"] is False
-    assert conflict["python_object_identity_in_identity"] is False
-    conflict_runtime = conflict["runtime"]
-    assert conflict_runtime["claim_source"] == "EXISTING_AASM_STATE_CLAIM_PROJECTION_ONLY"
-    assert conflict_runtime["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"
-    assert conflict_runtime["observation_authority_elevation"] == "NONE"
-    assert conflict_runtime["parallel_truth_table"] == "NONE"
-    assert conflict_runtime["parallel_dependency_graph"] == "NONE"
+    assert conflict["runtime"]["parallel_truth_table"] == "NONE"
 
     causal = contract["event_causality"]
     assert causal["local_event_identity"] == "NODE_ID_PLUS_BOOT_EPOCH_PLUS_MONOTONIC_LOCAL_SEQUENCE"
     assert causal["receipt_order_implies_source_order"] is False
     assert causal["host_wall_clock"] == "NOT_UNIVERSAL_TRUTH_AND_NEVER_IMPLICITLY_CAPTURED"
     assert causal["event_identity_grants_authority"] is False
-    assert causal["relation_grants_fact_authority"] is False
-    assert causal["relation_grants_effect_authority"] is False
     assert causal["parallel_event_ledger"] == "NONE"
     causal_runtime = causal["runtime"]
     assert causal_runtime["core_aasm_event_log"] == "UNCHANGED_AND_REMAINS_REPLAY_LEDGER"
-    assert causal_runtime["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"
-    assert causal_runtime["ingest_order"] == "MAY_DIFFER_FROM_SOURCE_SEQUENCE"
     assert causal_runtime["same_node_boot_order"] == "SEQUENCE_DEFINES_LOCAL_ORDER_INDEPENDENT_OF_INGEST_ORDER"
     assert causal_runtime["parallel_event_ledger"] == "NONE"
     assert causal_runtime["parallel_truth_table"] == "NONE"
@@ -179,7 +161,6 @@ def test_active_contract_preserves_external_reality_physical_control_and_s3_fire
     assert freshness["freshness_is_universal_admission"] is False
     freshness_runtime = freshness["runtime"]
     assert freshness_runtime["observation_source"] == "EXISTING_MACHINE_STATE_OBSERVATION_ONLY"
-    assert freshness_runtime["claim_source"] == "EXISTING_DURABLE_OBSERVED_STATE_CLAIM_ONLY"
     assert freshness_runtime["causal_source"] == "EXACT_DURABLE_CAUSAL_EVENT_ID_AND_FINGERPRINT"
     assert freshness_runtime["reference_time_source"] == "EXPLICIT_CALLER_POLICY_INPUT_NOT_HOST_NOW"
     assert freshness_runtime["observation_authority_elevation"] == "NONE"
@@ -187,8 +168,50 @@ def test_active_contract_preserves_external_reality_physical_control_and_s3_fire
     assert freshness_runtime["parallel_observation_store"] == "NONE"
     assert freshness_runtime["parallel_truth_table"] == "NONE"
 
+    identity = contract["physical_identity"]
+    assert identity["role"] == "EXACT_EXTERNAL_SUBJECT_INSTANCE_CONFIGURATION_REFERENCE_NOT_TRUTH_OR_AUTHORITY_BY_EXISTENCE"
+    assert identity["identity_existence_grants_fact_authority"] is False
+    assert identity["identity_existence_grants_effect_authority"] is False
+    assert identity["identity_existence_grants_source_trust"] is False
+    assert identity["host_wall_clock_in_identity"] is False
+    assert identity["python_object_identity_in_identity"] is False
+    identity_runtime = identity["runtime"]
+    assert identity_runtime["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"
+    assert identity_runtime["same_context_divergence"] == "REJECTED_BEFORE_RECORDING_REQUIRE_EXPLICIT_REVISION_CHANGE"
+    assert identity_runtime["source_trust"] == "NONE_IDENTITY_IS_ONLY_AN_EXACT_REFERENCE"
+    assert identity_runtime["parallel_identity_registry"] == "NONE_EVIDENCE_PROJECTION_ONLY"
+    assert identity_runtime["parallel_truth_table"] == "NONE"
 
-def test_active_import_registry_contains_pr3_and_s3_temporal_contracts():
+    calibration = contract["calibration"]
+    assert calibration["identity_binding"] == "EXACT_PHYSICAL_IDENTITY_ID_AND_FINGERPRINT_REQUIRED"
+    assert calibration["selection"] == "EXPLICIT_CALIBRATION_ID_NO_HIDDEN_CURRENT_CALIBRATION_POINTER"
+    assert calibration["transform_application"] == "NOT_IMPLEMENTED_IN_S3_FOUNDATION"
+    assert calibration["calibration_existence_grants_fact_authority"] is False
+    assert calibration["calibration_existence_grants_effect_authority"] is False
+    assert calibration["calibration_existence_grants_source_trust"] is False
+    assert calibration["calibration_mutates_observation"] is False
+    calibration_runtime = calibration["runtime"]
+    assert calibration_runtime["validity_reference"] == "EXPLICIT_CALLER_NANOSECOND_TIME_ONLY"
+    assert calibration_runtime["parallel_calibration_store"] == "NONE_EVIDENCE_PROJECTION_ONLY"
+    assert calibration_runtime["parallel_truth_table"] == "NONE"
+
+    trust = contract["source_trust"]
+    assert trust["role"] == "EXPLICIT_POLICY_INPUT_ABOUT_A_SOURCE_NOT_FACT_AUTHORITY_OR_EFFECT_AUTHORITY"
+    assert trust["selection"] == "EXPLICIT_TRUST_ASSERTION_ID_NO_HIDDEN_CURRENT_TRUST_OR_REPUTATION_SCORE"
+    assert trust["aggregation"] == "NONE_NO_TRUST_SCORE_NO_VOTING_NO_AUTOMATIC_LATEST_ASSERTION"
+    assert trust["trusted_disposition_grants_fact_authority"] is False
+    assert trust["trusted_disposition_grants_effect_authority"] is False
+    assert trust["trusted_disposition_makes_claim_authoritative"] is False
+    assert trust["source_trust_is_universal_admission"] is False
+    trust_runtime = trust["runtime"]
+    assert trust_runtime["fact_authority"] == "EXISTING_FACT_AUTHORITY_REMAINS_SEPARATE_AND_REQUIRED"
+    assert trust_runtime["reputation_score"] == "NONE"
+    assert trust_runtime["parallel_authority_evaluator"] == "NONE"
+    assert trust_runtime["parallel_trust_registry"] == "NONE_EVIDENCE_PROJECTION_ONLY"
+    assert trust_runtime["parallel_truth_table"] == "NONE"
+
+
+def test_active_import_registry_contains_pr3_and_s3_reality_contracts():
     for name in (
         "AuthorityDomain", "AuthorityLease", "physical_authority_contract",
         "EffectCapability", "NumericInterval", "effect_capability_contract",
@@ -204,6 +227,9 @@ def test_active_import_registry_contains_pr3_and_s3_temporal_contracts():
         "event_causality_runtime_contract", "EVENT_CAUSALITY_CAPABILITIES",
         "ObservationFreshnessAssessment", "assess_freshness", "observation_freshness_contract",
         "observation_freshness_runtime_contract", "OBSERVATION_FRESHNESS_CAPABILITIES",
+        "PhysicalIdentity", "physical_identity_contract", "physical_identity_runtime_contract", "PHYSICAL_IDENTITY_CAPABILITIES",
+        "CalibrationCertificate", "CalibrationRevocation", "calibration_contract", "calibration_runtime_contract", "CALIBRATION_CAPABILITIES",
+        "SourceTrustAssertion", "SourceTrustRevocation", "source_trust_contract", "source_trust_runtime_contract", "SOURCE_TRUST_CAPABILITIES",
     ):
         assert hasattr(aasm, name), name
         assert name in aasm.SUPPORTED_PUBLIC_IMPORTS
