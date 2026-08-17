@@ -111,13 +111,17 @@ def main() -> None:
 
     # Existing solver tolerance remains its own numerical-policy substrate.
     expected_legacy_fields = {
-        "absolute",
-        "relative",
-        "primal_feasibility",
-        "dual_feasibility",
-        "integrality",
-        "mip_gap",
+        "policy_id",
+        "contract_id",
+        "contract_version",
+        "absolute_tolerance",
+        "relative_tolerance",
+        "precision",
+        "fingerprint",
     }
+    require(legacy_tolerance["properties"]["contract_id"]["const"] == "aasm.numeric.tolerance.v1", "legacy numeric tolerance contract ID drift")
+    require(legacy_tolerance["properties"]["absolute_tolerance"]["type"] == "string", "legacy absolute tolerance lost exact-string encoding")
+    require(legacy_tolerance["properties"]["relative_tolerance"]["type"] == "string", "legacy relative tolerance lost exact-string encoding")
     require(set(legacy_tolerance["properties"]) == expected_legacy_fields, "legacy numeric-tolerance schema was reinterpreted or expanded")
     for forbidden in ("aasm.quantity.v1", "dimension", "source_unit", "canonical_unit"):
         require(forbidden not in legacy_tolerance_text, f"legacy solver numeric-tolerance schema leaked quantity semantics: {forbidden}")

@@ -324,13 +324,17 @@ def test_legacy_solver_numeric_tolerance_schema_is_not_reinterpreted_as_physical
     schema_text = (ROOT / "schemas/numeric-tolerance.schema.json").read_text(encoding="utf-8")
     schema = json.loads(schema_text)
     assert set(schema["properties"]) == {
-        "absolute",
-        "relative",
-        "primal_feasibility",
-        "dual_feasibility",
-        "integrality",
-        "mip_gap",
+        "policy_id",
+        "contract_id",
+        "contract_version",
+        "absolute_tolerance",
+        "relative_tolerance",
+        "precision",
+        "fingerprint",
     }
+    assert schema["properties"]["contract_id"]["const"] == "aasm.numeric.tolerance.v1"
+    assert schema["properties"]["absolute_tolerance"]["type"] == "string"
+    assert schema["properties"]["relative_tolerance"]["type"] == "string"
     for forbidden in ("aasm.quantity.v1", "dimension", "source_unit", "canonical_unit"):
         assert forbidden not in schema_text
 
