@@ -1,22 +1,22 @@
 # AASM v0.56.0 — Truthful Solver Outcomes
 
 **Latest immutable published release:** v0.56.0  
-**Current development target on `main`:** 0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority + S3 Lineage + S4 Engineering Quantity  
+**Current development target on `main`:** 0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority + S3 Lineage + S4 Engineering Quantity + Rule  
 **Released adoption contract:** `aasm.adoption.v1 / 0.32.0`  
-**Active development adoption contract on `main`:** `aasm.adoption.v1 / 0.32.16`  
-**Current qualified development boundary:** complete PR-3 / PHY-01 + complete S3 + S4 quantity/unit/tolerance semantic foundation  
-**Next unfinished boundary:** S4 — rule applicability and precedence (`aasm.rule.v1`)
+**Active development adoption contract on `main`:** `aasm.adoption.v1 / 0.32.17`  
+**Current qualified development boundary:** complete PR-3 / PHY-01 + complete S3 + S4 quantity/unit/tolerance + Rule applicability/precedence semantic foundations  
+**Next unfinished boundary:** S4.3 — semantic projection/equivalence (one explicit “same/equivalent” contract; no implicit “same enough”)
 
-AASM v0.56.0 is the latest published GitHub package/runtime release. Unreleased `main` now exposes the broader 0.56.1 development target and active adoption contract `0.32.16`, but that does **not** make v0.56.1 a published release. Exact unreleased source identity is the Git commit SHA.
+AASM v0.56.0 is the latest published GitHub package/runtime release. Unreleased `main` now exposes the broader 0.56.1 development target and active adoption contract `0.32.17`, but that does **not** make v0.56.1 a published release. Exact unreleased source identity is the Git commit SHA.
 
 The stable remote wire protocol remains **`aasm.remote.v1 / 0.19.0`** and is independent of package SemVer.
 
 ```text
 latest published package: 0.56.0
 published public surface: public_v56 / 0.32.0 at the v0.56.0 tag
-current development target: 0.56.1 / 0.32.16 on main
+current development target: 0.56.1 / 0.32.17 on main
 qualified implementation head before documentation-only updates:
-  263640a634da0e92bb1ae0b42cb55063e0b64552
+  7c808fc504fa91edb8fe9af13f12568b745f9762
 parent published release: v0.55.0
 ```
 
@@ -175,15 +175,48 @@ legacy EffectCapability NumericInterval bounds = UNCHANGED
 
 Quantity is therefore available as a portable public semantic IR without silently reinterpreting solver tolerance policy, physical EffectCapability bounds, machine postconditions, or any existing truth/authority path. Those integrations require explicit later translation/admission contracts and their own qualification.
 
+### S4 — Rule applicability and precedence semantic foundation
+
+Active public semantic contract:
+
+- `aasm.rule.v1 / 0.1.0`
+
+The qualified Rule IR binds stable rule identity, exact clause/source references, explicit scope selector, portable tri-state applicability, problem/external revision applicability, strength, specificity, priority, severity, and explicit waiver/override policy. Rule precedence is structural and deterministic; it is not objective priority and does not itself authorize override.
+
+Rule strength classes are:
+
+```text
+HARD_FLOOR | HARD | POLICY | PREFERENCE | ADVISORY
+```
+
+The claim ceiling is equally deliberate:
+
+```text
+public semantic admission = QUALIFIED
+runtime engine-state admission = PRE_ADMISSION_ONLY
+Rule -> LearnedConstraint lowering = NONE
+parallel rule registry/current pointer = NONE
+parallel constraint engine = NONE
+parallel authority evaluator = NONE
+precedence grants override authority = false
+HARD_FLOOR waiver/override = FORBIDDEN
+```
+
+Existing formal-calculus `LearnedConstraint(HARD | SOFT)` semantics remain unchanged and distinct. Any future Rule-to-constraint lowering must be explicit, versioned, provenance-preserving, independently checkable, and fail closed when semantics cannot be preserved. The Rule overlay preserves the exact existing `AASMEngine` and adds no engine methods or runtime state.
+
+### Next S4 boundary — semantic projection/equivalence
+
+The next unfinished semantic seam is one explicit projection/equivalence contract for solution pools/top-K/diversity, cache/reuse, cross-provider comparison, artifact comparison, and TextPCB alternative-design identity. AASM must not infer an implicit “same enough.” During this S4 work, invariant classification (`REPRESENTATIONAL | STATIC_PROTOCOL | DYNAMIC_KERNEL | EMPIRICAL`) must also become explicit early enough to preserve the later portable/Rust proof boundary.
+
 ## Exact-head qualification
 
 The implementation head:
 
 ```text
-263640a634da0e92bb1ae0b42cb55063e0b64552
+7c808fc504fa91edb8fe9af13f12568b745f9762
 ```
 
-qualified the active `0.56.1 / 0.32.16` candidate with all **28 current custom commit-status contexts green**, including:
+qualified the active `0.56.1 / 0.32.17` candidate with all **29 current custom commit-status contexts green**, including:
 
 - `aasm/ci-summary`
 - `aasm/formal-assurance`
@@ -212,11 +245,12 @@ qualified the active `0.56.1 / 0.32.16` candidate with all **28 current custom c
 - `aasm/artifact-lineage`
 - `aasm/entity-evolution`
 - `aasm/engineering-quantity`
+- `aasm/engineering-rule`
 - `aasm/physical-evidence`
 
-The cumulative v0.56 gate on that exact head passed the inherited solver, provenance, state-authority, external-machine, complete PR-3, and complete S3 suites, then the S4 Quantity source/public firewalls and adversarial corpora, cumulative release-contract validation, and the active `0.32.16` authority boundary.
+The cumulative v0.56 gate on that exact head passed the inherited solver, provenance, state-authority, external-machine, complete PR-3, and complete S3 suites, then the S4 Quantity and Rule source/public firewalls and adversarial corpora, cumulative release-contract validation, and the active `0.32.17` authority boundary.
 
-The main CI matrix passed Python 3.11, 3.12, and 3.13, reproducible development-wheel smoke, PostgreSQL integration, Compose full-stack smoke, hierarchical scopes, LangGraph integration, and adapter conformance.
+The main CI matrix passed Python 3.11, 3.12, and 3.13, reproducible development-wheel smoke, PostgreSQL integration, Compose full-stack smoke, hierarchical scopes, LangGraph integration, and adapter conformance. Formal assurance passed the architecture/release-contract validator plus the complete bounded TLA+ and Promela model suites.
 
 These are development/candidate capabilities until the selected release scope passes the deliberate release process and an explicit release operation publishes an immutable tag and artifacts.
 
