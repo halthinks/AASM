@@ -59,7 +59,7 @@ def main() -> int:
         "physical_authority_runtime_contract",
     ])
     require(root / "src/aasm/public_active.py", [
-        '"contract_version": "0.32.11"',
+        '"contract_version": "0.32.13"',
         "EFFECT_CAPABILITY_CONTRACT_ID",
         "PhysicalEffectAuthorityBinding",
         "STATE_CONFLICT_CONTRACT_ID",
@@ -73,6 +73,14 @@ def main() -> int:
         "SOURCE_TRUST_CONTRACT_ID",
         "SourceTrustAssertion",
         "SourceTrustRevocation",
+        "EXECUTION_ENVIRONMENT_CONTRACT_ID",
+        "ExecutionEnvironment",
+        "EnvironmentEvidenceBinding",
+        "OBSERVATION_LIFECYCLE_CONTRACT_ID",
+        "ObservationLifecycleRecord",
+        "ObservationDisposition",
+        "OBSERVATION_FUSION_CONTRACT_ID",
+        "ObservationFusionRecord",
         "physical_effect_integration_runtime_contract",
         "state_conflict_runtime_contract",
         "event_causality_runtime_contract",
@@ -80,12 +88,18 @@ def main() -> int:
         "physical_identity_runtime_contract",
         "calibration_runtime_contract",
         "source_trust_runtime_contract",
+        "execution_environment_runtime_contract",
+        "observation_processing_runtime_contract",
         '"physical_identity"',
         '"calibration"',
         '"source_trust"',
+        '"execution-environment"',
+        '"observation-processing"',
     ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
         "PhysicalEffectIntegrationBoundaryMixin",
+        "ObservationProcessingRuntimeMixin",
+        "ExecutionEnvironmentRuntimeMixin",
         "SourceTrustRuntimeMixin",
         "CalibrationRuntimeMixin",
         "PhysicalIdentityRuntimeMixin",
@@ -171,6 +185,43 @@ def main() -> int:
         '"reputation_score": "NONE"',
         '"parallel_authority_evaluator": "NONE"',
     ])
+    require(root / "src/aasm/execution_environment.py", [
+        'EXECUTION_ENVIRONMENT_CONTRACT_ID = "aasm.execution.environment.v1"',
+        '"level_ordering": "NONE"',
+        '"simulation_as_physical": "REJECT_EXACT_ACCEPTED_LEVELS_ONLY"',
+        '"environment_existence_grants_fact_authority": False',
+    ])
+    require(root / "src/aasm/execution_environment_runtime.py", [
+        'EXECUTION_ENVIRONMENT_RUNTIME_CONTRACT_ID = "aasm.execution.environment.runtime.v1"',
+        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORD_BIND_NOT_ENVIRONMENT_TRUTH"',
+        '"parallel_environment_store": "NONE_EVIDENCE_PROJECTION_ONLY"',
+        '"parallel_authority_evaluator": "NONE"',
+    ])
+    require(root / "src/aasm/observation_lifecycle.py", [
+        'OBSERVATION_LIFECYCLE_CONTRACT_ID = "aasm.observation.lifecycle.v1"',
+        'OBSERVATION_DISPOSITION_CONTRACT_ID = "aasm.observation.disposition.v1"',
+        '"empirical_root": "EXISTING_MACHINE_STATE_OBSERVATION_ONLY"',
+        '"stage_progression": "VALIDATED_AT_RUNTIME_NO_SILENT_STAGE_SKIPS"',
+        '"validated_stage_is_universal_admission": False',
+        '"parallel_observation_store": "NONE_EVIDENCE_PROJECTION_ONLY"',
+    ])
+    require(root / "src/aasm/observation_fusion.py", [
+        'OBSERVATION_FUSION_CONTRACT_ID = "aasm.observation.fusion.v1"',
+        '"agreement_semantics": "CORROBORATION_ONLY_NEVER_AUTHORITY_OR_TRUTH_BY_VOTE"',
+        '"declared_independence_grants_authority": False',
+        '"validated_by_agreement": False',
+        '"parallel_authority_evaluator": "NONE"',
+    ])
+    require(root / "src/aasm/observation_processing_runtime.py", [
+        'OBSERVATION_PROCESSING_RUNTIME_CONTRACT_ID = "aasm.observation.processing.runtime.v1"',
+        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORDING_NOT_OBSERVATION_TRUTH"',
+        '"disposed_source_reuse": "FAIL_CLOSED_FOR_NEW_LIFECYCLE_OR_FUSION_RECORDS"',
+        '"fact_authority_creation": "NONE"',
+        '"state_claim_creation": "NONE"',
+        '"parallel_observation_store": "NONE_EVIDENCE_PROJECTION_ONLY"',
+        '"parallel_truth_table": "NONE"',
+        '"parallel_authority_evaluator": "NONE"',
+    ])
 
     require(root / "src/aasm/public_v55.py", ['__version__ = "0.55.0"', '"contract_version": "0.31.0"'])
     require(root / "src/aasm/public_v54.py", ['__version__ = "0.54.0"', '"contract_version": "0.30.0"'])
@@ -204,6 +255,8 @@ def main() -> int:
         "check_state_conflict_contracts.py",
         "check_causal_freshness_contracts.py",
         "check_identity_calibration_trust_contracts.py",
+        "check_execution_environment_contracts.py",
+        "check_observation_processing_contracts.py",
     ):
         run_script(root, script)
 
@@ -229,6 +282,11 @@ def main() -> int:
         "calibration-revocation.schema.json",
         "source-trust.schema.json",
         "source-trust-revocation.schema.json",
+        "execution-environment.schema.json",
+        "execution-environment-binding.schema.json",
+        "observation-lifecycle.schema.json",
+        "observation-fusion.schema.json",
+        "observation-disposition.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -258,8 +316,12 @@ def main() -> int:
     require(root / ".github/workflows/v56.yml", [
         "AASM v0.56 Development Qualification",
         "check_identity_calibration_trust_contracts.py",
+        "check_execution_environment_contracts.py",
+        "check_observation_processing_contracts.py",
         "tests/test_identity_calibration_trust.py",
-        "0.32.11",
+        "tests/test_execution_environment.py",
+        "tests/test_observation_processing.py",
+        "0.32.13",
         "context='aasm/v56'",
     ])
     require(root / ".github/workflows/identity-calibration-trust.yml", [
@@ -267,13 +329,27 @@ def main() -> int:
         "tests/test_identity_calibration_trust.py",
         "context='aasm/identity-calibration-trust'",
     ])
+    require(root / ".github/workflows/execution-environment.yml", [
+        "check_execution_environment_contracts.py",
+        "tests/test_execution_environment.py",
+        "context='aasm/execution-environment'",
+    ])
+    require(root / ".github/workflows/observation-epistemics.yml", [
+        "check_observation_processing_contracts.py",
+        "tests/test_observation_processing.py",
+        "context='aasm/observation-epistemics'",
+    ])
     require(root / ".github/workflows/physical-evidence.yml", [
         "check_state_conflict_contracts.py",
         "check_causal_freshness_contracts.py",
         "check_identity_calibration_trust_contracts.py",
+        "check_execution_environment_contracts.py",
+        "check_observation_processing_contracts.py",
         "tests/test_state_conflict.py",
         "tests/test_causal_freshness.py",
         "tests/test_identity_calibration_trust.py",
+        "tests/test_execution_environment.py",
+        "tests/test_observation_processing.py",
         "context='aasm/physical-evidence'",
     ])
     require(root / ".github/workflows/release.yml", [
@@ -291,6 +367,8 @@ def main() -> int:
         "aasm/physical-effect-integration",
         "aasm/physical-evidence",
         "aasm/identity-calibration-trust",
+        "aasm/execution-environment",
+        "aasm/observation-epistemics",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
@@ -304,14 +382,14 @@ def main() -> int:
         "import aasm; "
         "r=aasm.validate_public_api_contract(); assert r['valid'], r; "
         "c=aasm.public_api_contract(); assert c['runtime_version']=='0.56.1'; "
-        "assert c['contract_version']=='0.32.11'; "
-        "assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust'))"
+        "assert c['contract_version']=='0.32.13'; "
+        "assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust','execution_environment','observation_processing'))"
     )
     completed = subprocess.run([sys.executable, "-c", code], cwd=root, env=env)
     if completed.returncode != 0:
         _fail("active public contract execution failed")
 
-    print("0.56.1 development target + active adoption 0.32.11 + PR-3 + S3 reality-evidence source/release contracts: PASS")
+    print("0.56.1 development target + active adoption 0.32.13 + PR-3 + S3 observation-epistemics source/release contracts: PASS")
     return 0
 
 
