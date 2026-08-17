@@ -29,8 +29,10 @@ def forbid(path: Path, tokens) -> None:
 def main() -> int:
     root = Path(__file__).resolve().parents[1]
     model = root / "src/aasm/artifact_lineage.py"
+    runtime = root / "src/aasm/artifact_lineage_runtime.py"
     schema_path = root / "schemas/artifact-revision.schema.json"
     tests = root / "tests/test_artifact_lineage_foundation.py"
+    runtime_tests = root / "tests/test_artifact_lineage_runtime.py"
     active_runtime = root / "src/aasm/runtime_v56_foundation.py"
 
     require(model, [
@@ -65,6 +67,34 @@ def main() -> int:
         "source_external_references",
         "evidence_ids",
     ])
+    require(runtime, [
+        'ARTIFACT_LINEAGE_RUNTIME_CONTRACT_ID = "aasm.artifact-lineage.runtime.v1"',
+        '"durability": "EXISTING_AASM_EVIDENCE_EVENT_REPLAY"',
+        '"recording_authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"',
+        '"parent_revision": "EXACT_DURABLE_ID_AND_FINGERPRINT_REQUIRED"',
+        '"source_problem_revision": "EXACT_DURABLE_ID_AND_FINGERPRINT_REQUIRED_WHEN_REFERENCED"',
+        '"storage_rebinding": "APPEND_ONLY_EVIDENCE_BINDING_NOT_REVISION_MUTATION"',
+        '"heads": "QUERY_PROJECTION_ONLY_NOT_ACCEPTANCE_OR_AUTHORITY"',
+        '"newest_revision_authority": "NONE"',
+        '"artifact_acceptance": "NONE_DEFINED_BY_RUNTIME"',
+        '"fact_authority_creation": "NONE"',
+        '"source_trust_creation": "NONE"',
+        '"effect_authorization": "NONE"',
+        '"effect_dispatch": "NONE"',
+        '"current_artifact_pointer": "NONE"',
+        '"parallel_artifact_registry": "NONE_EVIDENCE_PROJECTION_ONLY"',
+        '"parallel_current_state_store": "NONE"',
+        '"hidden_wall_clock": "NONE"',
+        '"runtime_admission": "PRE_ADMISSION_ONLY"',
+        "EvidenceRecord",
+        "authorize_scoped_request",
+        "add_evidence_guarded",
+        "semantic_evolution_report",
+        "execution_environment_report",
+        "project_artifact_lineage_evidence",
+        "storage_bindings_by_revision",
+        "sha256",
+    ])
     require(tests, [
         "revision_identity_is_backend_independent_but_storage_binding_is_not",
         "rejects_content_ref_digest_mismatch",
@@ -75,6 +105,16 @@ def main() -> int:
         "competing_children_are_distinct_legal_branches_not_implicit_authority",
         "duplicate_content_with_different_provenance_produces_distinct_revision_identity",
         "denies_truth_acceptance_and_parallel_registry",
+    ])
+    require(runtime_tests, [
+        "records_explicit_branch_and_merge_without_selecting_authority",
+        "rejects_forged_parent_fingerprint_and_second_created_root",
+        "rejects_stale_problem_revision_missing_or_invalidated_source_evidence",
+        "verifies_content_and_semantic_projection_hashes",
+        "storage_rebinding_appends_binding_without_mutating_revision",
+        "duplicate_content_with_different_provenance_remains_distinguishable",
+        "projection_rejects_mutated_revision_record_and_source_firewall_claims_remain_false",
+        "sqlite_restart_reconstructs_identical_lineage_projection",
     ])
 
     forbid(model, [
@@ -95,6 +135,26 @@ def main() -> int:
         "MemoryArtifactBackend(",
         "LocalDirectoryArtifactBackend(",
         "ArtifactBackendRegistry(",
+    ])
+    forbid(runtime, [
+        "register_fact_authority(",
+        "record_source_trust(",
+        "authorize_effect(",
+        "execute_effect(",
+        "dispatch_effect(",
+        "record_state_claim(",
+        "patch_snapshot(",
+        "snapshot.resources",
+        "external_artifacts",
+        "current_artifact =",
+        "current_entity_state =",
+        "time.time(",
+        "time_ns(",
+        "datetime.now(",
+        "datetime.utcnow(",
+        "TextPCB",
+        "TEXTPCB",
+        "pickle",
     ])
     forbid(active_runtime, [
         "artifact_lineage",
@@ -136,6 +196,7 @@ def main() -> int:
 
     sys.path.insert(0, str(root / "src"))
     from aasm.artifact_lineage import artifact_lineage_contract
+    from aasm.artifact_lineage_runtime import artifact_lineage_runtime_contract
 
     contract = artifact_lineage_contract()
     if not contract["revision_identity"].startswith("BACKEND_INDEPENDENT"):
@@ -155,7 +216,19 @@ def main() -> int:
     if contract["runtime_admission"] != "PRE_ADMISSION_ONLY":
         fail("artifact revision was promoted before qualification", model)
 
-    print("S3 artifact revision portable pre-admission source contracts: PASS")
+    runtime_contract = artifact_lineage_runtime_contract()
+    if runtime_contract["durability"] != "EXISTING_AASM_EVIDENCE_EVENT_REPLAY":
+        fail("artifact lineage bypassed existing durable Evidence/replay", runtime)
+    if runtime_contract["newest_revision_authority"] != "NONE":
+        fail("artifact lineage grants authority by recency", runtime)
+    if runtime_contract["artifact_acceptance"] != "NONE_DEFINED_BY_RUNTIME":
+        fail("pre-admission runtime acquired artifact acceptance semantics", runtime)
+    if runtime_contract["parallel_artifact_registry"] != "NONE_EVIDENCE_PROJECTION_ONLY":
+        fail("artifact lineage introduced a parallel artifact registry", runtime)
+    if runtime_contract["runtime_admission"] != "PRE_ADMISSION_ONLY":
+        fail("artifact lineage runtime was promoted before active-engine qualification", runtime)
+
+    print("S3 artifact revision portable pre-admission source and runtime contracts: PASS")
     return 0
 
 
