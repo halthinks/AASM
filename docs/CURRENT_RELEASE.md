@@ -1,22 +1,22 @@
 # AASM v0.56.0 — Truthful Solver Outcomes
 
 **Latest immutable published release:** v0.56.0  
-**Current development target on `main`:** 0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority + S3 Artifact/Entity Lineage  
+**Current development target on `main`:** 0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority + S3 Lineage + S4 Engineering Quantity  
 **Released adoption contract:** `aasm.adoption.v1 / 0.32.0`  
-**Active development adoption contract on `main`:** `aasm.adoption.v1 / 0.32.15`  
-**Current qualified development boundary:** complete PR-3 / PHY-01 + S3 through artifact revision lineage and entity evolution  
-**Next unfinished boundary:** S4 — Engineering + Safety Semantics (quantity/unit/tolerance foundation first)
+**Active development adoption contract on `main`:** `aasm.adoption.v1 / 0.32.16`  
+**Current qualified development boundary:** complete PR-3 / PHY-01 + complete S3 + S4 quantity/unit/tolerance semantic foundation  
+**Next unfinished boundary:** S4 — rule applicability and precedence (`aasm.rule.v1`)
 
-AASM v0.56.0 is the latest published GitHub package/runtime release. Unreleased `main` now exposes the broader 0.56.1 development target and active adoption contract `0.32.15`, but that does **not** make v0.56.1 a published release. Exact unreleased source identity is the Git commit SHA.
+AASM v0.56.0 is the latest published GitHub package/runtime release. Unreleased `main` now exposes the broader 0.56.1 development target and active adoption contract `0.32.16`, but that does **not** make v0.56.1 a published release. Exact unreleased source identity is the Git commit SHA.
 
 The stable remote wire protocol remains **`aasm.remote.v1 / 0.19.0`** and is independent of package SemVer.
 
 ```text
 latest published package: 0.56.0
 published public surface: public_v56 / 0.32.0 at the v0.56.0 tag
-current development target: 0.56.1 / 0.32.15 on main
+current development target: 0.56.1 / 0.32.16 on main
 qualified implementation head before documentation-only updates:
-  6b107268cd4190357bf45b3bfd1385410a0d82cf
+  263640a634da0e92bb1ae0b42cb55063e0b64552
 parent published release: v0.55.0
 ```
 
@@ -154,15 +154,36 @@ PR-3H integrates lease/capability/epoch/revocation/bounds checks into the **exis
 
 S3 is now gated through the observation/identity/calibration/trust/environment/fusion layers plus `aasm.artifact.revision.v1` / `aasm.artifact-lineage.runtime.v1` and `aasm.entity.evolution.v1` / `aasm.entity-evolution.runtime.v1`. Artifact revision identity is backend-independent and replayed through existing Evidence; storage binding is separate. Artifact existence or successful generation never implies authoritative acceptance. Entity evolution binds exact predecessor/successor artifact revision fingerprints and records split/merge/replacement/ambiguity without rewriting history. `AMBIGUOUS` mappings fail closed for hard automatic reuse. Neither subsystem creates a hidden current artifact/entity truth table or effect/fact authority.
 
+### S4 — engineering quantity/unit/tolerance semantic foundation
+
+Active public semantic contract:
+
+- `aasm.quantity.v1`
+
+The qualified Quantity IR provides exact integer, rational, canonical-decimal, interval, and measured/estimated representations; explicit dimension vectors; exact affine source-unit to canonical-unit transforms; explicit tolerance, quantization/grid, rounding, source precision, uncertainty reference, and provenance; deterministic identity/fingerprints; and fail-closed dimensional compatibility.
+
+The claim ceiling is deliberate:
+
+```text
+public semantic admission = QUALIFIED
+runtime engine-state admission = PRE_ADMISSION_ONLY
+hidden/mutable unit registry = NONE
+FactAuthority / EffectAuthority = NONE
+legacy aasm.numeric.tolerance.v1 = UNCHANGED
+legacy EffectCapability NumericInterval bounds = UNCHANGED
+```
+
+Quantity is therefore available as a portable public semantic IR without silently reinterpreting solver tolerance policy, physical EffectCapability bounds, machine postconditions, or any existing truth/authority path. Those integrations require explicit later translation/admission contracts and their own qualification.
+
 ## Exact-head qualification
 
 The implementation head:
 
 ```text
-6b107268cd4190357bf45b3bfd1385410a0d82cf
+263640a634da0e92bb1ae0b42cb55063e0b64552
 ```
 
-qualified the active `0.56.1 / 0.32.15` candidate with all 27 current custom commit-status contexts green, including:
+qualified the active `0.56.1 / 0.32.16` candidate with all **28 current custom commit-status contexts green**, including:
 
 - `aasm/ci-summary`
 - `aasm/formal-assurance`
@@ -190,7 +211,10 @@ qualified the active `0.56.1 / 0.32.15` candidate with all 27 current custom com
 - `aasm/observation-epistemics`
 - `aasm/artifact-lineage`
 - `aasm/entity-evolution`
+- `aasm/engineering-quantity`
 - `aasm/physical-evidence`
+
+The cumulative v0.56 gate on that exact head passed the inherited solver, provenance, state-authority, external-machine, complete PR-3, and complete S3 suites, then the S4 Quantity source/public firewalls and adversarial corpora, cumulative release-contract validation, and the active `0.32.16` authority boundary.
 
 The main CI matrix passed Python 3.11, 3.12, and 3.13, reproducible development-wheel smoke, PostgreSQL integration, Compose full-stack smoke, hierarchical scopes, LangGraph integration, and adapter conformance.
 
