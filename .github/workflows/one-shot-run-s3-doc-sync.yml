@@ -16,28 +16,40 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - name: Correct one stale current-release phrase anchor in the one-shot script
+      - name: Correct residual live documentation contradictions
         shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          p = Path('scripts/one_shot_sync_s3_docs.py')
-          text = p.read_text(encoding='utf-8')
-          old = '    old_phrase = f"qualified the active `0.56.1 / {ADOPTION}` candidate with all required direct contexts green, including:"'
-          new = '    old_phrase = "qualified the active `0.56.1 / 0.32.7` candidate with all required direct contexts green, including:"'
-          if text.count(old) != 1:
-              raise SystemExit('current-release phrase anchor patch drift')
-          p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          HEAD='6b107268cd4190357bf45b3bfd1385410a0d82cf'
+
+          def exact(path, old, new, expected=1):
+              p=Path(path); text=p.read_text(encoding='utf-8'); count=text.count(old)
+              if count != expected:
+                  raise SystemExit(f'{path}: expected {expected} occurrences of {old!r}, found {count}')
+              p.write_text(text.replace(old,new), encoding='utf-8')
+              print(f'{path}: {old[:60]}')
+
+          exact('README.md', '**Next release / cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority', '**Next release / cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority + S3 Artifact/Entity Lineage')
+          exact('README.md', 'assert aasm.public_api_contract()["contract_version"] == "0.32.7"', 'assert aasm.public_api_contract()["contract_version"] == "0.32.15"')
+          exact('README.md', f'The implementation head `{HEAD}` qualified the active `0.56.1 / 0.32.7` candidate across **20 direct required contexts**:', f'The implementation head `{HEAD}` qualified the active `0.56.1 / 0.32.15` candidate across **27 current custom commit-status contexts**:')
+          exact('README.md', 'aasm/physical-preemption-recovery       PASS\n```', 'aasm/physical-preemption-recovery       PASS\naasm/physical-effect-integration         PASS\naasm/identity-calibration-trust          PASS\naasm/execution-environment               PASS\naasm/observation-epistemics              PASS\naasm/artifact-lineage                    PASS\naasm/entity-evolution                    PASS\naasm/physical-evidence                   PASS\n```')
+          exact('README.md', '- crash recovery between durable preemption Evidence and lease-revocation Evidence;\n- cumulative source/release contracts;\n- active adoption contract `0.32.7`.', '- crash recovery between durable preemption Evidence and lease-revocation Evidence;\n- PR-3H physical-effect authority rechecks at existing Effect authorization/execution boundaries;\n- S3 identity/calibration/trust, execution-environment, and observation-epistemics containment;\n- backend-independent artifact revision lineage and ambiguity-safe entity evolution;\n- cumulative source/release contracts;\n- active adoption contract `0.32.15`.')
+          exact('README.md', 'v0.56.1 development  execution provenance + governed external reality + PR-3A–G physical control foundations', 'v0.56.1 development  execution provenance + governed external reality + complete PR-3 physical control + S3 artifact/entity lineage')
+          exact('README.md', '**PR-3 status:** `PR-3A through PR-3G GATED; PR-3H NOT YET IMPLEMENTED`', '**PR-3 / S3 status:** `complete PR-3 / PHY-01 GATED; S3 artifact revision lineage + entity evolution GATED; next S4`')
+
+          exact('docs/CURRENT_RELEASE.md', 'active adoption contract `0.32.7`', 'active adoption contract `0.32.15`')
+          exact('docs/CURRENT_RELEASE.md', 'current development target: 0.56.1 / 0.32.7 on main', 'current development target: 0.56.1 / 0.32.15 on main')
           PY
-      - name: Run guarded documentation transforms
-        run: python scripts/one_shot_sync_s3_docs.py
-      - name: Commit synchronized documents
+      - name: Commit residual synchronized documentation
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add README.md ROADMAP.md docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md docs/CURRENT_RELEASE.md docs/RELEASE_0.56.1.md
+          git add README.md docs/CURRENT_RELEASE.md
           git diff --cached --quiet && exit 0
-          git commit -m 'Synchronize docs with qualified S3 lineage boundary'
+          git commit -m 'Finish S3 qualified documentation alignment'
           git push origin HEAD:main
