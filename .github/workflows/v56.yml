@@ -180,7 +180,7 @@ jobs:
           assert calibration['source_trust']=='NONE_CALIBRATION_IS_ONLY_EVIDENCE_INPUT_TO_LATER_POLICY'
           assert calibration['parallel_calibration_store']=='NONE_EVIDENCE_PROJECTION_ONLY'; assert calibration['parallel_truth_table']=='NONE'
           trust=engine.source_trust_contract_report()
-          assert trust['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
+          assert trust['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORD_REVOKE_NOT_TRUST_EVALUATION'
           assert trust['fact_authority']=='EXISTING_FACT_AUTHORITY_REMAINS_SEPARATE_AND_REQUIRED'
           assert trust['trusted_claim_admission']=='NONE'; assert trust['reputation_score']=='NONE'
           assert trust['parallel_authority_evaluator']=='NONE'; assert trust['parallel_trust_registry']=='NONE_EVIDENCE_PROJECTION_ONLY'; assert trust['parallel_truth_table']=='NONE'
