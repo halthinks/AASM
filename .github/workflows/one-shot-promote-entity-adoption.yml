@@ -1,0 +1,170 @@
+name: One-shot entity public adoption promotion
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-promote-entity-adoption.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Promote qualified entity evolution to adoption 0.32.15
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: Path, old: str, new: str, label: str) -> None:
+              text = path.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: {label}: expected one anchor, found {count}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+              print(f'{path}: {label}')
+
+          runtime = Path('src/aasm/entity_evolution_runtime.py')
+          replace_once(
+              runtime,
+              '"runtime_admission": "ACTIVE_ENGINE_CANDIDATE",',
+              '"runtime_admission": "ACTIVE_ENGINE_QUALIFIED",',
+              'promoted runtime admission',
+          )
+
+          overlay = Path('src/aasm/public_active_entity_evolution.py')
+          text = overlay.read_text(encoding='utf-8')
+          count = text.count('ACTIVE_ENGINE_CANDIDATE')
+          if count != 1:
+              raise SystemExit(f'{overlay}: expected one candidate admission token, found {count}')
+          overlay.write_text(text.replace('ACTIVE_ENGINE_CANDIDATE', 'ACTIVE_ENGINE_QUALIFIED'), encoding='utf-8')
+          print(f'{overlay}: bound public surface to qualified runtime')
+
+          package_init = Path('src/aasm/__init__.py')
+          package_init.write_text(
+              '# public_v56 remains the frozen 0.56.1 base surface; public_active is the 0.32.14 additive parent; public_active_entity_evolution is the current qualified adoption overlay.\n'
+              'from .public_active_entity_evolution import *\n'
+              'from .public_active_entity_evolution import __version__, AASMEngine, validate_public_api_contract, public_api_contract, PUBLIC_API_CONTRACT\n',
+              encoding='utf-8',
+          )
+          print(f'{package_init}: promoted 0.32.15 overlay to package root')
+
+          old_test = Path('tests/test_entity_evolution_public_candidate.py')
+          new_test = Path('tests/test_entity_evolution_public.py')
+          test_text = old_test.read_text(encoding='utf-8')
+          test_text = test_text.replace('ACTIVE_ENGINE_CANDIDATE', 'ACTIVE_ENGINE_QUALIFIED')
+          old_block = '''def test_entity_public_candidate_top_level_not_promoted_before_candidate_gate():\n    # The staging discipline is explicit: creating the candidate does not\n    # silently change the current top-level adoption contract.\n    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.14"\n'''
+          new_block = '''def test_entity_public_adoption_is_top_level_after_qualification():\n    report = aasm.validate_public_api_contract()\n    assert report["valid"], report\n    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.15"\n    assert aasm.AASMEngine is candidate.AASMEngine\n    assert aasm.ENTITY_EVOLUTION_CONTRACT_ID == candidate.ENTITY_EVOLUTION_CONTRACT_ID\n    assert aasm.ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID == candidate.ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID\n'''
+          if old_block not in test_text:
+              raise SystemExit(f'{old_test}: top-level staging assertion anchor missing')
+          test_text = test_text.replace(old_block, new_block, 1)
+          new_test.write_text(test_text, encoding='utf-8')
+          old_test.unlink()
+          print(f'{new_test}: promoted public candidate corpus to active adoption corpus')
+
+          checker = Path('scripts/check_entity_evolution_contracts.py')
+          checker_text = checker.read_text(encoding='utf-8')
+          replacements = [
+              ('tests/test_entity_evolution_public_candidate.py', 'tests/test_entity_evolution_public.py', 'public test path'),
+              ('ACTIVE_ENGINE_CANDIDATE', 'ACTIVE_ENGINE_QUALIFIED', 'runtime admission token'),
+              ('require("public_active_entity_evolution" not in package_init, "entity evolution candidate was promoted before candidate qualification")',
+               'require("public_active_entity_evolution" in package_init, "qualified entity evolution overlay is not the package root")',
+               'package-root promotion'),
+              ('test_entity_public_candidate_top_level_not_promoted_before_candidate_gate',
+               'test_entity_public_adoption_is_top_level_after_qualification',
+               'public adoption test token'),
+              ('entity evolution active-engine + public-candidate source contracts: PASS',
+               'entity evolution active-engine + active-public source contracts: PASS',
+               'qualification label'),
+          ]
+          for old, new, label in replacements:
+              count = checker_text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{checker}: {label}: expected one anchor, found {count}')
+              checker_text = checker_text.replace(old, new, 1)
+          checker.write_text(checker_text, encoding='utf-8')
+          print(f'{checker}: promoted source gate to active public adoption')
+
+          release_checker = Path('scripts/check_release_contracts.py')
+          rc = release_checker.read_text(encoding='utf-8')
+          def rc_replace(old: str, new: str, label: str) -> None:
+              global rc
+              count = rc.count(old)
+              if count != 1:
+                  raise SystemExit(f'{release_checker}: {label}: expected one anchor, found {count}')
+              rc = rc.replace(old, new, 1)
+
+          rc_replace(
+              'require(root / "src/aasm/__init__.py", ["public_v56", "public_active"])',
+              'require(root / "src/aasm/__init__.py", ["public_v56", "public_active", "public_active_entity_evolution"])',
+              'package root source contract',
+          )
+          rc_replace(
+              '    require(root / "src/aasm/runtime_v56_foundation.py", [',
+              '''    require(root / "src/aasm/public_active_entity_evolution.py", [\n        '\"contract_version\": \"0.32.15\"',\n        "ENTITY_EVOLUTION_CONTRACT_ID",\n        "ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID",\n        "EntityRepresentationRef",\n        "EntityEvolution",\n        "entity_evolution_contract",\n        "entity_evolution_runtime_contract",\n        '\"entity-evolution\"',\n        '\"record_entity_evolution\"',\n    ])\n    require(root / "src/aasm/runtime_v56_foundation.py", [''',
+              'entity public overlay source contract',
+          )
+          rc_replace(
+              '        "ObservationProcessingRuntimeMixin",\n        "ExecutionEnvironmentRuntimeMixin",',
+              '        "ObservationProcessingRuntimeMixin",\n        "ArtifactLineageRuntimeMixin",\n        "EntityEvolutionRuntimeMixin",\n        "ExecutionEnvironmentRuntimeMixin",',
+              'active foundation S3 composition',
+          )
+          rc_replace(
+              '        "check_observation_processing_contracts.py",\n    ):',
+              '        "check_observation_processing_contracts.py",\n        "check_artifact_lineage_contracts.py",\n        "check_entity_evolution_contracts.py",\n    ):',
+              'nested S3 source checkers',
+          )
+          rc_replace(
+              '        "observation-disposition.schema.json",\n    ):',
+              '        "observation-disposition.schema.json",\n        "artifact-revision.schema.json",\n        "entity-evolution.schema.json",\n    ):',
+              'S3 schema coverage',
+          )
+          rc_replace(
+              '        "tests/test_observation_processing.py",\n        "0.32.14",\n        "context=\'aasm/v56\'",',
+              '        "tests/test_observation_processing.py",\n        "check_artifact_lineage_contracts.py",\n        "check_entity_evolution_contracts.py",\n        "tests/test_artifact_lineage_runtime.py",\n        "tests/test_entity_evolution.py",\n        "tests/test_entity_evolution_public.py",\n        "0.32.15",\n        "context=\'aasm/v56\'",',
+              'cumulative v56 S3 coverage',
+          )
+          rc_replace(
+              '        "aasm/observation-epistemics",\n        "check_version_policy.py",',
+              '        "aasm/observation-epistemics",\n        "aasm/artifact-lineage",\n        "aasm/entity-evolution",\n        "check_version_policy.py",',
+              'release required S3 contexts',
+          )
+          rc_replace(
+              '        "assert c[\'contract_version\']==\'0.32.14\'; "',
+              '        "assert c[\'contract_version\']==\'0.32.15\'; "',
+              'runtime adoption assertion',
+          )
+          rc_replace(
+              "        \"assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust','execution_environment','observation_processing'))\"",
+              "        \"assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust','execution_environment','observation_processing','artifact_lineage','entity_evolution'))\"",
+              'runtime S3 public contract keys',
+          )
+          rc_replace(
+              'print("0.56.1 development target + active adoption 0.32.14 + PR-3 + S3 observation-epistemics source/release contracts: PASS")',
+              'print("0.56.1 development target + active adoption 0.32.15 + PR-3 + S3 observation/artifact/entity source/release contracts: PASS")',
+              'release checker qualification label',
+          )
+          release_checker.write_text(rc, encoding='utf-8')
+          print(f'{release_checker}: expanded release contract through entity evolution')
+          PY
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            src/aasm/entity_evolution_runtime.py \
+            src/aasm/public_active_entity_evolution.py \
+            src/aasm/__init__.py \
+            tests/test_entity_evolution_public_candidate.py \
+            tests/test_entity_evolution_public.py \
+            scripts/check_entity_evolution_contracts.py \
+            scripts/check_release_contracts.py
+          git diff --cached --quiet && exit 0
+          git commit -m 'Promote entity evolution to adoption 0.32.15'
+          git push origin HEAD:main
