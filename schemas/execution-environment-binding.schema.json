@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/execution-environment-binding.schema.json",
+  "title": "AASM Execution Environment Binding v1",
+  "type": "object",
+  "required": [
+    "binding_id", "contract_id", "contract_version", "workspace_id", "scope_id", "subject_id",
+    "environment_id", "environment_fingerprint", "object_kind", "object_id", "object_fingerprint",
+    "problem_revision_id", "external_revision_id", "fingerprint"
+  ],
+  "properties": {
+    "binding_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.execution.environment-binding.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "subject_id": {"type": "string", "minLength": 1},
+    "environment_id": {"type": "string", "minLength": 1},
+    "environment_fingerprint": {"type": "string", "minLength": 16},
+    "object_kind": {"const": "MACHINE_STATE_OBSERVATION"},
+    "object_id": {"type": "string", "minLength": 1},
+    "object_fingerprint": {"type": "string", "minLength": 16},
+    "problem_revision_id": {"type": "string"},
+    "external_revision_id": {"type": "string"},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
