@@ -20,7 +20,6 @@ from aasm.execution_environment import (
 )
 from aasm.execution_environment_runtime import (
     EXECUTION_ENVIRONMENT_CAPABILITIES,
-    ExecutionEnvironmentRuntimeMixin,
     execution_environment_runtime_contract,
 )
 from aasm.external_machine import MachineBinding, MachineStateObservation
@@ -45,9 +44,7 @@ TEXTPCB = "textpcb-engine"
 OBSERVER_CAPABILITY = "machine.observe"
 OPERATOR_CAPABILITY = "machine.operate"
 
-
-class ExecutionEnvironmentEngine(ExecutionEnvironmentRuntimeMixin, ActiveEngine):
-    """Pre-admission S3 execution-environment composition."""
+ExecutionEnvironmentEngine = ActiveEngine
 
 
 def _grant(engine, subject: str, *capabilities: str):
