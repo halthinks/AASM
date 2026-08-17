@@ -13,12 +13,17 @@
     "artifact_ref",
     "artifact_kind",
     "parent_revision_ids",
+    "parent_revision_fingerprints",
+    "revision_relation",
     "producer_id",
     "producer_kind",
     "machine_id",
     "effect_id",
     "source_problem_revision_id",
     "source_problem_revision_fingerprint",
+    "environment_id",
+    "environment_fingerprint",
+    "refinement_run_id",
     "source_external_references",
     "format_id",
     "schema_id",
@@ -39,7 +44,7 @@
       "const": "aasm.artifact.revision.v1"
     },
     "contract_version": {
-      "const": "0.2.0"
+      "const": "0.3.0"
     },
     "logical_artifact_id": {
       "type": "string",
@@ -67,6 +72,26 @@
         "pattern": "^artifact-revision-[0-9a-f]{24}$"
       }
     },
+    "parent_revision_fingerprints": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^artifact-revision-[0-9a-f]{24}$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "revision_relation": {
+      "enum": [
+        "CREATED",
+        "CREATED_FROM",
+        "MODIFIES",
+        "DERIVED_FROM",
+        "MERGES",
+        "REPLACES"
+      ]
+    },
     "producer_id": {
       "type": "string",
       "minLength": 1
@@ -84,6 +109,17 @@
       "type": "string"
     },
     "source_problem_revision_fingerprint": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "environment_id": {
+      "type": "string"
+    },
+    "environment_fingerprint": {
+      "type": "string",
+      "pattern": "^$|^[0-9a-f]{64}$"
+    },
+    "refinement_run_id": {
       "type": "string"
     },
     "source_external_references": {
@@ -124,12 +160,40 @@
     },
     "fingerprint": {
       "type": "string",
-      "minLength": 16
+      "pattern": "^[0-9a-f]{64}$"
     },
     "storage_binding_fingerprint": {
       "type": "string",
-      "minLength": 16
+      "pattern": "^[0-9a-f]{64}$"
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "revision_relation": {"const": "CREATED"}
+        }
+      },
+      "then": {
+        "properties": {
+          "parent_revision_ids": {"maxItems": 0},
+          "parent_revision_fingerprints": {"maxProperties": 0}
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "revision_relation": {"const": "MERGES"}
+        }
+      },
+      "then": {
+        "properties": {
+          "parent_revision_ids": {"minItems": 2},
+          "parent_revision_fingerprints": {"minProperties": 2}
+        }
+      }
+    }
+  ],
   "additionalProperties": false
 }
