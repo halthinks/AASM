@@ -14,7 +14,7 @@ def test_v56_base_is_frozen_and_active_overlay_advances_adoption_only():
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.11"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.12"
     assert aasm.AASMEngine is public_active.AASMEngine
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v56.AASMEngine is not public_v55.AASMEngine
@@ -51,6 +51,8 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_reality_
         "calibration_contract_report", "record_calibration", "revoke_calibration", "calibration_report", "calibrations_report",
         "source_trust_contract_report", "record_source_trust", "revoke_source_trust",
         "source_trust_report", "source_trust_assertions_report",
+        "execution_environment_contract_report", "record_execution_environment", "bind_machine_observation_environment",
+        "execution_environment_report", "execution_environment_binding_report", "execution_environments_report",
     ):
         assert callable(getattr(aasm.AASMEngine, method)), method
         assert method in aasm.SUPPORTED_ENGINE_METHODS
@@ -58,7 +60,7 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_reality_
 
 def test_active_contract_preserves_external_reality_physical_control_and_s3_firewalls():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] == "0.32.11"
+    assert contract["contract_version"] == "0.32.12"
 
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -210,6 +212,31 @@ def test_active_contract_preserves_external_reality_physical_control_and_s3_fire
     assert trust_runtime["parallel_trust_registry"] == "NONE_EVIDENCE_PROJECTION_ONLY"
     assert trust_runtime["parallel_truth_table"] == "NONE"
 
+    environment = contract["execution_environment"]
+    assert environment["levels"] == ["MODEL", "SIMULATION", "SIL", "HIL", "BENCH", "CONTROLLED_PHYSICAL", "OPERATIONAL"]
+    assert environment["level_ordering"] == "NONE"
+    assert environment["higher_level_implies_truth"] is False
+    assert environment["higher_level_implies_authority"] is False
+    assert environment["automatic_level_upgrade"] is False
+    assert environment["simulation_as_physical"] == "REJECT_EXACT_ACCEPTED_LEVELS_ONLY"
+    assert environment["cross_environment_evidence_equivalence"] == "NONE_UNLESS_EXPLICIT_EXTERNAL_POLICY"
+    assert environment["environment_existence_grants_fact_authority"] is False
+    assert environment["environment_existence_grants_effect_authority"] is False
+    assert environment["environment_existence_grants_source_trust"] is False
+    assert environment["environment_level_is_universal_admission"] is False
+    environment_runtime = environment["runtime"]
+    assert environment_runtime["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORD_BIND_NOT_ENVIRONMENT_TRUTH"
+    assert environment_runtime["level_acceptance"] == "EXACT_ACCEPTED_LEVEL_SET_MEMBERSHIP_NO_ORDINAL_INFERENCE"
+    assert environment_runtime["environment_level_authority"] == "NONE"
+    assert environment_runtime["physical_identity_source"] == "EXISTING_PHYSICAL_IDENTITY_PROJECTION_ONLY"
+    assert environment_runtime["calibration_source"] == "EXISTING_CALIBRATION_PROJECTION_ONLY"
+    assert environment_runtime["source_trust_source"] == "EXISTING_SOURCE_TRUST_PROJECTION_ONLY"
+    assert environment_runtime["observation_source"] == "EXISTING_MACHINE_STATE_OBSERVATION_ONLY"
+    assert environment_runtime["parallel_environment_store"] == "NONE_EVIDENCE_PROJECTION_ONLY"
+    assert environment_runtime["parallel_observation_store"] == "NONE"
+    assert environment_runtime["parallel_truth_table"] == "NONE"
+    assert environment_runtime["parallel_authority_evaluator"] == "NONE"
+
 
 def test_active_import_registry_contains_pr3_and_s3_reality_contracts():
     for name in (
@@ -230,6 +257,8 @@ def test_active_import_registry_contains_pr3_and_s3_reality_contracts():
         "PhysicalIdentity", "physical_identity_contract", "physical_identity_runtime_contract", "PHYSICAL_IDENTITY_CAPABILITIES",
         "CalibrationCertificate", "CalibrationRevocation", "calibration_contract", "calibration_runtime_contract", "CALIBRATION_CAPABILITIES",
         "SourceTrustAssertion", "SourceTrustRevocation", "source_trust_contract", "source_trust_runtime_contract", "SOURCE_TRUST_CAPABILITIES",
+        "ExecutionEnvironment", "EnvironmentEvidenceBinding", "environment_level_accepted", "execution_environment_contract",
+        "execution_environment_runtime_contract", "EXECUTION_ENVIRONMENT_CAPABILITIES",
     ):
         assert hasattr(aasm, name), name
         assert name in aasm.SUPPORTED_PUBLIC_IMPORTS
