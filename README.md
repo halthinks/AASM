@@ -6,7 +6,7 @@
 
 **Truthful Solver Outcomes + Governed Semantic Evolution + Engineering Mathematical IR**
 
-**Next release / cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority
+**Next release / cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority + S3 Artifact/Entity Lineage
 
 **Current development package on `main`:** `0.56.1`  
 **Current active adoption contract on `main`:** `aasm.adoption.v1 / 0.32.15`  
@@ -747,7 +747,7 @@ import aasm
 report = aasm.validate_public_api_contract()
 assert report["valid"]
 assert aasm.__version__ == "0.56.1"
-assert aasm.public_api_contract()["contract_version"] == "0.32.7"
+assert aasm.public_api_contract()["contract_version"] == "0.32.15"
 ```
 
 If you need the immutable published package contract rather than the development branch, use the `v0.56.0` release/tag.
@@ -756,7 +756,7 @@ If you need the immutable published package contract rather than the development
 
 AASM uses independent, exact-head gates rather than treating documentation as evidence of implementation.
 
-The implementation head `6b107268cd4190357bf45b3bfd1385410a0d82cf` qualified the active `0.56.1 / 0.32.7` candidate across **20 direct required contexts**:
+The implementation head `6b107268cd4190357bf45b3bfd1385410a0d82cf` qualified the active `0.56.1 / 0.32.15` candidate across **27 current custom commit-status contexts**:
 
 ```text
 aasm/ci-summary                         PASS
@@ -779,6 +779,13 @@ aasm/physical-authority                 PASS
 aasm/effect-capability                  PASS
 aasm/physical-control-fencing           PASS
 aasm/physical-preemption-recovery       PASS
+aasm/physical-effect-integration         PASS
+aasm/identity-calibration-trust          PASS
+aasm/execution-environment               PASS
+aasm/observation-epistemics              PASS
+aasm/artifact-lineage                    PASS
+aasm/entity-evolution                    PASS
+aasm/physical-evidence                   PASS
 ```
 
 The cumulative v0.56 gate on that head passed:
@@ -793,8 +800,11 @@ The cumulative v0.56 gate on that head passed:
 - PR-3E/3F stale-command fencing;
 - PR-3G semantic preemption and canonical lease revocation;
 - crash recovery between durable preemption Evidence and lease-revocation Evidence;
+- PR-3H physical-effect authority rechecks at existing Effect authorization/execution boundaries;
+- S3 identity/calibration/trust, execution-environment, and observation-epistemics containment;
+- backend-independent artifact revision lineage and ambiguity-safe entity evolution;
 - cumulative source/release contracts;
-- active adoption contract `0.32.7`.
+- active adoption contract `0.32.15`.
 
 The main CI matrix on the same head passed Python **3.11, 3.12, and 3.13**, reproducible development-wheel smoke, PostgreSQL integration, Compose full-stack smoke, hierarchical scopes, LangGraph integration, and adapter conformance.
 
@@ -833,7 +843,7 @@ v0.53  scoped authority and durable solver learning
 v0.54  effect ownership + deterministic solver portfolio/exchange
 v0.55  governed semantic evolution + engineering IR + portable archive
 v0.56  truthful solver outcomes + exact provider status mapping
-v0.56.1 development  execution provenance + governed external reality + PR-3A–G physical control foundations
+v0.56.1 development  execution provenance + governed external reality + complete PR-3 physical control + S3 artifact/entity lineage
 ```
 
 Historical release documentation remains under `docs/RELEASE_*.md` and the architecture/roadmap documents.
@@ -865,6 +875,6 @@ AASM is an experimental `0.x` project. Public contracts are versioned and aggres
 **Current development target on `main`:** `0.56.1`  
 **Released adoption contract:** `aasm.adoption.v1 / 0.32.0`  
 **Active development adoption contract:** `aasm.adoption.v1 / 0.32.15`  
-**PR-3 status:** `PR-3A through PR-3G GATED; PR-3H NOT YET IMPLEMENTED`  
+**PR-3 / S3 status:** `complete PR-3 / PHY-01 GATED; S3 artifact revision lineage + entity evolution GATED; next S4`  
 **License:** Apache-2.0  
 **Repository:** https://github.com/halthinks/AASM

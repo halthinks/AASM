@@ -7,14 +7,14 @@
 **Current qualified development boundary:** complete PR-3 / PHY-01 + S3 through artifact revision lineage and entity evolution  
 **Next unfinished boundary:** S4 — Engineering + Safety Semantics (quantity/unit/tolerance foundation first)
 
-AASM v0.56.0 is the latest published GitHub package/runtime release. Unreleased `main` now exposes the broader 0.56.1 development target and active adoption contract `0.32.7`, but that does **not** make v0.56.1 a published release. Exact unreleased source identity is the Git commit SHA.
+AASM v0.56.0 is the latest published GitHub package/runtime release. Unreleased `main` now exposes the broader 0.56.1 development target and active adoption contract `0.32.15`, but that does **not** make v0.56.1 a published release. Exact unreleased source identity is the Git commit SHA.
 
 The stable remote wire protocol remains **`aasm.remote.v1 / 0.19.0`** and is independent of package SemVer.
 
 ```text
 latest published package: 0.56.0
 published public surface: public_v56 / 0.32.0 at the v0.56.0 tag
-current development target: 0.56.1 / 0.32.7 on main
+current development target: 0.56.1 / 0.32.15 on main
 qualified implementation head before documentation-only updates:
   6b107268cd4190357bf45b3bfd1385410a0d82cf
 parent published release: v0.55.0
