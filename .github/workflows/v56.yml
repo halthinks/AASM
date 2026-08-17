@@ -100,6 +100,10 @@ jobs:
         run: |
           python scripts/check_execution_environment_contracts.py
           pytest -q tests/test_execution_environment.py
+      - name: Check S3 observation lifecycle and fusion epistemic containment
+        run: |
+          python scripts/check_observation_processing_contracts.py
+          pytest -q tests/test_observation_processing.py
       - name: Validate cumulative development source contract
         run: python scripts/check_release_contracts.py
       - name: Guard active 0.56.1 development root and additive authority boundaries
@@ -108,7 +112,7 @@ jobs:
           import aasm
           from aasm import public_v55, public_v56
           active=aasm.validate_public_api_contract(); assert active['valid'], active
-          assert aasm.__version__=='0.56.1'; assert aasm.PUBLIC_API_CONTRACT['contract_version']=='0.32.12'
+          assert aasm.__version__=='0.56.1'; assert aasm.PUBLIC_API_CONTRACT['contract_version']=='0.32.13'
           assert public_v56.__version__=='0.56.1'; assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.6'
           assert public_v55.__version__=='0.55.0'; assert aasm.AASMEngine is public_v56.AASMEngine
           engine=aasm.AASMEngine(aasm.ProblemSpec('v56-gate'))
@@ -201,7 +205,26 @@ jobs:
           assert environment['parallel_environment_store']=='NONE_EVIDENCE_PROJECTION_ONLY'
           assert environment['parallel_observation_store']=='NONE'; assert environment['parallel_truth_table']=='NONE'
           assert environment['parallel_authority_evaluator']=='NONE'
-          print('cumulative 0.56.1 development contract + active adoption 0.32.12 PR-3 + S3 reality-environment boundaries: PASS')
+          processing=engine.observation_processing_contract_report()
+          assert processing['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORDING_NOT_OBSERVATION_TRUTH'
+          assert processing['empirical_root']=='EXISTING_MACHINE_STATE_OBSERVATION_ONLY'
+          assert processing['disposed_source_reuse']=='FAIL_CLOSED_FOR_NEW_LIFECYCLE_OR_FUSION_RECORDS'
+          assert processing['fusion_agreement_authority']=='NONE'
+          assert processing['validated_stage_authority']=='NONE_LOCAL_PROCESSING_LABEL_ONLY'
+          assert processing['fact_authority_creation']=='NONE'; assert processing['effect_authority']=='NONE'
+          assert processing['source_trust_creation']=='NONE'; assert processing['state_claim_creation']=='NONE'
+          assert processing['machine_state_mutation']=='NONE'; assert processing['source_observation_mutation']=='NONE'
+          assert processing['current_observation_pointer']=='NONE'
+          assert processing['parallel_observation_store']=='NONE_EVIDENCE_PROJECTION_ONLY'
+          assert processing['parallel_truth_table']=='NONE'; assert processing['parallel_authority_evaluator']=='NONE'
+          fusion=engine.observation_fusion_contract_report()
+          assert fusion['agreement_semantics']=='CORROBORATION_ONLY_NEVER_AUTHORITY_OR_TRUTH_BY_VOTE'
+          assert fusion['declared_independence_grants_authority'] is False
+          assert fusion['validated_by_agreement'] is False
+          lifecycle=engine.observation_lifecycle_contract_report()
+          assert lifecycle['validated_stage_is_universal_admission'] is False
+          assert lifecycle['lifecycle_record_grants_fact_authority'] is False
+          print('cumulative 0.56.1 development contract + active adoption 0.32.13 PR-3 + S3 observation-epistemics boundaries: PASS')
           PY
       - name: Publish cumulative v0.56 development qualification
         if: always()
@@ -211,5 +234,5 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative external-reality+physical-effect+S3-environment qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
+          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative external-reality+physical-effect+S3-observation-epistemics qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='aasm/v56' -f description="$description" -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
