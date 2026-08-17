@@ -24,7 +24,7 @@ def main() -> None:
     schema_text = text("schemas/entity-evolution.schema.json")
     tests = text("tests/test_entity_evolution.py")
     active_tests = text("tests/test_entity_evolution_active_engine.py")
-    public_tests = text("tests/test_entity_evolution_public_candidate.py")
+    public_tests = text("tests/test_entity_evolution_public.py")
     foundation = text("src/aasm/runtime_v56_foundation.py")
     parent_public = text("src/aasm/public_active.py")
     candidate_public = text("src/aasm/public_active_entity_evolution.py")
@@ -61,7 +61,7 @@ def main() -> None:
         '"parallel_entity_registry": "NONE_EVIDENCE_PROJECTION_ONLY"',
         '"parallel_current_state_store": "NONE"',
         '"hidden_wall_clock": "NONE"',
-        '"runtime_admission": "ACTIVE_ENGINE_CANDIDATE"',
+        '"runtime_admission": "ACTIVE_ENGINE_QUALIFIED"',
         "project_artifact_lineage_evidence",
         "add_evidence_guarded",
         "authorize_scoped_request",
@@ -108,7 +108,7 @@ def main() -> None:
     require('"contract_version": "0.32.14"' in parent_public, "entity public candidate parent adoption drift")
     require("ENTITY_EVOLUTION_CONTRACT_ID" not in parent_public, "entity evolution leaked into the 0.32.14 parent surface")
     require('"record_entity_evolution"' not in parent_public, "entity evolution method leaked into the 0.32.14 parent surface")
-    require("public_active_entity_evolution" not in package_init, "entity evolution candidate was promoted before candidate qualification")
+    require("public_active_entity_evolution" in package_init, "qualified entity evolution overlay is not the package root")
 
     required_candidate_tokens = [
         '"contract_version": "0.32.15"',
@@ -137,12 +137,12 @@ def main() -> None:
         "test_entity_public_candidate_exports_exact_semantic_and_runtime_contracts",
         "test_entity_public_candidate_exposes_no_authority_or_current_state_shortcut",
         "test_entity_public_candidate_engine_methods_are_real_active_engine_methods",
-        "test_entity_public_candidate_top_level_not_promoted_before_candidate_gate",
+        "test_entity_public_adoption_is_top_level_after_qualification",
     ]
     for token in required_public_test_tokens:
         require(token in public_tests, f"entity evolution public candidate corpus missing test: {token}")
 
-    print("entity evolution active-engine + public-candidate source contracts: PASS")
+    print("entity evolution active-engine + active-public source contracts: PASS")
 
 
 if __name__ == "__main__":

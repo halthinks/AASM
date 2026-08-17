@@ -178,7 +178,7 @@ def validate_public_api_contract():
         errors.append("entity evolution runtime introduced a current-state store")
     if runtime.get("hidden_wall_clock") != "NONE":
         errors.append("entity evolution runtime introduced hidden wall-clock semantics")
-    if runtime.get("runtime_admission") != "ACTIVE_ENGINE_CANDIDATE":
+    if runtime.get("runtime_admission") != "ACTIVE_ENGINE_QUALIFIED":
         errors.append("entity evolution public candidate does not expose the qualified candidate runtime boundary")
 
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}

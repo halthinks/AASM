@@ -64,7 +64,7 @@ def entity_evolution_runtime_contract() -> dict[str, Any]:
         "parallel_entity_registry": "NONE_EVIDENCE_PROJECTION_ONLY",
         "parallel_current_state_store": "NONE",
         "hidden_wall_clock": "NONE",
-        "runtime_admission": "ACTIVE_ENGINE_CANDIDATE",
+        "runtime_admission": "ACTIVE_ENGINE_QUALIFIED",
     }
 
 

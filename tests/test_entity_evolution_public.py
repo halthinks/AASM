@@ -37,7 +37,7 @@ def test_entity_public_candidate_exports_exact_semantic_and_runtime_contracts():
     assert runtime["ambiguity"] == "RECORDED_EXPLICITLY_AND_FAIL_CLOSED_FOR_HARD_AUTOMATIC_REUSE"
     assert runtime["parallel_entity_registry"] == "NONE_EVIDENCE_PROJECTION_ONLY"
     assert runtime["parallel_current_state_store"] == "NONE"
-    assert runtime["runtime_admission"] == "ACTIVE_ENGINE_CANDIDATE"
+    assert runtime["runtime_admission"] == "ACTIVE_ENGINE_QUALIFIED"
 
 
 def test_entity_public_candidate_exposes_no_authority_or_current_state_shortcut():
@@ -82,7 +82,10 @@ def test_entity_public_candidate_engine_methods_are_real_active_engine_methods()
         assert callable(getattr(candidate.AASMEngine, name, None))
 
 
-def test_entity_public_candidate_top_level_not_promoted_before_candidate_gate():
-    # The staging discipline is explicit: creating the candidate does not
-    # silently change the current top-level adoption contract.
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.14"
+def test_entity_public_adoption_is_top_level_after_qualification():
+    report = aasm.validate_public_api_contract()
+    assert report["valid"], report
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.15"
+    assert aasm.AASMEngine is candidate.AASMEngine
+    assert aasm.ENTITY_EVOLUTION_CONTRACT_ID == candidate.ENTITY_EVOLUTION_CONTRACT_ID
+    assert aasm.ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID == candidate.ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID
