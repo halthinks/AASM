@@ -6,6 +6,7 @@ from .calibration_runtime import CalibrationRuntimeMixin
 from .effect_capability_revocation_guard import EffectCapabilityRevocationGuardMixin
 from .effect_capability_runtime import EffectCapabilityRuntimeMixin
 from .event_causality_runtime import EventCausalityRuntimeMixin
+from .execution_environment_runtime import ExecutionEnvironmentRuntimeMixin
 from .external_machine_postcondition_execution_correlation import MachinePostconditionExecutionCorrelationMixin
 from .external_machine_postcondition_runtime import MachinePostconditionRuntimeMixin
 from .external_machine_runtime import ExternalMachineRuntimeMixin
@@ -32,6 +33,7 @@ class AASMEngine(
     MachinePostconditionExecutionCorrelationMixin,
     MachinePostconditionRuntimeMixin,
     MachineTransitionRuntimeMixin,
+    ExecutionEnvironmentRuntimeMixin,
     SourceTrustRuntimeMixin,
     CalibrationRuntimeMixin,
     PhysicalIdentityRuntimeMixin,
