@@ -1,0 +1,303 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/rule.schema.json",
+  "title": "AASM Engineering Rule v1",
+  "type": "object",
+  "required": [
+    "rule_revision_id",
+    "contract_id",
+    "contract_version",
+    "rule_id",
+    "clause",
+    "strength",
+    "scope_selector",
+    "applicability",
+    "precedence_group",
+    "priority",
+    "specificity",
+    "control_policy",
+    "severity",
+    "source_authority",
+    "problem_revision_id",
+    "problem_revision_fingerprint",
+    "applicable_external_references",
+    "evidence_ids",
+    "metadata",
+    "fingerprint"
+  ],
+  "properties": {
+    "rule_revision_id": {
+      "type": "string",
+      "pattern": "^rule-revision-[0-9a-f]{24}$"
+    },
+    "contract_id": {"const": "aasm.rule.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "rule_id": {"type": "string", "minLength": 1},
+    "clause": {"$ref": "#/$defs/ruleClauseRef"},
+    "strength": {
+      "enum": ["HARD_FLOOR", "HARD", "POLICY", "PREFERENCE", "ADVISORY"]
+    },
+    "scope_selector": {"$ref": "#/$defs/ruleScopeSelector"},
+    "applicability": {"$ref": "#/$defs/ruleApplicabilityPredicate"},
+    "precedence_group": {"type": "string", "minLength": 1},
+    "priority": {
+      "type": "integer",
+      "minimum": -9223372036854775808,
+      "maximum": 9223372036854775807
+    },
+    "specificity": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2147483647
+    },
+    "control_policy": {"$ref": "#/$defs/ruleControlPolicy"},
+    "severity": {"enum": ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"]},
+    "source_authority": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/ruleSourceAuthorityRef"}
+      ]
+    },
+    "problem_revision_id": {"type": "string"},
+    "problem_revision_fingerprint": {
+      "type": "string",
+      "pattern": "^(?:|[0-9a-f]{64})$"
+    },
+    "applicable_external_references": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/externalReference"}
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "metadata": {"$ref": "#/$defs/portableObject"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"problem_revision_id": {"minLength": 1}}},
+      "then": {
+        "properties": {
+          "problem_revision_fingerprint": {"pattern": "^[0-9a-f]{64}$"}
+        }
+      },
+      "else": {
+        "properties": {
+          "problem_revision_fingerprint": {"const": ""}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"strength": {"const": "HARD_FLOOR"}}},
+      "then": {
+        "properties": {
+          "control_policy": {
+            "allOf": [
+              {"$ref": "#/$defs/ruleControlPolicy"},
+              {
+                "properties": {
+                  "waiver_mode": {"const": "FORBIDDEN"},
+                  "override_mode": {"const": "FORBIDDEN"},
+                  "required_capability": {"const": ""}
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "portableValue": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "boolean"},
+        {"type": "string"},
+        {
+          "type": "integer",
+          "minimum": -9223372036854775808,
+          "maximum": 9223372036854775807
+        },
+        {
+          "type": "array",
+          "items": {"$ref": "#/$defs/portableValue"}
+        },
+        {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/portableValue"}
+        }
+      ]
+    },
+    "portableObject": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/portableValue"}
+    },
+    "attributeValue": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "boolean"},
+        {"type": "string"},
+        {
+          "type": "integer",
+          "minimum": -9223372036854775808,
+          "maximum": 9223372036854775807
+        }
+      ]
+    },
+    "attributeMap": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[A-Za-z][A-Za-z0-9_.:-]*$"},
+      "additionalProperties": {"$ref": "#/$defs/attributeValue"}
+    },
+    "ruleClauseRef": {
+      "type": "object",
+      "required": [
+        "clause_contract_id",
+        "clause_id",
+        "clause_fingerprint",
+        "clause_kind",
+        "metadata"
+      ],
+      "properties": {
+        "clause_contract_id": {"type": "string", "minLength": 1},
+        "clause_id": {"type": "string", "minLength": 1},
+        "clause_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "clause_kind": {
+          "enum": [
+            "CONSTRAINT",
+            "REQUIREMENT",
+            "POLICY",
+            "VERIFIER_PREDICATE",
+            "SAFETY_INVARIANT",
+            "OTHER"
+          ]
+        },
+        "metadata": {"$ref": "#/$defs/portableObject"}
+      },
+      "additionalProperties": false
+    },
+    "ruleSourceAuthorityRef": {
+      "type": "object",
+      "required": [
+        "principal_id",
+        "authority_grant_id",
+        "authority_grant_fingerprint",
+        "capability"
+      ],
+      "properties": {
+        "principal_id": {"type": "string", "minLength": 1},
+        "authority_grant_id": {"type": "string", "minLength": 1},
+        "authority_grant_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "capability": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "ruleScopeSelector": {
+      "type": "object",
+      "required": ["workspace_id", "scope_id", "match_policy", "subject_ids"],
+      "properties": {
+        "workspace_id": {"type": "string", "minLength": 1},
+        "scope_id": {"type": "string"},
+        "match_policy": {"enum": ["EXACT", "DESCENDANT_OR_SELF", "ANY_IN_WORKSPACE"]},
+        "subject_ids": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"match_policy": {"const": "ANY_IN_WORKSPACE"}}},
+          "then": {"properties": {"scope_id": {"const": ""}}},
+          "else": {"properties": {"scope_id": {"minLength": 1}}}
+        }
+      ],
+      "additionalProperties": false
+    },
+    "ruleApplicabilityPredicate": {
+      "type": "object",
+      "required": [
+        "kind",
+        "required_attributes",
+        "forbidden_attribute_values",
+        "required_tags",
+        "forbidden_tags"
+      ],
+      "properties": {
+        "kind": {"enum": ["ALWAYS", "CONTEXT_MATCH"]},
+        "required_attributes": {"$ref": "#/$defs/attributeMap"},
+        "forbidden_attribute_values": {"$ref": "#/$defs/attributeMap"},
+        "required_tags": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        },
+        "forbidden_tags": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ruleControlPolicy": {
+      "type": "object",
+      "required": ["waiver_mode", "override_mode", "required_capability"],
+      "properties": {
+        "waiver_mode": {"enum": ["FORBIDDEN", "EXPLICIT_AUTHORIZED"]},
+        "override_mode": {
+          "enum": [
+            "FORBIDDEN",
+            "STRICTLY_STRONGER_EXPLICIT",
+            "SAME_OR_STRONGER_EXPLICIT"
+          ]
+        },
+        "required_capability": {"type": "string"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              {"properties": {"waiver_mode": {"const": "EXPLICIT_AUTHORIZED"}}},
+              {"not": {"properties": {"override_mode": {"const": "FORBIDDEN"}}}}
+            ]
+          },
+          "then": {"properties": {"required_capability": {"minLength": 1}}},
+          "else": {"properties": {"required_capability": {"const": ""}}}
+        }
+      ],
+      "additionalProperties": false
+    },
+    "externalReference": {
+      "type": "object",
+      "required": [
+        "contract_id",
+        "contract_version",
+        "namespace",
+        "external_id",
+        "role",
+        "revision",
+        "source_fingerprint",
+        "source_location",
+        "semantic_entity_id",
+        "metadata"
+      ],
+      "properties": {
+        "contract_id": {"const": "aasm.external.reference.v1"},
+        "contract_version": {"const": "0.1.0"},
+        "namespace": {"type": "string", "minLength": 1},
+        "external_id": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1},
+        "revision": {"type": "string"},
+        "source_fingerprint": {"type": "string"},
+        "source_location": {"$ref": "#/$defs/portableObject"},
+        "semantic_entity_id": {"type": "string"},
+        "metadata": {"$ref": "#/$defs/portableObject"}
+      },
+      "additionalProperties": false
+    }
+  }
+}
