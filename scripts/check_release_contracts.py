@@ -59,7 +59,7 @@ def main() -> int:
         "physical_authority_runtime_contract",
     ])
     require(root / "src/aasm/public_active.py", [
-        '"contract_version": "0.32.13"',
+        '"contract_version": "0.32.14"',
         "EFFECT_CAPABILITY_CONTRACT_ID",
         "PhysicalEffectAuthorityBinding",
         "STATE_CONFLICT_CONTRACT_ID",
@@ -321,7 +321,7 @@ def main() -> int:
         "tests/test_identity_calibration_trust.py",
         "tests/test_execution_environment.py",
         "tests/test_observation_processing.py",
-        "0.32.13",
+        "0.32.14",
         "context='aasm/v56'",
     ])
     require(root / ".github/workflows/identity-calibration-trust.yml", [
@@ -382,14 +382,14 @@ def main() -> int:
         "import aasm; "
         "r=aasm.validate_public_api_contract(); assert r['valid'], r; "
         "c=aasm.public_api_contract(); assert c['runtime_version']=='0.56.1'; "
-        "assert c['contract_version']=='0.32.13'; "
+        "assert c['contract_version']=='0.32.14'; "
         "assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust','execution_environment','observation_processing'))"
     )
     completed = subprocess.run([sys.executable, "-c", code], cwd=root, env=env)
     if completed.returncode != 0:
         _fail("active public contract execution failed")
 
-    print("0.56.1 development target + active adoption 0.32.13 + PR-3 + S3 observation-epistemics source/release contracts: PASS")
+    print("0.56.1 development target + active adoption 0.32.14 + PR-3 + S3 observation-epistemics source/release contracts: PASS")
     return 0
 
 
