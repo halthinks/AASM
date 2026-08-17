@@ -365,7 +365,7 @@ def test_effective_trusted_source_still_cannot_mint_authoritative_state_without_
         external_revision_id=identity.external_revision_id,
         source_claim_ids=(observed.claim_id,),
     )
-    with pytest.raises(PermissionError, match="FactAuthority"):
+    with pytest.raises(PermissionError, match="fact authority"):
         engine.record_state_claim(authoritative, actor_principal_id=SENSOR)
     assert engine.state_claim_report(observed.claim_id)["claim"]["claim_kind"] == "OBSERVED"
 
