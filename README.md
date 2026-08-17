@@ -6,17 +6,17 @@
 
 **Truthful Solver Outcomes + Governed Semantic Evolution + Engineering Mathematical IR**
 
-**Next release / cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority + S3 Artifact/Entity Lineage
+**Next release / cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority + S3 Artifact/Entity Lineage + S4 Engineering Quantity
 
 **Current development package on `main`:** `0.56.1`  
-**Current active adoption contract on `main`:** `aasm.adoption.v1 / 0.32.15`  
-**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + S3 through artifact revision lineage and entity evolution  
-**Next unfinished boundary:** S4 — Engineering + Safety Semantics (quantity/unit/tolerance foundation first)  
-**Latest fully qualified pre-documentation implementation head:** `6b107268cd4190357bf45b3bfd1385410a0d82cf`
+**Current active adoption contract on `main`:** `aasm.adoption.v1 / 0.32.16`  
+**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + complete S3 + S4 `aasm.quantity.v1` engineering quantity/unit/tolerance semantic foundation  
+**Next unfinished boundary:** S4 — `aasm.rule.v1` rule applicability and precedence  
+**Latest fully qualified pre-documentation implementation head:** `263640a634da0e92bb1ae0b42cb55063e0b64552`
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, external engineering tools, physical/external state machines, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 
-The latest immutable published release remains **v0.56.0**. Development on `main` has advanced materially beyond that published boundary without pretending the development target is already released. The active `0.56.1` candidate now combines execution provenance, explicit state/fact authority, external-machine supervision, postcondition verification, complete physical-effect authority integration, observation epistemics, backend-independent artifact revision lineage, and governed entity evolution with ambiguity-safe reuse fencing.
+The latest immutable published release remains **v0.56.0**. Development on `main` has advanced materially beyond that published boundary without pretending the development target is already released. The active `0.56.1` candidate now combines execution provenance, explicit state/fact authority, external-machine supervision, postcondition verification, complete physical-effect authority integration, observation epistemics, backend-independent artifact revision lineage, governed entity evolution with ambiguity-safe reuse fencing, and an exact portable engineering Quantity semantic IR.
 
 The governing rule remains:
 
@@ -33,7 +33,7 @@ latest published package / public surface: 0.56.0
 released adoption contract:                 aasm.adoption.v1 / 0.32.0
 
 current development package on main:        0.56.1
-active development adoption contract:       aasm.adoption.v1 / 0.32.15
+active development adoption contract:       aasm.adoption.v1 / 0.32.16
 
 v0.56 truthful solver evidence:
   aasm.solver.outcome.v2
@@ -127,6 +127,17 @@ S3 artifact + entity lineage:
   artifact existence/generation != authoritative acceptance
   AMBIGUOUS entity mapping blocks hard automatic reuse
 
+S4 engineering quantity semantics:
+  aasm.quantity.v1
+  exact integer / rational / canonical decimal / interval / measured values
+  explicit dimensions and exact affine source->canonical unit transforms
+  explicit tolerance / quantization / rounding / source precision / uncertainty / provenance
+  public semantic admission = QUALIFIED
+  runtime engine-state admission = PRE_ADMISSION_ONLY
+  hidden unit registry = NONE
+  legacy aasm.numeric.tolerance.v1 = UNCHANGED
+  legacy EffectCapability NumericInterval = UNCHANGED
+
 license: Apache-2.0
 ```
 
@@ -153,7 +164,7 @@ Performance state may improve performance. Evidence may support a decision. Neit
 
 AASM's deeper direction is a governed reasoning and supervisory-control kernel over external authoritative state machines, typed engineering artifacts, heterogeneous solvers, verification/refinement loops, and reusable cross-run knowledge. This extends the original deterministic agent-state-machine purpose; it does not replace it.
 
-## v0.56.1 development — Governed external reality and physical control
+## v0.56.1 development — Governed external reality, physical control, and engineering semantics
 
 ### PR-1 — desired, predicted, observed, and authoritative state are different
 
@@ -295,6 +306,27 @@ The inherited `effect.authorize`, resources/Worker/TaskLease, Effect ownership, 
 Artifact revisions now have backend-independent immutable identity over content/semantic hashes and exact provenance, exact parent ID+fingerprint lineage, and a separate storage-binding fingerprint for non-semantic `artifact_ref` locators. Registration/replay uses existing Evidence and does not imply artifact acceptance or create a current-artifact truth pointer.
 
 Entity evolution now records `UNCHANGED | MODIFIED | GENERATED | SPLIT | MERGED | REPLACED | DELETED | AMBIGUOUS` relationships over exact artifact-revision-bound representations. `AMBIGUOUS` mappings remain durable and block hard automatic reuse. There is no hidden current-entity state table and no authority minting.
+
+### S4 — exact engineering quantity/unit/tolerance semantic IR
+
+`aasm.quantity.v1` is now a qualified public semantic contract. It represents exact integer, rational, canonical-decimal, interval, and measured/estimated engineering values; canonical dimensions; exact affine source-unit→canonical-unit transforms; absolute/relative/asymmetric tolerance; quantization/grid and rounding; source precision; uncertainty reference; provenance; canonical projection; and deterministic fingerprints.
+
+Binary floating point cannot enter durable Quantity identity. Dimensional inconsistency fails closed before solving or verification. There is no hidden mutable unit registry.
+
+Public admission is deliberately narrower than runtime integration:
+
+```text
+Quantity public semantic IR       = QUALIFIED
+Quantity runtime engine state     = NOT ADMITTED / PRE_ADMISSION_ONLY
+Quantity grants FactAuthority     = NO
+Quantity grants EffectAuthority   = NO
+solver numeric tolerance rewrite  = NO
+EffectCapability bound rewrite    = NO
+```
+
+The existing solver `aasm.numeric.tolerance.v1` contract and `EffectCapability.NumericInterval` remain unchanged. Later use of Quantity in postconditions, physical capability bounds, solver/provider tolerance, or other runtime semantics requires explicit translation/admission contracts and qualification.
+
+The next S4 boundary is `aasm.rule.v1`. It will model source/applicable engineering rules with `HARD_FLOOR | HARD | POLICY | PREFERENCE | ADVISORY`, but it must **not** redefine the formal-calculus `LearnedConstraint(HARD|SOFT)` vocabulary. Source rules and learned constraints remain distinct semantic objects unless an explicit checked lowering is later admitted.
 
 ## v0.56 — Truthful Solver Outcomes
 
@@ -646,7 +678,19 @@ EffectStatus.SUCCEEDED
   != achieved physical/external state
 
 PR-3H effect-boundary integration
-  = NOT YET IMPLEMENTED
+  = GATED THROUGH EXISTING EFFECT LIFECYCLE
+
+Quantity public semantic admission
+  = QUALIFIED
+
+Quantity runtime engine-state admission
+  = PRE_ADMISSION_ONLY
+
+Quantity
+  != fact authority / effect authority / hidden unit registry
+
+Quantity integration into EffectCapability/postconditions/solver tolerance
+  = NOT YET ADMITTED; EXPLICIT TRANSLATION CONTRACT REQUIRED
 ```
 
 ## Core architecture
@@ -694,6 +738,8 @@ feature + provider admission
 governed formulation
         ↓
 discrete / scheduling / continuous IR
+        ↓
+exact engineering Quantity semantic IR
         ↓
 truthful solver outcome
         ↓
@@ -747,7 +793,7 @@ import aasm
 report = aasm.validate_public_api_contract()
 assert report["valid"]
 assert aasm.__version__ == "0.56.1"
-assert aasm.public_api_contract()["contract_version"] == "0.32.15"
+assert aasm.public_api_contract()["contract_version"] == "0.32.16"
 ```
 
 If you need the immutable published package contract rather than the development branch, use the `v0.56.0` release/tag.
@@ -756,7 +802,7 @@ If you need the immutable published package contract rather than the development
 
 AASM uses independent, exact-head gates rather than treating documentation as evidence of implementation.
 
-The implementation head `6b107268cd4190357bf45b3bfd1385410a0d82cf` qualified the active `0.56.1 / 0.32.15` candidate across **27 current custom commit-status contexts**:
+The implementation head `263640a634da0e92bb1ae0b42cb55063e0b64552` qualified the active `0.56.1 / 0.32.16` candidate across **28 current custom commit-status contexts**:
 
 ```text
 aasm/ci-summary                         PASS
@@ -779,13 +825,14 @@ aasm/physical-authority                 PASS
 aasm/effect-capability                  PASS
 aasm/physical-control-fencing           PASS
 aasm/physical-preemption-recovery       PASS
-aasm/physical-effect-integration         PASS
-aasm/identity-calibration-trust          PASS
-aasm/execution-environment               PASS
-aasm/observation-epistemics              PASS
-aasm/artifact-lineage                    PASS
-aasm/entity-evolution                    PASS
-aasm/physical-evidence                   PASS
+aasm/physical-effect-integration        PASS
+aasm/identity-calibration-trust         PASS
+aasm/execution-environment              PASS
+aasm/observation-epistemics             PASS
+aasm/artifact-lineage                   PASS
+aasm/entity-evolution                   PASS
+aasm/engineering-quantity               PASS
+aasm/physical-evidence                  PASS
 ```
 
 The cumulative v0.56 gate on that head passed:
@@ -801,10 +848,10 @@ The cumulative v0.56 gate on that head passed:
 - PR-3G semantic preemption and canonical lease revocation;
 - crash recovery between durable preemption Evidence and lease-revocation Evidence;
 - PR-3H physical-effect authority rechecks at existing Effect authorization/execution boundaries;
-- S3 identity/calibration/trust, execution-environment, and observation-epistemics containment;
-- backend-independent artifact revision lineage and ambiguity-safe entity evolution;
+- S3 identity/calibration/trust, execution-environment, observation-epistemics, artifact lineage, and entity evolution;
+- S4 `aasm.quantity.v1` source/public firewalls and adversarial/public corpora;
 - cumulative source/release contracts;
-- active adoption contract `0.32.15`.
+- active adoption contract `0.32.16` and no-authority/no-runtime-Quantity-state guard.
 
 The main CI matrix on the same head passed Python **3.11, 3.12, and 3.13**, reproducible development-wheel smoke, PostgreSQL integration, Compose full-stack smoke, hierarchical scopes, LangGraph integration, and adapter conformance.
 
@@ -843,7 +890,7 @@ v0.53  scoped authority and durable solver learning
 v0.54  effect ownership + deterministic solver portfolio/exchange
 v0.55  governed semantic evolution + engineering IR + portable archive
 v0.56  truthful solver outcomes + exact provider status mapping
-v0.56.1 development  execution provenance + governed external reality + complete PR-3 physical control + S3 artifact/entity lineage
+v0.56.1 development  execution provenance + governed external reality + complete PR-3 + complete S3 + S4 Quantity semantic foundation
 ```
 
 Historical release documentation remains under `docs/RELEASE_*.md` and the architecture/roadmap documents.
@@ -874,7 +921,7 @@ AASM is an experimental `0.x` project. Public contracts are versioned and aggres
 **Current immutable release:** `0.56.0`  
 **Current development target on `main`:** `0.56.1`  
 **Released adoption contract:** `aasm.adoption.v1 / 0.32.0`  
-**Active development adoption contract:** `aasm.adoption.v1 / 0.32.15`  
-**PR-3 / S3 status:** `complete PR-3 / PHY-01 GATED; S3 artifact revision lineage + entity evolution GATED; next S4`  
+**Active development adoption contract:** `aasm.adoption.v1 / 0.32.16`  
+**PR-3 / S3 / S4 status:** `complete PR-3 / PHY-01 GATED; complete S3 GATED; S4 Quantity GATED/public semantic IR; next aasm.rule.v1`  
 **License:** Apache-2.0  
 **Repository:** https://github.com/halthinks/AASM
