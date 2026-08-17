@@ -35,7 +35,11 @@ def main() -> int:
 
     require(model, [
         'ARTIFACT_REVISION_CONTRACT_ID = "aasm.artifact.revision.v1"',
+        'ARTIFACT_REVISION_CONTRACT_VERSION = "0.2.0"',
+        '"revision_identity": "BACKEND_INDEPENDENT_CONTENT_HASH_SEMANTIC_HASH_AND_PROVENANCE_BOUND"',
+        '"storage_binding_identity": "SEPARATE_FROM_REVISION_IDENTITY_AND_INTEGRITY_FINGERPRINTED"',
         '"content_storage": "EXISTING_AASM_ARTIFACT_BACKENDS_OR_EXTERNAL_REFERENCE"',
+        '"artifact_ref": "NON_SEMANTIC_OPAQUE_STORAGE_BINDING_WITH_DIGEST_CHECK_WHEN_DECODABLE"',
         '"authority": "NONE_GRANTED_BY_ARTIFACT_REVISION"',
         '"truth_authority": "EXISTING_AASM_ADMISSION_PATH_ONLY"',
         '"artifact_acceptance": "NOT_DEFINED_BY_FOUNDATION_CONTRACT"',
@@ -46,6 +50,7 @@ def main() -> int:
         '"parallel_truth_table": "NONE"',
         '"parallel_authority_evaluator": "NONE"',
         '"runtime_admission": "PRE_ADMISSION_ONLY"',
+        "storage_binding_fingerprint",
         "ExternalReference",
         "semantic_fingerprint",
         "source_problem_revision_fingerprint",
@@ -53,9 +58,9 @@ def main() -> int:
         "evidence_ids",
     ])
     require(tests, [
-        "reuses_existing_memory_and_local_content_backends",
+        "revision_identity_is_backend_independent_but_storage_binding_is_not",
         "rejects_content_ref_digest_mismatch",
-        "rejects_forged_revision_id_and_fingerprint",
+        "rejects_forged_revision_semantic_and_storage_fingerprints",
         "requires_exact_id_and_fingerprint_pair",
         "requires_exact_parent_set_and_stable_logical_identity",
         "denies_truth_acceptance_and_parallel_registry",
@@ -86,6 +91,13 @@ def main() -> int:
         "ArtifactLineage",
     ])
 
+    model_text = model.read_text(encoding="utf-8")
+    identity_start = model_text.index("def identity_payload")
+    storage_start = model_text.index("def storage_binding_payload")
+    identity_body = model_text[identity_start:storage_start]
+    if '"artifact_ref"' in identity_body:
+        fail("portable artifact revision identity must not contain artifact_ref", model)
+
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
         fail("artifact revision schema must use JSON Schema 2020-12", schema_path)
@@ -101,6 +113,7 @@ def main() -> int:
         "format_id",
         "evidence_ids",
         "fingerprint",
+        "storage_binding_fingerprint",
     ):
         if name not in required:
             fail(f"artifact revision schema is missing required field: {name}", schema_path)
@@ -109,6 +122,8 @@ def main() -> int:
     from aasm.artifact_lineage import artifact_lineage_contract
 
     contract = artifact_lineage_contract()
+    if not contract["revision_identity"].startswith("BACKEND_INDEPENDENT"):
+        fail("artifact revision identity remains backend-dependent", model)
     if contract["authority"] != "NONE_GRANTED_BY_ARTIFACT_REVISION":
         fail("artifact revision acquired authority semantics", model)
     if contract["truth_authority"] != "EXISTING_AASM_ADMISSION_PATH_ONLY":
@@ -120,7 +135,7 @@ def main() -> int:
     if contract["runtime_admission"] != "PRE_ADMISSION_ONLY":
         fail("artifact revision was promoted before qualification", model)
 
-    print("S3 artifact revision pre-admission source contracts: PASS")
+    print("S3 artifact revision portable pre-admission source contracts: PASS")
     return 0
 
 

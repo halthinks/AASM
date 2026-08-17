@@ -9,6 +9,7 @@ import pytest
 from aasm.artifact_backends import LocalDirectoryArtifactBackend, MemoryArtifactBackend
 from aasm.artifact_lineage import (
     ARTIFACT_REVISION_CONTRACT_ID,
+    ARTIFACT_REVISION_CONTRACT_VERSION,
     ArtifactRevision,
     artifact_lineage_contract,
     validate_artifact_revision_transition,
@@ -70,10 +71,11 @@ def test_artifact_revision_is_deterministic_content_and_provenance_bound():
     assert first.revision_id.startswith("artifact-revision-")
     assert first.revision_id == second.revision_id
     assert first.fingerprint == second.fingerprint
+    assert first.storage_binding_fingerprint == second.storage_binding_fingerprint
     assert second.to_dict() == first.to_dict()
 
 
-def test_artifact_revision_reuses_existing_memory_and_local_content_backends(tmp_path):
+def test_revision_identity_is_backend_independent_but_storage_binding_is_not(tmp_path):
     payload = "same content through existing backends"
     memory = MemoryArtifactBackend()
     local = LocalDirectoryArtifactBackend(tmp_path / "files")
@@ -92,23 +94,38 @@ def test_artifact_revision_reuses_existing_memory_and_local_content_backends(tmp
     assert memory_ref.startswith("artifact+memory://")
     assert local_ref.startswith("artifact+file://")
 
+    assert memory_item.revision_id == local_item.revision_id
+    assert memory_item.fingerprint == local_item.fingerprint
+    assert memory_item.storage_binding_fingerprint != local_item.storage_binding_fingerprint
+
 
 def test_artifact_revision_rejects_content_ref_digest_mismatch():
     with pytest.raises(ValueError, match="artifact_ref content digest"):
         _revision(artifact_ref="0" * 64)
 
 
-def test_artifact_revision_rejects_forged_revision_id_and_fingerprint():
+def test_artifact_revision_rejects_forged_revision_semantic_and_storage_fingerprints():
     item = _revision()
+
     forged_id = item.to_dict()
     forged_id["revision_id"] = "artifact-revision-" + ("0" * 24)
     with pytest.raises(ValueError, match="revision_id"):
         ArtifactRevision.from_dict(forged_id)
 
-    forged_fingerprint = item.to_dict()
-    forged_fingerprint["fingerprint"] = "0" * 64
-    with pytest.raises(ValueError, match="fingerprint"):
-        ArtifactRevision.from_dict(forged_fingerprint)
+    forged_semantic_fingerprint = item.to_dict()
+    forged_semantic_fingerprint["fingerprint"] = "0" * 64
+    with pytest.raises(ValueError, match="canonical semantic content"):
+        ArtifactRevision.from_dict(forged_semantic_fingerprint)
+
+    forged_storage_fingerprint = item.to_dict()
+    forged_storage_fingerprint["storage_binding_fingerprint"] = "0" * 64
+    with pytest.raises(ValueError, match="storage binding fingerprint"):
+        ArtifactRevision.from_dict(forged_storage_fingerprint)
+
+    rebound_storage = item.to_dict()
+    rebound_storage["artifact_ref"] = "artifact+file://elsewhere/board.txt"
+    with pytest.raises(ValueError, match="storage binding fingerprint"):
+        ArtifactRevision.from_dict(rebound_storage)
 
 
 def test_source_problem_revision_requires_exact_id_and_fingerprint_pair():
@@ -116,6 +133,7 @@ def test_source_problem_revision_requires_exact_id_and_fingerprint_pair():
     payload = item.to_dict()
     payload["source_problem_revision_fingerprint"] = ""
     payload.pop("fingerprint")
+    payload.pop("storage_binding_fingerprint")
     payload.pop("revision_id")
     with pytest.raises(ValueError, match="must either both be present"):
         ArtifactRevision.from_dict(payload)
@@ -145,7 +163,13 @@ def test_lineage_transition_requires_exact_parent_set_and_stable_logical_identit
 def test_contract_explicitly_denies_truth_acceptance_and_parallel_registry():
     contract = artifact_lineage_contract()
     assert contract["artifact_revision_contract_id"] == ARTIFACT_REVISION_CONTRACT_ID
+    assert contract["artifact_revision_contract_version"] == ARTIFACT_REVISION_CONTRACT_VERSION
+    assert contract["revision_identity"].startswith("BACKEND_INDEPENDENT")
+    assert contract["storage_binding_identity"] == (
+        "SEPARATE_FROM_REVISION_IDENTITY_AND_INTEGRITY_FINGERPRINTED"
+    )
     assert contract["content_storage"] == "EXISTING_AASM_ARTIFACT_BACKENDS_OR_EXTERNAL_REFERENCE"
+    assert contract["artifact_ref"].startswith("NON_SEMANTIC_OPAQUE_STORAGE_BINDING")
     assert contract["authority"] == "NONE_GRANTED_BY_ARTIFACT_REVISION"
     assert contract["truth_authority"] == "EXISTING_AASM_ADMISSION_PATH_ONLY"
     assert contract["artifact_acceptance"] == "NOT_DEFINED_BY_FOUNDATION_CONTRACT"
@@ -162,5 +186,7 @@ def test_schema_is_strict_2020_12_and_matches_contract_surface():
     assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
     assert schema["additionalProperties"] is False
     assert schema["properties"]["contract_id"]["const"] == ARTIFACT_REVISION_CONTRACT_ID
+    assert schema["properties"]["contract_version"]["const"] == ARTIFACT_REVISION_CONTRACT_VERSION
     assert schema["properties"]["content_sha256"]["pattern"] == "^[0-9a-f]{64}$"
     assert schema["properties"]["semantic_projection_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert "storage_binding_fingerprint" in schema["required"]

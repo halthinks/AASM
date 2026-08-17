@@ -10,7 +10,7 @@ from .semantic_result import semantic_fingerprint
 
 
 ARTIFACT_REVISION_CONTRACT_ID = "aasm.artifact.revision.v1"
-ARTIFACT_REVISION_CONTRACT_VERSION = "0.1.0"
+ARTIFACT_REVISION_CONTRACT_VERSION = "0.2.0"
 ARTIFACT_LINEAGE_STABILITY = "FOUNDATION_EXPERIMENTAL"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
@@ -90,9 +90,11 @@ def _content_ref_digest(artifact_ref: str) -> str | None:
 class ArtifactRevision:
     """Immutable, authority-neutral lineage record for one logical artifact revision.
 
-    The payload bytes remain in the existing artifact backend or an external
-    system. This object binds identity, hashes, provenance and source revisions;
-    it does not store bytes, select a current artifact, or grant acceptance.
+    Revision identity is backend-independent: storage location never changes the
+    semantic identity of the immutable revision. The current storage locator is
+    protected separately by ``storage_binding_fingerprint``. Payload bytes remain
+    in an existing AASM artifact backend or an external system. This object does
+    not store bytes, select a current artifact, or grant acceptance or authority.
     """
 
     logical_artifact_id: str
@@ -186,13 +188,13 @@ class ArtifactRevision:
         object.__setattr__(self, "revision_id", derived)
 
     def identity_payload(self) -> dict[str, Any]:
+        """Portable semantic identity. Deliberately excludes storage location."""
         return {
             "contract_id": self.contract_id,
             "contract_version": self.contract_version,
             "logical_artifact_id": self.logical_artifact_id,
             "content_sha256": self.content_sha256,
             "semantic_projection_sha256": self.semantic_projection_sha256,
-            "artifact_ref": self.artifact_ref,
             "artifact_kind": self.artifact_kind,
             "parent_revision_ids": list(self.parent_revision_ids),
             "producer_id": self.producer_id,
@@ -211,21 +213,39 @@ class ArtifactRevision:
             "metadata": _jsonable(self.metadata),
         }
 
+    def storage_binding_payload(self) -> dict[str, Any]:
+        """Integrity binding for the current opaque storage locator."""
+        return {
+            "contract_id": self.contract_id,
+            "contract_version": self.contract_version,
+            "revision_id": self.revision_id,
+            "content_sha256": self.content_sha256,
+            "artifact_ref": self.artifact_ref,
+        }
+
     @property
     def fingerprint(self) -> str:
+        """Backend-independent semantic revision fingerprint."""
         return semantic_fingerprint({"revision_id": self.revision_id, **self.identity_payload()})
+
+    @property
+    def storage_binding_fingerprint(self) -> str:
+        return semantic_fingerprint(self.storage_binding_payload())
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "revision_id": self.revision_id,
             **self.identity_payload(),
+            "artifact_ref": self.artifact_ref,
             "fingerprint": self.fingerprint,
+            "storage_binding_fingerprint": self.storage_binding_fingerprint,
         }
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "ArtifactRevision":
         payload = deepcopy(dict(value))
         supplied_fingerprint = str(payload.pop("fingerprint", "")).strip()
+        supplied_storage_fingerprint = str(payload.pop("storage_binding_fingerprint", "")).strip()
         for name in (
             "parent_revision_ids",
             "source_external_references",
@@ -235,7 +255,12 @@ class ArtifactRevision:
             payload[name] = tuple(payload.get(name) or ())
         item = cls(**payload)
         if supplied_fingerprint and supplied_fingerprint != item.fingerprint:
-            raise ValueError("artifact revision fingerprint does not match canonical content")
+            raise ValueError("artifact revision fingerprint does not match canonical semantic content")
+        if (
+            supplied_storage_fingerprint
+            and supplied_storage_fingerprint != item.storage_binding_fingerprint
+        ):
+            raise ValueError("artifact storage binding fingerprint does not match artifact_ref")
         return item
 
 
@@ -277,9 +302,10 @@ def artifact_lineage_contract() -> dict[str, Any]:
         "artifact_revision_contract_version": ARTIFACT_REVISION_CONTRACT_VERSION,
         "stability": ARTIFACT_LINEAGE_STABILITY,
         "logical_identity": "STABLE_ACROSS_IMMUTABLE_REVISIONS",
-        "revision_identity": "CANONICAL_CONTENT_HASH_SEMANTIC_HASH_AND_PROVENANCE_BOUND",
+        "revision_identity": "BACKEND_INDEPENDENT_CONTENT_HASH_SEMANTIC_HASH_AND_PROVENANCE_BOUND",
+        "storage_binding_identity": "SEPARATE_FROM_REVISION_IDENTITY_AND_INTEGRITY_FINGERPRINTED",
         "content_storage": "EXISTING_AASM_ARTIFACT_BACKENDS_OR_EXTERNAL_REFERENCE",
-        "artifact_ref": "OPAQUE_EXISTING_BACKEND_REFERENCE_WITH_DIGEST_CHECK_WHEN_DECODABLE",
+        "artifact_ref": "NON_SEMANTIC_OPAQUE_STORAGE_BINDING_WITH_DIGEST_CHECK_WHEN_DECODABLE",
         "external_lineage": "EXISTING_AASM_EXTERNAL_REFERENCE_CONTRACT",
         "evidence_lineage": "EXISTING_AASM_EVIDENCE_IDS_ONLY",
         "source_problem_revision": "EXACT_ID_AND_FINGERPRINT_WHEN_PRESENT",

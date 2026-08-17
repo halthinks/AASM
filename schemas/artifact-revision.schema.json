@@ -27,7 +27,8 @@
     "external_references",
     "evidence_ids",
     "metadata",
-    "fingerprint"
+    "fingerprint",
+    "storage_binding_fingerprint"
   ],
   "properties": {
     "revision_id": {
@@ -38,7 +39,7 @@
       "const": "aasm.artifact.revision.v1"
     },
     "contract_version": {
-      "const": "0.1.0"
+      "const": "0.2.0"
     },
     "logical_artifact_id": {
       "type": "string",
@@ -122,6 +123,10 @@
       "type": "object"
     },
     "fingerprint": {
+      "type": "string",
+      "minLength": 16
+    },
+    "storage_binding_fingerprint": {
       "type": "string",
       "minLength": 16
     }
