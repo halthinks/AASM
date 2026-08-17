@@ -51,7 +51,13 @@ def main() -> int:
     if set(project.get("license-files", [])) != {"LICENSE", "NOTICE", "LICENSE_POLICY.md"}:
         _fail("license file set drift", path=root / "pyproject.toml")
 
-    require(root / "src/aasm/__init__.py", ["public_v56", "public_active", "public_active_entity_evolution", "public_active_engineering_quantity"])
+    require(root / "src/aasm/__init__.py", [
+        "public_v56",
+        "public_active",
+        "public_active_entity_evolution",
+        "public_active_engineering_quantity",
+        "public_active_engineering_rule",
+    ])
     require(root / "src/aasm/public_v56.py", [
         '__version__ = "0.56.1"',
         '"contract_version": "0.32.6"',
@@ -122,6 +128,39 @@ def main() -> int:
         '"NONE_HIDDEN_OR_MUTABLE"',
         '"UNCHANGED_NOT_REINTERPRETED_BY_QUANTITY_FOUNDATION"',
     ])
+    require(root / "src/aasm/public_active_engineering_rule.py", [
+        '"contract_version": "0.32.17"',
+        "RULE_CONTRACT_ID",
+        "RULE_CONTRACT_VERSION",
+        "EngineeringRule",
+        "RuleApplicabilityContext",
+        "evaluate_rule_applicability",
+        "compare_rule_precedence",
+        "rule_contract",
+        '"engineering-rule"',
+        '"public_admission": "QUALIFIED"',
+        '"engine_state_integration": "NONE_SEMANTIC_RULE_FOUNDATION_ONLY"',
+        '"DISTINCT_NO_IMPLICIT_MAPPING_TO_FORMAL_CALCULUS_HARD_SOFT"',
+        '"NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED"',
+    ])
+    require(root / "src/aasm/rule.py", [
+        'RULE_CONTRACT_ID = "aasm.rule.v1"',
+        'RULE_CONTRACT_VERSION = "0.1.0"',
+        '"HARD_FLOOR"',
+        '"POLICY"',
+        '"PREFERENCE"',
+        '"ADVISORY"',
+        '"EXPLICIT_PORTABLE_CONTEXT_MATCH_TRI_STATE_FAIL_CLOSED"',
+        '"STRENGTH_THEN_SPECIFICITY_THEN_PRIORITY_WITHIN_EXPLICIT_GROUP"',
+        '"STRUCTURAL_ELIGIBILITY_ONLY_EXISTING_SCOPED_AUTHORITY_MUST_AUTHORIZE_LATER_RUNTIME_ACTION"',
+        '"DISTINCT_NO_IMPLICIT_MAPPING_TO_FORMAL_CALCULUS_HARD_SOFT"',
+        '"NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED"',
+        '"parallel_rule_registry": "NONE"',
+        '"current_rule_pointer": "NONE"',
+        '"parallel_constraint_engine": "NONE"',
+        '"parallel_authority_evaluator": "NONE"',
+        '"runtime_admission": "PRE_ADMISSION_ONLY"',
+    ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
         "PhysicalEffectIntegrationBoundaryMixin",
         "ObservationProcessingRuntimeMixin",
@@ -137,6 +176,7 @@ def main() -> int:
         "StateAuthorityRuntimeMixin",
         "V55FoundationEngine",
     ])
+    forbid(root / "src/aasm/runtime_v56_foundation.py", ["EngineeringRule", "from .rule"])
 
     require(root / "src/aasm/physical_effect_binding.py", [
         'PHYSICAL_EFFECT_AUTHORITY_BINDING_CONTRACT_ID = "aasm.effect.physical-authority-binding.v1"',
@@ -289,6 +329,8 @@ def main() -> int:
         "check_entity_evolution_contracts.py",
         "check_quantity_contracts.py",
         "check_quantity_public.py",
+        "check_rule_contracts.py",
+        "check_rule_public.py",
     ):
         run_script(root, script)
 
@@ -322,6 +364,7 @@ def main() -> int:
         "artifact-revision.schema.json",
         "entity-evolution.schema.json",
         "quantity.schema.json",
+        "rule.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -365,7 +408,12 @@ def main() -> int:
         "check_quantity_public.py",
         "tests/test_quantity_foundation.py",
         "tests/test_quantity_public.py",
+        "check_rule_contracts.py",
+        "check_rule_public.py",
+        "tests/test_rule_foundation.py",
+        "tests/test_rule_public.py",
         "0.32.16",
+        "0.32.17",
         "context='aasm/v56'",
     ])
     require(root / ".github/workflows/identity-calibration-trust.yml", [
@@ -382,6 +430,14 @@ def main() -> int:
         "check_observation_processing_contracts.py",
         "tests/test_observation_processing.py",
         "context='aasm/observation-epistemics'",
+    ])
+    require(root / ".github/workflows/engineering-rule.yml", [
+        "check_rule_contracts.py",
+        "check_rule_public.py",
+        "tests/test_rule_foundation.py",
+        "tests/test_rule_public.py",
+        "0.32.17",
+        "context='aasm/engineering-rule'",
     ])
     require(root / ".github/workflows/physical-evidence.yml", [
         "check_state_conflict_contracts.py",
@@ -416,6 +472,7 @@ def main() -> int:
         "aasm/artifact-lineage",
         "aasm/entity-evolution",
         "aasm/engineering-quantity",
+        "aasm/engineering-rule",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
@@ -429,14 +486,25 @@ def main() -> int:
         "import aasm; "
         "r=aasm.validate_public_api_contract(); assert r['valid'], r; "
         "c=aasm.public_api_contract(); assert c['runtime_version']=='0.56.1'; "
-        "assert c['contract_version']=='0.32.16'; "
-        "assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust','execution_environment','observation_processing','artifact_lineage','entity_evolution','engineering_quantity'))"
+        "assert c['contract_version']=='0.32.17'; "
+        "assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust','execution_environment','observation_processing','artifact_lineage','entity_evolution','engineering_quantity','engineering_rule')); "
+        "q=c['engineering_quantity']; assert q['contract_id']=='aasm.quantity.v1' and q['public_admission']=='QUALIFIED' and q['runtime_admission']=='PRE_ADMISSION_ONLY'; "
+        "x=c['engineering_rule']; assert x['contract_id']=='aasm.rule.v1' and x['contract_version']=='0.1.0'; "
+        "assert x['public_admission']=='QUALIFIED' and x['runtime_admission']=='PRE_ADMISSION_ONLY'; "
+        "assert x['engine_state_integration']=='NONE_SEMANTIC_RULE_FOUNDATION_ONLY'; "
+        "assert x['precedence_is_objective_priority'] is False and x['precedence_authorizes_override'] is False; "
+        "assert x['hard_floor_waiver']=='FORBIDDEN' and x['hard_floor_override']=='FORBIDDEN'; "
+        "assert x['learned_constraint_relation']=='DISTINCT_NO_IMPLICIT_MAPPING_TO_FORMAL_CALCULUS_HARD_SOFT'; "
+        "assert x['rule_to_constraint_lowering']=='NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED'; "
+        "assert x['parallel_rule_registry']=='NONE' and x['current_rule_pointer']=='NONE'; "
+        "assert x['parallel_constraint_engine']=='NONE' and x['parallel_authority_evaluator']=='NONE'; "
+        "assert x['rule_existence_grants_fact_authority'] is False and x['rule_existence_grants_effect_authority'] is False and x['rule_existence_grants_source_authority'] is False"
     )
     completed = subprocess.run([sys.executable, "-c", code], cwd=root, env=env)
     if completed.returncode != 0:
         _fail("active public contract execution failed")
 
-    print("0.56.1 development target + active adoption 0.32.16 + PR-3 + S3 + S4 quantity source/release contracts: PASS")
+    print("0.56.1 development target + active adoption 0.32.17 + PR-3 + S3 + S4 quantity + Rule source/release contracts: PASS")
     return 0
 
 

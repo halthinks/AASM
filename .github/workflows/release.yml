@@ -131,6 +131,7 @@ jobs:
             aasm/artifact-lineage \
             aasm/entity-evolution \
             aasm/engineering-quantity \
+            aasm/engineering-rule \
             aasm/physical-evidence; do
             state=""
             for _ in $(seq 1 90); do

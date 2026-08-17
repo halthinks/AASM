@@ -117,6 +117,11 @@ jobs:
           python scripts/check_quantity_contracts.py
           python scripts/check_quantity_public.py
           pytest -q tests/test_quantity_foundation.py tests/test_quantity_public.py
+      - name: Check S4 engineering Rule semantic foundation and public adoption
+        run: |
+          python scripts/check_rule_contracts.py
+          python scripts/check_rule_public.py
+          pytest -q tests/test_rule_foundation.py tests/test_rule_public.py
       - name: Validate cumulative development source contract
         run: python scripts/check_release_contracts.py
       - name: Guard active 0.56.1 development root and additive authority boundaries
@@ -125,7 +130,7 @@ jobs:
           import aasm
           from aasm import public_v55, public_v56
           active=aasm.validate_public_api_contract(); assert active['valid'], active
-          assert aasm.__version__=='0.56.1'; assert aasm.PUBLIC_API_CONTRACT['contract_version']=='0.32.16'
+          assert aasm.__version__=='0.56.1'; assert aasm.PUBLIC_API_CONTRACT['contract_version']=='0.32.17'
           assert public_v56.__version__=='0.56.1'; assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.6'
           assert public_v55.__version__=='0.55.0'; assert aasm.AASMEngine is public_v56.AASMEngine
           engine=aasm.AASMEngine(aasm.ProblemSpec('v56-gate'))
@@ -270,7 +275,28 @@ jobs:
           assert quantity['external_state_authority']=='NONE'; assert quantity['effect_authority']=='NONE'
           assert quantity['artifact_acceptance']=='NONE'; assert quantity['entity_identity_authority']=='NONE'
           assert quantity['hidden_wall_clock']=='NONE'
-          print('cumulative 0.56.1 development contract + active adoption 0.32.16 PR-3 + S3 + S4 quantity boundaries: PASS')
+          rule=aasm.PUBLIC_API_CONTRACT['engineering_rule']
+          assert rule['contract_id']=='aasm.rule.v1'
+          assert rule['contract_version']=='0.1.0'
+          assert rule['public_admission']=='QUALIFIED'
+          assert rule['runtime_admission']=='PRE_ADMISSION_ONLY'
+          assert rule['engine_state_integration']=='NONE_SEMANTIC_RULE_FOUNDATION_ONLY'
+          assert rule['applicability']=='EXPLICIT_PORTABLE_CONTEXT_MATCH_TRI_STATE_FAIL_CLOSED'
+          assert rule['precedence']=='STRENGTH_THEN_SPECIFICITY_THEN_PRIORITY_WITHIN_EXPLICIT_GROUP'
+          assert rule['precedence_is_objective_priority'] is False
+          assert rule['precedence_authorizes_override'] is False
+          assert rule['hard_floor_waiver']=='FORBIDDEN'; assert rule['hard_floor_override']=='FORBIDDEN'
+          assert rule['waiver_override_authority']=='STRUCTURAL_ELIGIBILITY_ONLY_EXISTING_SCOPED_AUTHORITY_MUST_AUTHORIZE_LATER_RUNTIME_ACTION'
+          assert rule['source_authority']=='EXACT_EXISTING_SCOPED_AUTHORITY_GRANT_REFERENCE_ONLY_NOT_VERIFIED_BY_FOUNDATION'
+          assert rule['learned_constraint_relation']=='DISTINCT_NO_IMPLICIT_MAPPING_TO_FORMAL_CALCULUS_HARD_SOFT'
+          assert rule['rule_to_constraint_lowering']=='NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED'
+          assert rule['parallel_rule_registry']=='NONE'; assert rule['current_rule_pointer']=='NONE'
+          assert rule['parallel_constraint_engine']=='NONE'; assert rule['parallel_authority_evaluator']=='NONE'
+          assert rule['rule_existence_grants_fact_authority'] is False
+          assert rule['rule_existence_grants_effect_authority'] is False
+          assert rule['rule_existence_grants_source_authority'] is False
+          assert not any(name.startswith('rule_') for name in aasm.SUPPORTED_ENGINE_METHODS)
+          print('cumulative 0.56.1 development contract + active adoption 0.32.17 PR-3 + S3 + S4 quantity + Rule boundaries: PASS')
           PY
       - name: Publish cumulative v0.56 development qualification
         if: always()
@@ -280,5 +306,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative PR-3+S3+S4-quantity qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
-          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='aasm/v56' -f description="$description" -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative PR-3+S3+S4 quantity+Rule qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
+          for attempt in 1 2 3 4 5; do
+            if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='aasm/v56' -f description="$description" -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; then exit 0; fi
+            if [ "$attempt" -lt 5 ]; then sleep $((attempt * 2)); fi
+          done
+          echo 'failed to publish aasm/v56 after bounded retries' >&2
+          exit 1

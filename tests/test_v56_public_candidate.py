@@ -14,7 +14,7 @@ def test_v56_base_is_frozen_and_active_overlay_advances_adoption_only():
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.16"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.17"
     assert aasm.AASMEngine is public_active.AASMEngine
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v56.AASMEngine is not public_v55.AASMEngine
@@ -66,7 +66,7 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_reality_
 
 def test_active_contract_preserves_external_reality_physical_control_and_s3_firewalls():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] == "0.32.16"
+    assert contract["contract_version"] == "0.32.17"
 
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -335,3 +335,35 @@ def test_active_import_registry_contains_pr3_and_s3_reality_contracts():
     ):
         assert hasattr(aasm, name), name
         assert name in aasm.SUPPORTED_PUBLIC_IMPORTS
+
+
+def test_active_contract_exposes_s4_quantity_and_rule_foundations_without_runtime_composition():
+    contract = aasm.public_api_contract()
+    quantity = contract["engineering_quantity"]
+    assert quantity["contract_id"] == "aasm.quantity.v1"
+    assert quantity["contract_version"] == "0.1.0"
+    assert quantity["public_admission"] == "QUALIFIED"
+    assert quantity["runtime_admission"] == "PRE_ADMISSION_ONLY"
+    assert quantity["engine_state_integration"] == "NONE_SEMANTIC_VALUE_FOUNDATION_ONLY"
+
+    rule = contract["engineering_rule"]
+    assert rule["contract_id"] == "aasm.rule.v1"
+    assert rule["contract_version"] == "0.1.0"
+    assert rule["public_admission"] == "QUALIFIED"
+    assert rule["runtime_admission"] == "PRE_ADMISSION_ONLY"
+    assert rule["engine_state_integration"] == "NONE_SEMANTIC_RULE_FOUNDATION_ONLY"
+    assert rule["precedence_is_objective_priority"] is False
+    assert rule["precedence_authorizes_override"] is False
+    assert rule["hard_floor_waiver"] == "FORBIDDEN"
+    assert rule["hard_floor_override"] == "FORBIDDEN"
+    assert rule["learned_constraint_relation"] == "DISTINCT_NO_IMPLICIT_MAPPING_TO_FORMAL_CALCULUS_HARD_SOFT"
+    assert rule["rule_to_constraint_lowering"] == "NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED"
+    assert rule["parallel_rule_registry"] == "NONE"
+    assert rule["current_rule_pointer"] == "NONE"
+    assert rule["parallel_constraint_engine"] == "NONE"
+    assert rule["parallel_authority_evaluator"] == "NONE"
+    assert rule["rule_existence_grants_fact_authority"] is False
+    assert rule["rule_existence_grants_effect_authority"] is False
+    assert rule["rule_existence_grants_source_authority"] is False
+    assert aasm.AASMEngine is public_v56.AASMEngine
+    assert not any(name.startswith("rule_") for name in aasm.SUPPORTED_ENGINE_METHODS)
