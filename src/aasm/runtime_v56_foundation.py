@@ -12,6 +12,7 @@ from .external_machine_postcondition_runtime import MachinePostconditionRuntimeM
 from .external_machine_runtime import ExternalMachineRuntimeMixin
 from .external_machine_transition_runtime import MachineTransitionRuntimeMixin
 from .observation_freshness_runtime import ObservationFreshnessRuntimeMixin
+from .observation_processing_runtime import ObservationProcessingRuntimeMixin
 from .physical_authority_runtime import PhysicalAuthorityRuntimeMixin
 from .physical_control_fencing_runtime import PhysicalControlFencingRuntimeMixin
 from .physical_effect_integration_boundary import PhysicalEffectIntegrationBoundaryMixin
@@ -33,6 +34,7 @@ class AASMEngine(
     MachinePostconditionExecutionCorrelationMixin,
     MachinePostconditionRuntimeMixin,
     MachineTransitionRuntimeMixin,
+    ObservationProcessingRuntimeMixin,
     ExecutionEnvironmentRuntimeMixin,
     SourceTrustRuntimeMixin,
     CalibrationRuntimeMixin,
