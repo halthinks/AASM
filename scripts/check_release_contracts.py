@@ -59,39 +59,43 @@ def main() -> int:
         "physical_authority_runtime_contract",
     ])
     require(root / "src/aasm/public_active.py", [
-        '"contract_version": "0.32.10"',
+        '"contract_version": "0.32.11"',
         "EFFECT_CAPABILITY_CONTRACT_ID",
         "PhysicalEffectAuthorityBinding",
         "STATE_CONFLICT_CONTRACT_ID",
-        "StateConflict",
         "EVENT_CAUSALITY_CONTRACT_ID",
-        "CausalEventIdentity",
-        "CausalRelation",
         "OBSERVATION_FRESHNESS_CONTRACT_ID",
-        "ObservationFreshnessAssessment",
+        "PHYSICAL_IDENTITY_CONTRACT_ID",
+        "PhysicalIdentity",
+        "CALIBRATION_CONTRACT_ID",
+        "CalibrationCertificate",
+        "CalibrationRevocation",
+        "SOURCE_TRUST_CONTRACT_ID",
+        "SourceTrustAssertion",
+        "SourceTrustRevocation",
         "physical_effect_integration_runtime_contract",
         "state_conflict_runtime_contract",
         "event_causality_runtime_contract",
         "observation_freshness_runtime_contract",
-        '"physical_effect_integration"',
-        '"state_conflict"',
-        '"event_causality"',
-        '"observation_freshness"',
+        "physical_identity_runtime_contract",
+        "calibration_runtime_contract",
+        "source_trust_runtime_contract",
+        '"physical_identity"',
+        '"calibration"',
+        '"source_trust"',
     ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
         "PhysicalEffectIntegrationBoundaryMixin",
-        "PhysicalPreemptionRecoveryGuardMixin",
-        "PhysicalControlFencingRuntimeMixin",
-        "EffectCapabilityRevocationGuardMixin",
-        "EffectCapabilityRuntimeMixin",
-        "PhysicalAuthorityRuntimeMixin",
-        "MachinePostconditionExecutionCorrelationMixin",
+        "SourceTrustRuntimeMixin",
+        "CalibrationRuntimeMixin",
+        "PhysicalIdentityRuntimeMixin",
         "ObservationFreshnessRuntimeMixin",
         "EventCausalityRuntimeMixin",
         "StateConflictRuntimeMixin",
         "StateAuthorityRuntimeMixin",
         "V55FoundationEngine",
     ])
+
     require(root / "src/aasm/physical_effect_binding.py", [
         'PHYSICAL_EFFECT_AUTHORITY_BINDING_CONTRACT_ID = "aasm.effect.physical-authority-binding.v1"',
         '"authorization_recheck": "MANDATORY_AT_EXISTING_AUTHORIZE_EFFECT_BOUNDARY"',
@@ -107,54 +111,65 @@ def main() -> int:
         '"ownership": "EXISTING_V54_EFFECT_OWNERSHIP_UNCHANGED"',
         '"unknown_and_reconciliation": "EXISTING_V54_UNKNOWN_AND_RECONCILIATION_UNCHANGED"',
     ])
-    require(root / "src/aasm/physical_effect_integration_boundary.py", [
-        "owner_worker_id: str | None = None",
-        "task_lease_id: str | None = None",
-        'boundary="EXECUTE"',
-    ])
     require(root / "src/aasm/state_conflict.py", [
         'STATE_CONFLICT_CONTRACT_ID = "aasm.state.conflict.v1"',
         '"comparison": "EXACT_CANONICAL_PORTABLE_JSON_VALUE_PLUS_EXACT_REVISION_IDENTITY"',
         '"conflict_grants_fact_authority": False',
-        '"conflict_grants_effect_authority": False',
-        '"host_wall_clock_in_identity": False',
         '"parallel_truth_table": "NONE"',
-    ])
-    require(root / "src/aasm/state_conflict_runtime.py", [
-        'STATE_CONFLICT_RUNTIME_CONTRACT_ID = "aasm.state.conflict.runtime.v1"',
-        '"claim_source": "EXISTING_AASM_STATE_CLAIM_PROJECTION_ONLY"',
-        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"',
-        '"observation_authority_elevation": "NONE"',
-        '"parallel_dependency_graph": "NONE"',
     ])
     require(root / "src/aasm/event_causality.py", [
         'EVENT_CAUSALITY_CONTRACT_ID = "aasm.event.causality.v1"',
         "PORTABLE_U63_MAX = (1 << 63) - 1",
         '"local_event_identity": "NODE_ID_PLUS_BOOT_EPOCH_PLUS_MONOTONIC_LOCAL_SEQUENCE"',
         '"receipt_order_implies_source_order": False',
-        '"host_wall_clock": "NOT_UNIVERSAL_TRUTH_AND_NEVER_IMPLICITLY_CAPTURED"',
-        '"parallel_event_ledger": "NONE"',
-    ])
-    require(root / "src/aasm/event_causality_runtime.py", [
-        'EVENT_CAUSALITY_RUNTIME_CONTRACT_ID = "aasm.event.causality.runtime.v1"',
-        '"core_aasm_event_log": "UNCHANGED_AND_REMAINS_REPLAY_LEDGER"',
-        '"same_node_boot_order": "SEQUENCE_DEFINES_LOCAL_ORDER_INDEPENDENT_OF_INGEST_ORDER"',
-        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"',
         '"parallel_event_ledger": "NONE"',
     ])
     require(root / "src/aasm/observation_freshness.py", [
         'OBSERVATION_FRESHNESS_CONTRACT_ID = "aasm.observation.freshness.v1"',
         '"reference_time": "EXPLICIT_INTEGER_NANOSECONDS_NEVER_IMPLICIT_HOST_NOW"',
-        '"receipt_fallback": "OPTIONAL_AND_EXPLICITLY_MARKED_WEAKER_AGE_BASIS"',
         '"freshness_elevates_observation_authority": False',
         '"freshness_is_universal_admission": False',
     ])
-    require(root / "src/aasm/observation_freshness_runtime.py", [
-        'OBSERVATION_FRESHNESS_RUNTIME_CONTRACT_ID = "aasm.observation.freshness.runtime.v1"',
-        '"observation_source": "EXISTING_MACHINE_STATE_OBSERVATION_ONLY"',
-        '"causal_source": "EXACT_DURABLE_CAUSAL_EVENT_ID_AND_FINGERPRINT"',
-        '"reference_time_source": "EXPLICIT_CALLER_POLICY_INPUT_NOT_HOST_NOW"',
-        '"universal_admission": "NONE"',
+    require(root / "src/aasm/physical_identity.py", [
+        'PHYSICAL_IDENTITY_CONTRACT_ID = "aasm.physical.identity.v1"',
+        '"role": "EXACT_EXTERNAL_SUBJECT_INSTANCE_CONFIGURATION_REFERENCE_NOT_TRUTH_OR_AUTHORITY_BY_EXISTENCE"',
+        '"identity_existence_grants_fact_authority": False',
+        '"identity_existence_grants_effect_authority": False',
+        '"identity_existence_grants_source_trust": False',
+        '"parallel_identity_registry": "NONE_EVIDENCE_PROJECTION_ONLY"',
+    ])
+    require(root / "src/aasm/physical_identity_runtime.py", [
+        'PHYSICAL_IDENTITY_RUNTIME_CONTRACT_ID = "aasm.physical.identity.runtime.v1"',
+        '"same_context_divergence": "REJECTED_BEFORE_RECORDING_REQUIRE_EXPLICIT_REVISION_CHANGE"',
+        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"',
+        '"source_trust": "NONE_IDENTITY_IS_ONLY_AN_EXACT_REFERENCE"',
+    ])
+    require(root / "src/aasm/calibration.py", [
+        'CALIBRATION_CONTRACT_ID = "aasm.calibration.v1"',
+        '"identity_binding": "EXACT_PHYSICAL_IDENTITY_ID_AND_FINGERPRINT_REQUIRED"',
+        '"selection": "EXPLICIT_CALIBRATION_ID_NO_HIDDEN_CURRENT_CALIBRATION_POINTER"',
+        '"transform_application": "NOT_IMPLEMENTED_IN_S3_FOUNDATION"',
+        '"calibration_existence_grants_fact_authority": False',
+        '"calibration_mutates_observation": False',
+    ])
+    require(root / "src/aasm/calibration_runtime.py", [
+        'CALIBRATION_RUNTIME_CONTRACT_ID = "aasm.calibration.runtime.v1"',
+        '"validity_reference": "EXPLICIT_CALLER_NANOSECOND_TIME_ONLY"',
+        '"parallel_calibration_store": "NONE_EVIDENCE_PROJECTION_ONLY"',
+    ])
+    require(root / "src/aasm/source_trust.py", [
+        'SOURCE_TRUST_CONTRACT_ID = "aasm.source.trust.v1"',
+        '"role": "EXPLICIT_POLICY_INPUT_ABOUT_A_SOURCE_NOT_FACT_AUTHORITY_OR_EFFECT_AUTHORITY"',
+        '"aggregation": "NONE_NO_TRUST_SCORE_NO_VOTING_NO_AUTOMATIC_LATEST_ASSERTION"',
+        '"trusted_disposition_grants_fact_authority": False',
+        '"trusted_disposition_makes_claim_authoritative": False',
+        '"source_trust_is_universal_admission": False',
+    ])
+    require(root / "src/aasm/source_trust_runtime.py", [
+        'SOURCE_TRUST_RUNTIME_CONTRACT_ID = "aasm.source.trust.runtime.v1"',
+        '"fact_authority": "EXISTING_FACT_AUTHORITY_REMAINS_SEPARATE_AND_REQUIRED"',
+        '"reputation_score": "NONE"',
+        '"parallel_authority_evaluator": "NONE"',
     ])
 
     require(root / "src/aasm/public_v55.py", ['__version__ = "0.55.0"', '"contract_version": "0.31.0"'])
@@ -188,6 +203,7 @@ def main() -> int:
         "check_physical_effect_integration_contracts.py",
         "check_state_conflict_contracts.py",
         "check_causal_freshness_contracts.py",
+        "check_identity_calibration_trust_contracts.py",
     ):
         run_script(root, script)
 
@@ -208,6 +224,11 @@ def main() -> int:
         "causal-event.schema.json",
         "causal-relation.schema.json",
         "observation-freshness.schema.json",
+        "physical-identity.schema.json",
+        "calibration.schema.json",
+        "calibration-revocation.schema.json",
+        "source-trust.schema.json",
+        "source-trust-revocation.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -236,28 +257,23 @@ def main() -> int:
 
     require(root / ".github/workflows/v56.yml", [
         "AASM v0.56 Development Qualification",
-        "check_physical_effect_integration_contracts.py",
-        "tests/test_physical_effect_integration.py",
-        "check_state_conflict_contracts.py",
-        "tests/test_state_conflict.py",
-        "check_causal_freshness_contracts.py",
-        "tests/test_causal_freshness.py",
-        "0.32.10",
+        "check_identity_calibration_trust_contracts.py",
+        "tests/test_identity_calibration_trust.py",
+        "0.32.11",
         "context='aasm/v56'",
     ])
-    require(root / ".github/workflows/effect-capability.yml", ["context='aasm/effect-capability'"])
-    require(root / ".github/workflows/physical-control-fencing.yml", ["context='aasm/physical-control-fencing'"])
-    require(root / ".github/workflows/physical-preemption-recovery.yml", ["context='aasm/physical-preemption-recovery'"])
-    require(root / ".github/workflows/physical-effect-integration.yml", [
-        "check_physical_effect_integration_contracts.py",
-        "tests/test_physical_effect_integration.py",
-        "context='aasm/physical-effect-integration'",
+    require(root / ".github/workflows/identity-calibration-trust.yml", [
+        "check_identity_calibration_trust_contracts.py",
+        "tests/test_identity_calibration_trust.py",
+        "context='aasm/identity-calibration-trust'",
     ])
     require(root / ".github/workflows/physical-evidence.yml", [
         "check_state_conflict_contracts.py",
-        "tests/test_state_conflict.py",
         "check_causal_freshness_contracts.py",
+        "check_identity_calibration_trust_contracts.py",
+        "tests/test_state_conflict.py",
         "tests/test_causal_freshness.py",
+        "tests/test_identity_calibration_trust.py",
         "context='aasm/physical-evidence'",
     ])
     require(root / ".github/workflows/release.yml", [
@@ -274,6 +290,7 @@ def main() -> int:
         "aasm/physical-preemption-recovery",
         "aasm/physical-effect-integration",
         "aasm/physical-evidence",
+        "aasm/identity-calibration-trust",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
@@ -287,14 +304,14 @@ def main() -> int:
         "import aasm; "
         "r=aasm.validate_public_api_contract(); assert r['valid'], r; "
         "c=aasm.public_api_contract(); assert c['runtime_version']=='0.56.1'; "
-        "assert c['contract_version']=='0.32.10'; "
-        "assert 'physical_effect_integration' in c and 'state_conflict' in c and 'event_causality' in c and 'observation_freshness' in c"
+        "assert c['contract_version']=='0.32.11'; "
+        "assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust'))"
     )
     completed = subprocess.run([sys.executable, "-c", code], cwd=root, env=env)
     if completed.returncode != 0:
         _fail("active public contract execution failed")
 
-    print("0.56.1 development target + active adoption 0.32.10 + PR-3 + S3 conflict/causality/freshness source/release contracts: PASS")
+    print("0.56.1 development target + active adoption 0.32.11 + PR-3 + S3 reality-evidence source/release contracts: PASS")
     return 0
 
 
