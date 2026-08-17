@@ -29,7 +29,7 @@ def main() -> None:
     decision_vector = text("src/aasm/decision_vector_ir.py")
     effect_capability = text("src/aasm/effect_capability.py")
     quantity = text("src/aasm/quantity.py")
-    postcondition_runtime = text("src/aasm/machine_postcondition_runtime.py")
+    postcondition_runtime = text("src/aasm/external_machine_postcondition_runtime.py")
     numeric_tolerance_schema = text("schemas/numeric-tolerance.schema.json")
 
     schema = json.loads(schema_text)
@@ -146,7 +146,7 @@ def main() -> None:
         (package_init, "package root"),
         (public, "active 0.32.16 public overlay"),
         (effect_capability, "effect capability"),
-        (postcondition_runtime, "machine postcondition runtime"),
+        (postcondition_runtime, "external machine postcondition runtime"),
         (quantity, "quantity foundation"),
     ):
         require("from .rule" not in source, f"rule leaked into {label}")
