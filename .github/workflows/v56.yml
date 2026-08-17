@@ -96,6 +96,10 @@ jobs:
         run: |
           python scripts/check_identity_calibration_trust_contracts.py
           pytest -q tests/test_identity_calibration_trust.py
+      - name: Check S3 execution environment physical evidence foundation
+        run: |
+          python scripts/check_execution_environment_contracts.py
+          pytest -q tests/test_execution_environment.py
       - name: Validate cumulative development source contract
         run: python scripts/check_release_contracts.py
       - name: Guard active 0.56.1 development root and additive authority boundaries
@@ -104,7 +108,7 @@ jobs:
           import aasm
           from aasm import public_v55, public_v56
           active=aasm.validate_public_api_contract(); assert active['valid'], active
-          assert aasm.__version__=='0.56.1'; assert aasm.PUBLIC_API_CONTRACT['contract_version']=='0.32.11'
+          assert aasm.__version__=='0.56.1'; assert aasm.PUBLIC_API_CONTRACT['contract_version']=='0.32.12'
           assert public_v56.__version__=='0.56.1'; assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.6'
           assert public_v55.__version__=='0.55.0'; assert aasm.AASMEngine is public_v56.AASMEngine
           engine=aasm.AASMEngine(aasm.ProblemSpec('v56-gate'))
@@ -184,7 +188,20 @@ jobs:
           assert trust['fact_authority']=='EXISTING_FACT_AUTHORITY_REMAINS_SEPARATE_AND_REQUIRED'
           assert trust['trusted_claim_admission']=='NONE'; assert trust['reputation_score']=='NONE'
           assert trust['parallel_authority_evaluator']=='NONE'; assert trust['parallel_trust_registry']=='NONE_EVIDENCE_PROJECTION_ONLY'; assert trust['parallel_truth_table']=='NONE'
-          print('cumulative 0.56.1 development contract + active adoption 0.32.11 PR-3 + S3 reality-evidence boundaries: PASS')
+          environment=engine.execution_environment_contract_report()
+          assert environment['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORD_BIND_NOT_ENVIRONMENT_TRUTH'
+          assert environment['level_acceptance']=='EXACT_ACCEPTED_LEVEL_SET_MEMBERSHIP_NO_ORDINAL_INFERENCE'
+          assert environment['environment_level_authority']=='NONE'
+          assert environment['physical_identity_source']=='EXISTING_PHYSICAL_IDENTITY_PROJECTION_ONLY'
+          assert environment['calibration_source']=='EXISTING_CALIBRATION_PROJECTION_ONLY'
+          assert environment['source_trust_source']=='EXISTING_SOURCE_TRUST_PROJECTION_ONLY'
+          assert environment['observation_source']=='EXISTING_MACHINE_STATE_OBSERVATION_ONLY'
+          assert environment['fact_authority_creation']=='NONE'; assert environment['effect_authority']=='NONE'
+          assert environment['source_trust_creation']=='NONE'; assert environment['observation_mutation']=='NONE'
+          assert environment['parallel_environment_store']=='NONE_EVIDENCE_PROJECTION_ONLY'
+          assert environment['parallel_observation_store']=='NONE'; assert environment['parallel_truth_table']=='NONE'
+          assert environment['parallel_authority_evaluator']=='NONE'
+          print('cumulative 0.56.1 development contract + active adoption 0.32.12 PR-3 + S3 reality-environment boundaries: PASS')
           PY
       - name: Publish cumulative v0.56 development qualification
         if: always()
@@ -194,5 +211,5 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative external-reality+physical-effect+S3-reality-evidence qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
+          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative external-reality+physical-effect+S3-environment qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='aasm/v56' -f description="$description" -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
