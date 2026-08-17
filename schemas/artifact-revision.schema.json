@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/artifact-revision.schema.json",
+  "title": "AASM Artifact Revision v1",
+  "type": "object",
+  "required": [
+    "revision_id",
+    "contract_id",
+    "contract_version",
+    "logical_artifact_id",
+    "content_sha256",
+    "semantic_projection_sha256",
+    "artifact_ref",
+    "artifact_kind",
+    "parent_revision_ids",
+    "producer_id",
+    "producer_kind",
+    "machine_id",
+    "effect_id",
+    "source_problem_revision_id",
+    "source_problem_revision_fingerprint",
+    "source_external_references",
+    "format_id",
+    "schema_id",
+    "tool_id",
+    "tool_version",
+    "external_references",
+    "evidence_ids",
+    "metadata",
+    "fingerprint"
+  ],
+  "properties": {
+    "revision_id": {
+      "type": "string",
+      "pattern": "^artifact-revision-[0-9a-f]{24}$"
+    },
+    "contract_id": {
+      "const": "aasm.artifact.revision.v1"
+    },
+    "contract_version": {
+      "const": "0.1.0"
+    },
+    "logical_artifact_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "content_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "semantic_projection_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifact_ref": {
+      "type": "string"
+    },
+    "artifact_kind": {
+      "type": "string"
+    },
+    "parent_revision_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^artifact-revision-[0-9a-f]{24}$"
+      }
+    },
+    "producer_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "producer_kind": {
+      "type": "string"
+    },
+    "machine_id": {
+      "type": "string"
+    },
+    "effect_id": {
+      "type": "string"
+    },
+    "source_problem_revision_id": {
+      "type": "string"
+    },
+    "source_problem_revision_fingerprint": {
+      "type": "string"
+    },
+    "source_external_references": {
+      "type": "array",
+      "items": {
+        "$ref": "external-reference.schema.json"
+      }
+    },
+    "format_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_id": {
+      "type": "string"
+    },
+    "tool_id": {
+      "type": "string"
+    },
+    "tool_version": {
+      "type": "string"
+    },
+    "external_references": {
+      "type": "array",
+      "items": {
+        "$ref": "external-reference.schema.json"
+      }
+    },
+    "evidence_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "fingerprint": {
+      "type": "string",
+      "minLength": 16
+    }
+  },
+  "additionalProperties": false
+}
