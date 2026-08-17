@@ -1,11 +1,11 @@
-# AASM 0.56.1 Development Candidate — Governed External Reality + Physical Control + Engineering Quantity
+# AASM 0.56.1 Development Candidate — Governed External Reality + Physical Control + Engineering Semantics
 
 **Status:** UNRELEASED DEVELOPMENT TARGET  
 **Package target:** `0.56.1`  
 **Latest immutable published release:** `v0.56.0`  
-**Active adoption contract:** `aasm.adoption.v1 / 0.32.16`  
-**Active milestones:** solver provenance, authoritative state, external-machine supervision, complete physical authority/effect integration, complete S3 observation/artifact/entity semantics, S4 engineering Quantity semantic IR  
-**Qualified boundary:** complete PR-3 / PHY-01 + complete S3 + S4 `aasm.quantity.v1`; next architecture boundary is `aasm.rule.v1`
+**Active adoption contract:** `aasm.adoption.v1 / 0.32.17`  
+**Active milestones:** solver provenance, authoritative state, external-machine supervision, complete physical authority/effect integration, complete S3 observation/artifact/entity semantics, S4 engineering Quantity + Rule semantic IR  
+**Qualified boundary:** complete PR-3 / PHY-01 + complete S3 + S4 `aasm.quantity.v1` + `aasm.rule.v1`; next architecture boundary is S4.3 semantic projection/equivalence
 
 This document describes the current development surface on `main`. It is not a published-release claim. Package SemVer remains `0.56.1`; semantic/adoption contracts advance independently under `docs/VERSIONING.md`.
 
@@ -194,7 +194,7 @@ Crash recovery covers the two-write boundary where preemption Evidence became du
 
 ## No parallel control plane
 
-Across PR-1 through complete PR-3, S3, and the S4 Quantity semantic layer:
+Across PR-1 through complete PR-3, S3, and the S4 Quantity + Rule semantic layers:
 
 ```text
 scoped authority remains the permission evaluator
@@ -214,6 +214,9 @@ resource ledger
 external truth table
 artifact/entity current-state table
 unit registry
+rule registry
+rule authority evaluator
+parallel constraint engine
 ```
 
 ## PR-3H and S3 lineage are qualified
@@ -245,7 +248,34 @@ effect_authority = NONE
 
 The live solver `aasm.numeric.tolerance.v1` contract is preserved unchanged. `EffectCapability.NumericInterval` remains unchanged. Quantity does not silently reinterpret capability bounds, postconditions, solver/provider tolerance, or physical-effect execution.
 
-The next S4 contract is `aasm.rule.v1`. Its source engineering-rule strengths (`HARD_FLOOR | HARD | POLICY | PREFERENCE | ADVISORY`) are distinct from the existing formal-calculus `LearnedConstraint(HARD|SOFT)` strength. Any future lowering between them must be explicit and checked.
+## S4 Rule is qualified as public semantic IR
+
+Active semantic contract:
+
+```text
+aasm.rule.v1
+```
+
+The qualified Rule foundation provides stable rule/revision identity, exact clause/source-authority/external references, explicit workspace/scope/subject applicability, exact problem/external revision applicability, portable tri-state applicability evaluation, strength classes `HARD_FLOOR | HARD | POLICY | PREFERENCE | ADVISORY`, explicit precedence groups/specificity/priority, explicit waiver/override structural policy, severity, canonical serialization, and deterministic fingerprints.
+
+The qualification preserves the critical semantic separations:
+
+```text
+public_admission = QUALIFIED
+runtime_admission = PRE_ADMISSION_ONLY
+engine_state_integration = NONE_SEMANTIC_RULE_FOUNDATION_ONLY
+rule registry = NONE
+current rule pointer = NONE
+parallel constraint engine = NONE
+parallel authority evaluator = NONE
+rule existence grants fact/effect/source authority = false
+precedence authorizes override = false
+rule-to-learned-constraint lowering = NONE
+```
+
+Rule precedence is not objective priority. `HARD_FLOOR` cannot be structurally waived or overridden. A structurally eligible waiver/override still requires later explicit authorization through the existing scoped-authority system; the Rule foundation itself does not perform that authorization.
+
+The Rule strength vocabulary is deliberately distinct from the existing formal-calculus `LearnedConstraint(HARD|SOFT)` vocabulary. No implicit mapping or lowering exists between source engineering rules and learned constraints.
 
 ## Current claim ceilings
 
@@ -255,7 +285,10 @@ The candidate still does not claim:
 - tolerance-aware machine postcondition verification through `aasm.quantity.v1`;
 - automatic replacement of solver `aasm.numeric.tolerance.v1` with Quantity tolerance;
 - a hidden/cross-domain unit registry or universal unit inference;
-- rule applicability/precedence/waiver semantics before `aasm.rule.v1` qualifies;
+- runtime Rule registration/current-rule state or automatic Rule enforcement inside `AASMEngine`;
+- waiver/override authorization by Rule existence, precedence, or structural eligibility;
+- automatic Rule-to-`LearnedConstraint` lowering;
+- a generic semantic projection/equivalence contract for deciding when alternatives/results/artifacts are “the same”;
 - hybrid continuous/discrete safety envelopes;
 - automatic artifact or entity truth/acceptance by existence, recency, agreement, or generation success.
 
@@ -266,10 +299,10 @@ These are explicit later S4/integration boundaries.
 Current qualified implementation head before documentation-only synchronization:
 
 ```text
-263640a634da0e92bb1ae0b42cb55063e0b64552
+7c808fc504fa91edb8fe9af13f12568b745f9762
 ```
 
-All **28 current custom commit-status contexts** were green on that exact head. The deliberate release path now requires the inherited gates plus:
+All **29 current custom commit-status contexts** were green on that exact head. The deliberate release path now requires the inherited gates plus:
 
 ```text
 aasm/state-authority
@@ -287,18 +320,19 @@ aasm/observation-epistemics
 aasm/artifact-lineage
 aasm/entity-evolution
 aasm/engineering-quantity
+aasm/engineering-rule
 aasm/physical-evidence
 aasm/ci-summary
 ```
 
-Cumulative `aasm/v56`, formal assurance, and the main CI summary were also green on that exact head. Quantity's dedicated gate exercises the strict schema, source/runtime firewall, exact numeric/unit/dimension/tolerance semantics, adversarial tamper cases, public additive overlay, and legacy numeric-substrate non-regression.
+Cumulative `aasm/v56`, formal assurance, and the main CI summary were also green on that exact head. Quantity's dedicated gate exercises the strict schema, source/runtime firewall, exact numeric/unit/dimension/tolerance semantics, adversarial tamper cases, public additive overlay, and legacy numeric-substrate non-regression. Rule's dedicated gate exercises strict schema/source firewalls, deterministic applicability/revision/precedence semantics, HARD_FLOOR waiver/override containment, exact source-authority references, portable identity, learned-constraint separation, active `0.32.17` public adoption, and no Rule engine-state/authority/parallel-registry path.
 
 Until a deliberate package release occurs:
 
 ```text
 package target on main: 0.56.1
-active adoption contract: aasm.adoption.v1 / 0.32.16
+active adoption contract: aasm.adoption.v1 / 0.32.17
 published release: v0.56.0
-exact development identity: Git SHA
-next architecture boundary: aasm.rule.v1
+qualified code identity: 7c808fc504fa91edb8fe9af13f12568b745f9762
+next architecture boundary: S4.3 semantic projection/equivalence
 ```
