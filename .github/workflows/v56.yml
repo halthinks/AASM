@@ -1,4 +1,5 @@
 name: AASM v0.56 Development Qualification
+# Qualified additive parent: aasm.quantity.v1 adoption 0.32.16; active aasm.rule.v1 overlay 0.32.17.
 
 on:
   push:
