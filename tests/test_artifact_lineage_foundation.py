@@ -38,22 +38,42 @@ def _revision(
     payload: str = "board artifact",
     logical_artifact_id: str = "board-main",
     parents=(),
+    relation: str | None = None,
     artifact_ref: str | None = None,
+    parent_fingerprints: dict[str, str] | None = None,
 ) -> ArtifactRevision:
     digest = _digest(payload)
+    parent_items = tuple(parents)
+    parent_ids = tuple(
+        row.revision_id if isinstance(row, ArtifactRevision) else str(row)
+        for row in parent_items
+    )
+    if parent_fingerprints is None:
+        parent_fingerprints = {
+            row.revision_id: row.fingerprint
+            for row in parent_items
+            if isinstance(row, ArtifactRevision)
+        }
+    if relation is None:
+        relation = "CREATED" if not parent_ids else ("MERGES" if len(parent_ids) > 1 else "MODIFIES")
     return ArtifactRevision(
         logical_artifact_id=logical_artifact_id,
         content_sha256=digest,
         semantic_projection_sha256=_digest("semantic:" + payload),
         artifact_ref=digest if artifact_ref is None else artifact_ref,
         artifact_kind="ENGINEERING_DOCUMENT",
-        parent_revision_ids=tuple(parents),
+        parent_revision_ids=parent_ids,
+        parent_revision_fingerprints=parent_fingerprints,
+        revision_relation=relation,
         producer_id="tool:reference",
         producer_kind="TOOL",
         machine_id="machine-1",
         effect_id="effect-1",
         source_problem_revision_id="board-r7",
         source_problem_revision_fingerprint=_digest("board-r7"),
+        environment_id="env-r1",
+        environment_fingerprint=_digest("env-r1"),
+        refinement_run_id="refinement-run-r4",
         source_external_references=(_external(),),
         format_id="text/plain",
         schema_id="example.schema.v1",
@@ -128,27 +148,36 @@ def test_artifact_revision_rejects_forged_revision_semantic_and_storage_fingerpr
         ArtifactRevision.from_dict(rebound_storage)
 
 
-def test_source_problem_revision_requires_exact_id_and_fingerprint_pair():
+def test_source_problem_revision_and_environment_require_exact_pairs():
     item = _revision()
+
     payload = item.to_dict()
     payload["source_problem_revision_fingerprint"] = ""
     payload.pop("fingerprint")
     payload.pop("storage_binding_fingerprint")
     payload.pop("revision_id")
-    with pytest.raises(ValueError, match="must either both be present"):
+    with pytest.raises(ValueError, match="source problem revision ID and fingerprint"):
+        ArtifactRevision.from_dict(payload)
+
+    payload = item.to_dict()
+    payload["environment_fingerprint"] = ""
+    payload.pop("fingerprint")
+    payload.pop("storage_binding_fingerprint")
+    payload.pop("revision_id")
+    with pytest.raises(ValueError, match="environment ID and fingerprint"):
         ArtifactRevision.from_dict(payload)
 
 
-def test_lineage_transition_requires_exact_parent_set_and_stable_logical_identity():
+def test_lineage_transition_requires_exact_parent_id_fingerprint_and_stable_logical_identity():
     base = _revision(payload="r1")
-    child = _revision(payload="r2", parents=(base.revision_id,))
+    child = _revision(payload="r2", parents=(base,))
     report = validate_artifact_revision_transition((base,), child)
     assert report["valid"] is True
 
     wrong_identity = _revision(
         payload="r3",
         logical_artifact_id="other-artifact",
-        parents=(base.revision_id,),
+        parents=(base,),
     )
     report = validate_artifact_revision_transition((base,), wrong_identity)
     assert report["valid"] is False
@@ -159,17 +188,67 @@ def test_lineage_transition_requires_exact_parent_set_and_stable_logical_identit
     assert report["valid"] is False
     assert "PARENT_REVISION_SET_MISMATCH" in report["errors"]
 
+    forged_parent_fingerprint = _revision(
+        payload="r5",
+        parents=(base.revision_id,),
+        parent_fingerprints={base.revision_id: "0" * 64},
+    )
+    report = validate_artifact_revision_transition((base,), forged_parent_fingerprint)
+    assert report["valid"] is False
+    assert "PARENT_REVISION_FINGERPRINT_MISMATCH" in report["errors"]
+
+
+def test_revision_relation_is_explicit_and_merge_requires_complete_multiple_parent_set():
+    left = _revision(payload="left")
+    right = _revision(payload="right")
+    merged = _revision(payload="merged", parents=(left, right), relation="MERGES")
+    report = validate_artifact_revision_transition((left, right), merged)
+    assert report["valid"] is True
+    assert report["revision_relation"] == "MERGES"
+
+    with pytest.raises(ValueError, match="MERGES artifact revision requires at least two parents"):
+        _revision(payload="bad-merge", parents=(left,), relation="MERGES")
+
+    with pytest.raises(ValueError, match="parentless artifact revision must use CREATED"):
+        _revision(payload="bad-derived", relation="DERIVED_FROM")
+
+
+def test_competing_children_are_distinct_legal_branches_not_implicit_authority():
+    base = _revision(payload="root")
+    branch_a = _revision(payload="branch-a", parents=(base,), relation="MODIFIES")
+    branch_b = _revision(payload="branch-b", parents=(base,), relation="DERIVED_FROM")
+    assert validate_artifact_revision_transition((base,), branch_a)["valid"] is True
+    assert validate_artifact_revision_transition((base,), branch_b)["valid"] is True
+    assert branch_a.revision_id != branch_b.revision_id
+    assert branch_a.revision_relation != branch_b.revision_relation
+
+
+def test_duplicate_content_with_different_provenance_produces_distinct_revision_identity():
+    first = _revision(payload="same bytes")
+    payload = first.to_dict()
+    payload.pop("revision_id")
+    payload.pop("fingerprint")
+    payload.pop("storage_binding_fingerprint")
+    payload["producer_id"] = "tool:other"
+    second = ArtifactRevision.from_dict(payload)
+    assert second.content_sha256 == first.content_sha256
+    assert second.revision_id != first.revision_id
+    assert second.fingerprint != first.fingerprint
+
 
 def test_contract_explicitly_denies_truth_acceptance_and_parallel_registry():
     contract = artifact_lineage_contract()
     assert contract["artifact_revision_contract_id"] == ARTIFACT_REVISION_CONTRACT_ID
     assert contract["artifact_revision_contract_version"] == ARTIFACT_REVISION_CONTRACT_VERSION
     assert contract["revision_identity"].startswith("BACKEND_INDEPENDENT")
+    assert contract["parent_identity"] == "EXACT_PARENT_REVISION_ID_AND_FINGERPRINT_BINDINGS"
+    assert contract["revision_relation"] == "EXPLICIT_NOT_INFERRED_FROM_RECENCY"
     assert contract["storage_binding_identity"] == (
         "SEPARATE_FROM_REVISION_IDENTITY_AND_INTEGRITY_FINGERPRINTED"
     )
     assert contract["content_storage"] == "EXISTING_AASM_ARTIFACT_BACKENDS_OR_EXTERNAL_REFERENCE"
     assert contract["artifact_ref"].startswith("NON_SEMANTIC_OPAQUE_STORAGE_BINDING")
+    assert contract["execution_environment"] == "EXACT_ID_AND_FINGERPRINT_WHEN_PRESENT"
     assert contract["authority"] == "NONE_GRANTED_BY_ARTIFACT_REVISION"
     assert contract["truth_authority"] == "EXISTING_AASM_ADMISSION_PATH_ONLY"
     assert contract["artifact_acceptance"] == "NOT_DEFINED_BY_FOUNDATION_CONTRACT"
@@ -189,4 +268,14 @@ def test_schema_is_strict_2020_12_and_matches_contract_surface():
     assert schema["properties"]["contract_version"]["const"] == ARTIFACT_REVISION_CONTRACT_VERSION
     assert schema["properties"]["content_sha256"]["pattern"] == "^[0-9a-f]{64}$"
     assert schema["properties"]["semantic_projection_sha256"]["pattern"] == "^[0-9a-f]{64}$"
+    assert schema["properties"]["revision_relation"]["enum"] == [
+        "CREATED",
+        "CREATED_FROM",
+        "MODIFIES",
+        "DERIVED_FROM",
+        "MERGES",
+        "REPLACES",
+    ]
+    assert "parent_revision_fingerprints" in schema["required"]
+    assert "environment_fingerprint" in schema["required"]
     assert "storage_binding_fingerprint" in schema["required"]
