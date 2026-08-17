@@ -9,14 +9,14 @@
 **Next release / cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority
 
 **Current development package on `main`:** `0.56.1`  
-**Current active adoption contract on `main`:** `aasm.adoption.v1 / 0.32.7`  
-**Qualified development boundary:** PR-1 + PR-2 + PR-3A through PR-3G  
-**Next unfinished boundary:** PR-3H — integrate bounded physical-effect authority into the existing Effect authorization/execution path  
-**Latest fully qualified pre-documentation implementation head:** `9425fbdd22f664f3a2cb5db73dcf45c5b77a0673`
+**Current active adoption contract on `main`:** `aasm.adoption.v1 / 0.32.15`  
+**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + S3 through artifact revision lineage and entity evolution  
+**Next unfinished boundary:** S4 — Engineering + Safety Semantics (quantity/unit/tolerance foundation first)  
+**Latest fully qualified pre-documentation implementation head:** `6b107268cd4190357bf45b3bfd1385410a0d82cf`
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, external engineering tools, physical/external state machines, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 
-The latest immutable published release remains **v0.56.0**. Development on `main` has advanced materially beyond that published boundary without pretending the development target is already released. The active `0.56.1` candidate now combines execution provenance, explicit state/fact authority, external-machine supervision, postcondition verification, exclusive authority leases, bounded effect capabilities, stale-command fencing, semantic preemption, and crash-safe preemption recovery.
+The latest immutable published release remains **v0.56.0**. Development on `main` has advanced materially beyond that published boundary without pretending the development target is already released. The active `0.56.1` candidate now combines execution provenance, explicit state/fact authority, external-machine supervision, postcondition verification, complete physical-effect authority integration, observation epistemics, backend-independent artifact revision lineage, and governed entity evolution with ambiguity-safe reuse fencing.
 
 The governing rule remains:
 
@@ -33,7 +33,7 @@ latest published package / public surface: 0.56.0
 released adoption contract:                 aasm.adoption.v1 / 0.32.0
 
 current development package on main:        0.56.1
-active development adoption contract:       aasm.adoption.v1 / 0.32.7
+active development adoption contract:       aasm.adoption.v1 / 0.32.15
 
 v0.56 truthful solver evidence:
   aasm.solver.outcome.v2
@@ -113,11 +113,19 @@ parent v0.54 execution/solver contracts remain authoritative:
   aasm.solver.portfolio.v1
   aasm.solver.exchange.v1
 
-PR-3H status:
-  NOT IMPLEMENTED
-  must integrate with existing authorize_effect / execute_effect
-  must recheck capability/lease/epoch/revocation/bounds at effect boundaries
-  must not create a second authority evaluator, dispatcher, ownership model, or effect lifecycle
+PR-3H physical-effect integration:
+  GATED
+  reuses existing authorize_effect / execute_effect
+  rechecks capability/lease/epoch/revocation/bounds at effect boundaries
+  creates no second authority evaluator, dispatcher, ownership model, or effect lifecycle
+
+S3 artifact + entity lineage:
+  aasm.artifact.revision.v1
+  aasm.artifact-lineage.runtime.v1
+  aasm.entity.evolution.v1
+  aasm.entity-evolution.runtime.v1
+  artifact existence/generation != authoritative acceptance
+  AMBIGUOUS entity mapping blocks hard automatic reuse
 
 license: Apache-2.0
 ```
@@ -276,35 +284,17 @@ Successful preemption:
 
 A crash between durable preemption Evidence and canonical lease-revocation Evidence is repaired deterministically on retry.
 
-### PR-3H — next active implementation boundary
+### PR-3H — implemented and gated
 
-PR-3H remains deliberately unfinished. It must connect the already-landed physical authority/capability/fencing semantics into the existing Effect authorization and execution boundaries.
+PR-3H now connects the qualified authority-domain/lease/capability/fencing semantics to the **existing** Effect authorization and execution boundaries. Both boundaries recheck live lease identity/fingerprint/epoch, capability identity/fingerprint, effective revocation generation, holder, operation/bounds, workspace/scope/subject, and applicable problem/external revision. Earlier capability-use Evidence is never a reusable bearer token.
 
-The required architecture is:
+The inherited `effect.authorize`, resources/Worker/TaskLease, Effect ownership, dispatch, `UNKNOWN`, and reconciliation paths remain authoritative; no parallel authority evaluator, scheduler, dispatcher, Effect store, ownership primitive, or reconciliation path was introduced.
 
-```text
-EffectIntent
-   |
-   v
-existing scoped effect authorization
-   +
-active AuthorityLease
-   +
-active bounded EffectCapability
-   +
-exact holder / operation / numeric bounds
-   +
-current authority epoch
-   +
-current revocation generation
-   +
-current scope / problem revision / external revision
-   |
-   v
-existing Effect ownership / dispatch / reconciliation
-```
+### S3 — artifact revision lineage + entity evolution
 
-PR-3H must **not** create a parallel authority evaluator, scheduler, dispatcher, Effect store, ownership primitive, or reconciliation path.
+Artifact revisions now have backend-independent immutable identity over content/semantic hashes and exact provenance, exact parent ID+fingerprint lineage, and a separate storage-binding fingerprint for non-semantic `artifact_ref` locators. Registration/replay uses existing Evidence and does not imply artifact acceptance or create a current-artifact truth pointer.
+
+Entity evolution now records `UNCHANGED | MODIFIED | GENERATED | SPLIT | MERGED | REPLACED | DELETED | AMBIGUOUS` relationships over exact artifact-revision-bound representations. `AMBIGUOUS` mappings remain durable and block hard automatic reuse. There is no hidden current-entity state table and no authority minting.
 
 ## v0.56 — Truthful Solver Outcomes
 
@@ -766,7 +756,7 @@ If you need the immutable published package contract rather than the development
 
 AASM uses independent, exact-head gates rather than treating documentation as evidence of implementation.
 
-The implementation head `9425fbdd22f664f3a2cb5db73dcf45c5b77a0673` qualified the active `0.56.1 / 0.32.7` candidate across **20 direct required contexts**:
+The implementation head `6b107268cd4190357bf45b3bfd1385410a0d82cf` qualified the active `0.56.1 / 0.32.7` candidate across **20 direct required contexts**:
 
 ```text
 aasm/ci-summary                         PASS
@@ -874,7 +864,7 @@ AASM is an experimental `0.x` project. Public contracts are versioned and aggres
 **Current immutable release:** `0.56.0`  
 **Current development target on `main`:** `0.56.1`  
 **Released adoption contract:** `aasm.adoption.v1 / 0.32.0`  
-**Active development adoption contract:** `aasm.adoption.v1 / 0.32.7`  
+**Active development adoption contract:** `aasm.adoption.v1 / 0.32.15`  
 **PR-3 status:** `PR-3A through PR-3G GATED; PR-3H NOT YET IMPLEMENTED`  
 **License:** Apache-2.0  
 **Repository:** https://github.com/halthinks/AASM

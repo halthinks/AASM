@@ -4,8 +4,8 @@
 **Repository:** `halthinks/AASM`  
 **Latest immutable release:** `v0.56.0`  
 **Current development package:** `0.56.1`  
-**Current adoption contract:** `aasm.adoption.v1 / 0.32.13`  
-**Current exact qualified development boundary:** `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd` — all 25 current custom qualification contexts green  
+**Current adoption contract:** `aasm.adoption.v1 / 0.32.15`  
+**Current exact qualified code boundary before documentation-only synchronization:** `6b107268cd4190357bf45b3bfd1385410a0d82cf` — all 27 current custom qualification contexts green  
 **Status:** single canonical execution roadmap for governed semantic evolution, TextPCB compatibility, physical/distributed control, portable machine semantics, Rust `std`, and Rust `no_std`
 
 Companion architecture:
@@ -208,9 +208,11 @@ Active and gated contracts/runtime include:
 - `aasm.observation.lifecycle.v1`;
 - `aasm.observation.disposition.v1`;
 - `aasm.observation.fusion.v1`;
-- `aasm.observation.processing.runtime.v1`.
+- `aasm.observation.processing.runtime.v1`;
+- `aasm.artifact.revision.v1` + `aasm.artifact-lineage.runtime.v1`;
+- `aasm.entity.evolution.v1` + `aasm.entity-evolution.runtime.v1`.
 
-Exact qualified boundary: `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd`, adoption `0.32.13`, all 25 current custom qualification contexts green.
+Exact qualified code boundary before documentation-only synchronization: `6b107268cd4190357bf45b3bfd1385410a0d82cf`, adoption `0.32.15`, all 27 current custom qualification contexts green.
 
 Claim ceilings remain strict: conflict/freshness/identity/calibration/trust/environment/processing are Evidence or policy-input layers only; source trust cannot replace `FactAuthority`; record/revoke authority is not trust-evaluation authority; environment level is not a truth/authority rank; neither proximity to hardware, a `TRUSTED` disposition, a `VALIDATED` processing label, fusion agreement, nor declared source independence mints truth or effect authority. Existing machine observations remain the empirical root, and no parallel observation/truth table is introduced.
 
@@ -234,7 +236,7 @@ RELEASED/GATED BASE
   |      +-- physical identity/calibration/source trust ----- DONE
   |      +-- execution/qualification environment ------------ DONE
   |      +-- observation lifecycle/fusion ------------------- DONE
-  |      +-- artifact revision/entity evolution ------------- NEXT
+  |      +-- artifact revision/entity evolution ------------- DONE
   |
   v
 S4 ENGINEERING + SAFETY SEMANTICS
@@ -447,7 +449,7 @@ The existing `MachineStateObservation` remains the empirical root. RAW reproduce
 
 ## 7.7 Artifact revision lineage
 
-**Status: NEXT under the separate cumulative `aasm/artifact-lineage` gate.**
+**Status: GATED under `aasm/artifact-lineage` and inherited by cumulative `aasm/v56`.**
 
 Target: `aasm.artifact.revision.v1`.
 
@@ -464,11 +466,11 @@ Bind:
 - external references;
 - Evidence IDs.
 
-Failed/generated artifacts may remain Evidence without becoming current authoritative artifacts. Artifact existence or successful generation is not authoritative acceptance. AASM must not introduce a hidden current-artifact/project-truth table.
+The landed runtime records immutable revision documents through existing Evidence/event replay, verifies payload and semantic-projection hashes, exact parent IDs and parent fingerprints, ProblemRevision/external-source bindings, producer/machine/effect provenance, and active Evidence dependencies. Revision identity is backend-independent; `artifact_ref` is a non-semantic storage locator with a separate storage-binding fingerprint. Failed/generated artifacts may remain Evidence without becoming current authoritative artifacts. Artifact existence or successful generation is not authoritative acceptance. No hidden current-artifact/project-truth table, parallel artifact registry, truth table, or authority evaluator is introduced.
 
 ## 7.8 Entity evolution
 
-**Status: NEXT after/with artifact revision lineage under `aasm/artifact-lineage`.**
+**Status: GATED under the independent `aasm/entity-evolution` gate and inherited by cumulative `aasm/v56`.**
 
 Target: `aasm.entity.evolution.v1`.
 
@@ -476,7 +478,7 @@ Relations:
 
 `UNCHANGED | MODIFIED | GENERATED | SPLIT | MERGED | REPLACED | DELETED | AMBIGUOUS`
 
-Hard reusable knowledge fails closed across `AMBIGUOUS` mapping. Evolution records preserve exact predecessor/successor identities and provenance; they do not silently rewrite historical entity identity.
+The landed runtime binds every predecessor/successor representation to an exact qualified artifact revision ID+fingerprint, validates workspace/scope and artifact-lineage ancestry, requires active supporting Evidence, reconstructs history by deterministic replay, and rejects forged fingerprints, unrelated lineages, and non-descendant successors. Hard reusable knowledge fails closed across `AMBIGUOUS` mapping. Evolution records preserve exact predecessor/successor identities and provenance; they do not silently rewrite historical entity identity or create a current-entity truth pointer.
 
 ## 7.9 TextPCB S3 conformance fixtures
 
@@ -502,7 +504,7 @@ TextPCB-specific kernel types remain forbidden.
 
 Every S3 object must define canonical field types, ordering, identity payload, enum values, optionality and fingerprint rules without Python object identity. These become future machine/kernel IR references rather than being redesigned for Rust.
 
-**Gates:** `aasm/physical-evidence`, `aasm/identity-calibration-trust`, `aasm/execution-environment`, `aasm/observation-epistemics`, `aasm/artifact-lineage`.
+**Gates:** `aasm/physical-evidence`, `aasm/identity-calibration-trust`, `aasm/execution-environment`, `aasm/observation-epistemics`, `aasm/artifact-lineage`, `aasm/entity-evolution`; all inherited by cumulative `aasm/v56`.
 
 ---
 

@@ -3,9 +3,9 @@
 **Status:** UNRELEASED DEVELOPMENT TARGET  
 **Package target:** `0.56.1`  
 **Latest immutable published release:** `v0.56.0`  
-**Active adoption contract:** `aasm.adoption.v1 / 0.32.7`  
-**Active milestones:** solver provenance, authoritative state, external-machine supervision, physical authority/capability/preemption  
-**PR-3 boundary:** PR-3A through PR-3G active; PR-3H Effect authorization/execution integration intentionally not yet implemented
+**Active adoption contract:** `aasm.adoption.v1 / 0.32.15`  
+**Active milestones:** solver provenance, authoritative state, external-machine supervision, complete physical authority/effect integration, S3 observation epistemics, artifact revision lineage, entity evolution  
+**Qualified boundary:** complete PR-3 / PHY-01 and S3 through artifact revision lineage + entity evolution; next architecture boundary is S4 Engineering + Safety Semantics
 
 This document describes the current development surface on `main`. It is not a published-release claim. Package SemVer remains `0.56.1`; semantic/adoption contracts advance independently under `docs/VERSIONING.md`.
 
@@ -194,7 +194,7 @@ Crash recovery covers the two-write boundary where preemption Evidence became du
 
 ## No parallel control plane
 
-Across PR-1 through PR-3G:
+Across PR-1 through complete PR-3 and S3:
 
 ```text
 scoped authority remains the permission evaluator
@@ -214,49 +214,23 @@ resource ledger
 external truth table
 ```
 
-## PR-3H remains deliberately unimplemented
+## PR-3H and S3 lineage are qualified
 
-The current active surface explicitly stops before connecting bounded physical capability semantics to existing Effect authorization/execution.
+PR-3H now rechecks current AuthorityLease/EffectCapability identity, epoch, revocation generation, holder, operation/bounds, scope/subject, and problem/external revision at the actual inherited Effect authorization and execution boundaries. Earlier capability-use Evidence remains audit evidence only and cannot act as a bearer authorization token.
 
-PR-3H must recheck at the actual existing Effect boundaries:
-
-```text
-current AuthorityLease identity/fingerprint/epoch
-current EffectCapability identity/fingerprint
-current effective revocation generation
-current holder
-current operation + numeric bounds
-current workspace/scope/subject
-current problem/external revision
-```
-
-It must not trust an earlier capability-use validation record as a reusable bearer token.
-
-PR-3H must reuse existing:
-
-```text
-effect.authorize
-EffectIntent
-TaskLease
-resource governance
-EffectOwnership
-external dispatch
-UNKNOWN handling
-reconciliation
-```
+S3 additionally qualifies explicit causal/freshness/identity/calibration/trust/environment/observation-processing evidence, backend-independent artifact revision lineage, and exact entity evolution. Artifact existence/generation does not create authoritative acceptance; entity `AMBIGUOUS` mappings block hard automatic reuse. Both use existing Evidence/event replay and create no parallel truth/authority/current-state plane.
 
 ## Current claim ceilings
 
-The candidate does not yet claim:
+The candidate still does not claim:
 
-- PR-3H physical capability enforcement inside `authorize_effect` / `execute_effect`;
 - quantity/unit interpretation for capability numeric bounds;
-- observation freshness, clock-quality or distributed causal ordering;
-- calibration lifecycle or measurement uncertainty;
-- tolerance-aware postcondition verification;
-- hybrid continuous/discrete safety envelopes.
+- tolerance-aware postcondition verification with dimensional semantics;
+- hybrid continuous/discrete safety envelopes;
+- universal cross-domain physical-unit inference;
+- automatic artifact or entity truth/acceptance by existence, recency, agreement, or generation success.
 
-These remain explicit later integration programs.
+These are explicit S4 and later integration boundaries.
 
 ## Qualification contexts
 
@@ -271,13 +245,21 @@ aasm/physical-authority
 aasm/effect-capability
 aasm/physical-control-fencing
 aasm/physical-preemption-recovery
+aasm/physical-effect-integration
+aasm/identity-calibration-trust
+aasm/execution-environment
+aasm/observation-epistemics
+aasm/artifact-lineage
+aasm/entity-evolution
+aasm/physical-evidence
+aasm/ci-summary
 ```
 
 Until a deliberate package release occurs:
 
 ```text
 package target on main: 0.56.1
-active adoption contract: aasm.adoption.v1 / 0.32.7
+active adoption contract: aasm.adoption.v1 / 0.32.15
 published release: v0.56.0
 exact development identity: Git SHA
 ```

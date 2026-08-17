@@ -3,16 +3,16 @@
 AASM's latest immutable public release is **v0.56.0 — Truthful Solver Outcomes + Governed Semantic Evolution + Engineering Mathematical IR**.
 
 **Current development package on `main`:** `0.56.1`  
-**Current active adoption contract:** `aasm.adoption.v1 / 0.32.13`  
-**Qualified development boundary:** PR-1, PR-2, complete PR-3 / PHY-01, plus S3 state conflict, causality/freshness, physical identity/calibration/source trust, execution environment, and observation lifecycle/fusion  
-**Exact S3 observation-epistemics qualification head:** `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd` — all 25 current custom contexts green  
-**Immediate unfinished boundary:** **U4 / artifact revision lineage + entity evolution under `aasm/artifact-lineage`**
+**Current active adoption contract:** `aasm.adoption.v1 / 0.32.15`  
+**Qualified development boundary:** PR-1, PR-2, complete PR-3 / PHY-01, plus complete S3 state conflict, causality/freshness, identity/calibration/trust, execution environment, observation epistemics, artifact revision lineage, and entity evolution  
+**Exact qualified S3 code boundary before documentation-only synchronization:** `6b107268cd4190357bf45b3bfd1385410a0d82cf` — all 27 current custom qualification contexts green  
+**Immediate unfinished boundary:** **S4 / Engineering + Safety Semantics — quantity/unit/tolerance semantics first**
 
 Package SemVer is not an architecture-progress counter. Exact unreleased identity is the Git SHA. Future capabilities below are milestone identities, not reserved package versions. See [`docs/VERSIONING.md`](docs/VERSIONING.md).
 
 ## Canonical direction
 
-AASM is being built as a **governed reasoning and supervisory-control kernel over authoritative external state machines, typed engineering artifacts, heterogeneous solvers, verification/refinement loops, and eventually a portable deterministic kernel that can be implemented in Python, Rust `std`, and constrained Rust `no_std` profiles without changing the governing semantics**.
+AASM is being built as a **governed reasoning and supervisory-control kernel over authoritative external state machines, typed engineering artifacts, heterogeneous solvers, verification/refinement loops, and a portable deterministic kernel that can be implemented in Python, Rust `std`, and constrained Rust `no_std` profiles without changing the governing semantics**.
 
 This is one architecture, not three projects.
 
@@ -71,6 +71,8 @@ The active 0.56.1 development line has additionally qualified:
 - **S3 source trust:** explicit source-policy Evidence bound to exact principals/subjects/identity/calibration/revisions; no reputation score or voting; `TRUSTED` does not admit claims, grant effect authority, or replace `FactAuthority`.
 - **S3 execution environment:** explicit `MODEL | SIMULATION | SIL | HIL | BENCH | CONTROLLED_PHYSICAL | OPERATIONAL` evidence context with exact identity/revision binding; levels are labels, not ordinal truth/authority ranks; simulation cannot silently satisfy a physical evidence requirement.
 - **S3 observation lifecycle/fusion:** append-only `RAW -> NORMALIZED -> CALIBRATED -> DERIVED -> VALIDATED` processing lineage plus fusion/disposition Evidence; exact source fingerprints, explicit calibration/environment/freshness references, no stage skips, no consensus voting, and no authority/admission by a `VALIDATED` label.
+- **S3 artifact revision lineage:** backend-independent immutable revision identity over content/semantic hashes and provenance, exact parent ID+fingerprint lineage, separate storage-binding fingerprint, Evidence-backed replay, and no hidden current-artifact or acceptance authority.
+- **S3 entity evolution:** exact predecessor/successor representation binding across `UNCHANGED | MODIFIED | GENERATED | SPLIT | MERGED | REPLACED | DELETED | AMBIGUOUS`; ambiguity is durable and fail-closed for hard automatic reuse; no current-entity truth table or authority minting.
 
 PR-3H preserves the existing scoped `effect.authorize`, resource reservations, Worker/TaskLease path, durable `EffectOwnership`, dispatch, `UNKNOWN`, and reconciliation. A prior capability-use validation record remains Evidence only and cannot become a reusable bearer token.
 
@@ -93,10 +95,10 @@ RELEASED/GATED AASM SUBSTRATE
         |       physical identity/calibration/source trust ------ GATED
         |       execution/qualification environment ------------- GATED
         |       observation lifecycle/fusion -------------------- GATED
-        |       artifact revision/entity evolution -------------- NEXT
+        |       artifact revision/entity evolution -------------- GATED
         |
         v
-U4  Reality identity + time + artifact lineage + observation epistemics ---- ACTIVE
+U4/S3 Reality identity + time + artifact lineage + observation epistemics -- GATED
         |\
         | +--> TextPCB artifact/entity/revision qualification
         | +--> portable identity/serialization constraints active
