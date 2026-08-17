@@ -70,6 +70,27 @@ from .event_causality_runtime import (
     event_causality_runtime_contract,
     project_event_causality_evidence,
 )
+from .execution_environment import (
+    ENVIRONMENT_BINDING_OBJECT_KINDS,
+    EXECUTION_ENVIRONMENT_BINDING_CONTRACT_ID,
+    EXECUTION_ENVIRONMENT_BINDING_CONTRACT_VERSION,
+    EXECUTION_ENVIRONMENT_CONTRACT_ID,
+    EXECUTION_ENVIRONMENT_CONTRACT_VERSION,
+    EXECUTION_ENVIRONMENT_LEVELS,
+    EXECUTION_ENVIRONMENT_STABILITY,
+    EnvironmentEvidenceBinding,
+    ExecutionEnvironment,
+    environment_level_accepted,
+    execution_environment_contract,
+)
+from .execution_environment_runtime import (
+    EXECUTION_ENVIRONMENT_CAPABILITIES,
+    EXECUTION_ENVIRONMENT_RUNTIME_CONTRACT_ID,
+    EXECUTION_ENVIRONMENT_RUNTIME_CONTRACT_VERSION,
+    EXECUTION_ENVIRONMENT_RUNTIME_STABILITY,
+    execution_environment_runtime_contract,
+    project_execution_environment_evidence,
+)
 from .observation_freshness import (
     FRESHNESS_AGE_BASES,
     FRESHNESS_REASONS,
@@ -227,6 +248,12 @@ _NEW_ENGINE_METHODS = [
     "revoke_source_trust",
     "source_trust_report",
     "source_trust_assertions_report",
+    "execution_environment_contract_report",
+    "record_execution_environment",
+    "bind_machine_observation_environment",
+    "execution_environment_report",
+    "execution_environment_binding_report",
+    "execution_environments_report",
 ]
 
 _NEW_IMPORTS = [
@@ -356,6 +383,23 @@ _NEW_IMPORTS = [
     "SOURCE_TRUST_CAPABILITIES",
     "project_source_trust_evidence",
     "source_trust_runtime_contract",
+    "EXECUTION_ENVIRONMENT_CONTRACT_ID",
+    "EXECUTION_ENVIRONMENT_CONTRACT_VERSION",
+    "EXECUTION_ENVIRONMENT_BINDING_CONTRACT_ID",
+    "EXECUTION_ENVIRONMENT_BINDING_CONTRACT_VERSION",
+    "EXECUTION_ENVIRONMENT_STABILITY",
+    "EXECUTION_ENVIRONMENT_LEVELS",
+    "ENVIRONMENT_BINDING_OBJECT_KINDS",
+    "ExecutionEnvironment",
+    "EnvironmentEvidenceBinding",
+    "environment_level_accepted",
+    "execution_environment_contract",
+    "EXECUTION_ENVIRONMENT_RUNTIME_CONTRACT_ID",
+    "EXECUTION_ENVIRONMENT_RUNTIME_CONTRACT_VERSION",
+    "EXECUTION_ENVIRONMENT_RUNTIME_STABILITY",
+    "EXECUTION_ENVIRONMENT_CAPABILITIES",
+    "project_execution_environment_evidence",
+    "execution_environment_runtime_contract",
 ]
 
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*getattr(_base, "SUPPORTED_ENGINE_METHODS", []), *_NEW_ENGINE_METHODS]))
@@ -371,12 +415,13 @@ SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([
     "physical-identity",
     "calibration",
     "source-trust",
+    "execution-environment",
 ]))
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*getattr(_base, "SUPPORTED_PUBLIC_IMPORTS", []), *_NEW_IMPORTS]))
 
 PUBLIC_API_CONTRACT = deepcopy(_base.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.32.11",
+    "contract_version": "0.32.12",
     "runtime_version": __version__,
     "release_stability": PUBLIC_RELEASE_STABILITY,
     "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
@@ -424,6 +469,10 @@ PUBLIC_API_CONTRACT["source_trust"] = {
     **source_trust_contract(),
     "runtime": source_trust_runtime_contract(),
 }
+PUBLIC_API_CONTRACT["execution_environment"] = {
+    **execution_environment_contract(),
+    "runtime": execution_environment_runtime_contract(),
+}
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
 
@@ -446,7 +495,7 @@ def validate_public_api_contract():
         errors.append(f"missing active governed-reality engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
         errors.append("active runtime version mismatch")
-    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.11":
+    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.12":
         errors.append("active adoption contract mismatch")
 
     capability = PUBLIC_API_CONTRACT.get("effect_capability", {})
@@ -574,6 +623,33 @@ def validate_public_api_contract():
         errors.append("source trust introduced reputation/parallel authority")
     if trust_runtime.get("parallel_trust_registry") != "NONE_EVIDENCE_PROJECTION_ONLY" or trust_runtime.get("parallel_truth_table") != "NONE":
         errors.append("source trust introduced a parallel trust/truth plane")
+
+    environment = PUBLIC_API_CONTRACT.get("execution_environment", {})
+    environment_runtime = environment.get("runtime", {})
+    if environment.get("contract_id") != EXECUTION_ENVIRONMENT_CONTRACT_ID:
+        errors.append("S3 execution-environment contract missing")
+    if environment.get("level_ordering") != "NONE":
+        errors.append("execution environment acquired ordinal level semantics")
+    if environment.get("higher_level_implies_truth") is not False or environment.get("higher_level_implies_authority") is not False:
+        errors.append("execution environment level incorrectly implies truth/authority")
+    if environment.get("automatic_level_upgrade") is not False:
+        errors.append("execution environment permits automatic level upgrade")
+    if environment.get("simulation_as_physical") != "REJECT_EXACT_ACCEPTED_LEVELS_ONLY":
+        errors.append("execution environment simulation-as-physical firewall drift")
+    if environment.get("environment_existence_grants_fact_authority") is not False or environment.get("environment_existence_grants_effect_authority") is not False:
+        errors.append("execution environment existence incorrectly grants authority")
+    if environment.get("environment_existence_grants_source_trust") is not False or environment.get("environment_level_is_universal_admission") is not False:
+        errors.append("execution environment incorrectly grants trust/admission")
+    if environment_runtime.get("authority") != "EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORD_BIND_NOT_ENVIRONMENT_TRUTH":
+        errors.append("execution environment record authority became environment truth authority")
+    if environment_runtime.get("level_acceptance") != "EXACT_ACCEPTED_LEVEL_SET_MEMBERSHIP_NO_ORDINAL_INFERENCE":
+        errors.append("execution environment level acceptance drift")
+    if environment_runtime.get("environment_level_authority") != "NONE":
+        errors.append("execution environment level acquired authority")
+    if environment_runtime.get("parallel_environment_store") != "NONE_EVIDENCE_PROJECTION_ONLY" or environment_runtime.get("parallel_truth_table") != "NONE":
+        errors.append("execution environment introduced parallel store/truth")
+    if environment_runtime.get("parallel_authority_evaluator") != "NONE":
+        errors.append("execution environment introduced parallel authority evaluator")
 
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 
