@@ -23,6 +23,7 @@ def main() -> None:
     runtime = text("src/aasm/entity_evolution_runtime.py")
     schema_text = text("schemas/entity-evolution.schema.json")
     tests = text("tests/test_entity_evolution.py")
+    active_tests = text("tests/test_entity_evolution_active_engine.py")
     foundation = text("src/aasm/runtime_v56_foundation.py")
     public = text("src/aasm/public_active.py")
 
@@ -92,14 +93,21 @@ def main() -> None:
     for token in required_test_tokens:
         require(token in tests, f"entity evolution adversarial corpus missing test: {token}")
 
-    # This checker is the pre-admission firewall. Promotion deliberately flips
-    # these expectations only after this gate is green and the real-engine corpus
-    # is rerun against from aasm import AASMEngine.
-    require("EntityEvolutionRuntimeMixin" not in foundation, "entity evolution runtime was composed before pre-admission qualification")
-    require("ENTITY_EVOLUTION_CONTRACT_ID" not in public, "entity evolution public surface was exposed before pre-admission qualification")
-    require("record_entity_evolution" not in public, "entity evolution public method was exposed before pre-admission qualification")
+    # Promotion gate: the proven runtime is now composed into the real v0.56
+    # engine, and the same corpus is rebound to `from aasm import AASMEngine`.
+    require("from .entity_evolution_runtime import EntityEvolutionRuntimeMixin" in foundation, "entity evolution runtime is not imported by active foundation")
+    require("EntityEvolutionRuntimeMixin," in foundation, "entity evolution runtime is not composed into active AASMEngine")
+    require("from aasm import AASMEngine as ActiveEngine" in active_tests, "active-engine corpus does not import exported AASMEngine")
+    require("corpus.EntityEvolutionEngine = ActiveEngine" in active_tests, "active-engine corpus does not rebind the full adversarial corpus")
+    require("test_active_engine_composes_entity_evolution_runtime" in active_tests, "active-engine composition assertion is missing")
 
-    print("entity evolution pre-admission source contracts: PASS")
+    # Public contract exposure remains a separate promotion step. The engine may
+    # implement the methods here, but public_active must not claim them until the
+    # active-engine qualification run is green.
+    require("ENTITY_EVOLUTION_CONTRACT_ID" not in public, "entity evolution public surface was exposed before active-engine qualification")
+    require('"record_entity_evolution"' not in public, "entity evolution public method was claimed before active-engine qualification")
+
+    print("entity evolution active-engine source contracts: PASS")
 
 
 if __name__ == "__main__":

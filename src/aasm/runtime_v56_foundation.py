@@ -6,6 +6,7 @@ from .artifact_lineage_runtime import ArtifactLineageRuntimeMixin
 from .calibration_runtime import CalibrationRuntimeMixin
 from .effect_capability_revocation_guard import EffectCapabilityRevocationGuardMixin
 from .effect_capability_runtime import EffectCapabilityRuntimeMixin
+from .entity_evolution_runtime import EntityEvolutionRuntimeMixin
 from .event_causality_runtime import EventCausalityRuntimeMixin
 from .execution_environment_runtime import ExecutionEnvironmentRuntimeMixin
 from .external_machine_postcondition_execution_correlation import MachinePostconditionExecutionCorrelationMixin
@@ -37,6 +38,7 @@ class AASMEngine(
     MachineTransitionRuntimeMixin,
     ObservationProcessingRuntimeMixin,
     ArtifactLineageRuntimeMixin,
+    EntityEvolutionRuntimeMixin,
     ExecutionEnvironmentRuntimeMixin,
     SourceTrustRuntimeMixin,
     CalibrationRuntimeMixin,
@@ -50,7 +52,7 @@ class AASMEngine(
     SolverOutcomeV2RuntimeMixin,
     V55FoundationEngine,
 ):
-    """Active v0.56 development runtime with governed external reality, bounded effects, S3 observation epistemics, and candidate artifact lineage."""
+    """Active v0.56 development runtime with governed external reality, bounded effects, S3 observation epistemics, qualified artifact lineage, and candidate entity evolution."""
 
 
 __all__ = ["AASMEngine"]
