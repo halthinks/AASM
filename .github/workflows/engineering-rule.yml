@@ -1,0 +1,58 @@
+name: AASM Engineering Rule Qualification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: aasm-engineering-rule-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  engineering-rule:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install AASM development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile Rule foundation and adversarial corpus
+        run: |
+          python -m compileall -q \
+            src/aasm/rule.py \
+            tests/test_rule_foundation.py \
+            scripts/check_rule_contracts.py
+          python -m json.tool schemas/rule.schema.json >/dev/null
+      - name: Check Rule source and pre-admission firewalls
+        run: python scripts/check_rule_contracts.py
+      - name: Run Rule adversarial foundation corpus
+        run: pytest -q tests/test_rule_foundation.py
+      - name: Publish engineering Rule qualification
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='S4 aasm.rule.v1 pre-admission foundation qualification passed'
+          else
+            state=failure
+            description='S4 aasm.rule.v1 pre-admission foundation qualification failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" \
+            -f context='aasm/engineering-rule' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
