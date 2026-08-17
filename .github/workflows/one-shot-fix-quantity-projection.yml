@@ -1,0 +1,59 @@
+name: One-shot quantity projection correction
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-fix-quantity-projection.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  correct:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Make canonical projection representation explicit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/aasm/quantity.py')
+          text = p.read_text(encoding='utf-8')
+          old = '''        return {
+            "dimension": self.dimension.identity_payload(),
+            "canonical_unit": self.unit.canonical_unit,
+            "representation": self.representation,
+            "value": value.identity_payload(),
+            "tolerance": self.canonical_tolerance.identity_payload(),
+            "quantization": None if self.canonical_quantization is None else self.canonical_quantization.identity_payload(),
+            "source_precision": None if self.source_precision is None else self.source_precision.identity_payload(),
+        }
+'''
+          new = '''        return {
+            "dimension": self.dimension.identity_payload(),
+            "canonical_unit": self.unit.canonical_unit,
+            "source_representation": self.representation,
+            "canonical_value_representation": (
+                value.representation if isinstance(value, ExactNumber) else self.representation
+            ),
+            "canonical_value": value.identity_payload(),
+            "tolerance": self.canonical_tolerance.identity_payload(),
+            "quantization": None if self.canonical_quantization is None else self.canonical_quantization.identity_payload(),
+            "source_precision": None if self.source_precision is None else self.source_precision.identity_payload(),
+        }
+'''
+          if text.count(old) != 1:
+              raise SystemExit('quantity canonical projection anchor drift')
+          p.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          python -m compileall -q src/aasm/quantity.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/aasm/quantity.py
+          git commit -m 'Disambiguate quantity canonical projection identity'
+          git push origin HEAD:main
