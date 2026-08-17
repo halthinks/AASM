@@ -28,7 +28,7 @@ jobs:
       - name: Check artifact lineage source contracts
         run: python scripts/check_artifact_lineage_contracts.py
       - name: Run artifact lineage foundation and adversarial fixtures
-        run: pytest -q tests/test_artifact_lineage_foundation.py
+        run: pytest -q tests/test_artifact_lineage_foundation.py tests/test_artifact_lineage_runtime.py
       - name: Publish artifact lineage qualification
         if: always()
         env:
@@ -39,10 +39,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S3 artifact revision pre-admission qualification passed'
+            description='S3 artifact revision runtime pre-admission qualification passed'
           else
             state=failure
-            description='S3 artifact revision pre-admission qualification failed'
+            description='S3 artifact revision runtime pre-admission qualification failed'
           fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             -f state="$state" \
