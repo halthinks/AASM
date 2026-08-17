@@ -1,0 +1,76 @@
+name: AASM Semantic Projection Public Candidate Qualification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: aasm-engineering-semantic-projection-public-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  semantic-projection-public:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install AASM development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile public candidate and foundation
+        run: |
+          python -m compileall -q \
+            src/aasm/semantic_projection.py \
+            src/aasm/_semantic_projection_core.py \
+            src/aasm/_semantic_projection_equivalence.py \
+            src/aasm/public_active_semantic_projection.py \
+            scripts/check_semantic_projection_contracts.py \
+            scripts/check_semantic_projection_public_candidate.py \
+            tests/test_semantic_projection_public_candidate.py
+          python -m json.tool schemas/semantic-projection.schema.json >/dev/null
+      - name: Check semantic projection foundation firewalls
+        run: python scripts/check_semantic_projection_contracts.py
+      - name: Check 0.32.18 public candidate firewalls
+        run: python scripts/check_semantic_projection_public_candidate.py
+      - name: Run public candidate and adversarial semantic corpus
+        run: |
+          pytest -q \
+            tests/test_semantic_projection_foundation.py \
+            tests/test_semantic_projection_textpcb.py \
+            tests/test_semantic_projection_adversarial.py \
+            tests/test_semantic_projection_public_candidate.py
+      - name: Publish semantic projection public candidate qualification
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='0.32.18 semantic projection public candidate passed'
+          else
+            state=failure
+            description='0.32.18 semantic projection public candidate failed'
+          fi
+          for attempt in 1 2 3 4 5; do
+            if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+              -f state="$state" \
+              -f context='aasm/engineering-semantic-projection-public' \
+              -f description="$description" \
+              -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 5 ]; then sleep $((attempt * 2)); fi
+          done
+          echo 'failed to publish aasm/engineering-semantic-projection-public after bounded retries' >&2
+          exit 1
