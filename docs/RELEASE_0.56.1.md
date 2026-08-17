@@ -1,17 +1,17 @@
-# AASM 0.56.1 Development Candidate — Governed External Reality + Physical Control
+# AASM 0.56.1 Development Candidate — Governed External Reality + Physical Control + Engineering Quantity
 
 **Status:** UNRELEASED DEVELOPMENT TARGET  
 **Package target:** `0.56.1`  
 **Latest immutable published release:** `v0.56.0`  
-**Active adoption contract:** `aasm.adoption.v1 / 0.32.15`  
-**Active milestones:** solver provenance, authoritative state, external-machine supervision, complete physical authority/effect integration, S3 observation epistemics, artifact revision lineage, entity evolution  
-**Qualified boundary:** complete PR-3 / PHY-01 and S3 through artifact revision lineage + entity evolution; next architecture boundary is S4 Engineering + Safety Semantics
+**Active adoption contract:** `aasm.adoption.v1 / 0.32.16`  
+**Active milestones:** solver provenance, authoritative state, external-machine supervision, complete physical authority/effect integration, complete S3 observation/artifact/entity semantics, S4 engineering Quantity semantic IR  
+**Qualified boundary:** complete PR-3 / PHY-01 + complete S3 + S4 `aasm.quantity.v1`; next architecture boundary is `aasm.rule.v1`
 
 This document describes the current development surface on `main`. It is not a published-release claim. Package SemVer remains `0.56.1`; semantic/adoption contracts advance independently under `docs/VERSIONING.md`.
 
 ## Active architecture
 
-The current active root is a stable additive overlay over the frozen v0.56 base. It preserves one AASM truth/authority/resource/effect system while admitting the physical-control semantics that were previously only source candidates.
+The current active root is a stable additive overlay over the frozen v0.56 base. It preserves one AASM truth/authority/resource/effect system while adding independently qualified semantic layers without allowing later overlays to rewrite earlier qualified parents.
 
 ### PR-1 — governed state authority
 
@@ -194,7 +194,7 @@ Crash recovery covers the two-write boundary where preemption Evidence became du
 
 ## No parallel control plane
 
-Across PR-1 through complete PR-3 and S3:
+Across PR-1 through complete PR-3, S3, and the S4 Quantity semantic layer:
 
 ```text
 scoped authority remains the permission evaluator
@@ -212,29 +212,64 @@ Effect ownership model
 Effect lifecycle
 resource ledger
 external truth table
+artifact/entity current-state table
+unit registry
 ```
 
 ## PR-3H and S3 lineage are qualified
 
-PR-3H now rechecks current AuthorityLease/EffectCapability identity, epoch, revocation generation, holder, operation/bounds, scope/subject, and problem/external revision at the actual inherited Effect authorization and execution boundaries. Earlier capability-use Evidence remains audit evidence only and cannot act as a bearer authorization token.
+PR-3H rechecks current AuthorityLease/EffectCapability identity, epoch, revocation generation, holder, operation/bounds, scope/subject, and problem/external revision at the actual inherited Effect authorization and execution boundaries. Earlier capability-use Evidence remains audit evidence only and cannot act as a bearer authorization token.
 
-S3 additionally qualifies explicit causal/freshness/identity/calibration/trust/environment/observation-processing evidence, backend-independent artifact revision lineage, and exact entity evolution. Artifact existence/generation does not create authoritative acceptance; entity `AMBIGUOUS` mappings block hard automatic reuse. Both use existing Evidence/event replay and create no parallel truth/authority/current-state plane.
+S3 qualifies explicit causal/freshness/identity/calibration/trust/environment/observation-processing evidence, backend-independent artifact revision lineage, and exact entity evolution. Artifact existence/generation does not create authoritative acceptance; entity `AMBIGUOUS` mappings block hard automatic reuse. Both use existing Evidence/event replay and create no parallel truth/authority/current-state plane.
+
+## S4 Quantity is qualified as public semantic IR
+
+Active semantic contract:
+
+```text
+aasm.quantity.v1
+```
+
+It supports exact integer, rational, canonical decimal, interval, and measured/estimated values; canonical dimension vectors; exact affine source-to-canonical unit transforms; absolute/relative/asymmetric tolerance; quantization/grid + rounding; source precision; uncertainty reference; provenance; canonical projections; and deterministic fingerprints.
+
+The qualification explicitly separates public semantic availability from engine-state/runtime admission:
+
+```text
+public_admission = QUALIFIED
+runtime_admission = PRE_ADMISSION_ONLY
+engine_state_integration = NONE_SEMANTIC_VALUE_FOUNDATION_ONLY
+unit_registry = NONE_HIDDEN_OR_MUTABLE
+fact_authority = NONE
+effect_authority = NONE
+```
+
+The live solver `aasm.numeric.tolerance.v1` contract is preserved unchanged. `EffectCapability.NumericInterval` remains unchanged. Quantity does not silently reinterpret capability bounds, postconditions, solver/provider tolerance, or physical-effect execution.
+
+The next S4 contract is `aasm.rule.v1`. Its source engineering-rule strengths (`HARD_FLOOR | HARD | POLICY | PREFERENCE | ADVISORY`) are distinct from the existing formal-calculus `LearnedConstraint(HARD|SOFT)` strength. Any future lowering between them must be explicit and checked.
 
 ## Current claim ceilings
 
 The candidate still does not claim:
 
-- quantity/unit interpretation for capability numeric bounds;
-- tolerance-aware postcondition verification with dimensional semantics;
+- Quantity-aware interpretation of existing EffectCapability numeric bounds;
+- tolerance-aware machine postcondition verification through `aasm.quantity.v1`;
+- automatic replacement of solver `aasm.numeric.tolerance.v1` with Quantity tolerance;
+- a hidden/cross-domain unit registry or universal unit inference;
+- rule applicability/precedence/waiver semantics before `aasm.rule.v1` qualifies;
 - hybrid continuous/discrete safety envelopes;
-- universal cross-domain physical-unit inference;
 - automatic artifact or entity truth/acceptance by existence, recency, agreement, or generation success.
 
-These are explicit S4 and later integration boundaries.
+These are explicit later S4/integration boundaries.
 
-## Qualification contexts
+## Exact-head qualification
 
-The deliberate release path now requires the inherited gates plus:
+Current qualified implementation head before documentation-only synchronization:
+
+```text
+263640a634da0e92bb1ae0b42cb55063e0b64552
+```
+
+All **28 current custom commit-status contexts** were green on that exact head. The deliberate release path now requires the inherited gates plus:
 
 ```text
 aasm/state-authority
@@ -251,15 +286,19 @@ aasm/execution-environment
 aasm/observation-epistemics
 aasm/artifact-lineage
 aasm/entity-evolution
+aasm/engineering-quantity
 aasm/physical-evidence
 aasm/ci-summary
 ```
+
+Cumulative `aasm/v56`, formal assurance, and the main CI summary were also green on that exact head. Quantity's dedicated gate exercises the strict schema, source/runtime firewall, exact numeric/unit/dimension/tolerance semantics, adversarial tamper cases, public additive overlay, and legacy numeric-substrate non-regression.
 
 Until a deliberate package release occurs:
 
 ```text
 package target on main: 0.56.1
-active adoption contract: aasm.adoption.v1 / 0.32.15
+active adoption contract: aasm.adoption.v1 / 0.32.16
 published release: v0.56.0
 exact development identity: Git SHA
+next architecture boundary: aasm.rule.v1
 ```
