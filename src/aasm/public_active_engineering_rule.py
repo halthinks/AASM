@@ -5,9 +5,9 @@ from copy import deepcopy
 from . import public_active_engineering_quantity as _base
 
 # Preserve the complete qualified 0.32.16 public surface, then add only the
-# independently qualified aasm.rule.v1 semantic foundation as a public
-# candidate. This candidate does not become the package root until its own
-# dedicated qualification is green.
+# independently qualified aasm.rule.v1 semantic foundation. No engine state,
+# authority path, learned-constraint lowering, objective-priority rewrite, or
+# runtime Rule registry is introduced by this overlay.
 for _name in dir(_base):
     if not _name.startswith("_"):
         globals()[_name] = getattr(_base, _name)
@@ -98,7 +98,7 @@ PUBLIC_API_CONTRACT.update(
 )
 PUBLIC_API_CONTRACT["engineering_rule"] = {
     **rule_contract(),
-    "public_admission": "CANDIDATE_PRE_ADMISSION",
+    "public_admission": "QUALIFIED",
     "engine_state_integration": "NONE_SEMANTIC_RULE_FOUNDATION_ONLY",
 }
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
@@ -117,11 +117,11 @@ def validate_public_api_contract():
 
     missing_imports = [name for name in _RULE_IMPORTS if name not in globals()]
     if missing_imports:
-        errors.append(f"missing engineering-rule candidate imports: {missing_imports}")
+        errors.append(f"missing engineering-rule public imports: {missing_imports}")
     if AASMEngine is not _base.AASMEngine:
-        errors.append("engineering rule candidate forked the active engine")
+        errors.append("engineering rule overlay forked the active engine")
     if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.17":
-        errors.append("engineering rule candidate adoption contract mismatch")
+        errors.append("engineering rule adoption contract mismatch")
     if "engineering-rule" not in SUPPORTED_INSPECTION_SURFACES:
         errors.append("engineering-rule inspection surface missing")
 
@@ -149,13 +149,13 @@ def validate_public_api_contract():
     if rule.get("learned_constraint_relation") != "DISTINCT_NO_IMPLICIT_MAPPING_TO_FORMAL_CALCULUS_HARD_SOFT":
         errors.append("engineering rule strength was conflated with learned constraints")
     if rule.get("rule_to_constraint_lowering") != "NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED":
-        errors.append("engineering rule candidate introduced implicit rule-to-constraint lowering")
+        errors.append("engineering rule overlay introduced implicit rule-to-constraint lowering")
     if rule.get("runtime_admission") != "PRE_ADMISSION_ONLY":
-        errors.append("engineering rule candidate unexpectedly gained runtime admission")
-    if rule.get("public_admission") != "CANDIDATE_PRE_ADMISSION":
-        errors.append("engineering rule candidate public-admission state drift")
+        errors.append("engineering rule semantic foundation unexpectedly gained runtime admission")
+    if rule.get("public_admission") != "QUALIFIED":
+        errors.append("engineering rule public qualification status drift")
     if rule.get("engine_state_integration") != "NONE_SEMANTIC_RULE_FOUNDATION_ONLY":
-        errors.append("engineering rule candidate introduced engine state")
+        errors.append("engineering rule overlay introduced engine state")
     for key in (
         "rule_existence_grants_fact_authority",
         "rule_existence_grants_effect_authority",
@@ -175,6 +175,6 @@ def validate_public_api_contract():
             errors.append(f"engineering rule state/authority firewall drift: {key}")
 
     if SUPPORTED_ENGINE_METHODS != list(getattr(_base, "SUPPORTED_ENGINE_METHODS", [])):
-        errors.append("engineering rule candidate added engine methods")
+        errors.append("engineering rule overlay added engine methods")
 
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}

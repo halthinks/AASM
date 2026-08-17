@@ -23,8 +23,7 @@ def main() -> None:
     schema_text = text("schemas/rule.schema.json")
     tests = text("tests/test_rule_foundation.py")
     foundation = text("src/aasm/runtime_v56_foundation.py")
-    package_init = text("src/aasm/__init__.py")
-    public = text("src/aasm/public_active_engineering_quantity.py")
+    public_parent = text("src/aasm/public_active_engineering_quantity.py")
     calculus = text("src/aasm/_calculus_model.py")
     decision_vector = text("src/aasm/decision_vector_ir.py")
     effect_capability = text("src/aasm/effect_capability.py")
@@ -135,16 +134,16 @@ def main() -> None:
         "test_rule_foundation_is_distinct_from_formal_calculus_learned_constraints",
         "test_existing_decision_vector_hard_floor_remains_separate_and_unchanged",
         "test_rule_contract_firewalls_and_pre_admission_boundary_are_explicit",
-        "test_rule_is_not_public_or_runtime_composed_before_qualification",
+        "test_rule_public_admission_does_not_imply_runtime_composition",
     )
     for token in required_test_tokens:
         require(token in tests, f"rule adversarial corpus missing test: {token}")
 
-    # Pre-admission means no active runtime or public root can consume Rule yet.
+    # Runtime pre-admission remains strict even after qualified public semantic exposure.
+    # The active package-root surface is checked separately by check_rule_public.py.
     for source, label in (
         (foundation, "runtime_v56_foundation"),
-        (package_init, "package root"),
-        (public, "active 0.32.16 public overlay"),
+        (public_parent, "qualified 0.32.16 parent overlay"),
         (effect_capability, "effect capability"),
         (postcondition_runtime, "external machine postcondition runtime"),
         (quantity, "quantity foundation"),
@@ -170,7 +169,7 @@ def main() -> None:
     require('"contract_id": {"const": "aasm.numeric.tolerance.v1"}' in numeric_tolerance_schema, "legacy solver numeric tolerance contract drift")
     require("aasm.rule.v1" not in numeric_tolerance_schema, "engineering rule semantics leaked into numeric tolerance schema")
 
-    print("S4 aasm.rule.v1 pre-admission source contracts: PASS")
+    print("S4 aasm.rule.v1 foundation source contracts: PASS")
 
 
 if __name__ == "__main__":
