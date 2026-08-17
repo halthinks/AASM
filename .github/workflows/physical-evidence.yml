@@ -34,20 +34,26 @@ jobs:
             src/aasm/physical_identity.py src/aasm/physical_identity_runtime.py \
             src/aasm/calibration.py src/aasm/calibration_runtime.py \
             src/aasm/source_trust.py src/aasm/source_trust_runtime.py \
-            tests/test_state_conflict.py tests/test_causal_freshness.py tests/test_identity_calibration_trust.py \
-            scripts/check_state_conflict_contracts.py scripts/check_causal_freshness_contracts.py scripts/check_identity_calibration_trust_contracts.py
+            src/aasm/execution_environment.py src/aasm/execution_environment_runtime.py \
+            tests/test_state_conflict.py tests/test_causal_freshness.py tests/test_identity_calibration_trust.py tests/test_execution_environment.py \
+            scripts/check_state_conflict_contracts.py scripts/check_causal_freshness_contracts.py \
+            scripts/check_identity_calibration_trust_contracts.py scripts/check_execution_environment_contracts.py
       - name: Check S3 state-conflict source contracts
         run: python scripts/check_state_conflict_contracts.py
       - name: Check S3 causal identity and freshness source contracts
         run: python scripts/check_causal_freshness_contracts.py
       - name: Check S3 identity calibration trust source contracts
         run: python scripts/check_identity_calibration_trust_contracts.py
+      - name: Check S3 execution environment source contracts
+        run: python scripts/check_execution_environment_contracts.py
       - name: Run S3 state-conflict adversarial, TextPCB-derived, and replay fixtures
         run: pytest -q tests/test_state_conflict.py
       - name: Run S3 causal/freshness embedded, TextPCB-derived, and replay fixtures
         run: pytest -q tests/test_causal_freshness.py
       - name: Run S3 identity/calibration/trust embedded, TextPCB-derived, authority-firewall, and replay fixtures
         run: pytest -q tests/test_identity_calibration_trust.py
+      - name: Run S3 execution-environment laundering, TextPCB-derived, authority-firewall, and replay fixtures
+        run: pytest -q tests/test_execution_environment.py
       - name: Publish cumulative S3 physical evidence qualification
         if: always()
         env:
@@ -58,7 +64,7 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S3 conflict+causality+freshness+identity+calibration+trust evidence passed'
+            description='S3 conflict+causality+freshness+identity+calibration+trust+environment passed'
           else
             state=failure
             description='S3 physical evidence qualification failed'
