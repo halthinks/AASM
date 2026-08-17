@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from ._runtime_v56_provenance import SolverProvenanceRuntimeMixin
 from ._runtime_v56_solver_outcome import SolverOutcomeV2RuntimeMixin
+from .calibration_runtime import CalibrationRuntimeMixin
 from .effect_capability_revocation_guard import EffectCapabilityRevocationGuardMixin
 from .effect_capability_runtime import EffectCapabilityRuntimeMixin
 from .event_causality_runtime import EventCausalityRuntimeMixin
@@ -13,8 +14,10 @@ from .observation_freshness_runtime import ObservationFreshnessRuntimeMixin
 from .physical_authority_runtime import PhysicalAuthorityRuntimeMixin
 from .physical_control_fencing_runtime import PhysicalControlFencingRuntimeMixin
 from .physical_effect_integration_boundary import PhysicalEffectIntegrationBoundaryMixin
+from .physical_identity_runtime import PhysicalIdentityRuntimeMixin
 from .physical_preemption_recovery_guard import PhysicalPreemptionRecoveryGuardMixin
 from .runtime_v55_foundation import AASMEngine as V55FoundationEngine
+from .source_trust_runtime import SourceTrustRuntimeMixin
 from .state_authority_runtime import StateAuthorityRuntimeMixin
 from .state_conflict_runtime import StateConflictRuntimeMixin
 
@@ -29,6 +32,9 @@ class AASMEngine(
     MachinePostconditionExecutionCorrelationMixin,
     MachinePostconditionRuntimeMixin,
     MachineTransitionRuntimeMixin,
+    SourceTrustRuntimeMixin,
+    CalibrationRuntimeMixin,
+    PhysicalIdentityRuntimeMixin,
     ObservationFreshnessRuntimeMixin,
     EventCausalityRuntimeMixin,
     ExternalMachineRuntimeMixin,
@@ -38,7 +44,7 @@ class AASMEngine(
     SolverOutcomeV2RuntimeMixin,
     V55FoundationEngine,
 ):
-    """Active v0.56 development runtime with governed external reality, bounded effects, and S3 conflict/causality/freshness evidence."""
+    """Active v0.56 development runtime with governed external reality, bounded effects, and S3 reality-evidence semantics."""
 
 
 __all__ = ["AASMEngine"]
