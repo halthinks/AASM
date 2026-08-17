@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/observation-fusion.schema.json",
+  "title": "AASM Observation Fusion Record v1",
+  "type": "object",
+  "required": [
+    "fusion_id", "contract_id", "contract_version", "workspace_id", "scope_id", "subject_id",
+    "state_namespace", "value", "processor_principal_id", "fusion_method_id", "source_refs",
+    "problem_revision_id", "external_revision_id", "independence", "independence_basis_evidence_ids",
+    "evidence_ids", "attributes", "fingerprint"
+  ],
+  "properties": {
+    "fusion_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.observation.fusion.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "subject_id": {"type": "string", "minLength": 1},
+    "state_namespace": {"type": "string", "minLength": 1},
+    "value": {},
+    "processor_principal_id": {"type": "string", "minLength": 1},
+    "fusion_method_id": {"type": "string", "minLength": 1},
+    "source_refs": {
+      "type": "array", "minItems": 2, "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "required": ["source_kind", "source_id", "source_fingerprint"],
+        "properties": {
+          "source_kind": {"enum": ["LIFECYCLE_RECORD", "FUSION_RECORD"]},
+          "source_id": {"type": "string", "minLength": 1},
+          "source_fingerprint": {"type": "string", "minLength": 16}
+        },
+        "additionalProperties": false
+      }
+    },
+    "problem_revision_id": {"type": "string"},
+    "external_revision_id": {"type": "string"},
+    "independence": {"enum": ["UNASSESSED", "KNOWN_DEPENDENT", "DECLARED_PARTIALLY_INDEPENDENT", "DECLARED_INDEPENDENT"]},
+    "independence_basis_evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "attributes": {"type": "object", "additionalProperties": {"type": "string"}},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"independence": {"enum": ["DECLARED_PARTIALLY_INDEPENDENT", "DECLARED_INDEPENDENT"]}}, "required": ["independence"]},
+      "then": {"properties": {"independence_basis_evidence_ids": {"minItems": 1}}}
+    }
+  ],
+  "additionalProperties": false
+}
