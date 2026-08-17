@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/observation-disposition.schema.json",
+  "title": "AASM Observation Disposition v1",
+  "type": "object",
+  "required": [
+    "disposition_id", "contract_id", "contract_version", "target_kind", "target_id", "target_fingerprint",
+    "disposition", "reason_code", "actor_principal_id", "evidence_ids", "fingerprint"
+  ],
+  "properties": {
+    "disposition_id": {"type": "string", "minLength": 1},
+    "contract_id": {"const": "aasm.observation.disposition.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "target_kind": {"enum": ["LIFECYCLE_RECORD", "FUSION_RECORD"]},
+    "target_id": {"type": "string", "minLength": 1},
+    "target_fingerprint": {"type": "string", "minLength": 16},
+    "disposition": {"enum": ["REJECTED", "SUPERSEDED", "STALE", "DISPUTED"]},
+    "reason_code": {"type": "string", "minLength": 1},
+    "actor_principal_id": {"type": "string", "minLength": 1},
+    "evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "fingerprint": {"type": "string", "minLength": 16}
+  },
+  "additionalProperties": false
+}
