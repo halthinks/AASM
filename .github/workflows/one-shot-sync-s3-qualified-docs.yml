@@ -22,189 +22,179 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
+          import re
 
           HEAD = '6b107268cd4190357bf45b3bfd1385410a0d82cf'
           ADOPTION = '0.32.15'
           CONTEXTS = '27'
 
-          def replace(path: Path, old: str, new: str, *, expected: int = 1, label: str = '') -> None:
-              text = path.read_text(encoding='utf-8')
-              count = text.count(old)
+          def read(path: str) -> tuple[Path, str]:
+              p = Path(path)
+              return p, p.read_text(encoding='utf-8')
+
+          def write(p: Path, text: str) -> None:
+              p.write_text(text, encoding='utf-8')
+
+          def sub(text: str, pattern: str, replacement: str, *, expected: int = 1, label: str = '', flags: int = re.MULTILINE) -> str:
+              out, count = re.subn(pattern, replacement, text, flags=flags)
               if count != expected:
-                  raise SystemExit(f'{path}: {label or old[:60]}: expected {expected} anchor(s), found {count}')
-              path.write_text(text.replace(old, new), encoding='utf-8')
-              print(f'{path}: {label or old[:60]}')
+                  raise SystemExit(f'{label or pattern[:80]}: expected {expected} match(es), found {count}')
+              print(f'{label or pattern[:80]}')
+              return out
 
-          def replace_any(path: Path, old: str, new: str, *, label: str = '') -> None:
-              text = path.read_text(encoding='utf-8')
+          def replace_all(text: str, old: str, new: str, *, minimum: int = 1, label: str = '') -> str:
               count = text.count(old)
-              if count < 1:
-                  raise SystemExit(f'{path}: {label or old[:60]}: expected at least one anchor')
-              path.write_text(text.replace(old, new), encoding='utf-8')
-              print(f'{path}: {label or old[:60]} ({count} replacement(s))')
+              if count < minimum:
+                  raise SystemExit(f'{label or old[:80]}: expected >= {minimum}, found {count}')
+              print(f'{label or old[:80]} ({count} replacement(s))')
+              return text.replace(old, new)
 
-          def replace_line(path: Path, prefix: str, new_line: str, *, label: str = '') -> None:
-              lines = path.read_text(encoding='utf-8').splitlines()
+          def table_replace(text: str, prefix: str, replacement: str, *, label: str) -> str:
+              lines = text.splitlines()
               hits = [i for i, line in enumerate(lines) if line.startswith(prefix)]
               if len(hits) != 1:
-                  raise SystemExit(f'{path}: {label or prefix}: expected one line, found {len(hits)}')
-              lines[hits[0]] = new_line
-              path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
-              print(f'{path}: {label or prefix}')
+                  raise SystemExit(f'{label}: expected one row, found {len(hits)}')
+              lines[hits[0]] = replacement
+              print(label)
+              return '\n'.join(lines) + '\n'
 
-          # README — keep package release identity distinct from qualified main.
-          p = Path('README.md')
-          replace_any(p, 'aasm.adoption.v1 / 0.32.7', f'aasm.adoption.v1 / {ADOPTION}', label='active adoption -> 0.32.15')
-          replace(p,
-              '**Qualified development boundary:** PR-1 + PR-2 + PR-3A through PR-3G  ',
-              '**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + S3 through artifact revision lineage and entity evolution  ',
-              label='qualified boundary')
-          replace(p,
-              '**Next unfinished boundary:** PR-3H — integrate bounded physical-effect authority into the existing Effect authorization/execution path  ',
-              '**Next unfinished boundary:** S4 — Engineering + Safety Semantics (quantity/unit/tolerance foundation first)  ',
-              label='next boundary')
-          replace_any(p, '9425fbdd22f664f3a2cb5db73dcf45c5b77a0673', HEAD, label='qualified code head')
-          replace(p,
-              'The active `0.56.1` candidate now combines execution provenance, explicit state/fact authority, external-machine supervision, postcondition verification, exclusive authority leases, bounded effect capabilities, stale-command fencing, semantic preemption, and crash-safe preemption recovery.',
-              'The active `0.56.1` candidate now combines execution provenance, explicit state/fact authority, external-machine supervision, postcondition verification, complete physical-effect authority integration, observation epistemics, backend-independent artifact revision lineage, and governed entity evolution with ambiguity-safe reuse fencing.',
-              label='development summary')
-          replace(p,
-              '''PR-3H status:\n  NOT IMPLEMENTED\n  must integrate with existing authorize_effect / execute_effect\n  must recheck capability/lease/epoch/revocation/bounds at effect boundaries\n  must not create a second authority evaluator, dispatcher, ownership model, or effect lifecycle''',
-              '''PR-3H physical-effect integration:\n  GATED\n  reuses existing authorize_effect / execute_effect\n  rechecks capability/lease/epoch/revocation/bounds at effect boundaries\n  creates no second authority evaluator, dispatcher, ownership model, or effect lifecycle\n\nS3 artifact + entity lineage:\n  aasm.artifact.revision.v1\n  aasm.artifact-lineage.runtime.v1\n  aasm.entity.evolution.v1\n  aasm.entity-evolution.runtime.v1\n  artifact existence/generation != authoritative acceptance\n  AMBIGUOUS entity mapping blocks hard automatic reuse''',
-              label='PR3H and S3 contract summary')
-          replace(p,
-              '        |       artifact revision/entity evolution -------------- NEXT',
-              '        |       artifact revision/entity evolution -------------- GATED',
-              label='README dependency graph S3 lineage')
+          # README -----------------------------------------------------------------
+          p, t = read('README.md')
+          t = replace_all(t, 'aasm.adoption.v1 / 0.32.7', f'aasm.adoption.v1 / {ADOPTION}', label='README adoption')
+          t = sub(t, r'^\*\*Qualified development boundary:\*\*.*$', '**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + S3 through artifact revision lineage and entity evolution  ', label='README qualified boundary')
+          t = sub(t, r'^\*\*Next unfinished boundary:\*\*.*$', '**Next unfinished boundary:** S4 — Engineering + Safety Semantics (quantity/unit/tolerance foundation first)  ', label='README next boundary')
+          t = replace_all(t, '9425fbdd22f664f3a2cb5db73dcf45c5b77a0673', HEAD, label='README qualified head')
+          t = sub(t, r'^The active `0\.56\.1` candidate now combines .*$', 'The active `0.56.1` candidate now combines execution provenance, explicit state/fact authority, external-machine supervision, postcondition verification, complete physical-effect authority integration, observation epistemics, backend-independent artifact revision lineage, and governed entity evolution with ambiguity-safe reuse fencing.', label='README development summary')
+          t = sub(t,
+              r'PR-3H status:\n  NOT IMPLEMENTED\n  must integrate with existing authorize_effect / execute_effect\n  must recheck capability/lease/epoch/revocation/bounds at effect boundaries\n  must not create a second authority evaluator, dispatcher, ownership model, or effect lifecycle',
+              'PR-3H physical-effect integration:\n  GATED\n  reuses existing authorize_effect / execute_effect\n  rechecks capability/lease/epoch/revocation/bounds at effect boundaries\n  creates no second authority evaluator, dispatcher, ownership model, or effect lifecycle\n\nS3 artifact + entity lineage:\n  aasm.artifact.revision.v1\n  aasm.artifact-lineage.runtime.v1\n  aasm.entity.evolution.v1\n  aasm.entity-evolution.runtime.v1\n  artifact existence/generation != authoritative acceptance\n  AMBIGUOUS entity mapping blocks hard automatic reuse',
+              label='README contract block', flags=0)
+          t = sub(t,
+              r'### PR-3H — next active implementation boundary\n.*?(?=\n## v0\.56 — Truthful Solver Outcomes)',
+              '''### PR-3H — implemented and gated
 
-          # Top-level roadmap.
-          p = Path('ROADMAP.md')
-          replace(p, '**Current active adoption contract:** `aasm.adoption.v1 / 0.32.13`  ', f'**Current active adoption contract:** `aasm.adoption.v1 / {ADOPTION}`  ', label='roadmap adoption')
-          replace(p,
-              '**Qualified development boundary:** PR-1, PR-2, complete PR-3 / PHY-01, plus S3 state conflict, causality/freshness, physical identity/calibration/source trust, execution environment, and observation lifecycle/fusion  ',
-              '**Qualified development boundary:** PR-1, PR-2, complete PR-3 / PHY-01, plus complete S3 state conflict, causality/freshness, identity/calibration/trust, execution environment, observation epistemics, artifact revision lineage, and entity evolution  ',
-              label='roadmap qualified boundary')
-          replace(p,
-              '**Exact S3 observation-epistemics qualification head:** `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd` — all 25 current custom contexts green  ',
-              f'**Exact qualified S3 code boundary before documentation-only synchronization:** `{HEAD}` — all {CONTEXTS} current custom qualification contexts green  ',
-              label='roadmap exact boundary')
-          replace(p,
-              '**Immediate unfinished boundary:** **U4 / artifact revision lineage + entity evolution under `aasm/artifact-lineage`**',
-              '**Immediate unfinished boundary:** **S4 / Engineering + Safety Semantics — quantity/unit/tolerance semantics first**',
-              label='roadmap next boundary')
-          replace(p,
-              'verification/refinement loops, and eventually a portable deterministic kernel that can be implemented',
-              'verification/refinement loops, and a portable deterministic kernel that can be implemented',
-              label='remove deferred portable-kernel wording')
-          replace(p,
-              '- **S3 observation lifecycle/fusion:** append-only `RAW -> NORMALIZED -> CALIBRATED -> DERIVED -> VALIDATED` processing lineage plus fusion/disposition Evidence; exact source fingerprints, explicit calibration/environment/freshness references, no stage skips, no consensus voting, and no authority/admission by a `VALIDATED` label.',
-              '- **S3 observation lifecycle/fusion:** append-only `RAW -> NORMALIZED -> CALIBRATED -> DERIVED -> VALIDATED` processing lineage plus fusion/disposition Evidence; exact source fingerprints, explicit calibration/environment/freshness references, no stage skips, no consensus voting, and no authority/admission by a `VALIDATED` label.\n- **S3 artifact revision lineage:** backend-independent immutable revision identity over content/semantic hashes and provenance, exact parent ID+fingerprint lineage, separate storage-binding fingerprint, Evidence-backed replay, and no hidden current-artifact or acceptance authority.\n- **S3 entity evolution:** exact predecessor/successor representation binding across `UNCHANGED | MODIFIED | GENERATED | SPLIT | MERGED | REPLACED | DELETED | AMBIGUOUS`; ambiguity is durable and fail-closed for hard automatic reuse; no current-entity truth table or authority minting.',
-              label='roadmap S3 qualified bullets')
-          replace(p,
-              '        |       artifact revision/entity evolution -------------- NEXT',
-              '        |       artifact revision/entity evolution -------------- GATED',
-              label='roadmap dependency graph lineage')
-          replace(p, 'U4  Reality identity + time + artifact lineage + observation epistemics ---- ACTIVE', 'U4/S3 Reality identity + time + artifact lineage + observation epistemics -- GATED', label='roadmap U4 status')
+PR-3H now connects the qualified authority-domain/lease/capability/fencing semantics to the **existing** Effect authorization and execution boundaries. Both boundaries recheck live lease identity/fingerprint/epoch, capability identity/fingerprint, effective revocation generation, holder, operation/bounds, workspace/scope/subject, and applicable problem/external revision. Earlier capability-use Evidence is never a reusable bearer token.
 
-          # Canonical merged roadmap.
-          p = Path('docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md')
-          replace(p, '**Current adoption contract:** `aasm.adoption.v1 / 0.32.13`  ', f'**Current adoption contract:** `aasm.adoption.v1 / {ADOPTION}`  ', label='canonical adoption')
-          replace(p,
-              '**Current exact qualified development boundary:** `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd` — all 25 current custom qualification contexts green  ',
-              f'**Current exact qualified code boundary before documentation-only synchronization:** `{HEAD}` — all {CONTEXTS} current custom qualification contexts green  ',
-              label='canonical exact boundary')
-          replace(p,
-              'Exact qualified boundary: `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd`, adoption `0.32.13`, all 25 current custom qualification contexts green.',
-              f'Exact qualified code boundary before documentation-only synchronization: `{HEAD}`, adoption `{ADOPTION}`, all {CONTEXTS} current custom qualification contexts green.',
-              label='canonical S3 baseline')
-          replace(p,
-              '- `aasm.observation.processing.runtime.v1`.',
-              '- `aasm.observation.processing.runtime.v1`;\n- `aasm.artifact.revision.v1` + `aasm.artifact-lineage.runtime.v1`;\n- `aasm.entity.evolution.v1` + `aasm.entity-evolution.runtime.v1`.',
-              label='canonical active S3 contracts')
-          replace(p,
-              '  |      +-- artifact revision/entity evolution ------------- NEXT',
-              '  |      +-- artifact revision/entity evolution ------------- DONE',
-              label='canonical dependency graph lineage')
-          replace(p,
-              '**Status: NEXT under the separate cumulative `aasm/artifact-lineage` gate.**',
-              '**Status: GATED under `aasm/artifact-lineage` and inherited by cumulative `aasm/v56`.**',
-              label='artifact lineage status')
-          replace(p,
+The inherited `effect.authorize`, resources/Worker/TaskLease, Effect ownership, dispatch, `UNKNOWN`, and reconciliation paths remain authoritative; no parallel authority evaluator, scheduler, dispatcher, Effect store, ownership primitive, or reconciliation path was introduced.
+
+### S3 — artifact revision lineage + entity evolution
+
+Artifact revisions now have backend-independent immutable identity over content/semantic hashes and exact provenance, exact parent ID+fingerprint lineage, and a separate storage-binding fingerprint for non-semantic `artifact_ref` locators. Registration/replay uses existing Evidence and does not imply artifact acceptance or create a current-artifact truth pointer.
+
+Entity evolution now records `UNCHANGED | MODIFIED | GENERATED | SPLIT | MERGED | REPLACED | DELETED | AMBIGUOUS` relationships over exact artifact-revision-bound representations. `AMBIGUOUS` mappings remain durable and block hard automatic reuse. There is no hidden current-entity state table and no authority minting.''',
+              label='README PR3H/S3 section', flags=re.MULTILINE | re.DOTALL)
+          write(p, t)
+
+          # ROADMAP ----------------------------------------------------------------
+          p, t = read('ROADMAP.md')
+          t = sub(t, r'^\*\*Current active adoption contract:\*\*.*$', f'**Current active adoption contract:** `aasm.adoption.v1 / {ADOPTION}`  ', label='ROADMAP adoption')
+          t = sub(t, r'^\*\*Qualified development boundary:\*\*.*$', '**Qualified development boundary:** PR-1, PR-2, complete PR-3 / PHY-01, plus complete S3 state conflict, causality/freshness, identity/calibration/trust, execution environment, observation epistemics, artifact revision lineage, and entity evolution  ', label='ROADMAP qualified boundary')
+          t = sub(t, r'^\*\*Exact S3 observation-epistemics qualification head:\*\*.*$', f'**Exact qualified S3 code boundary before documentation-only synchronization:** `{HEAD}` — all {CONTEXTS} current custom qualification contexts green  ', label='ROADMAP exact boundary')
+          t = sub(t, r'^\*\*Immediate unfinished boundary:\*\*.*$', '**Immediate unfinished boundary:** **S4 / Engineering + Safety Semantics — quantity/unit/tolerance semantics first**', label='ROADMAP next boundary')
+          t = t.replace('verification/refinement loops, and eventually a portable deterministic kernel that can be implemented', 'verification/refinement loops, and a portable deterministic kernel that can be implemented')
+          obs = '- **S3 observation lifecycle/fusion:** append-only `RAW -> NORMALIZED -> CALIBRATED -> DERIVED -> VALIDATED` processing lineage plus fusion/disposition Evidence; exact source fingerprints, explicit calibration/environment/freshness references, no stage skips, no consensus voting, and no authority/admission by a `VALIDATED` label.'
+          if t.count(obs) != 1: raise SystemExit('ROADMAP S3 observation bullet anchor drift')
+          t = t.replace(obs, obs + '\n- **S3 artifact revision lineage:** backend-independent immutable revision identity over content/semantic hashes and provenance, exact parent ID+fingerprint lineage, separate storage-binding fingerprint, Evidence-backed replay, and no hidden current-artifact or acceptance authority.\n- **S3 entity evolution:** exact predecessor/successor representation binding across `UNCHANGED | MODIFIED | GENERATED | SPLIT | MERGED | REPLACED | DELETED | AMBIGUOUS`; ambiguity is durable and fail-closed for hard automatic reuse; no current-entity truth table or authority minting.')
+          t = sub(t, r'^(\s*\|\s*artifact revision/entity evolution\s+-+)\s+NEXT$', r'\1 GATED', label='ROADMAP dependency lineage')
+          t = sub(t, r'^U4\s+Reality identity \+ time \+ artifact lineage \+ observation epistemics\s+-+\s+ACTIVE$', 'U4/S3 Reality identity + time + artifact lineage + observation epistemics -- GATED', label='ROADMAP U4 status')
+          write(p, t)
+
+          # Canonical merged roadmap ------------------------------------------------
+          p, t = read('docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md')
+          t = sub(t, r'^\*\*Current adoption contract:\*\*.*$', f'**Current adoption contract:** `aasm.adoption.v1 / {ADOPTION}`  ', label='canonical adoption')
+          t = sub(t, r'^\*\*Current exact qualified development boundary:\*\*.*$', f'**Current exact qualified code boundary before documentation-only synchronization:** `{HEAD}` — all {CONTEXTS} current custom qualification contexts green  ', label='canonical exact boundary')
+          t = sub(t, r'^Exact qualified boundary: `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd`, adoption `0\.32\.13`, all 25 current custom qualification contexts green\.$', f'Exact qualified code boundary before documentation-only synchronization: `{HEAD}`, adoption `{ADOPTION}`, all {CONTEXTS} current custom qualification contexts green.', label='canonical S3 baseline')
+          anchor = '- `aasm.observation.processing.runtime.v1`.'
+          if t.count(anchor) != 1: raise SystemExit('canonical active S3 contract anchor drift')
+          t = t.replace(anchor, '- `aasm.observation.processing.runtime.v1`;\n- `aasm.artifact.revision.v1` + `aasm.artifact-lineage.runtime.v1`;\n- `aasm.entity.evolution.v1` + `aasm.entity-evolution.runtime.v1`.')
+          t = sub(t, r'^(\s*\|\s*\+-- artifact revision/entity evolution\s+-+)\s+NEXT$', r'\1 DONE', label='canonical dependency lineage')
+          t = replace_all(t, '**Status: NEXT under the separate cumulative `aasm/artifact-lineage` gate.**', '**Status: GATED under `aasm/artifact-lineage` and inherited by cumulative `aasm/v56`.**', label='artifact lineage status')
+          t = replace_all(t, '**Status: NEXT after/with artifact revision lineage under `aasm/artifact-lineage`.**', '**Status: GATED under the independent `aasm/entity-evolution` gate and inherited by cumulative `aasm/v56`.**', label='entity evolution status')
+          t = replace_all(t,
               'Failed/generated artifacts may remain Evidence without becoming current authoritative artifacts. Artifact existence or successful generation is not authoritative acceptance. AASM must not introduce a hidden current-artifact/project-truth table.',
               'The landed runtime records immutable revision documents through existing Evidence/event replay, verifies payload and semantic-projection hashes, exact parent IDs and parent fingerprints, ProblemRevision/external-source bindings, producer/machine/effect provenance, and active Evidence dependencies. Revision identity is backend-independent; `artifact_ref` is a non-semantic storage locator with a separate storage-binding fingerprint. Failed/generated artifacts may remain Evidence without becoming current authoritative artifacts. Artifact existence or successful generation is not authoritative acceptance. No hidden current-artifact/project-truth table, parallel artifact registry, truth table, or authority evaluator is introduced.',
-              label='artifact lineage landed semantics')
-          replace(p,
-              '**Status: NEXT after/with artifact revision lineage under `aasm/artifact-lineage`.**',
-              '**Status: GATED under the independent `aasm/entity-evolution` gate and inherited by cumulative `aasm/v56`.**',
-              label='entity evolution status')
-          replace(p,
+              label='artifact lineage semantics')
+          t = replace_all(t,
               'Hard reusable knowledge fails closed across `AMBIGUOUS` mapping. Evolution records preserve exact predecessor/successor identities and provenance; they do not silently rewrite historical entity identity.',
               'The landed runtime binds every predecessor/successor representation to an exact qualified artifact revision ID+fingerprint, validates workspace/scope and artifact-lineage ancestry, requires active supporting Evidence, reconstructs history by deterministic replay, and rejects forged fingerprints, unrelated lineages, and non-descendant successors. Hard reusable knowledge fails closed across `AMBIGUOUS` mapping. Evolution records preserve exact predecessor/successor identities and provenance; they do not silently rewrite historical entity identity or create a current-entity truth pointer.',
-              label='entity evolution landed semantics')
-          replace(p,
+              label='entity evolution semantics')
+          t = replace_all(t,
               '**Gates:** `aasm/physical-evidence`, `aasm/identity-calibration-trust`, `aasm/execution-environment`, `aasm/observation-epistemics`, `aasm/artifact-lineage`.',
               '**Gates:** `aasm/physical-evidence`, `aasm/identity-calibration-trust`, `aasm/execution-environment`, `aasm/observation-epistemics`, `aasm/artifact-lineage`, `aasm/entity-evolution`; all inherited by cumulative `aasm/v56`.',
-              label='canonical S3 gate set')
+              label='canonical S3 gates')
+          write(p, t)
 
-          # Execution ledger — advance only current rows; preserve historical qualification references elsewhere.
-          p = Path('docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md')
-          replace(p, '**Current adoption contract:** `aasm.adoption.v1 / 0.32.13`', f'**Current adoption contract:** `aasm.adoption.v1 / {ADOPTION}`', label='ledger adoption')
-          replace(p,
-              '**Current exact qualified development boundary:** `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd` — all 25 current custom qualification contexts green',
-              f'**Current exact qualified code boundary before documentation-only synchronization:** `{HEAD}` — all {CONTEXTS} current custom qualification contexts green',
-              label='ledger exact boundary')
-          replace_line(p, '| 57.3 |',
-              f'| 57.3 | `external-machine-supervision` | Artifact revision lineage | GATED | immutable CAD/PCB/CAE/physical outputs | `aasm.artifact.revision.v1`; `artifact_lineage.py`; `artifact_lineage_runtime.py`; schema; active public surface | 55.1; 57.1; S3-01–04 | exact head `{HEAD}`; `aasm/artifact-lineage` + cumulative `aasm/v56`; content/semantic hash tamper, exact-parent, stale source revision/reference, producer/machine/effect mismatch, unsupported format/schema, storage-rebinding, Evidence invalidation, SQLite replay | artifact existence/generation/success is Evidence only; no authoritative acceptance, current artifact pointer, parallel registry/truth/authority evaluator | preserve; S3 entity evolution qualified on top |',
-              label='ledger 57.3 artifact lineage')
-          replace_line(p, '| 57.4 |',
-              f'| 57.4 | `external-machine-supervision` | Entity evolution | GATED | persistent semantic identity across topology/tool/world-model changes | `aasm.entity.evolution.v1`; `entity_evolution.py`; `entity_evolution_runtime.py`; schema; active public adoption `{ADOPTION}` | 57.3 | exact head `{HEAD}`; `aasm/entity-evolution` + cumulative `aasm/v56`; MODIFIED/SPLIT/MERGED/AMBIGUOUS, forged artifact fingerprints, unrelated/non-descendant lineages, inactive Evidence, envelope tamper, SQLite replay | exact predecessor/successor provenance only; `AMBIGUOUS` blocks hard automatic reuse; no entity authority/current-state table | preserve; S3 complete, next S4 engineering + safety semantics |',
-              label='ledger 57.4 entity evolution')
-          replace_line(p, '| S3-04 |',
-              [line for line in p.read_text(encoding='utf-8').splitlines() if line.startswith('| S3-04 |')][0].replace('preserve; next boundary artifact/entity lineage', 'preserve; artifact/entity lineage now qualified; next boundary S4'),
-              label='ledger S3-04 next pointer')
-          replace_line(p, '| 57.2 |',
-              [line for line in p.read_text(encoding='utf-8').splitlines() if line.startswith('| 57.2 |')][0].replace('preserve; next external-reality dependency is artifact/entity lineage', 'preserve; artifact/entity lineage now qualified; next external-reality dependency is S4 engineering/safety semantics'),
-              label='ledger 57.2 next pointer')
+          # Execution ledger --------------------------------------------------------
+          p, t = read('docs/implementation/GOVERNED_SEMANTIC_EVOLUTION_EXECUTION_LEDGER.md')
+          t = sub(t, r'^\*\*Current adoption contract:\*\*.*$', f'**Current adoption contract:** `aasm.adoption.v1 / {ADOPTION}`', label='ledger adoption')
+          t = sub(t, r'^\*\*Current exact qualified development boundary:\*\*.*$', f'**Current exact qualified code boundary before documentation-only synchronization:** `{HEAD}` — all {CONTEXTS} current custom qualification contexts green', label='ledger exact boundary')
+          t = table_replace(t, '| 57.3 |', f'| 57.3 | `external-machine-supervision` | Artifact revision lineage | GATED | immutable CAD/PCB/CAE/physical outputs | `aasm.artifact.revision.v1`; `artifact_lineage.py`; `artifact_lineage_runtime.py`; schema; active public surface | 55.1; 57.1; S3-01–04 | exact head `{HEAD}`; `aasm/artifact-lineage` + cumulative `aasm/v56`; content/semantic hash tamper, exact-parent, stale source revision/reference, producer/machine/effect mismatch, unsupported format/schema, storage-rebinding, Evidence invalidation, SQLite replay | artifact existence/generation/success is Evidence only; no authoritative acceptance, current artifact pointer, parallel registry/truth/authority evaluator | preserve; S3 entity evolution qualified on top |', label='ledger 57.3')
+          t = table_replace(t, '| 57.4 |', f'| 57.4 | `external-machine-supervision` | Entity evolution | GATED | persistent semantic identity across topology/tool/world-model changes | `aasm.entity.evolution.v1`; `entity_evolution.py`; `entity_evolution_runtime.py`; schema; active public adoption `{ADOPTION}` | 57.3 | exact head `{HEAD}`; `aasm/entity-evolution` + cumulative `aasm/v56`; MODIFIED/SPLIT/MERGED/AMBIGUOUS, forged artifact fingerprints, unrelated/non-descendant lineages, inactive Evidence, envelope tamper, SQLite replay | exact predecessor/successor provenance only; `AMBIGUOUS` blocks hard automatic reuse; no entity authority/current-state table | preserve; S3 complete, next S4 engineering + safety semantics |', label='ledger 57.4')
+          lines = t.splitlines()
+          for prefix, old, new, label in [
+              ('| 57.2 |', 'preserve; next external-reality dependency is artifact/entity lineage', 'preserve; artifact/entity lineage now qualified; next external-reality dependency is S4 engineering/safety semantics', 'ledger 57.2 pointer'),
+              ('| S3-04 |', 'preserve; next boundary artifact/entity lineage', 'preserve; artifact/entity lineage now qualified; next boundary S4', 'ledger S3-04 pointer'),
+          ]:
+              hits = [i for i, line in enumerate(lines) if line.startswith(prefix)]
+              if len(hits) != 1 or old not in lines[hits[0]]: raise SystemExit(f'{label}: anchor drift')
+              lines[hits[0]] = lines[hits[0]].replace(old, new)
+              print(label)
+          t = '\n'.join(lines) + '\n'
+          write(p, t)
 
-          # CURRENT_RELEASE remains explicit that v0.56.0 is the immutable published package.
-          p = Path('docs/CURRENT_RELEASE.md')
-          replace(p,
-              '**Current development target on `main`:** 0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority  ',
-              '**Current development target on `main`:** 0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority + S3 Artifact/Entity Lineage  ',
-              label='current release development title')
-          replace_any(p, 'aasm.adoption.v1 / 0.32.7', f'aasm.adoption.v1 / {ADOPTION}', label='current release adoption')
-          replace(p, '**Current qualified physical-control boundary:** PR-3A through PR-3G  ', '**Current qualified development boundary:** complete PR-3 / PHY-01 + S3 through artifact revision lineage and entity evolution  ', label='current release qualified boundary')
-          replace(p, '**Next unfinished boundary:** PR-3H — Effect authorization/execution integration', '**Next unfinished boundary:** S4 — Engineering + Safety Semantics (quantity/unit/tolerance foundation first)', label='current release next boundary')
-          replace_any(p, '9425fbdd22f664f3a2cb5db73dcf45c5b77a0673', HEAD, label='current release qualified head')
-          replace(p,
-              '### PR-3H — not yet implemented\n\nPR-3H is the next active boundary. It must integrate the already-landed lease/capability/epoch/revocation/bounds checks into the **existing** `authorize_effect` / `execute_effect` path.',
-              '### PR-3H — implemented and gated\n\nPR-3H integrates lease/capability/epoch/revocation/bounds checks into the **existing** `authorize_effect` / `execute_effect` path and rechecks live authority at both boundaries.',
-              label='current release PR3H status')
-          replace(p,
-              'It must not create:\n\n- a second authority evaluator;\n- a second scheduler;\n- a second Effect dispatcher;\n- a second ownership model;\n- a second reconciliation path;\n- a parallel Effect truth store.\n\nThe existing v0.54 Effect lifecycle remains authoritative.',
-              'It creates no second authority evaluator, scheduler, Effect dispatcher, ownership model, reconciliation path, or Effect truth store. The existing v0.54 Effect lifecycle remains authoritative.\n\n### S3 — reality evidence, artifact lineage, and entity evolution\n\nS3 is now gated through `aasm.artifact.revision.v1` / `aasm.artifact-lineage.runtime.v1` and `aasm.entity.evolution.v1` / `aasm.entity-evolution.runtime.v1`. Artifact revision identity is backend-independent and replayed through existing Evidence; storage binding is separate. Artifact existence or successful generation never implies authoritative acceptance. Entity evolution binds exact predecessor/successor artifact revision fingerprints and records split/merge/replacement/ambiguity without rewriting history. `AMBIGUOUS` mappings fail closed for hard automatic reuse. Neither subsystem creates a hidden current artifact/entity truth table or effect/fact authority.',
-              label='current release S3 completion')
-          replace(p,
-              f'qualified the active `0.56.1 / {ADOPTION}` candidate with all required direct contexts green, including:',
-              f'qualified the active `0.56.1 / {ADOPTION}` candidate with all {CONTEXTS} current custom commit-status contexts green, including:',
-              label='current release context count')
-          replace(p,
-              '- `aasm/physical-preemption-recovery`\n',
-              '- `aasm/physical-preemption-recovery`\n- `aasm/physical-effect-integration`\n- `aasm/identity-calibration-trust`\n- `aasm/execution-environment`\n- `aasm/observation-epistemics`\n- `aasm/artifact-lineage`\n- `aasm/entity-evolution`\n- `aasm/physical-evidence`\n- `aasm/ci-summary`\n',
-              label='current release qualification contexts')
+          # CURRENT_RELEASE ---------------------------------------------------------
+          p, t = read('docs/CURRENT_RELEASE.md')
+          t = sub(t, r'^\*\*Current development target on `main`:\*\*.*$', '**Current development target on `main`:** 0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority + S3 Artifact/Entity Lineage  ', label='CURRENT_RELEASE dev title')
+          t = replace_all(t, 'aasm.adoption.v1 / 0.32.7', f'aasm.adoption.v1 / {ADOPTION}', label='CURRENT_RELEASE adoption')
+          t = sub(t, r'^\*\*Current qualified physical-control boundary:\*\*.*$', '**Current qualified development boundary:** complete PR-3 / PHY-01 + S3 through artifact revision lineage and entity evolution  ', label='CURRENT_RELEASE qualified boundary')
+          t = sub(t, r'^\*\*Next unfinished boundary:\*\*.*$', '**Next unfinished boundary:** S4 — Engineering + Safety Semantics (quantity/unit/tolerance foundation first)', label='CURRENT_RELEASE next boundary')
+          t = replace_all(t, '9425fbdd22f664f3a2cb5db73dcf45c5b77a0673', HEAD, label='CURRENT_RELEASE head')
+          t = sub(t,
+              r'### PR-3H — not yet implemented\n.*?(?=\n## Exact-head qualification)',
+              '''### PR-3H — implemented and gated
 
-          # Development-candidate note.
-          p = Path('docs/RELEASE_0.56.1.md')
-          replace_any(p, 'aasm.adoption.v1 / 0.32.7', f'aasm.adoption.v1 / {ADOPTION}', label='0.56.1 candidate adoption')
-          replace(p,
-              '**Active milestones:** solver provenance, authoritative state, external-machine supervision, physical authority/capability/preemption  ',
-              '**Active milestones:** solver provenance, authoritative state, external-machine supervision, complete physical authority/effect integration, S3 observation epistemics, artifact revision lineage, entity evolution  ',
-              label='0.56.1 active milestones')
-          replace(p,
-              '**PR-3 boundary:** PR-3A through PR-3G active; PR-3H Effect authorization/execution integration intentionally not yet implemented',
-              '**Qualified boundary:** complete PR-3 / PHY-01 and S3 through artifact revision lineage + entity evolution; next architecture boundary is S4 Engineering + Safety Semantics',
-              label='0.56.1 qualified boundary')
+PR-3H integrates lease/capability/epoch/revocation/bounds checks into the **existing** `authorize_effect` / `execute_effect` path and rechecks live authority at both boundaries. It creates no second authority evaluator, scheduler, Effect dispatcher, ownership model, reconciliation path, or Effect truth store. The existing v0.54 Effect lifecycle remains authoritative.
 
+### S3 — reality evidence, artifact lineage, and entity evolution
+
+S3 is now gated through the observation/identity/calibration/trust/environment/fusion layers plus `aasm.artifact.revision.v1` / `aasm.artifact-lineage.runtime.v1` and `aasm.entity.evolution.v1` / `aasm.entity-evolution.runtime.v1`. Artifact revision identity is backend-independent and replayed through existing Evidence; storage binding is separate. Artifact existence or successful generation never implies authoritative acceptance. Entity evolution binds exact predecessor/successor artifact revision fingerprints and records split/merge/replacement/ambiguity without rewriting history. `AMBIGUOUS` mappings fail closed for hard automatic reuse. Neither subsystem creates a hidden current artifact/entity truth table or effect/fact authority.''',
+              label='CURRENT_RELEASE PR3H/S3', flags=re.MULTILINE | re.DOTALL)
+          t = replace_all(t, f'qualified the active `0.56.1 / {ADOPTION}` candidate with all required direct contexts green, including:', f'qualified the active `0.56.1 / {ADOPTION}` candidate with all {CONTEXTS} current custom commit-status contexts green, including:', label='CURRENT_RELEASE context count')
+          anchor = '- `aasm/physical-preemption-recovery`\n'
+          if t.count(anchor) != 1: raise SystemExit('CURRENT_RELEASE context insertion anchor drift')
+          t = t.replace(anchor, anchor + '- `aasm/physical-effect-integration`\n- `aasm/identity-calibration-trust`\n- `aasm/execution-environment`\n- `aasm/observation-epistemics`\n- `aasm/artifact-lineage`\n- `aasm/entity-evolution`\n- `aasm/physical-evidence`\n- `aasm/ci-summary`\n')
+          write(p, t)
+
+          # 0.56.1 development candidate -------------------------------------------
+          p, t = read('docs/RELEASE_0.56.1.md')
+          t = replace_all(t, 'aasm.adoption.v1 / 0.32.7', f'aasm.adoption.v1 / {ADOPTION}', label='0.56.1 adoption')
+          t = sub(t, r'^\*\*Active milestones:\*\*.*$', '**Active milestones:** solver provenance, authoritative state, external-machine supervision, complete physical authority/effect integration, S3 observation epistemics, artifact revision lineage, entity evolution  ', label='0.56.1 milestones')
+          t = sub(t, r'^\*\*PR-3 boundary:\*\*.*$', '**Qualified boundary:** complete PR-3 / PHY-01 and S3 through artifact revision lineage + entity evolution; next architecture boundary is S4 Engineering + Safety Semantics', label='0.56.1 boundary')
+          t = replace_all(t, 'Across PR-1 through PR-3G:', 'Across PR-1 through complete PR-3 and S3:', label='0.56.1 no-parallel scope')
+          t = sub(t,
+              r'## PR-3H remains deliberately unimplemented\n.*?(?=\n## Qualification contexts)',
+              '''## PR-3H and S3 lineage are qualified
+
+PR-3H now rechecks current AuthorityLease/EffectCapability identity, epoch, revocation generation, holder, operation/bounds, scope/subject, and problem/external revision at the actual inherited Effect authorization and execution boundaries. Earlier capability-use Evidence remains audit evidence only and cannot act as a bearer authorization token.
+
+S3 additionally qualifies explicit causal/freshness/identity/calibration/trust/environment/observation-processing evidence, backend-independent artifact revision lineage, and exact entity evolution. Artifact existence/generation does not create authoritative acceptance; entity `AMBIGUOUS` mappings block hard automatic reuse. Both use existing Evidence/event replay and create no parallel truth/authority/current-state plane.
+
+## Current claim ceilings
+
+The candidate still does not claim:
+
+- quantity/unit interpretation for capability numeric bounds;
+- tolerance-aware postcondition verification with dimensional semantics;
+- hybrid continuous/discrete safety envelopes;
+- universal cross-domain physical-unit inference;
+- automatic artifact or entity truth/acceptance by existence, recency, agreement, or generation success.
+
+These are explicit S4 and later integration boundaries.''',
+              label='0.56.1 PR3H/S3 section', flags=re.MULTILINE | re.DOTALL)
+          anchor = 'aasm/physical-preemption-recovery\n'
+          if t.count(anchor) != 1: raise SystemExit('0.56.1 qualification context anchor drift')
+          t = t.replace(anchor, anchor + 'aasm/physical-effect-integration\naasm/identity-calibration-trust\naasm/execution-environment\naasm/observation-epistemics\naasm/artifact-lineage\naasm/entity-evolution\naasm/physical-evidence\naasm/ci-summary\n')
+          write(p, t)
           PY
           git diff --check
           git config user.name 'github-actions[bot]'
