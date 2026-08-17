@@ -53,12 +53,14 @@ def main() -> None:
 
     require("from . import public_active_entity_evolution as _base" in active, "active quantity surface does not inherit qualified 0.32.15 parent")
     require("AASMEngine = _base.AASMEngine" in active, "active quantity surface forked AASMEngine")
-    require("SUPPORTED_ENGINE_METHODS = list(getattr(_base, \"SUPPORTED_ENGINE_METHODS\", []))" in active, "active quantity surface changed engine method set")
+    require('SUPPORTED_ENGINE_METHODS = list(getattr(_base, "SUPPORTED_ENGINE_METHODS", []))' in active, "active quantity surface changed engine method set")
 
     require("from .quantity" not in parent, "quantity leaked backward into 0.32.15 parent")
     require("aasm.quantity.v1" not in parent, "quantity contract leaked backward into 0.32.15 parent")
-    require("from .public_active_engineering_quantity import *" in package_init, "qualified quantity surface is not package root")
-    require("from .public_active_engineering_quantity import __version__, AASMEngine" in package_init, "package root does not bind qualified quantity contract helpers")
+
+    # Quantity owns the qualified 0.32.16 layer but need not remain the newest
+    # package root forever. A later additive overlay must inherit/preserve it.
+    require("public_active_engineering_quantity" in package_init, "package root lineage no longer records the qualified quantity layer")
 
     # Public value semantics do not imply runtime state composition.
     require("from .quantity" not in foundation, "quantity semantic value type was composed into runtime_v56 engine state")
@@ -85,7 +87,7 @@ def main() -> None:
     ):
         require(token in tests, f"active quantity public corpus missing test: {token}")
 
-    print("S4 quantity active public adoption source contracts: PASS")
+    print("S4 quantity 0.32.16 qualified additive public layer source contracts: PASS")
 
 
 if __name__ == "__main__":

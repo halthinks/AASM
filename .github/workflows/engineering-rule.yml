@@ -58,8 +58,15 @@ jobs:
             state=failure
             description='S4 aasm.rule.v1 foundation/active-public qualification failed'
           fi
-          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            -f state="$state" \
-            -f context='aasm/engineering-rule' \
-            -f description="$description" \
-            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          for attempt in 1 2 3 4 5; do
+            if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+              -f state="$state" \
+              -f context='aasm/engineering-rule' \
+              -f description="$description" \
+              -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 5 ]; then sleep $((attempt * 2)); fi
+          done
+          echo 'failed to publish aasm/engineering-rule after bounded retries' >&2
+          exit 1

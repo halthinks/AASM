@@ -16,16 +16,26 @@ def test_quantity_public_adoption_is_additive_over_qualified_parent():
     assert root_report["valid"], root_report
     assert parent.PUBLIC_API_CONTRACT["contract_version"] == "0.32.15"
     assert active.PUBLIC_API_CONTRACT["contract_version"] == "0.32.16"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.16"
     assert active.AASMEngine is parent.AASMEngine
     assert active.AASMEngine is aasm.AASMEngine
     assert set(parent.SUPPORTED_PUBLIC_IMPORTS).issubset(active.SUPPORTED_PUBLIC_IMPORTS)
     assert set(parent.SUPPORTED_INSPECTION_SURFACES).issubset(active.SUPPORTED_INSPECTION_SURFACES)
     assert active.SUPPORTED_ENGINE_METHODS == parent.SUPPORTED_ENGINE_METHODS
 
+    # Quantity owns the immutable 0.32.16 adoption layer; a later additive
+    # root may supersede only the top-level adoption version, never Quantity's
+    # qualified semantics or engine identity.
+    root_contract = aasm.public_api_contract()
+    assert root_contract["engineering_quantity"] == active.PUBLIC_API_CONTRACT["engineering_quantity"]
+    assert set(active.SUPPORTED_PUBLIC_IMPORTS).issubset(aasm.SUPPORTED_PUBLIC_IMPORTS)
+    assert set(active.SUPPORTED_INSPECTION_SURFACES).issubset(aasm.SUPPORTED_INSPECTION_SURFACES)
+    assert aasm.SUPPORTED_ENGINE_METHODS == active.SUPPORTED_ENGINE_METHODS
+
 
 def test_quantity_public_adoption_exports_exact_quantity_contract_and_firewalls():
-    contract = aasm.public_api_contract()["engineering_quantity"]
+    contract = active.public_api_contract()["engineering_quantity"]
+    root_contract = aasm.public_api_contract()["engineering_quantity"]
+    assert root_contract == contract
     assert contract["contract_id"] == "aasm.quantity.v1"
     assert contract["contract_version"] == "0.1.0"
     assert contract["numeric_identity"] == "EXACT_INTEGER_RATIONAL_OR_CANONICAL_DECIMAL_NO_BINARY_FLOAT"
@@ -51,24 +61,26 @@ def test_quantity_public_adoption_exports_exact_quantity_contract_and_firewalls(
 
 
 def test_quantity_public_adoption_exposes_real_exact_value_types_without_engine_state():
-    length = aasm.DimensionVector({"length": 1})
-    cm_to_m = aasm.UnitBinding(
+    length = active.DimensionVector({"length": 1})
+    cm_to_m = active.UnitBinding(
         "cm",
         "m",
-        aasm.ExactNumber.rational(1, 100),
-        aasm.ExactNumber.integer(0),
+        active.ExactNumber.rational(1, 100),
+        active.ExactNumber.integer(0),
     )
-    item = aasm.Quantity(
+    item = active.Quantity(
         "DECIMAL",
-        aasm.ExactNumber.decimal("250.0"),
+        active.ExactNumber.decimal("250.0"),
         length,
         cm_to_m,
-        tolerance=aasm.ToleranceSpec("ABSOLUTE", aasm.ExactNumber.decimal("0.5")),
+        tolerance=active.ToleranceSpec("ABSOLUTE", active.ExactNumber.decimal("0.5")),
     )
     assert item.canonical_value.as_fraction == Fraction(5, 2)
     assert item.canonical_tolerance.magnitude.as_fraction == Fraction(1, 200)
+    assert active.Quantity.from_dict(item.to_dict()).fingerprint == item.fingerprint
     assert aasm.Quantity.from_dict(item.to_dict()).fingerprint == item.fingerprint
     assert "engineering-quantity" in active.SUPPORTED_INSPECTION_SURFACES
+    assert "engineering-quantity" in aasm.SUPPORTED_INSPECTION_SURFACES
     assert not any(name.startswith("quantity_") for name in active.SUPPORTED_ENGINE_METHODS)
 
 
@@ -77,13 +89,16 @@ def test_quantity_public_adoption_does_not_reinterpret_live_solver_or_effect_cap
 
     interval = NumericInterval(1.25, 2.5)
     assert interval.to_dict() == {"minimum": 1.25, "maximum": 2.5}
-    assert aasm.PUBLIC_API_CONTRACT["engineering_quantity"]["legacy_solver_numeric_tolerance"] == "UNCHANGED_NOT_REINTERPRETED_BY_QUANTITY_FOUNDATION"
-    assert aasm.PUBLIC_API_CONTRACT["engineering_quantity"]["legacy_effect_capability_numeric_bounds"] == "UNCHANGED_NOT_REINTERPRETED_BY_QUANTITY_FOUNDATION"
+    assert active.PUBLIC_API_CONTRACT["engineering_quantity"]["legacy_solver_numeric_tolerance"] == "UNCHANGED_NOT_REINTERPRETED_BY_QUANTITY_FOUNDATION"
+    assert active.PUBLIC_API_CONTRACT["engineering_quantity"]["legacy_effect_capability_numeric_bounds"] == "UNCHANGED_NOT_REINTERPRETED_BY_QUANTITY_FOUNDATION"
+    assert aasm.PUBLIC_API_CONTRACT["engineering_quantity"] == active.PUBLIC_API_CONTRACT["engineering_quantity"]
 
 
 def test_quantity_public_adoption_does_not_add_engine_methods_or_runtime_state():
     assert aasm.AASMEngine is active.AASMEngine
     assert active.SUPPORTED_ENGINE_METHODS == parent.SUPPORTED_ENGINE_METHODS
-    contract = aasm.PUBLIC_API_CONTRACT["engineering_quantity"]
+    assert aasm.SUPPORTED_ENGINE_METHODS == active.SUPPORTED_ENGINE_METHODS
+    contract = active.PUBLIC_API_CONTRACT["engineering_quantity"]
     assert contract["engine_state_integration"] == "NONE_SEMANTIC_VALUE_FOUNDATION_ONLY"
     assert contract["runtime_admission"] == "PRE_ADMISSION_ONLY"
+    assert aasm.PUBLIC_API_CONTRACT["engineering_quantity"] == contract
