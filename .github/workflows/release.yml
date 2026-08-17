@@ -126,6 +126,8 @@ jobs:
             aasm/physical-preemption-recovery \
             aasm/physical-effect-integration \
             aasm/identity-calibration-trust \
+            aasm/execution-environment \
+            aasm/observation-epistemics \
             aasm/physical-evidence; do
             state=""
             for _ in $(seq 1 90); do
