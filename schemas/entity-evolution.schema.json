@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/entity-evolution.schema.json",
+  "title": "AASM Entity Evolution",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evolution_id",
+    "contract_id",
+    "contract_version",
+    "relation",
+    "predecessors",
+    "successors",
+    "evidence_ids",
+    "reason",
+    "refinement_run_id",
+    "metadata",
+    "fingerprint"
+  ],
+  "properties": {
+    "evolution_id": {"type": "string", "pattern": "^entity-evolution-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.entity.evolution.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "relation": {
+      "enum": ["UNCHANGED", "MODIFIED", "GENERATED", "SPLIT", "MERGED", "REPLACED", "DELETED", "AMBIGUOUS"]
+    },
+    "predecessors": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/entityRepresentationRef"}
+    },
+    "successors": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/entityRepresentationRef"}
+    },
+    "evidence_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "reason": {"type": "string"},
+    "refinement_run_id": {"type": "string"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "entityRepresentationRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entity_id",
+        "artifact_revision_id",
+        "artifact_revision_fingerprint",
+        "representation_id",
+        "representation_fingerprint",
+        "entity_kind",
+        "metadata",
+        "fingerprint"
+      ],
+      "properties": {
+        "entity_id": {"type": "string", "minLength": 1},
+        "artifact_revision_id": {"type": "string", "pattern": "^artifact-revision-[0-9a-f]{24}$"},
+        "artifact_revision_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "representation_id": {"type": "string", "minLength": 1},
+        "representation_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "entity_kind": {"type": "string"},
+        "metadata": {"type": "object"},
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"relation": {"const": "GENERATED"}}},
+      "then": {
+        "properties": {
+          "predecessors": {"maxItems": 0},
+          "successors": {"minItems": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"relation": {"const": "DELETED"}}},
+      "then": {
+        "properties": {
+          "predecessors": {"minItems": 1},
+          "successors": {"maxItems": 0}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"relation": {"const": "SPLIT"}}},
+      "then": {
+        "properties": {
+          "predecessors": {"minItems": 1, "maxItems": 1},
+          "successors": {"minItems": 2}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"relation": {"const": "MERGED"}}},
+      "then": {
+        "properties": {
+          "predecessors": {"minItems": 2},
+          "successors": {"minItems": 1, "maxItems": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"relation": {"enum": ["UNCHANGED", "MODIFIED", "REPLACED"]}}},
+      "then": {
+        "properties": {
+          "predecessors": {"minItems": 1, "maxItems": 1},
+          "successors": {"minItems": 1, "maxItems": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"relation": {"const": "AMBIGUOUS"}}},
+      "then": {
+        "properties": {
+          "predecessors": {"minItems": 1},
+          "successors": {"minItems": 1}
+        }
+      }
+    }
+  ]
+}
