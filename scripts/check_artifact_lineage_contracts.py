@@ -35,11 +35,14 @@ def main() -> int:
 
     require(model, [
         'ARTIFACT_REVISION_CONTRACT_ID = "aasm.artifact.revision.v1"',
-        'ARTIFACT_REVISION_CONTRACT_VERSION = "0.2.0"',
+        'ARTIFACT_REVISION_CONTRACT_VERSION = "0.3.0"',
         '"revision_identity": "BACKEND_INDEPENDENT_CONTENT_HASH_SEMANTIC_HASH_AND_PROVENANCE_BOUND"',
+        '"parent_identity": "EXACT_PARENT_REVISION_ID_AND_FINGERPRINT_BINDINGS"',
+        '"revision_relation": "EXPLICIT_NOT_INFERRED_FROM_RECENCY"',
         '"storage_binding_identity": "SEPARATE_FROM_REVISION_IDENTITY_AND_INTEGRITY_FINGERPRINTED"',
         '"content_storage": "EXISTING_AASM_ARTIFACT_BACKENDS_OR_EXTERNAL_REFERENCE"',
         '"artifact_ref": "NON_SEMANTIC_OPAQUE_STORAGE_BINDING_WITH_DIGEST_CHECK_WHEN_DECODABLE"',
+        '"execution_environment": "EXACT_ID_AND_FINGERPRINT_WHEN_PRESENT"',
         '"authority": "NONE_GRANTED_BY_ARTIFACT_REVISION"',
         '"truth_authority": "EXISTING_AASM_ADMISSION_PATH_ONLY"',
         '"artifact_acceptance": "NOT_DEFINED_BY_FOUNDATION_CONTRACT"',
@@ -50,6 +53,11 @@ def main() -> int:
         '"parallel_truth_table": "NONE"',
         '"parallel_authority_evaluator": "NONE"',
         '"runtime_admission": "PRE_ADMISSION_ONLY"',
+        "parent_revision_fingerprints",
+        "revision_relation",
+        "environment_id",
+        "environment_fingerprint",
+        "refinement_run_id",
         "storage_binding_fingerprint",
         "ExternalReference",
         "semantic_fingerprint",
@@ -61,8 +69,11 @@ def main() -> int:
         "revision_identity_is_backend_independent_but_storage_binding_is_not",
         "rejects_content_ref_digest_mismatch",
         "rejects_forged_revision_semantic_and_storage_fingerprints",
-        "requires_exact_id_and_fingerprint_pair",
-        "requires_exact_parent_set_and_stable_logical_identity",
+        "require_exact_pairs",
+        "requires_exact_parent_id_fingerprint_and_stable_logical_identity",
+        "revision_relation_is_explicit_and_merge_requires_complete_multiple_parent_set",
+        "competing_children_are_distinct_legal_branches_not_implicit_authority",
+        "duplicate_content_with_different_provenance_produces_distinct_revision_identity",
         "denies_truth_acceptance_and_parallel_registry",
     ])
 
@@ -109,8 +120,13 @@ def main() -> int:
         "logical_artifact_id",
         "content_sha256",
         "semantic_projection_sha256",
+        "parent_revision_ids",
+        "parent_revision_fingerprints",
+        "revision_relation",
         "producer_id",
         "format_id",
+        "environment_id",
+        "environment_fingerprint",
         "evidence_ids",
         "fingerprint",
         "storage_binding_fingerprint",
@@ -124,6 +140,10 @@ def main() -> int:
     contract = artifact_lineage_contract()
     if not contract["revision_identity"].startswith("BACKEND_INDEPENDENT"):
         fail("artifact revision identity remains backend-dependent", model)
+    if contract["parent_identity"] != "EXACT_PARENT_REVISION_ID_AND_FINGERPRINT_BINDINGS":
+        fail("artifact revision does not bind exact predecessor fingerprints", model)
+    if contract["revision_relation"] != "EXPLICIT_NOT_INFERRED_FROM_RECENCY":
+        fail("artifact revision relation remains implicit", model)
     if contract["authority"] != "NONE_GRANTED_BY_ARTIFACT_REVISION":
         fail("artifact revision acquired authority semantics", model)
     if contract["truth_authority"] != "EXISTING_AASM_ADMISSION_PATH_ONLY":
