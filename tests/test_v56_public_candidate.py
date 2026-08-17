@@ -14,7 +14,7 @@ def test_v56_base_is_frozen_and_active_overlay_advances_adoption_only():
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.12"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.13"
     assert aasm.AASMEngine is public_active.AASMEngine
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v56.AASMEngine is not public_v55.AASMEngine
@@ -53,6 +53,10 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_reality_
         "source_trust_report", "source_trust_assertions_report",
         "execution_environment_contract_report", "record_execution_environment", "bind_machine_observation_environment",
         "execution_environment_report", "execution_environment_binding_report", "execution_environments_report",
+        "observation_processing_contract_report", "observation_lifecycle_contract_report", "observation_fusion_contract_report",
+        "record_observation_lifecycle", "record_observation_fusion", "record_observation_disposition",
+        "observation_lifecycle_record_report", "observation_fusion_record_report", "observation_disposition_report",
+        "observation_processing_report",
     ):
         assert callable(getattr(aasm.AASMEngine, method)), method
         assert method in aasm.SUPPORTED_ENGINE_METHODS
@@ -60,7 +64,7 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_reality_
 
 def test_active_contract_preserves_external_reality_physical_control_and_s3_firewalls():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] == "0.32.12"
+    assert contract["contract_version"] == "0.32.13"
 
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -237,6 +241,37 @@ def test_active_contract_preserves_external_reality_physical_control_and_s3_fire
     assert environment_runtime["parallel_truth_table"] == "NONE"
     assert environment_runtime["parallel_authority_evaluator"] == "NONE"
 
+    processing = contract["observation_processing"]
+    assert processing["empirical_root"] == "EXISTING_MACHINE_STATE_OBSERVATION_ONLY"
+    assert processing["stage_progression"] == "VALIDATED_AT_RUNTIME_NO_SILENT_STAGE_SKIPS"
+    assert processing["raw_value"] == "MUST_EQUAL_EXACT_SOURCE_STATE_CLAIM_PORTABLE_VALUE"
+    assert processing["current_observation_pointer"] == "NONE"
+    assert processing["lifecycle_record_grants_fact_authority"] is False
+    assert processing["lifecycle_record_grants_effect_authority"] is False
+    assert processing["lifecycle_record_elevates_observation_authority"] is False
+    assert processing["validated_stage_is_universal_admission"] is False
+    assert processing["parallel_observation_store"] == "NONE_EVIDENCE_PROJECTION_ONLY"
+    assert processing["parallel_truth_table"] == "NONE"
+    fusion = processing["fusion"]
+    assert fusion["source_minimum"] == 2
+    assert fusion["direct_machine_observation_source"] == "FORBIDDEN_USE_RAW_LIFECYCLE_ROOT_FIRST"
+    assert fusion["agreement_semantics"] == "CORROBORATION_ONLY_NEVER_AUTHORITY_OR_TRUTH_BY_VOTE"
+    assert fusion["declared_independence_grants_authority"] is False
+    assert fusion["validated_by_agreement"] is False
+    processing_runtime = processing["runtime"]
+    assert processing_runtime["authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORDING_NOT_OBSERVATION_TRUTH"
+    assert processing_runtime["empirical_root"] == "EXISTING_MACHINE_STATE_OBSERVATION_ONLY"
+    assert processing_runtime["disposed_source_reuse"] == "FAIL_CLOSED_FOR_NEW_LIFECYCLE_OR_FUSION_RECORDS"
+    assert processing_runtime["fact_authority_creation"] == "NONE"
+    assert processing_runtime["effect_authority"] == "NONE"
+    assert processing_runtime["source_trust_creation"] == "NONE"
+    assert processing_runtime["state_claim_creation"] == "NONE"
+    assert processing_runtime["source_observation_mutation"] == "NONE"
+    assert processing_runtime["current_observation_pointer"] == "NONE"
+    assert processing_runtime["parallel_observation_store"] == "NONE_EVIDENCE_PROJECTION_ONLY"
+    assert processing_runtime["parallel_truth_table"] == "NONE"
+    assert processing_runtime["parallel_authority_evaluator"] == "NONE"
+
 
 def test_active_import_registry_contains_pr3_and_s3_reality_contracts():
     for name in (
@@ -259,6 +294,9 @@ def test_active_import_registry_contains_pr3_and_s3_reality_contracts():
         "SourceTrustAssertion", "SourceTrustRevocation", "source_trust_contract", "source_trust_runtime_contract", "SOURCE_TRUST_CAPABILITIES",
         "ExecutionEnvironment", "EnvironmentEvidenceBinding", "environment_level_accepted", "execution_environment_contract",
         "execution_environment_runtime_contract", "EXECUTION_ENVIRONMENT_CAPABILITIES",
+        "ObservationSourceRef", "ObservationLifecycleRecord", "ObservationDisposition", "observation_lifecycle_contract",
+        "ObservationFusionRecord", "observation_fusion_contract",
+        "observation_processing_runtime_contract", "OBSERVATION_PROCESSING_CAPABILITIES",
     ):
         assert hasattr(aasm, name), name
         assert name in aasm.SUPPORTED_PUBLIC_IMPORTS
