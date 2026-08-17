@@ -4,8 +4,8 @@
 **Repository:** `halthinks/AASM`  
 **Latest immutable release:** `v0.56.0`  
 **Current development package:** `0.56.1`  
-**Current adoption contract:** `aasm.adoption.v1 / 0.32.16`  
-**Current exact qualified code boundary before documentation-only synchronization:** `263640a634da0e92bb1ae0b42cb55063e0b64552` — all 28 current custom qualification contexts green  
+**Current adoption contract:** `aasm.adoption.v1 / 0.32.17`  
+**Current exact qualified code boundary before documentation-only synchronization:** `7c808fc504fa91edb8fe9af13f12568b745f9762` — all 29 current custom qualification contexts green  
 **Status:** single canonical execution roadmap for governed semantic evolution, TextPCB compatibility, physical/distributed control, portable machine semantics, Rust `std`, and Rust `no_std`
 
 Companion architecture:
@@ -234,7 +234,31 @@ legacy aasm.numeric.tolerance.v1 = UNCHANGED
 legacy EffectCapability NumericInterval = UNCHANGED
 ```
 
-Exact qualified code boundary before documentation-only synchronization: `263640a634da0e92bb1ae0b42cb55063e0b64552`, adoption `0.32.16`, all 28 current custom qualification contexts green.
+### S4 engineering Rule applicability/precedence semantic foundation
+
+Qualified public semantic contract:
+
+- `aasm.rule.v1`
+
+The foundation supports stable rule revision identity, exact clause/source-authority/external-reference binding, explicit scope and subject selectors, exact problem/external revision applicability, portable tri-state applicability, `HARD_FLOOR | HARD | POLICY | PREFERENCE | ADVISORY` strengths, explicit precedence group/specificity/priority, severity, structural waiver/override eligibility, canonical serialization and deterministic fingerprints.
+
+The public/runtime and authority boundary is explicit:
+
+```text
+public semantic admission = QUALIFIED
+runtime engine-state admission = PRE_ADMISSION_ONLY
+parallel rule registry = NONE
+current rule pointer = NONE
+parallel constraint engine = NONE
+parallel authority evaluator = NONE
+rule existence grants fact/effect/source authority = false
+precedence authorizes override = false
+rule-to-LearnedConstraint lowering = NONE
+```
+
+Rule precedence is not objective priority. `HARD_FLOOR` cannot be waived or overridden by the Rule model. Structural waiver/override eligibility never replaces the existing scoped-authority system. The source Rule strength vocabulary remains distinct from the existing formal-calculus `LearnedConstraint(HARD|SOFT)` vocabulary.
+
+Exact qualified code boundary before documentation-only synchronization: `7c808fc504fa91edb8fe9af13f12568b745f9762`, adoption `0.32.17`, all 29 current custom qualification contexts green.
 
 ---
 
@@ -261,8 +285,9 @@ RELEASED/GATED BASE
   v
 S4 ENGINEERING + SAFETY SEMANTICS -------------------------- ACTIVE
   quantity/unit/tolerance semantic foundation -------------- DONE
-  rule applicability/precedence ----------------------------- NEXT
-  projection/equivalence + uncertainty/scenarios/trace
+  rule applicability/precedence ----------------------------- DONE
+  semantic projection/equivalence -------------------------- NEXT
+  uncertainty/scenarios/trace
   degraded operation + risk + irreversibility + obligation phases
   safety/hybrid state + epistemic debt + manual override
   |\
@@ -531,7 +556,7 @@ Every S3 object must define canonical field types, ordering, identity payload, e
 
 # 8. S4 — Engineering Semantics, Safety, Risk and Uncertainty
 
-**Status: ACTIVE.** The first semantic seam, Quantity, is qualified; Rule is next.
+**Status: ACTIVE.** Quantity and Rule are qualified public semantic foundations; Semantic Projection/Equivalence is next.
 
 ## 8.1 Quantity/unit/tolerance semantics
 
@@ -570,35 +595,39 @@ Quantity grants no FactAuthority, physical/external state authority, EffectAutho
 
 ## 8.2 Rule applicability and precedence
 
-**Status: NEXT.**
+**Status: GATED under `aasm/engineering-rule`; public semantic IR, runtime engine-state admission remains `PRE_ADMISSION_ONLY`.**
 
-Target: `aasm.rule.v1`.
+Contract: `aasm.rule.v1`.
 
 Strength classes:
 
 `HARD_FLOOR | HARD | POLICY | PREFERENCE | ADVISORY`
 
-Bind:
+Qualified bindings:
 
-- stable rule identity and source/external references;
-- explicit applicability context/predicate;
-- scope selector;
+- stable rule revision identity and exact source/external references;
+- exact clause identity/fingerprint;
+- explicit applicability context/predicate with portable tri-state result;
+- workspace/scope/subject selector;
 - priority;
 - specificity;
-- waiver/override policy;
+- precedence group;
+- explicit waiver/override structural policy;
 - severity;
-- source authority;
+- exact existing scoped-authority grant reference for source authority;
 - exact problem/external revision applicability.
 
-Rule precedence is not objective priority. A lower objective score cannot override a hard floor.
+Rule precedence is not objective priority. A lower objective score cannot override a hard floor. Precedence does not authorize override, and structural waiver/override eligibility does not perform authorization.
 
-**Critical substrate rule:** AASM already has conflict-learning `LearnedConstraint` objects with `HARD | SOFT` strength in the formal execution calculus. `aasm.rule.v1` must not redefine or alias that vocabulary. Source engineering rules and learned constraints are different semantic objects. Any rule-to-constraint lowering/admission must be explicit, versioned, provenance-preserving, independently checkable, and fail closed when semantics cannot be preserved.
+**Critical substrate rule:** AASM already has conflict-learning `LearnedConstraint` objects with `HARD | SOFT` strength in the formal execution calculus. `aasm.rule.v1` does not redefine or alias that vocabulary. Source engineering rules and learned constraints are different semantic objects. There is no implicit rule-to-constraint lowering; any future lowering/admission must be explicit, versioned, provenance-preserving, independently checkable, and fail closed when semantics cannot be preserved.
 
-The first Rule implementation remains pre-admission until a dedicated `aasm/engineering-rule` gate proves scope/revision/applicability, precedence, waiver/override, source-authority, portability, and no-parallel-rule-engine invariants.
+The dedicated `aasm/engineering-rule` gate proves scope/revision/applicability, precedence, HARD_FLOOR waiver/override containment, source-authority reference semantics, portability, public additive inheritance, learned-constraint separation, and no-parallel-rule-engine/authority invariants.
 
 ## 8.3 Semantic projection/equivalence
 
-One explicit equivalence/projection contract is used for:
+**Status: NEXT.**
+
+One explicit equivalence/projection contract must be shared by:
 
 - solution pools/top-K/diversity;
 - cache/reuse;
@@ -607,6 +636,18 @@ One explicit equivalence/projection contract is used for:
 - TextPCB alternative design identity.
 
 No implicit “same enough.”
+
+The contract must distinguish:
+
+- exact identity;
+- equivalence under a named/versioned projection;
+- non-equivalence under that projection;
+- indeterminate/unsupported comparison;
+- exact versus declared-lossy projection.
+
+A projection must state what semantic information it preserves and what it drops. Projection/equivalence must never mint truth, FactAuthority, effect authority, artifact acceptance, entity identity authority, Rule authority, solver proof, or objective preference by itself. Revision/applicability identity remains explicit. Cross-runtime canonical representation must be feasible for Python/Rust differential vectors.
+
+Before public admission, reconcile existing narrow projection/fingerprint mechanisms rather than creating a second cache, truth, artifact, solver, or alternative-identity plane.
 
 ## 8.4 Uncertainty/scenarios/trace properties
 
@@ -682,10 +723,12 @@ Introduce `aasm.invariant.v1` classification early enough that each new engineer
 
 `REPRESENTATIONAL | STATIC_PROTOCOL | DYNAMIC_KERNEL | EMPIRICAL`.
 
+This classification is now an immediate design dependency for Semantic Projection/Equivalence: a projection may show representational or declared semantic equivalence under its contract, but it must never pretend that representational equality proves an empirical fact or that a static projection has discharged a dynamic authority/evidence obligation.
+
 This prevents later Rust typestate from pretending to prove empirical facts and prevents statically knowable illegal configurations from remaining unstructured runtime conditionals.
 
-**Current gate:** `aasm/engineering-quantity` — GATED.  
-**Next dedicated gate:** `aasm/engineering-rule`.  
+**Current gates:** `aasm/engineering-quantity`, `aasm/engineering-rule` — GATED.  
+**Next seam:** S4.3 Semantic Projection/Equivalence.  
 **Future aggregate gates:** `aasm/engineering-semantics`, `aasm/safety-governance`.
 
 ---
@@ -1089,6 +1132,7 @@ Include at minimum:
 - disposed/stale/disputed observation reuse;
 - artifact tampering;
 - quantity/rule attacks;
+- projection/equivalence laundering or undeclared semantic loss;
 - refinement self-authorization/no-progress/oscillation;
 - scarcity attempting to weaken hard evidence;
 - manual override without authority;
@@ -1147,17 +1191,18 @@ TextPCB may pressure contract design through realistic cases, but:
 
 # 18. Immediate builder queue
 
-1. **Implement a pre-admission `aasm.rule.v1` foundation** with stable rule identity, external/source references, explicit applicability context, scope selector, priority, specificity, `HARD_FLOOR | HARD | POLICY | PREFERENCE | ADVISORY`, waiver/override policy, severity, source authority, and exact problem/external revision applicability.
-2. Preserve the existing calculus `LearnedConstraint(strength=HARD|SOFT)` unchanged. Rule strength is source engineering/policy semantics, not learned-constraint strength; any lowering between them must be explicit, versioned, provenance-preserving, independently checkable, and fail closed.
-3. Add strict portable Rule schema, deterministic fingerprinting, adversarial scope/revision/applicability/precedence/waiver/source-authority fixtures, a source firewall, and an independent `aasm/engineering-rule` gate before public/runtime admission.
-4. Keep `aasm.quantity.v1` public but runtime-pre-admission while future Quantity integration is designed explicitly. Do not replace/reinterpret `aasm.numeric.tolerance.v1`, `EffectCapability.NumericInterval`, postcondition semantics, or solver/provider tolerance behavior implicitly.
-5. Continue S4 projection/equivalence, uncertainty/scenarios/trace properties, degraded operation, risk/irreversibility, obligation phases, safety/hybrid state, epistemic debt, and manual override after Rule qualifies.
-6. Add TextPCB-derived rule/waiver/revision fixtures only as conformance pressure; TextPCB rule/domain classes remain outside the kernel.
-7. Continue applying cross-cutting portable identity/serialization discipline to every S4 object so future Rust does not require contract redesign.
-8. Build S5 RefinementLoop/Experiment/VerificationPlan/KnowledgeApplication on existing Evidence/ProblemDelta/authority/resource/dependency planes.
-9. Freeze S6 machine IR/kernel/wire semantics and Python reference vectors.
-10. Implement S7 Rust `std` only against the frozen portable target; then S8 `no_std`/real-time/executor traits.
-11. Complete TextPCB + embedded qualification, readiness and permanent stress corpus.
+1. **Reconcile the existing projection/equivalence substrate before adding a new generic contract.** Inspect solution pools/top-K/diversity, cache/reuse, solver/formulation comparison, artifact semantic projections, decision vectors, semantic evolution and any public equality/fingerprint helpers. Do not create a second semantic-identity plane.
+2. Define the S4.3 generic contract so exact identity, equivalence-under-projection, non-equivalence, indeterminate/unsupported comparison and declared lossy projection remain distinct.
+3. Make preservation/loss explicit: a projection cannot silently discard hard requirements, authority/revision identity, proof/evidence requirements, or other semantics and still claim exact equivalence.
+4. Introduce `aasm.invariant.v1` classification pressure during this S4 seam so projection/equivalence explicitly distinguishes `REPRESENTATIONAL | STATIC_PROTOCOL | DYNAMIC_KERNEL | EMPIRICAL` claims before later Rust typestate work.
+5. Add strict portable schema, canonical serialization/fingerprints, TextPCB-derived alternative/artifact fixtures, and adversarial projection-loss/type/revision/fingerprint attacks under a dedicated pre-admission gate before public exposure.
+6. Preserve `aasm.rule.v1` as qualified public semantic IR but runtime-pre-admission: no rule registry, authority evaluator, automatic waiver/override, or implicit `LearnedConstraint` lowering.
+7. Preserve `aasm.quantity.v1` as qualified public semantic IR but runtime-pre-admission: no silent replacement of `aasm.numeric.tolerance.v1`, `EffectCapability.NumericInterval`, postcondition or solver semantics.
+8. Continue S4 uncertainty/scenarios/trace properties, degraded operation, risk/irreversibility, obligation phases, safety/hybrid state, epistemic debt and manual override after projection/equivalence qualifies.
+9. Build S5 RefinementLoop/Experiment/VerificationPlan/KnowledgeApplication on existing Evidence/ProblemDelta/authority/resource/dependency planes.
+10. Freeze S6 machine IR/kernel/wire semantics and Python reference vectors.
+11. Implement S7 Rust `std` only against the frozen portable target; then S8 `no_std`/real-time/executor traits.
+12. Complete TextPCB + embedded qualification, readiness and permanent stress corpus.
 
 ---
 
