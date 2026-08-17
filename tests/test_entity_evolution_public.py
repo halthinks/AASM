@@ -86,8 +86,11 @@ def test_entity_public_adoption_remains_inherited_after_later_additive_promotion
     report = aasm.validate_public_api_contract()
     assert report["valid"], report
     assert candidate.PUBLIC_API_CONTRACT["contract_version"] == "0.32.15"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.16"
     assert "entity_evolution" in aasm.PUBLIC_API_CONTRACT
+    assert aasm.PUBLIC_API_CONTRACT["entity_evolution"] == candidate.PUBLIC_API_CONTRACT["entity_evolution"]
+    assert set(candidate.SUPPORTED_ENGINE_METHODS).issubset(aasm.SUPPORTED_ENGINE_METHODS)
+    assert set(candidate.SUPPORTED_PUBLIC_IMPORTS).issubset(aasm.SUPPORTED_PUBLIC_IMPORTS)
+    assert set(candidate.SUPPORTED_INSPECTION_SURFACES).issubset(aasm.SUPPORTED_INSPECTION_SURFACES)
     assert aasm.AASMEngine is candidate.AASMEngine
     assert aasm.ENTITY_EVOLUTION_CONTRACT_ID == candidate.ENTITY_EVOLUTION_CONTRACT_ID
     assert aasm.ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID == candidate.ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID
