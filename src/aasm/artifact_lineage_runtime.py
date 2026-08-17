@@ -20,14 +20,21 @@ from .semantic_result import canonical_semantic_json, semantic_fingerprint
 ARTIFACT_LINEAGE_RUNTIME_CONTRACT_ID = "aasm.artifact-lineage.runtime.v1"
 ARTIFACT_LINEAGE_RUNTIME_CONTRACT_VERSION = "0.1.0"
 ARTIFACT_LINEAGE_RUNTIME_STABILITY = "FOUNDATION_EXPERIMENTAL"
-ARTIFACT_LINEAGE_CAPABILITIES = {
-    "revision_record": "artifact.revision.record",
-}
+ARTIFACT_LINEAGE_CAPABILITIES = {"revision_record": "artifact.revision.record"}
 
 _ARTIFACT_LINEAGE_RECORD_TYPE = "aasm_artifact_lineage_record_type"
 _ARTIFACT_LINEAGE_DOCUMENT = "document"
 _ARTIFACT_REVISION_RECORD = "ARTIFACT_REVISION"
 _ARTIFACT_STORAGE_BINDING_RECORD = "ARTIFACT_STORAGE_BINDING"
+_FIREWALL_METADATA = {
+    "fact_authority_creation": "NONE",
+    "source_trust_creation": "NONE",
+    "effect_authorization": "NONE",
+    "effect_dispatch": "NONE",
+    "state_claim_creation": "NONE",
+    "artifact_acceptance": "NONE",
+    "current_artifact_pointer": "NONE",
+}
 
 
 def artifact_lineage_runtime_contract() -> dict[str, Any]:
@@ -43,6 +50,8 @@ def artifact_lineage_runtime_contract() -> dict[str, Any]:
         "semantic_projection_verification": "SHA256_OVER_EXPLICIT_CANONICAL_PROJECTION_BYTES",
         "source_problem_revision": "EXACT_DURABLE_ID_AND_FINGERPRINT_REQUIRED_WHEN_REFERENCED",
         "parent_revision": "EXACT_DURABLE_ID_AND_FINGERPRINT_REQUIRED",
+        "evidence_envelope": "DETERMINISTIC_ID_OBJECT_ID_OBJECT_FINGERPRINT_AND_CANONICAL_STATEMENT",
+        "scope_binding": "WORKSPACE_AND_SCOPE_BOUND_TO_DURABLE_REVISION_RECORD",
         "storage_rebinding": "APPEND_ONLY_EVIDENCE_BINDING_NOT_REVISION_MUTATION",
         "branching": "EXPLICIT_AND_LEGAL",
         "heads": "QUERY_PROJECTION_ONLY_NOT_ACCEPTANCE_OR_AUTHORITY",
@@ -74,6 +83,44 @@ def _document(row: Mapping[str, Any]) -> dict[str, Any]:
     raise ValueError("artifact-lineage Evidence is missing canonical document")
 
 
+def _expected_evidence_id(record_type: str, object_id: str, document: Mapping[str, Any]) -> str:
+    identity = {
+        "record_type": str(record_type),
+        "object_id": str(object_id),
+        "document": deepcopy(dict(document)),
+    }
+    return f"artifact-lineage-evidence-{semantic_fingerprint(identity)[:24]}"
+
+
+def _require_evidence_envelope(
+    row: Mapping[str, Any],
+    *,
+    record_type: str,
+    object_id: str,
+    object_fingerprint: str,
+    document: Mapping[str, Any],
+) -> None:
+    metadata = dict(row.get("metadata") or {})
+    if str(row.get("kind") or "") != "artifact_lineage":
+        raise ValueError("artifact-lineage Evidence kind mismatch")
+    if str(row.get("source") or "") != ARTIFACT_REVISION_CONTRACT_ID:
+        raise ValueError("artifact-lineage Evidence source contract mismatch")
+    if metadata.get(_ARTIFACT_LINEAGE_RECORD_TYPE) != record_type:
+        raise ValueError("artifact-lineage Evidence record type mismatch")
+    if metadata.get("object_id") != object_id:
+        raise ValueError(f"artifact-lineage metadata object_id mismatch: {object_id}")
+    if metadata.get("object_fingerprint") != object_fingerprint:
+        raise ValueError(f"artifact-lineage metadata fingerprint mismatch: {object_id}")
+    for key, expected in _FIREWALL_METADATA.items():
+        if metadata.get(key) != expected:
+            raise ValueError(f"artifact-lineage source firewall metadata mismatch: {key}")
+    expected_id = _expected_evidence_id(record_type, object_id, document)
+    if str(row.get("evidence_id") or "") != expected_id:
+        raise ValueError(f"artifact-lineage deterministic Evidence ID mismatch: {object_id}")
+    if str(row.get("statement") or "") != canonical_semantic_json(dict(document)):
+        raise ValueError(f"artifact-lineage canonical statement mismatch: {object_id}")
+
+
 def _storage_binding_document(item: ArtifactRevision) -> dict[str, Any]:
     return {
         "revision_id": item.revision_id,
@@ -85,8 +132,7 @@ def _storage_binding_document(item: ArtifactRevision) -> dict[str, Any]:
 
 
 def _validate_storage_binding_document(
-    document: Mapping[str, Any],
-    revision: ArtifactRevision,
+    document: Mapping[str, Any], revision: ArtifactRevision
 ) -> dict[str, Any]:
     payload = deepcopy(dict(document))
     required = {
@@ -135,6 +181,13 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
             document = _document(row)
             if record_type == _ARTIFACT_REVISION_RECORD:
                 item = ArtifactRevision.from_dict(document)
+                _require_evidence_envelope(
+                    row,
+                    record_type=record_type,
+                    object_id=item.revision_id,
+                    object_fingerprint=item.fingerprint,
+                    document=document,
+                )
                 candidate = {
                     "revision": item.to_dict(),
                     "evidence_id": evidence_id,
@@ -143,6 +196,8 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
                     "scope_id": str(metadata.get("scope_id") or ""),
                     "actor_principal_id": str(metadata.get("actor_principal_id") or ""),
                 }
+                if not candidate["workspace_id"] or not candidate["scope_id"]:
+                    raise ValueError("artifact revision Evidence requires workspace_id and scope_id")
                 prior = revisions.get(item.revision_id)
                 if prior is not None:
                     if prior["revision"]["fingerprint"] != item.fingerprint:
@@ -150,18 +205,27 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
                     raise ValueError(
                         f"duplicate artifact revision record; use storage binding for rebinding: {item.revision_id}"
                     )
-                if metadata.get("object_id") != item.revision_id:
-                    raise ValueError(f"artifact-lineage metadata object_id mismatch: {item.revision_id}")
-                if metadata.get("object_fingerprint") != item.fingerprint:
-                    raise ValueError(f"artifact-lineage metadata fingerprint mismatch: {item.revision_id}")
                 revisions[item.revision_id] = candidate
             else:
+                revision_id = str(document.get("revision_id") or "")
+                binding_fingerprint = str(document.get("storage_binding_fingerprint") or "")
+                object_id = f"{revision_id}:{binding_fingerprint}"
+                _require_evidence_envelope(
+                    row,
+                    record_type=record_type,
+                    object_id=object_id,
+                    object_fingerprint=binding_fingerprint,
+                    document=document,
+                )
                 pending_bindings.append(
                     {
                         "index": index,
                         "evidence_id": evidence_id,
                         "evidence_status": evidence_status,
                         "document": document,
+                        "derived_from": tuple(map(str, row.get("derived_from") or ())),
+                        "workspace_id": str(metadata.get("workspace_id") or ""),
+                        "scope_id": str(metadata.get("scope_id") or ""),
                     }
                 )
         except Exception as exc:
@@ -192,9 +256,14 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
     for raw in pending_bindings:
         try:
             revision_id = str(raw["document"].get("revision_id") or "")
-            if revision_id not in revisions:
+            revision_row = revisions.get(revision_id)
+            if revision_row is None:
                 raise ValueError(f"artifact storage binding references unknown revision: {revision_id}")
-            revision = ArtifactRevision.from_dict(revisions[revision_id]["revision"])
+            if raw["workspace_id"] != revision_row["workspace_id"] or raw["scope_id"] != revision_row["scope_id"]:
+                raise ValueError("artifact storage binding workspace/scope mismatch")
+            if revision_row["evidence_id"] not in set(raw["derived_from"]):
+                raise ValueError("artifact storage binding must derive from canonical revision Evidence")
+            revision = ArtifactRevision.from_dict(revision_row["revision"])
             document = _validate_storage_binding_document(raw["document"], revision)
             fingerprint = str(document["storage_binding_fingerprint"])
             prior = next(
@@ -228,18 +297,28 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
 
     graph: dict[str, list[str]] = {}
     children: dict[str, set[str]] = {revision_id: set() for revision_id in revisions}
-    roots_by_artifact: dict[str, list[str]] = {}
+    roots_by_artifact: dict[tuple[str, str, str], list[str]] = {}
     for revision_id, row in revisions.items():
         try:
             item = ArtifactRevision.from_dict(row["revision"])
             graph[revision_id] = list(item.parent_revision_ids)
+            scoped_artifact = (row["workspace_id"], row["scope_id"], item.logical_artifact_id)
             if not item.parent_revision_ids:
-                roots_by_artifact.setdefault(item.logical_artifact_id, []).append(revision_id)
-            parent_rows = []
+                roots_by_artifact.setdefault(scoped_artifact, []).append(revision_id)
+            parent_rows: list[ArtifactRevision] = []
             for parent_id in item.parent_revision_ids:
                 parent_row = revisions.get(parent_id)
                 if parent_row is None:
                     raise ValueError(f"unknown artifact parent revision: {parent_id}")
+                if parent_row["workspace_id"] != row["workspace_id"] or parent_row["scope_id"] != row["scope_id"]:
+                    raise ValueError(f"artifact parent workspace/scope mismatch: {parent_id}")
+                if parent_row["evidence_id"] not in set(
+                    map(str, next(
+                        (raw.get("derived_from") or () for raw in records if str(raw.get("evidence_id") or "") == row["evidence_id"]),
+                        (),
+                    ))
+                ):
+                    raise ValueError(f"artifact revision Evidence missing parent Evidence lineage: {parent_id}")
                 parent = ArtifactRevision.from_dict(parent_row["revision"])
                 if item.parent_revision_fingerprints.get(parent_id) != parent.fingerprint:
                     raise ValueError(f"artifact parent fingerprint mismatch: {parent_id}")
@@ -259,14 +338,14 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
                 }
             )
 
-    for logical_artifact_id, roots in sorted(roots_by_artifact.items()):
+    for scoped_artifact, roots in sorted(roots_by_artifact.items()):
         if len(roots) > 1:
             issues.append(
                 {
                     "index": -1,
                     "evidence_id": "",
                     "record_type": "LINEAGE",
-                    "error": f"ValueError: multiple CREATED roots for logical artifact {logical_artifact_id}: {sorted(roots)}",
+                    "error": f"ValueError: multiple CREATED roots for scoped logical artifact {scoped_artifact}: {sorted(roots)}",
                 }
             )
 
@@ -290,21 +369,17 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
             visit(node)
     except Exception as exc:
         issues.append(
-            {
-                "index": -1,
-                "evidence_id": "",
-                "record_type": "LINEAGE",
-                "error": f"{type(exc).__name__}: {exc}",
-            }
+            {"index": -1, "evidence_id": "", "record_type": "LINEAGE", "error": f"{type(exc).__name__}: {exc}"}
         )
 
     heads_by_artifact: dict[str, list[str]] = {}
     for revision_id, row in revisions.items():
         item = ArtifactRevision.from_dict(row["revision"])
         if not children.get(revision_id):
-            heads_by_artifact.setdefault(item.logical_artifact_id, []).append(revision_id)
-    for logical_artifact_id in list(heads_by_artifact):
-        heads_by_artifact[logical_artifact_id] = sorted(heads_by_artifact[logical_artifact_id])
+            key = f"{row['workspace_id']}::{row['scope_id']}::{item.logical_artifact_id}"
+            heads_by_artifact.setdefault(key, []).append(revision_id)
+    for key in list(heads_by_artifact):
+        heads_by_artifact[key] = sorted(heads_by_artifact[key])
     for revision_id in list(storage_bindings_by_revision):
         storage_bindings_by_revision[revision_id] = sorted(
             storage_bindings_by_revision[revision_id],
@@ -406,20 +481,18 @@ class ArtifactLineageRuntimeMixin:
         reason: str,
     ) -> str:
         payload = deepcopy(dict(document))
-        identity = {"record_type": record_type, "object_id": object_id, "document": payload}
-        evidence_id = f"artifact-lineage-evidence-{semantic_fingerprint(identity)[:24]}"
+        evidence_id = _expected_evidence_id(record_type, object_id, payload)
         lineage = self._require_evidence_ids(tuple(derived_from))
         for row in self.snapshot.evidence.get("records", []):
             if row.get("evidence_id") != evidence_id:
                 continue
-            metadata = row.get("metadata") or {}
-            if (
-                metadata.get(_ARTIFACT_LINEAGE_RECORD_TYPE) != record_type
-                or metadata.get(_ARTIFACT_LINEAGE_DOCUMENT) != payload
-                or metadata.get("object_id") != object_id
-                or metadata.get("object_fingerprint") != object_fingerprint
-            ):
-                raise ValueError(f"artifact-lineage Evidence collision: {evidence_id}")
+            _require_evidence_envelope(
+                row,
+                record_type=record_type,
+                object_id=object_id,
+                object_fingerprint=object_fingerprint,
+                document=payload,
+            )
             return evidence_id
         record = EvidenceRecord(
             kind="artifact_lineage",
@@ -434,21 +507,11 @@ class ArtifactLineageRuntimeMixin:
                 "workspace_id": str(workspace_id),
                 "scope_id": str(scope_id),
                 "actor_principal_id": str(actor_principal_id),
-                "fact_authority_creation": "NONE",
-                "source_trust_creation": "NONE",
-                "effect_authorization": "NONE",
-                "effect_dispatch": "NONE",
-                "state_claim_creation": "NONE",
-                "artifact_acceptance": "NONE",
-                "current_artifact_pointer": "NONE",
+                **_FIREWALL_METADATA,
             },
             evidence_id=evidence_id,
         )
-        self.add_evidence_guarded(
-            record,
-            expected_machine_version=self.snapshot.version,
-            reason=reason,
-        )
+        self.add_evidence_guarded(record, expected_machine_version=self.snapshot.version, reason=reason)
         return evidence_id
 
     def _verify_artifact_payloads(
@@ -472,11 +535,9 @@ class ArtifactLineageRuntimeMixin:
         content_digest = sha256(content).hexdigest()
         if content_digest != item.content_sha256:
             raise ValueError("artifact content SHA-256 mismatch")
-
         if semantic_projection is None:
             raise ValueError("artifact revision recording requires explicit semantic projection bytes")
-        projection_bytes = _payload_bytes(semantic_projection, label="semantic_projection")
-        projection_digest = sha256(projection_bytes).hexdigest()
+        projection_digest = sha256(_payload_bytes(semantic_projection, label="semantic_projection")).hexdigest()
         if projection_digest != item.semantic_projection_sha256:
             raise ValueError("artifact semantic projection SHA-256 mismatch")
         return {
@@ -495,8 +556,7 @@ class ArtifactLineageRuntimeMixin:
             row = report["revisions"][item.source_problem_revision_id]
         except KeyError:
             raise KeyError(f"unknown durable source problem revision: {item.source_problem_revision_id}") from None
-        revision = row["revision"]
-        if revision.get("fingerprint") != item.source_problem_revision_fingerprint:
+        if row["revision"].get("fingerprint") != item.source_problem_revision_fingerprint:
             raise ValueError("artifact source problem revision fingerprint mismatch")
         return deepcopy(row)
 
@@ -504,8 +564,7 @@ class ArtifactLineageRuntimeMixin:
         if not item.environment_id:
             return None
         row = self.execution_environment_report(item.environment_id)
-        environment = row["environment"]
-        if environment.get("fingerprint") != item.environment_fingerprint:
+        if row["environment"].get("fingerprint") != item.environment_fingerprint:
             raise ValueError("artifact execution environment fingerprint mismatch")
         return str(row["evidence_id"])
 
@@ -522,18 +581,16 @@ class ArtifactLineageRuntimeMixin:
         if not item.artifact_ref:
             return None
         projection = self._require_valid_artifact_lineage_projection()
-        existing = projection["storage_bindings_by_revision"].get(item.revision_id, [])
-        for row in existing:
+        for row in projection["storage_bindings_by_revision"].get(item.revision_id, []):
             if row["binding"]["storage_binding_fingerprint"] == item.storage_binding_fingerprint:
                 if row["binding"] != _storage_binding_document(item):
                     raise ValueError("artifact storage binding identity collision")
                 return str(row["evidence_id"])
-        document = _storage_binding_document(item)
         return self._record_artifact_lineage_document(
             record_type=_ARTIFACT_STORAGE_BINDING_RECORD,
             object_id=f"{item.revision_id}:{item.storage_binding_fingerprint}",
             object_fingerprint=item.storage_binding_fingerprint,
-            document=document,
+            document=_storage_binding_document(item),
             workspace_id=workspace_id,
             scope_id=scope_id,
             actor_principal_id=actor_principal_id,
@@ -563,11 +620,12 @@ class ArtifactLineageRuntimeMixin:
             semantic_projection=semantic_projection,
         )
         projection = self._require_valid_artifact_lineage_projection()
-
         prior = projection["revisions"].get(item.revision_id)
         if prior is not None:
             if prior["revision"]["fingerprint"] != item.fingerprint:
                 raise ValueError(f"artifact revision identity collision: {item.revision_id}")
+            if prior["workspace_id"] != workspace_id or prior["scope_id"] != scope_id:
+                raise PermissionError("artifact revision storage rebinding cannot cross workspace/scope")
             lineage = self._require_active_artifact_evidence_ids(
                 tuple(sorted(set((*map(str, evidence_ids), *item.evidence_ids, str(prior["evidence_id"])))))
             )
@@ -610,11 +668,12 @@ class ArtifactLineageRuntimeMixin:
                 row = projection["revisions"][parent_id]
             except KeyError:
                 raise KeyError(f"unknown durable artifact parent revision: {parent_id}") from None
+            if row["workspace_id"] != workspace_id or row["scope_id"] != scope_id:
+                raise PermissionError(f"artifact parent revision is outside requested workspace/scope: {parent_id}")
             if row["evidence_status"] != "active":
                 raise ValueError(f"artifact parent revision Evidence is not active: {parent_id}")
             parent = ArtifactRevision.from_dict(row["revision"])
-            expected_fingerprint = item.parent_revision_fingerprints.get(parent_id)
-            if expected_fingerprint != parent.fingerprint:
+            if item.parent_revision_fingerprints.get(parent_id) != parent.fingerprint:
                 raise ValueError(f"artifact parent revision fingerprint mismatch: {parent_id}")
             parents.append(parent)
             parent_evidence_ids.append(str(row["evidence_id"]))
@@ -627,7 +686,9 @@ class ArtifactLineageRuntimeMixin:
             existing_roots = [
                 revision_id
                 for revision_id, row in projection["revisions"].items()
-                if row["revision"]["logical_artifact_id"] == item.logical_artifact_id
+                if row["workspace_id"] == workspace_id
+                and row["scope_id"] == scope_id
+                and row["revision"]["logical_artifact_id"] == item.logical_artifact_id
                 and not row["revision"]["parent_revision_ids"]
             ]
             if existing_roots:
@@ -643,7 +704,6 @@ class ArtifactLineageRuntimeMixin:
         if environment_evidence_id:
             lineage_ids.add(environment_evidence_id)
         lineage = self._require_active_artifact_evidence_ids(tuple(sorted(lineage_ids)))
-
         authorization = self._authorize_artifact_lineage_record(
             actor_principal_id=actor_principal_id,
             workspace_id=workspace_id,
@@ -693,7 +753,13 @@ class ArtifactLineageRuntimeMixin:
             "authoritative": False,
         }
 
-    def artifact_lineage_report(self, logical_artifact_id: str | None = None) -> dict[str, Any]:
+    def artifact_lineage_report(
+        self,
+        logical_artifact_id: str | None = None,
+        *,
+        workspace_id: str | None = None,
+        scope_id: str | None = None,
+    ) -> dict[str, Any]:
         projection = self._artifact_lineage_projection()
         if logical_artifact_id is None:
             return projection
@@ -701,18 +767,30 @@ class ArtifactLineageRuntimeMixin:
             revision_id: deepcopy(row)
             for revision_id, row in projection["revisions"].items()
             if row["revision"]["logical_artifact_id"] == logical_artifact_id
+            and (workspace_id is None or row["workspace_id"] == workspace_id)
+            and (scope_id is None or row["scope_id"] == scope_id)
         }
+        heads = sorted(
+            revision_id
+            for revision_id in revisions
+            if not any(
+                revision_id in candidate["revision"]["parent_revision_ids"]
+                for candidate in revisions.values()
+            )
+        )
         return {
             "runtime_contract": artifact_lineage_runtime_contract(),
             "valid": projection["valid"],
             "issues": deepcopy(projection["issues"]),
             "logical_artifact_id": logical_artifact_id,
+            "workspace_id": workspace_id,
+            "scope_id": scope_id,
             "revisions": revisions,
             "storage_bindings_by_revision": {
                 revision_id: deepcopy(projection["storage_bindings_by_revision"].get(revision_id, []))
                 for revision_id in revisions
             },
-            "heads": deepcopy(projection["heads_by_artifact"].get(logical_artifact_id, [])),
+            "heads": heads,
             "head_semantics": projection["head_semantics"],
             "newest_revision_authority": "NONE",
             "artifact_acceptance": "NONE",
