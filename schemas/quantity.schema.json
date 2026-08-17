@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/quantity.schema.json",
+  "title": "AASM Engineering Quantity v1",
+  "$defs": {
+    "exactNumber": {
+      "type": "object",
+      "required": ["representation", "canonical"],
+      "properties": {
+        "representation": {"enum": ["INTEGER", "RATIONAL", "DECIMAL"]},
+        "canonical": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "dimensionVector": {
+      "type": "object",
+      "required": ["exponents"],
+      "properties": {
+        "exponents": {
+          "type": "object",
+          "propertyNames": {"pattern": "^[a-z][a-z0-9_.-]*$"},
+          "additionalProperties": {"type": "integer"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "unitBinding": {
+      "type": "object",
+      "required": ["source_unit", "canonical_unit", "scale", "offset"],
+      "properties": {
+        "source_unit": {"type": "string", "minLength": 1},
+        "canonical_unit": {"type": "string", "minLength": 1},
+        "scale": {"$ref": "#/$defs/exactNumber"},
+        "offset": {"$ref": "#/$defs/exactNumber"}
+      },
+      "additionalProperties": false
+    },
+    "intervalValue": {
+      "type": "object",
+      "required": ["lower", "upper", "lower_inclusive", "upper_inclusive"],
+      "properties": {
+        "lower": {"$ref": "#/$defs/exactNumber"},
+        "upper": {"$ref": "#/$defs/exactNumber"},
+        "lower_inclusive": {"type": "boolean"},
+        "upper_inclusive": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "externalReferenceIdentity": {
+      "type": "object",
+      "required": ["contract_id", "contract_version", "namespace", "external_id", "role", "revision", "source_fingerprint", "source_location", "semantic_entity_id", "metadata"],
+      "properties": {
+        "contract_id": {"const": "aasm.external.reference.v1"},
+        "contract_version": {"const": "0.1.0"},
+        "namespace": {"type": "string", "minLength": 1},
+        "external_id": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1},
+        "revision": {"type": "string"},
+        "source_fingerprint": {"type": "string"},
+        "source_location": {"type": "object"},
+        "semantic_entity_id": {"type": "string"},
+        "metadata": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "measuredValue": {
+      "type": "object",
+      "required": ["measurement_kind", "nominal", "uncertainty_interval", "uncertainty_reference"],
+      "properties": {
+        "measurement_kind": {"enum": ["MEASURED", "ESTIMATED"]},
+        "nominal": {"$ref": "#/$defs/exactNumber"},
+        "uncertainty_interval": {"$ref": "#/$defs/intervalValue"},
+        "uncertainty_reference": {"$ref": "#/$defs/externalReferenceIdentity"}
+      },
+      "additionalProperties": false
+    },
+    "tolerance": {
+      "type": "object",
+      "required": ["kind", "magnitude", "lower", "upper"],
+      "properties": {
+        "kind": {"enum": ["NONE", "ABSOLUTE", "RELATIVE", "ASYMMETRIC"]},
+        "magnitude": {"oneOf": [{"$ref": "#/$defs/exactNumber"}, {"type": "null"}]},
+        "lower": {"oneOf": [{"$ref": "#/$defs/exactNumber"}, {"type": "null"}]},
+        "upper": {"oneOf": [{"$ref": "#/$defs/exactNumber"}, {"type": "null"}]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "NONE"}}, "required": ["kind"]},
+          "then": {"properties": {"magnitude": {"type": "null"}, "lower": {"type": "null"}, "upper": {"type": "null"}}}
+        },
+        {
+          "if": {"properties": {"kind": {"enum": ["ABSOLUTE", "RELATIVE"]}}, "required": ["kind"]},
+          "then": {"properties": {"magnitude": {"$ref": "#/$defs/exactNumber"}, "lower": {"type": "null"}, "upper": {"type": "null"}}}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "ASYMMETRIC"}}, "required": ["kind"]},
+          "then": {"properties": {"magnitude": {"type": "null"}, "lower": {"$ref": "#/$defs/exactNumber"}, "upper": {"$ref": "#/$defs/exactNumber"}}}
+        }
+      ],
+      "additionalProperties": false
+    },
+    "quantization": {
+      "type": "object",
+      "required": ["step", "origin", "rounding_rule"],
+      "properties": {
+        "step": {"$ref": "#/$defs/exactNumber"},
+        "origin": {"$ref": "#/$defs/exactNumber"},
+        "rounding_rule": {"enum": ["EXACT", "HALF_EVEN", "HALF_UP", "HALF_AWAY_FROM_ZERO", "TOWARD_ZERO", "FLOOR", "CEILING"]}
+      },
+      "additionalProperties": false
+    },
+    "precision": {
+      "type": "object",
+      "required": ["kind", "digits"],
+      "properties": {
+        "kind": {"enum": ["DECIMAL_PLACES", "SIGNIFICANT_DIGITS"]},
+        "digits": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "canonicalProjection": {
+      "type": "object",
+      "required": ["dimension", "canonical_unit", "representation", "value", "tolerance", "quantization", "source_precision"],
+      "properties": {
+        "dimension": {"$ref": "#/$defs/dimensionVector"},
+        "canonical_unit": {"type": "string", "minLength": 1},
+        "representation": {"enum": ["INTEGER", "RATIONAL", "DECIMAL", "INTERVAL", "MEASURED"]},
+        "value": {
+          "oneOf": [
+            {"$ref": "#/$defs/exactNumber"},
+            {"$ref": "#/$defs/intervalValue"},
+            {"$ref": "#/$defs/measuredValue"}
+          ]
+        },
+        "tolerance": {"$ref": "#/$defs/tolerance"},
+        "quantization": {"oneOf": [{"$ref": "#/$defs/quantization"}, {"type": "null"}]},
+        "source_precision": {"oneOf": [{"$ref": "#/$defs/precision"}, {"type": "null"}]}
+      },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "required": [
+    "quantity_id",
+    "contract_id",
+    "contract_version",
+    "representation",
+    "value",
+    "dimension",
+    "unit",
+    "tolerance",
+    "quantization",
+    "source_precision",
+    "provenance_refs",
+    "metadata",
+    "canonical_projection",
+    "canonical_projection_fingerprint",
+    "fingerprint"
+  ],
+  "properties": {
+    "quantity_id": {"type": "string", "pattern": "^quantity-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.quantity.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "representation": {"enum": ["INTEGER", "RATIONAL", "DECIMAL", "INTERVAL", "MEASURED"]},
+    "value": {
+      "oneOf": [
+        {"$ref": "#/$defs/exactNumber"},
+        {"$ref": "#/$defs/intervalValue"},
+        {"$ref": "#/$defs/measuredValue"}
+      ]
+    },
+    "dimension": {"$ref": "#/$defs/dimensionVector"},
+    "unit": {"$ref": "#/$defs/unitBinding"},
+    "tolerance": {"$ref": "#/$defs/tolerance"},
+    "quantization": {"oneOf": [{"$ref": "#/$defs/quantization"}, {"type": "null"}]},
+    "source_precision": {"oneOf": [{"$ref": "#/$defs/precision"}, {"type": "null"}]},
+    "provenance_refs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/externalReferenceIdentity"}
+    },
+    "metadata": {"type": "object"},
+    "canonical_projection": {"$ref": "#/$defs/canonicalProjection"},
+    "canonical_projection_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"representation": {"enum": ["INTEGER", "RATIONAL", "DECIMAL"]}}, "required": ["representation"]},
+      "then": {"properties": {"value": {"$ref": "#/$defs/exactNumber"}}}
+    },
+    {
+      "if": {"properties": {"representation": {"const": "INTERVAL"}}, "required": ["representation"]},
+      "then": {"properties": {"value": {"$ref": "#/$defs/intervalValue"}}}
+    },
+    {
+      "if": {"properties": {"representation": {"const": "MEASURED"}}, "required": ["representation"]},
+      "then": {"properties": {"value": {"$ref": "#/$defs/measuredValue"}}}
+    }
+  ],
+  "additionalProperties": false
+}
