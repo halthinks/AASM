@@ -1,0 +1,57 @@
+name: AASM S3 Execution Environment Qualification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: aasm-execution-environment-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  execution_environment:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install S3 execution environment qualification dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile S3 execution environment foundation
+        run: |
+          python -m compileall -q \
+            src/aasm/execution_environment.py \
+            src/aasm/execution_environment_runtime.py \
+            tests/test_execution_environment.py \
+            scripts/check_execution_environment_contracts.py
+      - name: Check S3 execution environment source contracts
+        run: python scripts/check_execution_environment_contracts.py
+      - name: Run S3 execution environment adversarial, TextPCB-derived, and replay fixtures
+        run: pytest -q tests/test_execution_environment.py
+      - name: Publish S3 execution environment qualification
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='S3 execution environment context, laundering firewall, and replay passed'
+          else
+            state=failure
+            description='S3 execution environment qualification failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" -f context='aasm/execution-environment' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
