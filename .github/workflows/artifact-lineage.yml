@@ -25,9 +25,9 @@ jobs:
           cache: pip
       - name: Install AASM development dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Check artifact lineage source contracts
+      - name: Check artifact lineage active-engine candidate contracts
         run: python scripts/check_artifact_lineage_contracts.py
-      - name: Run artifact lineage foundation, runtime, and adversarial fixtures
+      - name: Run artifact lineage foundation, real-engine runtime, and adversarial fixtures
         run: pytest -q tests/test_artifact_lineage_*.py
       - name: Publish artifact lineage qualification
         if: always()
@@ -39,10 +39,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S3 artifact revision runtime pre-admission qualification passed'
+            description='S3 artifact revision active-engine candidate qualification passed'
           else
             state=failure
-            description='S3 artifact revision runtime pre-admission qualification failed'
+            description='S3 artifact revision active-engine candidate qualification failed'
           fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             -f state="$state" \

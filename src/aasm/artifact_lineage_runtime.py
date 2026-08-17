@@ -66,7 +66,7 @@ def artifact_lineage_runtime_contract() -> dict[str, Any]:
         "parallel_artifact_registry": "NONE_EVIDENCE_PROJECTION_ONLY",
         "parallel_current_state_store": "NONE",
         "hidden_wall_clock": "NONE",
-        "runtime_admission": "PRE_ADMISSION_ONLY",
+        "runtime_admission": "ACTIVE_ENGINE_CANDIDATE_QUALIFICATION",
     }
 
 
@@ -84,21 +84,12 @@ def _document(row: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _expected_evidence_id(record_type: str, object_id: str, document: Mapping[str, Any]) -> str:
-    identity = {
-        "record_type": str(record_type),
-        "object_id": str(object_id),
-        "document": deepcopy(dict(document)),
-    }
+    identity = {"record_type": str(record_type), "object_id": str(object_id), "document": deepcopy(dict(document))}
     return f"artifact-lineage-evidence-{semantic_fingerprint(identity)[:24]}"
 
 
 def _require_evidence_envelope(
-    row: Mapping[str, Any],
-    *,
-    record_type: str,
-    object_id: str,
-    object_fingerprint: str,
-    document: Mapping[str, Any],
+    row: Mapping[str, Any], *, record_type: str, object_id: str, object_fingerprint: str, document: Mapping[str, Any]
 ) -> None:
     metadata = dict(row.get("metadata") or {})
     if str(row.get("kind") or "") != "artifact_lineage":
@@ -114,8 +105,7 @@ def _require_evidence_envelope(
     for key, expected in _FIREWALL_METADATA.items():
         if metadata.get(key) != expected:
             raise ValueError(f"artifact-lineage source firewall metadata mismatch: {key}")
-    expected_id = _expected_evidence_id(record_type, object_id, document)
-    if str(row.get("evidence_id") or "") != expected_id:
+    if str(row.get("evidence_id") or "") != _expected_evidence_id(record_type, object_id, document):
         raise ValueError(f"artifact-lineage deterministic Evidence ID mismatch: {object_id}")
     if str(row.get("statement") or "") != canonical_semantic_json(dict(document)):
         raise ValueError(f"artifact-lineage canonical statement mismatch: {object_id}")
@@ -131,17 +121,9 @@ def _storage_binding_document(item: ArtifactRevision) -> dict[str, Any]:
     }
 
 
-def _validate_storage_binding_document(
-    document: Mapping[str, Any], revision: ArtifactRevision
-) -> dict[str, Any]:
+def _validate_storage_binding_document(document: Mapping[str, Any], revision: ArtifactRevision) -> dict[str, Any]:
     payload = deepcopy(dict(document))
-    required = {
-        "revision_id",
-        "revision_fingerprint",
-        "content_sha256",
-        "artifact_ref",
-        "storage_binding_fingerprint",
-    }
+    required = {"revision_id", "revision_fingerprint", "content_sha256", "artifact_ref", "storage_binding_fingerprint"}
     if set(payload) != required:
         raise ValueError("artifact storage binding has unexpected or missing fields")
     if str(payload["revision_id"]) != revision.revision_id:
@@ -165,12 +147,12 @@ def _validate_storage_binding_document(
 
 
 def project_artifact_lineage_evidence(records) -> dict[str, Any]:
+    rows = [deepcopy(dict(row)) for row in records]
     revisions: dict[str, dict[str, Any]] = {}
     pending_bindings: list[dict[str, Any]] = []
     issues: list[dict[str, Any]] = []
 
-    for index, raw in enumerate(records):
-        row = deepcopy(dict(raw))
+    for index, row in enumerate(rows):
         metadata = dict(row.get("metadata") or {})
         record_type = metadata.get(_ARTIFACT_LINEAGE_RECORD_TYPE)
         if record_type not in {_ARTIFACT_REVISION_RECORD, _ARTIFACT_STORAGE_BINDING_RECORD}:
@@ -195,6 +177,7 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
                     "workspace_id": str(metadata.get("workspace_id") or ""),
                     "scope_id": str(metadata.get("scope_id") or ""),
                     "actor_principal_id": str(metadata.get("actor_principal_id") or ""),
+                    "derived_from": tuple(map(str, row.get("derived_from") or ())),
                 }
                 if not candidate["workspace_id"] or not candidate["scope_id"]:
                     raise ValueError("artifact revision Evidence requires workspace_id and scope_id")
@@ -202,9 +185,7 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
                 if prior is not None:
                     if prior["revision"]["fingerprint"] != item.fingerprint:
                         raise ValueError(f"artifact revision identity collision: {item.revision_id}")
-                    raise ValueError(
-                        f"duplicate artifact revision record; use storage binding for rebinding: {item.revision_id}"
-                    )
+                    raise ValueError(f"duplicate artifact revision record; use storage binding for rebinding: {item.revision_id}")
                 revisions[item.revision_id] = candidate
             else:
                 revision_id = str(document.get("revision_id") or "")
@@ -229,18 +210,9 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
                     }
                 )
         except Exception as exc:
-            issues.append(
-                {
-                    "index": index,
-                    "evidence_id": evidence_id,
-                    "record_type": record_type,
-                    "error": f"{type(exc).__name__}: {exc}",
-                }
-            )
+            issues.append({"index": index, "evidence_id": evidence_id, "record_type": record_type, "error": f"{type(exc).__name__}: {exc}"})
 
-    storage_bindings_by_revision: dict[str, list[dict[str, Any]]] = {
-        revision_id: [] for revision_id in revisions
-    }
+    storage_bindings_by_revision: dict[str, list[dict[str, Any]]] = {revision_id: [] for revision_id in revisions}
     for revision_id, row in revisions.items():
         item = ArtifactRevision.from_dict(row["revision"])
         if item.artifact_ref:
@@ -267,11 +239,7 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
             document = _validate_storage_binding_document(raw["document"], revision)
             fingerprint = str(document["storage_binding_fingerprint"])
             prior = next(
-                (
-                    row
-                    for row in storage_bindings_by_revision[revision_id]
-                    if row["binding"]["storage_binding_fingerprint"] == fingerprint
-                ),
+                (row for row in storage_bindings_by_revision[revision_id] if row["binding"]["storage_binding_fingerprint"] == fingerprint),
                 None,
             )
             if prior is not None and prior["binding"] != document:
@@ -286,14 +254,7 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
                     }
                 )
         except Exception as exc:
-            issues.append(
-                {
-                    "index": raw["index"],
-                    "evidence_id": raw["evidence_id"],
-                    "record_type": _ARTIFACT_STORAGE_BINDING_RECORD,
-                    "error": f"{type(exc).__name__}: {exc}",
-                }
-            )
+            issues.append({"index": raw["index"], "evidence_id": raw["evidence_id"], "record_type": _ARTIFACT_STORAGE_BINDING_RECORD, "error": f"{type(exc).__name__}: {exc}"})
 
     graph: dict[str, list[str]] = {}
     children: dict[str, set[str]] = {revision_id: set() for revision_id in revisions}
@@ -312,12 +273,7 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
                     raise ValueError(f"unknown artifact parent revision: {parent_id}")
                 if parent_row["workspace_id"] != row["workspace_id"] or parent_row["scope_id"] != row["scope_id"]:
                     raise ValueError(f"artifact parent workspace/scope mismatch: {parent_id}")
-                if parent_row["evidence_id"] not in set(
-                    map(str, next(
-                        (raw.get("derived_from") or () for raw in records if str(raw.get("evidence_id") or "") == row["evidence_id"]),
-                        (),
-                    ))
-                ):
+                if parent_row["evidence_id"] not in set(row["derived_from"]):
                     raise ValueError(f"artifact revision Evidence missing parent Evidence lineage: {parent_id}")
                 parent = ArtifactRevision.from_dict(parent_row["revision"])
                 if item.parent_revision_fingerprints.get(parent_id) != parent.fingerprint:
@@ -329,14 +285,7 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
                 if not validation["valid"]:
                     raise ValueError(f"invalid artifact revision transition: {validation['errors']}")
         except Exception as exc:
-            issues.append(
-                {
-                    "index": -1,
-                    "evidence_id": row["evidence_id"],
-                    "record_type": _ARTIFACT_REVISION_RECORD,
-                    "error": f"{type(exc).__name__}: {exc}",
-                }
-            )
+            issues.append({"index": -1, "evidence_id": row["evidence_id"], "record_type": _ARTIFACT_REVISION_RECORD, "error": f"{type(exc).__name__}: {exc}"})
 
     for scoped_artifact, roots in sorted(roots_by_artifact.items()):
         if len(roots) > 1:
@@ -368,9 +317,7 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
         for node in sorted(graph):
             visit(node)
     except Exception as exc:
-        issues.append(
-            {"index": -1, "evidence_id": "", "record_type": "LINEAGE", "error": f"{type(exc).__name__}: {exc}"}
-        )
+        issues.append({"index": -1, "evidence_id": "", "record_type": "LINEAGE", "error": f"{type(exc).__name__}: {exc}"})
 
     heads_by_artifact: dict[str, list[str]] = {}
     for revision_id, row in revisions.items():
@@ -382,8 +329,7 @@ def project_artifact_lineage_evidence(records) -> dict[str, Any]:
         heads_by_artifact[key] = sorted(heads_by_artifact[key])
     for revision_id in list(storage_bindings_by_revision):
         storage_bindings_by_revision[revision_id] = sorted(
-            storage_bindings_by_revision[revision_id],
-            key=lambda row: row["binding"]["storage_binding_fingerprint"],
+            storage_bindings_by_revision[revision_id], key=lambda row: row["binding"]["storage_binding_fingerprint"]
         )
 
     return {
@@ -406,7 +352,7 @@ def _payload_bytes(value: str | bytes, *, label: str) -> bytes:
 
 
 class ArtifactLineageRuntimeMixin:
-    """Pre-admission artifact revision runtime over existing Evidence/event replay."""
+    """Candidate artifact revision runtime over existing Evidence/event replay."""
 
     def artifact_lineage_runtime_contract_report(self) -> dict[str, Any]:
         return artifact_lineage_runtime_contract()
@@ -540,11 +486,7 @@ class ArtifactLineageRuntimeMixin:
         projection_digest = sha256(_payload_bytes(semantic_projection, label="semantic_projection")).hexdigest()
         if projection_digest != item.semantic_projection_sha256:
             raise ValueError("artifact semantic projection SHA-256 mismatch")
-        return {
-            "content_sha256": content_digest,
-            "semantic_projection_sha256": projection_digest,
-            "content_source": content_source,
-        }
+        return {"content_sha256": content_digest, "semantic_projection_sha256": projection_digest, "content_source": content_source}
 
     def _artifact_source_problem_revision(self, item: ArtifactRevision) -> dict[str, Any] | None:
         if not item.source_problem_revision_id:
@@ -773,10 +715,7 @@ class ArtifactLineageRuntimeMixin:
         heads = sorted(
             revision_id
             for revision_id in revisions
-            if not any(
-                revision_id in candidate["revision"]["parent_revision_ids"]
-                for candidate in revisions.values()
-            )
+            if not any(revision_id in candidate["revision"]["parent_revision_ids"] for candidate in revisions.values())
         )
         return {
             "runtime_contract": artifact_lineage_runtime_contract(),
@@ -787,8 +726,7 @@ class ArtifactLineageRuntimeMixin:
             "scope_id": scope_id,
             "revisions": revisions,
             "storage_bindings_by_revision": {
-                revision_id: deepcopy(projection["storage_bindings_by_revision"].get(revision_id, []))
-                for revision_id in revisions
+                revision_id: deepcopy(projection["storage_bindings_by_revision"].get(revision_id, [])) for revision_id in revisions
             },
             "heads": heads,
             "head_semantics": projection["head_semantics"],
