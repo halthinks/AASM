@@ -4,7 +4,8 @@
 **Repository:** `halthinks/AASM`  
 **Latest immutable release:** `v0.56.0`  
 **Current development package:** `0.56.1`  
-**Current adoption contract:** `aasm.adoption.v1 / 0.32.7`  
+**Current adoption contract:** `aasm.adoption.v1 / 0.32.11`  
+**Current exact qualified development boundary:** `6dbd62dc704b15fccb86a61053ce7bfdcdea477a` — all 23 current custom qualification contexts green  
 **Status:** single canonical execution roadmap for governed semantic evolution, TextPCB compatibility, physical/distributed control, portable machine semantics, Rust `std`, and Rust `no_std`
 
 Companion architecture:
@@ -174,7 +175,7 @@ Active contracts include:
 
 Transition proposal reuses existing `EffectIntent`; postcondition verification requires execution-correlated observation plus independently authoritative state. `SUCCEEDED != achieved` is gated.
 
-### PR-3A–G / physical authority foundations
+### PR-3 / physical authority and inherited Effect-boundary integration
 
 Active contracts/runtime include:
 
@@ -187,9 +188,25 @@ Active contracts/runtime include:
 - non-amplifying delegation;
 - monotonic epochs/revocation generations;
 - semantic preemption;
-- crash-safe recovery when semantic preemption is durable before canonical lease revocation.
+- crash-safe recovery when semantic preemption is durable before canonical lease revocation;
+- mandatory live authority/capability recheck at the existing `authorize_effect` and `execute_effect` boundaries.
 
-These slices are gated. The parent PR-3 remains incomplete until PR-3H.
+The complete PR-3 / PHY-01 parent is GATED. Existing scoped effect authority, TaskLease/resource governance, durable EffectOwnership, dispatch, `UNKNOWN`, and reconciliation remain authoritative.
+
+### S3 reality-evidence foundation
+
+Active and gated contracts/runtime include:
+
+- `aasm.state.conflict.v1`;
+- `aasm.event.causality.v1`;
+- `aasm.observation.freshness.v1`;
+- `aasm.physical.identity.v1`;
+- `aasm.calibration.v1`;
+- `aasm.source.trust.v1`.
+
+Exact qualified boundary: `6dbd62dc704b15fccb86a61053ce7bfdcdea477a`, adoption `0.32.11`, all 23 current custom qualification contexts green.
+
+Claim ceilings remain strict: conflict/freshness/identity/calibration/trust are Evidence/policy-input layers only; source trust cannot replace `FactAuthority`; record/revoke authority is not trust-evaluation authority; neither proximity to hardware nor a `TRUSTED` disposition mints truth or effect authority.
 
 ---
 
@@ -204,16 +221,15 @@ RELEASED/GATED BASE
   |
   +-- S2  physical authority/capabilities
   |      +-- A-G -------------------------------------------- DONE
-  |      +-- H effect-boundary integration ----------------- NEXT
+  |      +-- H effect-boundary integration ----------------- DONE
   |
-  v
-S3 REALITY SEMANTICS
-  causality + freshness + physical identity + calibration
-  source trust + qualification environment + observation lifecycle/fusion
-  artifact revision + entity evolution + out-of-band conflicts
-  |\
-  | +-- TextPCB project/artifact/entity fixtures
-  | +-- portability/serialization constraints active
+  +-- S3  state conflict ------------------------------------ DONE
+  |      +-- causality/freshness ---------------------------- DONE
+  |      +-- physical identity/calibration/source trust ----- DONE
+  |      +-- execution/qualification environment ------------ NEXT
+  |      +-- observation lifecycle/fusion ------------------- QUEUED
+  |      +-- artifact revision/entity evolution ------------- QUEUED
+  |
   v
 S4 ENGINEERING + SAFETY SEMANTICS
   quantities + rules + projection/equivalence
@@ -260,11 +276,13 @@ S10 PERMANENT STRESS CORPUS + HOSTED-FOUNDATION REVIEW
 
 # 6. S2H — Physical Effect Integration
 
-**Status:** immediate implementation target.
+**Status:** GATED.
 
 ## 6.1 Purpose
 
 Make the already-qualified authority-domain/lease/effect-capability semantics mandatory at the actual existing effect authorization/execution boundaries for effects that explicitly bind physical/external authority.
+
+This is implemented and qualified. The requirements below remain permanent compatibility requirements, not future work.
 
 ## 6.2 Required binding
 
@@ -324,9 +342,9 @@ Do not add:
 - physical Effect uses existing TaskLease/ownership/UNKNOWN/reconciliation unchanged;
 - restart/replay does not resurrect old authority.
 
-**Gate:** `aasm/physical-effect-integration`.
+**Gate:** `aasm/physical-effect-integration` — GATED.
 
-**Exit:** PR-3 / PHY-01 may become GATED only when this gate and inherited effect/authority gates pass on one exact head.
+**Exit:** PR-3 / PHY-01 is GATED and remains subject to this inherited gate on every qualifying head.
 
 ---
 
@@ -336,15 +354,19 @@ S3 combines the missing pieces from the original TextPCB roadmap and the physica
 
 ## 7.1 State conflict / expectation violation
 
-Add a generic conflict object for an authoritative observation that contradicts desired/predicted/expected external state. Do not overwrite either history.
+**Status: GATED.**
 
-Target: `aasm.state.conflict.v1` or equivalent stable semantic module.
+A generic conflict object records an authoritative/observed external state that contradicts desired/predicted/expected state without overwriting either history.
+
+Contract: `aasm.state.conflict.v1`.
 
 ## 7.2 Causal/temporal identity
 
-Target contract: `aasm.event.causality.v1`.
+**Status: GATED.**
 
-Represent:
+Contract: `aasm.event.causality.v1`.
+
+Represents:
 
 - node/device identity;
 - boot epoch;
@@ -356,33 +378,37 @@ Represent:
 - receipt time vs source time;
 - clock quality/uncertainty.
 
-Host wall clock is Evidence/context, not universal truth.
+Host wall clock is Evidence/context, not universal truth. Portable integer/time identity is bounded so Python and future Rust implementations cannot diverge through integer-width accidents.
 
 ## 7.3 Observation freshness
 
-Target: `aasm.observation.freshness.v1`.
+**Status: GATED.**
 
-Bind observation age, source time quality, maximum acceptable age, relevant machine/revision/boot epoch and stale reason.
+Contract: `aasm.observation.freshness.v1`.
+
+Binds observation age, source time quality, maximum acceptable age, exact observation/causal identity, relevant revisions and stale/unknown reason. `FRESH | STALE | UNKNOWN` remain distinct. Receipt-time fallback is explicit and weaker. Freshness neither mints authority nor universally admits Evidence.
 
 PR-2 exact execution correlation remains valid but is no longer the whole temporal story.
 
 ## 7.4 Physical identity and calibration
 
-Target contracts:
+**Status: GATED for the physical identity + calibration + source trust foundation.**
+
+Contracts:
 
 - `aasm.physical.identity.v1`
 - `aasm.calibration.v1`
 - `aasm.source.trust.v1`
 
-Bind device/component/sensor/actuator/fixture/firmware/assembly identity and calibration lifecycle:
+The active foundation binds exact device/component/sensor/actuator/fixture/firmware/assembly/project-instance identity, exact calibration ID/fingerprint/validity/revocation, and exact source-trust policy inputs. Same-context identity divergence fails closed until an explicit problem/external revision changes. Calibration does not rewrite observations. Source trust has no score/voting/latest pointer and cannot replace `FactAuthority` or grant effect authority.
 
-`VALID | DUE | EXPIRED | INVALID | OUT_OF_RANGE | SUPERSEDED`
+Future lifecycle state richness such as `VALID | DUE | EXPIRED | INVALID | OUT_OF_RANGE | SUPERSEDED` may be added where explicitly evidenced; the current foundation truthfully claims explicit validity interval/revocation semantics and does not overclaim unimplemented calibration-state inference.
 
-Calibration/trust changes evidence admissibility/grade; they do not erase measurements.
-
-Reserve hardware attestation hooks without binding the kernel to a TPM/TEE/vendor.
+Hardware attestation hooks remain reserved without binding the kernel to a TPM/TEE/vendor.
 
 ## 7.5 Execution/qualification environment
+
+**Status: NEXT.**
 
 Target:
 
@@ -393,9 +419,11 @@ Levels:
 
 `MODEL | SIMULATION | SIL | HIL | BENCH | CONTROLLED_PHYSICAL | OPERATIONAL`
 
-Simulation evidence cannot silently become physical evidence.
+Simulation evidence cannot silently become physical evidence. Environment identity/configuration/revision must be explicit and portable. Environment proximity to hardware must not mint FactAuthority, source trust, or effect authority.
 
 ## 7.6 Observation lifecycle/fusion
+
+**Status: QUEUED after execution environment.**
 
 Target:
 
@@ -409,6 +437,8 @@ Lifecycle:
 Every derived/fused observation references sources. Fusion never votes authority.
 
 ## 7.7 Artifact revision lineage
+
+**Status: QUEUED under the separate cumulative `aasm/artifact-lineage` gate.**
 
 Target: `aasm.artifact.revision.v1`.
 
@@ -428,6 +458,8 @@ Failed/generated artifacts may remain Evidence without becoming current authorit
 
 ## 7.8 Entity evolution
 
+**Status: QUEUED after artifact revision lineage.**
+
 Target: `aasm.entity.evolution.v1`.
 
 Relations:
@@ -438,6 +470,8 @@ Hard reusable knowledge fails closed across `AMBIGUOUS` mapping.
 
 ## 7.9 TextPCB S3 conformance fixtures
 
+Permanent fixture requirements include:
+
 - project revision changes while solver/verifier is in flight;
 - board/CAD artifact revision lineage;
 - requirement/net/component/rule external-reference lineage;
@@ -445,13 +479,17 @@ Hard reusable knowledge fails closed across `AMBIGUOUS` mapping.
 - stale DRC/ERC observation;
 - out-of-band TextPCB project-state transition;
 - simulation result presented as if bench/physical;
-- artifact hash mismatch.
+- artifact hash mismatch;
+- project/tool identity/configuration revision changes;
+- DRC/tool calibration or trust invalidation without authority laundering.
+
+TextPCB-specific kernel types remain forbidden.
 
 ## 7.10 Portability requirements active in S3
 
 Every S3 object must define canonical field types, ordering, identity payload, enum values, optionality and fingerprint rules without Python object identity. These become future machine/kernel IR references rather than being redesigned for Rust.
 
-**Gates:** `aasm/physical-evidence`, `aasm/artifact-lineage`.
+**Gates:** `aasm/physical-evidence`, `aasm/identity-calibration-trust`, `aasm/artifact-lineage`.
 
 ---
 
@@ -1024,13 +1062,13 @@ TextPCB may pressure contract design through realistic cases, but:
 
 # 18. Immediate builder queue
 
-1. **Implement PR-3H / S2H** over the existing Effect authorization/execution lifecycle.
-2. Add `aasm/physical-effect-integration` gate with revoke-between-authorize-and-execute, stale-epoch, wrong-holder, bounds, revision, restart/replay and ordinary-Effect compatibility attacks.
-3. Only after exact-head qualification, mark PR-3 / PHY-01 parent GATED.
-4. Begin S3 with state conflict/expectation violation + causal event identity + observation freshness + artifact revision/entity evolution.
-5. Apply the cross-cutting portable identity/serialization discipline to those S3 contracts immediately.
-6. Add TextPCB-derived S3 fixtures immediately, not at final conformance only.
-7. Complete S3 physical identity/calibration/trust/environment/fusion semantics.
+1. **Implement `aasm.execution.environment.v1`** with explicit `MODEL | SIMULATION | SIL | HIL | BENCH | CONTROLLED_PHYSICAL | OPERATIONAL` qualification levels, exact environment/configuration identity, problem/external revisions and Evidence lineage. Environment proximity to hardware must never mint authority.
+2. Extend `aasm/physical-evidence` with simulation-as-physical laundering, wrong environment/configuration/revision, identity/calibration/trust mismatch, stale environment evidence and deterministic replay attacks.
+3. Implement `aasm.observation.lifecycle.v1` over existing observations/Evidence; preserve exact source lineage through normalization/calibration/derivation/fusion/validation and explicit rejected/superseded/stale/disputed outcomes.
+4. Implement `aasm.observation.fusion.v1` as explicit derivation over source IDs/fingerprints; fusion never votes truth or creates `FactAuthority`.
+5. Implement artifact revision and entity evolution under the separate cumulative `aasm/artifact-lineage` gate.
+6. Apply the cross-cutting portable identity/serialization discipline to every remaining S3 contract immediately.
+7. Add TextPCB-derived environment/lifecycle/fusion/artifact/entity fixtures as each generic contract lands.
 8. Begin S4 quantity/rule/projection/uncertainty/safety semantics and formal invariant taxonomy.
 9. Build S5 RefinementLoop/Experiment/VerificationPlan/KnowledgeApplication on existing Evidence/ProblemDelta/authority/resource/dependency planes.
 10. Freeze S6 machine IR/kernel/wire semantics and Python reference vectors.
