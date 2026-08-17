@@ -24,7 +24,6 @@ from aasm.observation_lifecycle import (
 )
 from aasm.observation_processing_runtime import (
     OBSERVATION_PROCESSING_CAPABILITIES,
-    ObservationProcessingRuntimeMixin,
     observation_processing_runtime_contract,
     project_observation_processing_evidence,
 )
@@ -46,8 +45,7 @@ OBSERVER_CAPABILITY = "machine.observe"
 OPERATOR_CAPABILITY = "machine.operate"
 
 
-class ObservationProcessingEngine(ObservationProcessingRuntimeMixin, ActiveEngine):
-    pass
+ObservationProcessingEngine = ActiveEngine
 
 
 def _grant(engine, subject: str, *capabilities: str):
