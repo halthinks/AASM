@@ -88,7 +88,7 @@ PUBLIC_API_CONTRACT.update(
 )
 PUBLIC_API_CONTRACT["engineering_quantity"] = {
     **quantity_contract(),
-    "public_admission": "CANDIDATE",
+    "public_admission": "QUALIFIED",
     "engine_state_integration": "NONE_SEMANTIC_VALUE_FOUNDATION_ONLY",
 }
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
@@ -109,7 +109,7 @@ def validate_public_api_contract():
     if missing_imports:
         errors.append(f"missing engineering-quantity public imports: {missing_imports}")
     if AASMEngine is not _base.AASMEngine:
-        errors.append("engineering quantity candidate forked the active engine")
+        errors.append("engineering quantity overlay forked the active engine")
     if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.16":
         errors.append("engineering quantity adoption contract mismatch")
     if "engineering-quantity" not in SUPPORTED_INSPECTION_SURFACES:
@@ -136,10 +136,10 @@ def validate_public_api_contract():
         errors.append("engineering quantity reinterpreted EffectCapability numeric bounds")
     if quantity.get("runtime_admission") != "PRE_ADMISSION_ONLY":
         errors.append("engineering quantity semantic foundation unexpectedly gained runtime admission")
-    if quantity.get("public_admission") != "CANDIDATE":
-        errors.append("engineering quantity public candidate status drift")
+    if quantity.get("public_admission") != "QUALIFIED":
+        errors.append("engineering quantity public qualification status drift")
     if quantity.get("engine_state_integration") != "NONE_SEMANTIC_VALUE_FOUNDATION_ONLY":
-        errors.append("engineering quantity candidate introduced engine state")
+        errors.append("engineering quantity overlay introduced engine state")
     for key in (
         "fact_authority",
         "physical_state_authority",
@@ -153,6 +153,6 @@ def validate_public_api_contract():
             errors.append(f"engineering quantity authority/state firewall drift: {key}")
 
     if SUPPORTED_ENGINE_METHODS != list(getattr(_base, "SUPPORTED_ENGINE_METHODS", [])):
-        errors.append("engineering quantity candidate added engine methods")
+        errors.append("engineering quantity overlay added engine methods")
 
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
