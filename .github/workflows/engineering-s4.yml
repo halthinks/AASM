@@ -1,0 +1,90 @@
+name: AASM S4 Engineering Semantic Cumulative Qualification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: aasm-engineering-s4-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  engineering-s4:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install AASM development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile cumulative S4 semantic layers
+        run: |
+          python -m compileall -q \
+            src/aasm/quantity.py \
+            src/aasm/rule.py \
+            src/aasm/semantic_projection.py \
+            src/aasm/_semantic_projection_core.py \
+            src/aasm/_semantic_projection_equivalence.py \
+            scripts/check_quantity_contracts.py \
+            scripts/check_quantity_public.py \
+            scripts/check_rule_contracts.py \
+            scripts/check_rule_public.py \
+            scripts/check_semantic_projection_contracts.py
+          python -m json.tool schemas/quantity.schema.json >/dev/null
+          python -m json.tool schemas/rule.schema.json >/dev/null
+          python -m json.tool schemas/semantic-projection.schema.json >/dev/null
+      - name: Check Quantity semantic contracts
+        run: |
+          python scripts/check_quantity_contracts.py
+          python scripts/check_quantity_public.py
+      - name: Check Rule semantic contracts
+        run: |
+          python scripts/check_rule_contracts.py
+          python scripts/check_rule_public.py
+      - name: Check Projection and Equivalence semantic contracts
+        run: python scripts/check_semantic_projection_contracts.py
+      - name: Run cumulative S4 semantic corpus
+        run: |
+          pytest -q \
+            tests/test_quantity_foundation.py \
+            tests/test_quantity_public.py \
+            tests/test_rule_foundation.py \
+            tests/test_rule_public.py \
+            tests/test_semantic_projection_foundation.py \
+            tests/test_semantic_projection_textpcb.py \
+            tests/test_semantic_projection_adversarial.py
+      - name: Publish cumulative S4 qualification
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='S4 Quantity + Rule + Projection/Equivalence cumulative boundary passed'
+          else
+            state=failure
+            description='S4 Quantity + Rule + Projection/Equivalence cumulative boundary failed'
+          fi
+          for attempt in 1 2 3 4 5; do
+            if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+              -f state="$state" \
+              -f context='aasm/engineering-s4' \
+              -f description="$description" \
+              -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 5 ]; then sleep $((attempt * 2)); fi
+          done
+          echo 'failed to publish aasm/engineering-s4 after bounded retries' >&2
+          exit 1
