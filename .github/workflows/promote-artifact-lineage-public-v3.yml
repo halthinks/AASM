@@ -1,0 +1,63 @@
+name: Persist qualified artifact lineage public source patch
+
+on:
+  push:
+    branches: [artifact-lineage-public-adoption]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-push:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Reapply already-qualified adoption edit
+        shell: bash
+        run: |
+          set -euo pipefail
+          awk '
+            /^          python - <<'"'"'PY'"'"'$/ {capture=1; next}
+            capture && /^          PY$/ {exit}
+            capture {sub(/^          /, ""); print}
+          ' .github/workflows/promote-artifact-lineage-public.yml > /tmp/promote.py
+          test -s /tmp/promote.py
+          python /tmp/promote.py
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('tests/test_artifact_lineage_foundation.py')
+          text=path.read_text(encoding='utf-8')
+          old='assert contract["runtime_admission"] == "PRE_ADMISSION_ONLY"'
+          new='assert contract["runtime_admission"] == "ACTIVE_PUBLIC_ADOPTION"'
+          if text.count(old) != 1:
+              raise SystemExit(f'foundation admission assertion anchor count={text.count(old)}')
+          path.write_text(text.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Install and requalify exact source patch
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m compileall -q src tests scripts
+          python scripts/check_artifact_lineage_contracts.py
+          pytest -q tests/test_artifact_lineage_foundation.py
+          pytest -q tests/test_artifact_lineage_envelope.py
+          pytest -q tests/test_artifact_lineage_runtime.py
+          pytest -q tests/test_v56_public_candidate.py
+          git diff --check
+      - name: Commit source patch only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "halthinks"
+          git config user.email "halthinks@gmail.com"
+          git add src/aasm/artifact_lineage.py src/aasm/artifact_lineage_runtime.py src/aasm/public_active.py \
+            tests/test_artifact_lineage_foundation.py tests/test_artifact_lineage_runtime.py tests/test_v56_public_candidate.py \
+            scripts/check_artifact_lineage_contracts.py .github/workflows/artifact-lineage.yml
+          git diff --cached --check
+          git commit -m "Admit artifact lineage public surface 0.32.14"
+          git push origin HEAD:artifact-lineage-public-adoption
