@@ -9,19 +9,15 @@ from jsonschema import Draft202012Validator
 
 from aasm import AASMEngine as ActiveEngine
 from aasm.calibration import CalibrationCertificate, CalibrationRevocation, calibration_contract
-from aasm.calibration_runtime import CALIBRATION_CAPABILITIES, CalibrationRuntimeMixin, calibration_runtime_contract
+from aasm.calibration_runtime import CALIBRATION_CAPABILITIES, calibration_runtime_contract
 from aasm.evidence import EvidenceRecord
 from aasm.model import ProblemSpec
 from aasm.persistence.sqlite import SQLiteStore
 from aasm.physical_identity import PhysicalIdentity, physical_identity_contract
-from aasm.physical_identity_runtime import (
-    PHYSICAL_IDENTITY_CAPABILITIES,
-    PhysicalIdentityRuntimeMixin,
-    physical_identity_runtime_contract,
-)
+from aasm.physical_identity_runtime import PHYSICAL_IDENTITY_CAPABILITIES, physical_identity_runtime_contract
 from aasm.scoped_authority import Principal, ScopedAuthorityGrant, Workspace
 from aasm.source_trust import SourceTrustAssertion, SourceTrustRevocation, source_trust_contract
-from aasm.source_trust_runtime import SOURCE_TRUST_CAPABILITIES, SourceTrustRuntimeMixin, source_trust_runtime_contract
+from aasm.source_trust_runtime import SOURCE_TRUST_CAPABILITIES, source_trust_runtime_contract
 from aasm.state_authority import StateClaim
 from aasm.state_authority_runtime import STATE_AUTHORITY_CAPABILITIES
 
@@ -32,14 +28,7 @@ ROOT = "root"
 SENSOR = "sensor-a"
 TEXTPCB = "textpcb-engine"
 
-
-class IdentityCalibrationTrustEngine(
-    SourceTrustRuntimeMixin,
-    CalibrationRuntimeMixin,
-    PhysicalIdentityRuntimeMixin,
-    ActiveEngine,
-):
-    """Pre-admission S3 identity/calibration/trust composition."""
+IdentityCalibrationTrustEngine = ActiveEngine
 
 
 def _grant(engine, subject: str, *capabilities: str):
