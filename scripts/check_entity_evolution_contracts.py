@@ -104,11 +104,12 @@ def main() -> None:
     require("corpus.EntityEvolutionEngine = ActiveEngine" in active_tests, "active-engine corpus does not rebind the full adversarial corpus")
     require("test_active_engine_composes_entity_evolution_runtime" in active_tests, "active-engine composition assertion is missing")
 
-    # The parent public surface remains immutable while 0.32.15 is qualified.
+    # Entity remains the immutable 0.32.15 additive parent even when later
+    # qualified overlays become the package root.
     require('"contract_version": "0.32.14"' in parent_public, "entity public candidate parent adoption drift")
     require("ENTITY_EVOLUTION_CONTRACT_ID" not in parent_public, "entity evolution leaked into the 0.32.14 parent surface")
     require('"record_entity_evolution"' not in parent_public, "entity evolution method leaked into the 0.32.14 parent surface")
-    require("public_active_entity_evolution" in package_init, "qualified entity evolution overlay is not the package root")
+    require("public_active_entity_evolution" in package_init, "qualified entity evolution overlay is not preserved in the active package lineage")
 
     required_candidate_tokens = [
         '"contract_version": "0.32.15"',
@@ -137,7 +138,7 @@ def main() -> None:
         "test_entity_public_candidate_exports_exact_semantic_and_runtime_contracts",
         "test_entity_public_candidate_exposes_no_authority_or_current_state_shortcut",
         "test_entity_public_candidate_engine_methods_are_real_active_engine_methods",
-        "test_entity_public_adoption_is_top_level_after_qualification",
+        "test_entity_public_adoption_remains_inherited_after_later_additive_promotion",
     ]
     for token in required_public_test_tokens:
         require(token in public_tests, f"entity evolution public candidate corpus missing test: {token}")
