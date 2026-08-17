@@ -3,10 +3,10 @@
 AASM's latest immutable public release is **v0.56.0 — Truthful Solver Outcomes + Governed Semantic Evolution + Engineering Mathematical IR**.
 
 **Current development package on `main`:** `0.56.1`  
-**Current active adoption contract:** `aasm.adoption.v1 / 0.32.15`  
-**Qualified development boundary:** PR-1, PR-2, complete PR-3 / PHY-01, plus complete S3 state conflict, causality/freshness, identity/calibration/trust, execution environment, observation epistemics, artifact revision lineage, and entity evolution  
-**Exact qualified S3 code boundary before documentation-only synchronization:** `6b107268cd4190357bf45b3bfd1385410a0d82cf` — all 27 current custom qualification contexts green  
-**Immediate unfinished boundary:** **S4 / Engineering + Safety Semantics — quantity/unit/tolerance semantics first**
+**Current active adoption contract:** `aasm.adoption.v1 / 0.32.16`  
+**Qualified development boundary:** PR-1, PR-2, complete PR-3 / PHY-01, complete S3 reality/artifact/entity semantics, plus the S4 `aasm.quantity.v1` engineering quantity/unit/tolerance semantic foundation  
+**Exact qualified S4 Quantity code boundary before documentation-only synchronization:** `263640a634da0e92bb1ae0b42cb55063e0b64552` — all 28 current custom qualification contexts green  
+**Immediate unfinished boundary:** **S4 / `aasm.rule.v1` — rule applicability, precedence, waiver/override, source authority, and revision applicability**
 
 Package SemVer is not an architecture-progress counter. Exact unreleased identity is the Git SHA. Future capabilities below are milestone identities, not reserved package versions. See [`docs/VERSIONING.md`](docs/VERSIONING.md).
 
@@ -43,7 +43,7 @@ The permanent product-backward rule is:
 6. **No second scheduler, resource ledger, effect lifecycle, revision system, knowledge plane, refinement truth path, or authority evaluator.** New semantics extend the existing planes.
 7. **Lease/reservation before consumption; durable ownership before external effects.** Resource availability never grants authority; authority never grants unlimited resources.
 8. **UNKNOWN remains first class.** Unknown external-effect outcomes block unsafe retries/dependent readiness until reconciliation.
-9. **Revision-bound applicability.** Solver, verifier, artifact, external-machine, calibration, observation, refinement, and learned results bind to exact applicable revisions/environments.
+9. **Revision-bound applicability.** Solver, verifier, artifact, external-machine, calibration, observation, refinement, quantity, rule, and learned results bind to exact applicable revisions/environments.
 10. **No silent unsupported lowering.** Exact, translated, approximate, verifier-only, and unsupported semantics stay distinguishable and fail closed when required meaning cannot be preserved.
 11. **Hard semantics dominate optimization/scarcity.** Quota, money, time, provider availability, or expert-model scarcity may change strategy but never hard requirements/evidence floors.
 12. **Cross-backend or cross-sensor agreement never votes truth.** Agreement is corroboration; contradiction is conflict; authority comes from explicit governed evidence/admission.
@@ -73,8 +73,11 @@ The active 0.56.1 development line has additionally qualified:
 - **S3 observation lifecycle/fusion:** append-only `RAW -> NORMALIZED -> CALIBRATED -> DERIVED -> VALIDATED` processing lineage plus fusion/disposition Evidence; exact source fingerprints, explicit calibration/environment/freshness references, no stage skips, no consensus voting, and no authority/admission by a `VALIDATED` label.
 - **S3 artifact revision lineage:** backend-independent immutable revision identity over content/semantic hashes and provenance, exact parent ID+fingerprint lineage, separate storage-binding fingerprint, Evidence-backed replay, and no hidden current-artifact or acceptance authority.
 - **S3 entity evolution:** exact predecessor/successor representation binding across `UNCHANGED | MODIFIED | GENERATED | SPLIT | MERGED | REPLACED | DELETED | AMBIGUOUS`; ambiguity is durable and fail-closed for hard automatic reuse; no current-entity truth table or authority minting.
+- **S4 engineering quantity/unit/tolerance foundation:** `aasm.quantity.v1` exact integer/rational/canonical-decimal/interval/measured representations, canonical dimension vectors, exact affine source-to-canonical unit transforms, explicit tolerance/quantization/rounding/source precision/uncertainty/provenance, deterministic fingerprints, and fail-closed dimensional compatibility. It is qualified as public semantic IR while runtime engine-state admission remains `PRE_ADMISSION_ONLY`.
 
 PR-3H preserves the existing scoped `effect.authorize`, resource reservations, Worker/TaskLease path, durable `EffectOwnership`, dispatch, `UNKNOWN`, and reconciliation. A prior capability-use validation record remains Evidence only and cannot become a reusable bearer token.
+
+Quantity likewise preserves existing semantics rather than shadow-redefining them: `aasm.numeric.tolerance.v1` remains the existing solver tolerance-policy contract and `EffectCapability` retains its existing `NumericInterval` behavior until an explicit later quantity integration contract is qualified.
 
 ## Unified merged dependency graph
 
@@ -99,11 +102,11 @@ RELEASED/GATED AASM SUBSTRATE
         |
         v
 U4/S3 Reality identity + time + artifact lineage + observation epistemics -- GATED
-        |\
-        | +--> TextPCB artifact/entity/revision qualification
-        | +--> portable identity/serialization constraints active
+        |
         v
-U5  Engineering semantics + safety + uncertainty
+U5/S4 Engineering semantics + safety + uncertainty ------------- ACTIVE
+        |       quantity/unit/tolerance semantic foundation ------ GATED
+        |       rule applicability/precedence -------------------- NEXT
         |\
         | +--> TextPCB quantities/rules/scenarios/safety fixtures
         | +--> invariant taxonomy / portable numerical boundaries
@@ -141,7 +144,7 @@ The rails are deliberately merged: **TextPCB continuously pressures the generic 
 
 **Status: GATED.**
 
-PR-3H is implemented in the active `AASMEngine` and qualified at exact head `b910549677ec6f84a32e39ad625c131f68d4348c` together with all inherited release-required contexts. The complete PR-3 / PHY-01 program remains qualified on the later cumulative boundary `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd`.
+PR-3H is implemented in the active `AASMEngine` and qualified at exact head `b910549677ec6f84a32e39ad625c131f68d4348c` together with all inherited release-required contexts. The complete PR-3 / PHY-01 program remains qualified on the later cumulative boundaries through `263640a634da0e92bb1ae0b42cb55063e0b64552`.
 
 A bounded physical effect is rechecked at authorization and execution against the current authority domain/lease identity, lease fingerprint/holder, authority epoch, capability identity/fingerprint and revocation generation, operation/bounds, workspace/scope/subject, problem/external revisions, and current validity time. An earlier `EffectCapabilityUse` validation remains Evidence only.
 
@@ -151,13 +154,13 @@ The integration reuses the existing v0.54 `EffectIntent`, scoped `effect.authori
 
 ### U4 — Reality Identity, Time, Artifact Lineage, and Observation Epistemics
 
-**Status: ACTIVE.**
+**Status: GATED.**
 
-Current exact qualification boundary: `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd`, adoption `0.32.13`, with all 25 current custom contexts green.
+Current exact cumulative qualification boundary: `263640a634da0e92bb1ae0b42cb55063e0b64552`, adoption `0.32.16`, with all 28 current custom contexts green.
 
-This merges the old external-machine artifact/entity work with the physical/distributed evidence program.
+This merged the old external-machine artifact/entity work with the physical/distributed evidence program without creating another truth, artifact, entity, or authority plane.
 
-Required contracts/seams:
+Qualified contracts/seams include:
 
 - `aasm.state.conflict.v1` / expectation violation — **GATED**;
 - `aasm.event.causality.v1` — **GATED**;
@@ -168,23 +171,45 @@ Required contracts/seams:
 - `aasm.execution.environment.v1` and qualification level — **GATED**;
 - `aasm.observation.lifecycle.v1` — **GATED**;
 - `aasm.observation.fusion.v1` — **GATED**;
-- `aasm.artifact.revision.v1` — **NEXT under `aasm/artifact-lineage`**;
-- `aasm.entity.evolution.v1` — **NEXT under `aasm/artifact-lineage`**.
+- `aasm.artifact.revision.v1` / `aasm.artifact-lineage.runtime.v1` — **GATED**;
+- `aasm.entity.evolution.v1` / `aasm.entity-evolution.runtime.v1` — **GATED**.
 
-TextPCB qualification must exercise project/artifact revisions, stable requirement/net/component/entity references, generated board/CAD artifacts, stale DRC/ERC or solver feedback, ambiguous entity evolution, and out-of-band external changes without copying TextPCB project truth into AASM.
+TextPCB qualification exercises project/artifact revisions, stable requirement/net/component/entity references, generated board/CAD artifacts, stale DRC/ERC or solver feedback, ambiguous entity evolution, and out-of-band external changes without copying TextPCB project truth into AASM.
 
-Embedded/physical qualification must exercise reboot epochs, out-of-order receipt, local causal sequence, clock quality/uncertainty, identity changes, calibration state, stale/uncalibrated observations, source-trust changes, environment/qualification changes, and multi-source processing without allowing transport metadata, processing labels, consensus, or proximity to hardware to mint authority.
+Embedded/physical qualification exercises reboot epochs, out-of-order receipt, local causal sequence, clock quality/uncertainty, identity changes, calibration state, stale/uncalibrated observations, source-trust changes, environment/qualification changes, and multi-source processing without allowing transport metadata, processing labels, consensus, or proximity to hardware to mint authority.
 
-Portable constraint active in U4: all new IDs, enumerations, causal references, revisions, fingerprints, bounded integers, and state transitions must have canonical language-independent representations suitable for the future machine/kernel IR.
+Portable constraints remain active: all IDs, enumerations, causal references, revisions, fingerprints, bounded integers, and state transitions use canonical language-independent representations suitable for the future machine/kernel IR.
 
-**Gates:** `aasm/physical-evidence`, `aasm/identity-calibration-trust`, `aasm/execution-environment`, `aasm/observation-epistemics`, `aasm/artifact-lineage`.
+**Gates:** `aasm/physical-evidence`, `aasm/identity-calibration-trust`, `aasm/execution-environment`, `aasm/observation-epistemics`, `aasm/artifact-lineage`, `aasm/entity-evolution` — GATED.
 
 ### U5 — Engineering Semantics, Safety, Risk, and Uncertainty
 
-Required contracts/seams:
+**Status: ACTIVE.**
 
-- `aasm.quantity.v1` including unit/tolerance/quantization/uncertainty semantics;
-- `aasm.rule.v1` including hard-floor/hard/policy/preference/advisory and waiver/precedence semantics;
+Current first qualified seam:
+
+- `aasm.quantity.v1` — **GATED / PUBLIC SEMANTIC IR** under `aasm/engineering-quantity`.
+
+Quantity defines exact integer/rational/canonical-decimal/interval/measured/estimated values; explicit dimension vectors; exact affine source/canonical unit binding; absolute/relative/asymmetric tolerance; quantization/grid and rounding; source precision; uncertainty reference; provenance; canonical projection; and deterministic fingerprints. Dimensional inconsistency fails closed.
+
+Its public admission does **not** imply runtime integration. The active engine does not gain Quantity state, a unit registry, or new truth/effect authority. Existing solver `aasm.numeric.tolerance.v1` and `EffectCapability.NumericInterval` semantics remain unchanged until an explicit later translation/admission contract is qualified.
+
+**Next seam: `aasm.rule.v1`.** Required semantics:
+
+- rule ID and external/source reference;
+- explicit applicability predicate/context;
+- scope selector;
+- priority and specificity;
+- strength `HARD_FLOOR | HARD | POLICY | PREFERENCE | ADVISORY`;
+- explicit waiver/override policy;
+- severity;
+- source authority;
+- exact revision applicability.
+
+Rule precedence is distinct from objective priority. A lower objective score can never override a hard floor. `aasm.rule.v1` must not redefine the existing conflict-learning calculus `LearnedConstraint(strength=HARD|SOFT)`; source engineering-rule semantics and learned-constraint semantics remain distinct until an explicit, versioned lowering/admission contract is qualified.
+
+Remaining U5 seams:
+
 - semantic projection/equivalence;
 - uncertainty/scenario/trace-property semantics;
 - degraded operation;
@@ -199,7 +224,8 @@ TextPCB qualification must exercise dimensions/units, manufacturing/design rules
 
 Portable constraint active in U5: canonical quantitative representation and invariant classification must identify what can be statically represented, what remains a dynamic kernel guard, and what remains empirical Evidence.
 
-**Gates:** `aasm/engineering-semantics`, `aasm/safety-governance`.
+**Current gate:** `aasm/engineering-quantity` — GATED.  
+**Planned U5 aggregate gates:** `aasm/engineering-semantics`, `aasm/safety-governance`.
 
 ### U6 — Governed Refinement, Experiments, Verification Planning, and Knowledge Application
 
@@ -302,16 +328,17 @@ The hosted-foundation review succeeds only if a private hosted fabric can consum
 
 ## Immediate builder queue
 
-1. **U4/S3 artifact revision lineage:** implement `aasm.artifact.revision.v1` with stable logical artifact ID, immutable revision ID, content hash, semantic projection hash, parent revisions, producer/effect/machine binding, source problem/external revisions, format/schema/tool identity, external references, and Evidence lineage. Artifact existence/creation must never imply authoritative acceptance.
-2. Implement `aasm.entity.evolution.v1` with `UNCHANGED | MODIFIED | GENERATED | SPLIT | MERGED | REPLACED | DELETED | AMBIGUOUS` relations; hard reusable knowledge must fail closed across ambiguous mapping.
-3. Add `aasm/artifact-lineage` with forged hash/parent/revision, out-of-band artifact change, stale artifact, ambiguous split/merge mapping, TextPCB board/CAD/project fixtures, and SQLite replay/restart attacks.
-4. Keep TextPCB authoritative for project/artifact truth: AASM stores identity/lineage Evidence and governed acceptance, not a competing “current CAD/PCB artifact” table.
-5. Continue applying canonical portable identity/serialization/bounded-integer rules to every U4 object so later Rust does not require contract redesign.
-6. After artifact/entity lineage qualifies, close U4 and proceed to U5 engineering quantity/rule/safety/uncertainty semantics with TextPCB engineering fixtures and explicit portable invariant classification.
-7. Implement U6 `RefinementLoop`/Experiment/VerificationPlan/KnowledgeApplication using existing `ProblemDelta`, Evidence, scoped authority, resources, obligations, effects, and semantic dependencies.
-8. Freeze U7 portable machine/kernel contracts and differential vectors before writing the broad Rust kernel.
-9. Implement U8 Rust `std`, qualify against Python traces, then U9 `no_std`/real-time/executor profiles.
-10. Complete TextPCB + embedded qualification and permanent stress corpus before claiming vertically complete engineering/physical conformance.
+1. **U5/S4 rule applicability and precedence:** implement pre-admission `aasm.rule.v1` with explicit applicability context, scope selector, priority, specificity, `HARD_FLOOR | HARD | POLICY | PREFERENCE | ADVISORY`, waiver/override policy, severity, source authority, external references, and exact problem/external revision applicability.
+2. Preserve the existing calculus `LearnedConstraint(HARD|SOFT)` as a distinct conflict-learning object; do not reinterpret source rule strength as learned-constraint strength. Any rule-to-constraint lowering must be explicit, versioned, independently checked, and fail closed.
+3. Add a strict portable Rule schema, deterministic fingerprints, adversarial precedence/waiver/revision/scope/source-authority fixtures, and a dedicated `aasm/engineering-rule` gate before public or engine admission.
+4. Keep Quantity public but runtime-pre-admission while designing explicit translation seams for later EffectCapability/postcondition/solver use; do not silently replace `aasm.numeric.tolerance.v1` or `NumericInterval`.
+5. Continue U5 semantic projection/equivalence, uncertainty/scenario/trace-property, degraded operation, risk/irreversibility, safety envelopes, and override/debt semantics after Rule qualifies.
+6. Keep TextPCB authoritative for project/artifact/rule truth: TextPCB-specific rule types remain adapter/conformance material, not kernel types.
+7. Continue applying canonical portable identity/serialization/bounded-integer rules to every U5 object so later Rust does not require contract redesign.
+8. Implement U6 `RefinementLoop`/Experiment/VerificationPlan/KnowledgeApplication using existing `ProblemDelta`, Evidence, scoped authority, resources, obligations, effects, and semantic dependencies.
+9. Freeze U7 portable machine/kernel contracts and differential vectors before writing the broad Rust kernel.
+10. Implement U8 Rust `std`, qualify against Python traces, then U9 `no_std`/real-time/executor profiles.
+11. Complete TextPCB + embedded qualification and the permanent stress corpus before claiming vertically complete engineering/physical conformance.
 
 ## Future capability milestones
 
