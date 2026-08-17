@@ -130,7 +130,12 @@ def _external_refs(
     by_fingerprint = {row.fingerprint: row for row in refs}
     if len(by_fingerprint) != len(refs):
         raise ValueError("duplicate external reference in rule contract")
+    by_identity: dict[tuple[str, str, str], ExternalReference] = {}
     for row in refs:
+        key = (row.namespace, row.external_id, row.role)
+        if key in by_identity:
+            raise ValueError("duplicate external reference identity in rule contract")
+        by_identity[key] = row
         _jsonable(row.identity_payload())
     return tuple(
         sorted(
@@ -327,6 +332,9 @@ class RuleApplicabilityPredicate:
         forbidden = _attribute_map("forbidden", self.forbidden_attribute_values)
         required_tags = _uniq_text(self.required_tags, name="required_tags")
         forbidden_tags = _uniq_text(self.forbidden_tags, name="forbidden_tags")
+        for key in sorted(set(required) & set(forbidden)):
+            if required[key] == forbidden[key]:
+                raise ValueError("rule applicability predicate cannot require and forbid the same attribute value")
         if set(required_tags) & set(forbidden_tags):
             raise ValueError("rule applicability predicate cannot require and forbid the same tag")
         if kind == "ALWAYS" and (required or forbidden or required_tags or forbidden_tags):
