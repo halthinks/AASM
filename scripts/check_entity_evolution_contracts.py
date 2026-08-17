@@ -24,8 +24,11 @@ def main() -> None:
     schema_text = text("schemas/entity-evolution.schema.json")
     tests = text("tests/test_entity_evolution.py")
     active_tests = text("tests/test_entity_evolution_active_engine.py")
+    public_tests = text("tests/test_entity_evolution_public_candidate.py")
     foundation = text("src/aasm/runtime_v56_foundation.py")
-    public = text("src/aasm/public_active.py")
+    parent_public = text("src/aasm/public_active.py")
+    candidate_public = text("src/aasm/public_active_entity_evolution.py")
+    package_init = text("src/aasm/__init__.py")
 
     schema = json.loads(schema_text)
     require(schema["properties"]["contract_id"]["const"] == "aasm.entity.evolution.v1", "entity evolution schema contract ID drift")
@@ -53,10 +56,12 @@ def main() -> None:
         'ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID = "aasm.entity-evolution.runtime.v1"',
         'ENTITY_EVOLUTION_CAPABILITIES = {"evolution_record": "entity.evolution.record"}',
         '"artifact_revision_source": "EXISTING_ARTIFACT_LINEAGE_PROJECTION_ONLY"',
+        '"artifact_revision_binding": "EXACT_ID_AND_FINGERPRINT_REQUIRED"',
         '"ambiguity": "RECORDED_EXPLICITLY_AND_FAIL_CLOSED_FOR_HARD_AUTOMATIC_REUSE"',
         '"parallel_entity_registry": "NONE_EVIDENCE_PROJECTION_ONLY"',
         '"parallel_current_state_store": "NONE"',
         '"hidden_wall_clock": "NONE"',
+        '"runtime_admission": "ACTIVE_ENGINE_CANDIDATE"',
         "project_artifact_lineage_evidence",
         "add_evidence_guarded",
         "authorize_scoped_request",
@@ -93,21 +98,51 @@ def main() -> None:
     for token in required_test_tokens:
         require(token in tests, f"entity evolution adversarial corpus missing test: {token}")
 
-    # Promotion gate: the proven runtime is now composed into the real v0.56
-    # engine, and the same corpus is rebound to `from aasm import AASMEngine`.
     require("from .entity_evolution_runtime import EntityEvolutionRuntimeMixin" in foundation, "entity evolution runtime is not imported by active foundation")
     require("EntityEvolutionRuntimeMixin," in foundation, "entity evolution runtime is not composed into active AASMEngine")
     require("from aasm import AASMEngine as ActiveEngine" in active_tests, "active-engine corpus does not import exported AASMEngine")
     require("corpus.EntityEvolutionEngine = ActiveEngine" in active_tests, "active-engine corpus does not rebind the full adversarial corpus")
     require("test_active_engine_composes_entity_evolution_runtime" in active_tests, "active-engine composition assertion is missing")
 
-    # Public contract exposure remains a separate promotion step. The engine may
-    # implement the methods here, but public_active must not claim them until the
-    # active-engine qualification run is green.
-    require("ENTITY_EVOLUTION_CONTRACT_ID" not in public, "entity evolution public surface was exposed before active-engine qualification")
-    require('"record_entity_evolution"' not in public, "entity evolution public method was claimed before active-engine qualification")
+    # The parent public surface remains immutable while 0.32.15 is qualified.
+    require('"contract_version": "0.32.14"' in parent_public, "entity public candidate parent adoption drift")
+    require("ENTITY_EVOLUTION_CONTRACT_ID" not in parent_public, "entity evolution leaked into the 0.32.14 parent surface")
+    require('"record_entity_evolution"' not in parent_public, "entity evolution method leaked into the 0.32.14 parent surface")
+    require("public_active_entity_evolution" not in package_init, "entity evolution candidate was promoted before candidate qualification")
 
-    print("entity evolution active-engine source contracts: PASS")
+    required_candidate_tokens = [
+        '"contract_version": "0.32.15"',
+        "ENTITY_EVOLUTION_CONTRACT_ID",
+        "ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID",
+        "EntityRepresentationRef",
+        "EntityEvolution",
+        "entity_evolution_contract",
+        "entity_evolution_runtime_contract",
+        "project_entity_evolution_evidence",
+        '"entity-evolution"',
+        '"entity_evolution_runtime_contract_report"',
+        '"record_entity_evolution"',
+        '"entity_evolution_event_report"',
+        '"entity_evolution_report"',
+        '"entity_evolutions_report"',
+        '"FAIL_CLOSED_FOR_HARD_REUSE_OR_AUTOMATIC_IDENTITY_TRANSFER"',
+        '"NONE_EVIDENCE_PROJECTION_ONLY"',
+        '"QUERY_PROJECTION_ONLY_NEVER_CURRENT_STATE_OR_AUTHORITY"',
+    ]
+    for token in required_candidate_tokens:
+        require(token in candidate_public, f"entity evolution public candidate missing token: {token}")
+
+    required_public_test_tokens = [
+        "test_entity_public_candidate_is_additive_over_active_parent",
+        "test_entity_public_candidate_exports_exact_semantic_and_runtime_contracts",
+        "test_entity_public_candidate_exposes_no_authority_or_current_state_shortcut",
+        "test_entity_public_candidate_engine_methods_are_real_active_engine_methods",
+        "test_entity_public_candidate_top_level_not_promoted_before_candidate_gate",
+    ]
+    for token in required_public_test_tokens:
+        require(token in public_tests, f"entity evolution public candidate corpus missing test: {token}")
+
+    print("entity evolution active-engine + public-candidate source contracts: PASS")
 
 
 if __name__ == "__main__":
