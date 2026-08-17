@@ -17,7 +17,6 @@ from aasm.entity_evolution import (
 )
 from aasm.entity_evolution_runtime import (
     ENTITY_EVOLUTION_CAPABILITIES,
-    EntityEvolutionRuntimeMixin,
     entity_evolution_runtime_contract,
     project_entity_evolution_evidence,
 )
@@ -34,8 +33,11 @@ ROOT = "root"
 RECORDER = "entity-recorder"
 
 
-class EntityEvolutionEngine(EntityEvolutionRuntimeMixin, ActiveEngine):
-    pass
+# The corpus began life as a pre-admission synthetic composition. Once the
+# runtime was admitted into the real v0.56 engine, retaining a second mixin base
+# would be both redundant and an invalid Python MRO. The same corpus now executes
+# directly against the exported engine.
+EntityEvolutionEngine = ActiveEngine
 
 
 def _digest(value: str) -> str:
