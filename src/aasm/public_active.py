@@ -110,6 +110,37 @@ from .observation_freshness_runtime import (
     observation_freshness_runtime_contract,
     project_observation_freshness_evidence,
 )
+from .observation_fusion import (
+    OBSERVATION_FUSION_CONTRACT_ID,
+    OBSERVATION_FUSION_CONTRACT_VERSION,
+    OBSERVATION_FUSION_INDEPENDENCE,
+    OBSERVATION_FUSION_STABILITY,
+    ObservationFusionRecord,
+    observation_fusion_contract,
+)
+from .observation_lifecycle import (
+    OBSERVATION_DISPOSITION_CONTRACT_ID,
+    OBSERVATION_DISPOSITION_CONTRACT_VERSION,
+    OBSERVATION_DISPOSITIONS,
+    OBSERVATION_LIFECYCLE_CONTRACT_ID,
+    OBSERVATION_LIFECYCLE_CONTRACT_VERSION,
+    OBSERVATION_LIFECYCLE_STABILITY,
+    OBSERVATION_LIFECYCLE_STAGES,
+    OBSERVATION_SOURCE_KINDS,
+    ObservationDisposition,
+    ObservationLifecycleRecord,
+    ObservationSourceRef,
+    observation_lifecycle_contract,
+    portable_observation_value,
+)
+from .observation_processing_runtime import (
+    OBSERVATION_PROCESSING_CAPABILITIES,
+    OBSERVATION_PROCESSING_RUNTIME_CONTRACT_ID,
+    OBSERVATION_PROCESSING_RUNTIME_CONTRACT_VERSION,
+    OBSERVATION_PROCESSING_RUNTIME_STABILITY,
+    observation_processing_runtime_contract,
+    project_observation_processing_evidence,
+)
 from .physical_control_fencing_runtime import (
     PHYSICAL_CONTROL_FENCING_CAPABILITIES,
     PHYSICAL_CONTROL_FENCING_RUNTIME_CONTRACT_ID,
@@ -254,6 +285,16 @@ _NEW_ENGINE_METHODS = [
     "execution_environment_report",
     "execution_environment_binding_report",
     "execution_environments_report",
+    "observation_processing_contract_report",
+    "observation_lifecycle_contract_report",
+    "observation_fusion_contract_report",
+    "record_observation_lifecycle",
+    "record_observation_fusion",
+    "record_observation_disposition",
+    "observation_lifecycle_record_report",
+    "observation_fusion_record_report",
+    "observation_disposition_report",
+    "observation_processing_report",
 ]
 
 _NEW_IMPORTS = [
@@ -400,6 +441,31 @@ _NEW_IMPORTS = [
     "EXECUTION_ENVIRONMENT_CAPABILITIES",
     "project_execution_environment_evidence",
     "execution_environment_runtime_contract",
+    "OBSERVATION_LIFECYCLE_CONTRACT_ID",
+    "OBSERVATION_LIFECYCLE_CONTRACT_VERSION",
+    "OBSERVATION_DISPOSITION_CONTRACT_ID",
+    "OBSERVATION_DISPOSITION_CONTRACT_VERSION",
+    "OBSERVATION_LIFECYCLE_STABILITY",
+    "OBSERVATION_LIFECYCLE_STAGES",
+    "OBSERVATION_SOURCE_KINDS",
+    "OBSERVATION_DISPOSITIONS",
+    "ObservationSourceRef",
+    "ObservationLifecycleRecord",
+    "ObservationDisposition",
+    "portable_observation_value",
+    "observation_lifecycle_contract",
+    "OBSERVATION_FUSION_CONTRACT_ID",
+    "OBSERVATION_FUSION_CONTRACT_VERSION",
+    "OBSERVATION_FUSION_STABILITY",
+    "OBSERVATION_FUSION_INDEPENDENCE",
+    "ObservationFusionRecord",
+    "observation_fusion_contract",
+    "OBSERVATION_PROCESSING_RUNTIME_CONTRACT_ID",
+    "OBSERVATION_PROCESSING_RUNTIME_CONTRACT_VERSION",
+    "OBSERVATION_PROCESSING_RUNTIME_STABILITY",
+    "OBSERVATION_PROCESSING_CAPABILITIES",
+    "project_observation_processing_evidence",
+    "observation_processing_runtime_contract",
 ]
 
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*getattr(_base, "SUPPORTED_ENGINE_METHODS", []), *_NEW_ENGINE_METHODS]))
@@ -416,12 +482,13 @@ SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([
     "calibration",
     "source-trust",
     "execution-environment",
+    "observation-processing",
 ]))
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*getattr(_base, "SUPPORTED_PUBLIC_IMPORTS", []), *_NEW_IMPORTS]))
 
 PUBLIC_API_CONTRACT = deepcopy(_base.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.32.12",
+    "contract_version": "0.32.13",
     "runtime_version": __version__,
     "release_stability": PUBLIC_RELEASE_STABILITY,
     "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
@@ -473,6 +540,11 @@ PUBLIC_API_CONTRACT["execution_environment"] = {
     **execution_environment_contract(),
     "runtime": execution_environment_runtime_contract(),
 }
+PUBLIC_API_CONTRACT["observation_processing"] = {
+    **observation_lifecycle_contract(),
+    "fusion": observation_fusion_contract(),
+    "runtime": observation_processing_runtime_contract(),
+}
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
 
@@ -495,7 +567,7 @@ def validate_public_api_contract():
         errors.append(f"missing active governed-reality engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
         errors.append("active runtime version mismatch")
-    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.12":
+    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.13":
         errors.append("active adoption contract mismatch")
 
     capability = PUBLIC_API_CONTRACT.get("effect_capability", {})
@@ -650,6 +722,36 @@ def validate_public_api_contract():
         errors.append("execution environment introduced parallel store/truth")
     if environment_runtime.get("parallel_authority_evaluator") != "NONE":
         errors.append("execution environment introduced parallel authority evaluator")
+
+    processing = PUBLIC_API_CONTRACT.get("observation_processing", {})
+    processing_runtime = processing.get("runtime", {})
+    fusion = processing.get("fusion", {})
+    if processing.get("contract_id") != OBSERVATION_LIFECYCLE_CONTRACT_ID:
+        errors.append("S3 observation-lifecycle contract missing")
+    if processing.get("empirical_root") != "EXISTING_MACHINE_STATE_OBSERVATION_ONLY":
+        errors.append("observation lifecycle replaced the empirical root")
+    if processing.get("current_observation_pointer") != "NONE":
+        errors.append("observation lifecycle introduced a hidden current pointer")
+    if processing.get("lifecycle_record_grants_fact_authority") is not False or processing.get("validated_stage_is_universal_admission") is not False:
+        errors.append("observation lifecycle incorrectly grants authority/admission")
+    if fusion.get("contract_id") != OBSERVATION_FUSION_CONTRACT_ID:
+        errors.append("S3 observation-fusion contract missing")
+    if fusion.get("agreement_semantics") != "CORROBORATION_ONLY_NEVER_AUTHORITY_OR_TRUTH_BY_VOTE":
+        errors.append("observation fusion acquired voting semantics")
+    if fusion.get("declared_independence_grants_authority") is not False or fusion.get("validated_by_agreement") is not False:
+        errors.append("observation fusion incorrectly grants authority/validation")
+    if processing_runtime.get("authority") != "EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORDING_NOT_OBSERVATION_TRUTH":
+        errors.append("observation processing recording authority became truth authority")
+    if processing_runtime.get("disposed_source_reuse") != "FAIL_CLOSED_FOR_NEW_LIFECYCLE_OR_FUSION_RECORDS":
+        errors.append("observation processing permits disposed-source reuse")
+    if processing_runtime.get("fact_authority_creation") != "NONE" or processing_runtime.get("effect_authority") != "NONE":
+        errors.append("observation processing incorrectly creates authority")
+    if processing_runtime.get("state_claim_creation") != "NONE" or processing_runtime.get("source_trust_creation") != "NONE":
+        errors.append("observation processing incorrectly creates state/trust")
+    if processing_runtime.get("parallel_observation_store") != "NONE_EVIDENCE_PROJECTION_ONLY" or processing_runtime.get("parallel_truth_table") != "NONE":
+        errors.append("observation processing introduced parallel observation/truth state")
+    if processing_runtime.get("parallel_authority_evaluator") != "NONE":
+        errors.append("observation processing introduced parallel authority evaluator")
 
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 
