@@ -4,8 +4,8 @@
 **Repository:** `halthinks/AASM`  
 **Latest immutable release:** `v0.56.0`  
 **Current development package:** `0.56.1`  
-**Current adoption contract:** `aasm.adoption.v1 / 0.32.11`  
-**Current exact qualified development boundary:** `6dbd62dc704b15fccb86a61053ce7bfdcdea477a` — all 23 current custom qualification contexts green  
+**Current adoption contract:** `aasm.adoption.v1 / 0.32.13`  
+**Current exact qualified development boundary:** `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd` — all 25 current custom qualification contexts green  
 **Status:** single canonical execution roadmap for governed semantic evolution, TextPCB compatibility, physical/distributed control, portable machine semantics, Rust `std`, and Rust `no_std`
 
 Companion architecture:
@@ -193,7 +193,7 @@ Active contracts/runtime include:
 
 The complete PR-3 / PHY-01 parent is GATED. Existing scoped effect authority, TaskLease/resource governance, durable EffectOwnership, dispatch, `UNKNOWN`, and reconciliation remain authoritative.
 
-### S3 reality-evidence foundation
+### S3 reality-evidence and observation-epistemics foundation
 
 Active and gated contracts/runtime include:
 
@@ -202,11 +202,17 @@ Active and gated contracts/runtime include:
 - `aasm.observation.freshness.v1`;
 - `aasm.physical.identity.v1`;
 - `aasm.calibration.v1`;
-- `aasm.source.trust.v1`.
+- `aasm.source.trust.v1`;
+- `aasm.execution.environment.v1`;
+- `aasm.execution.environment-binding.v1`;
+- `aasm.observation.lifecycle.v1`;
+- `aasm.observation.disposition.v1`;
+- `aasm.observation.fusion.v1`;
+- `aasm.observation.processing.runtime.v1`.
 
-Exact qualified boundary: `6dbd62dc704b15fccb86a61053ce7bfdcdea477a`, adoption `0.32.11`, all 23 current custom qualification contexts green.
+Exact qualified boundary: `55a8da1f6937d97439a6e2103a55d1b6f6d0f4fd`, adoption `0.32.13`, all 25 current custom qualification contexts green.
 
-Claim ceilings remain strict: conflict/freshness/identity/calibration/trust are Evidence/policy-input layers only; source trust cannot replace `FactAuthority`; record/revoke authority is not trust-evaluation authority; neither proximity to hardware nor a `TRUSTED` disposition mints truth or effect authority.
+Claim ceilings remain strict: conflict/freshness/identity/calibration/trust/environment/processing are Evidence or policy-input layers only; source trust cannot replace `FactAuthority`; record/revoke authority is not trust-evaluation authority; environment level is not a truth/authority rank; neither proximity to hardware, a `TRUSTED` disposition, a `VALIDATED` processing label, fusion agreement, nor declared source independence mints truth or effect authority. Existing machine observations remain the empirical root, and no parallel observation/truth table is introduced.
 
 ---
 
@@ -226,9 +232,9 @@ RELEASED/GATED BASE
   +-- S3  state conflict ------------------------------------ DONE
   |      +-- causality/freshness ---------------------------- DONE
   |      +-- physical identity/calibration/source trust ----- DONE
-  |      +-- execution/qualification environment ------------ NEXT
-  |      +-- observation lifecycle/fusion ------------------- QUEUED
-  |      +-- artifact revision/entity evolution ------------- QUEUED
+  |      +-- execution/qualification environment ------------ DONE
+  |      +-- observation lifecycle/fusion ------------------- DONE
+  |      +-- artifact revision/entity evolution ------------- NEXT
   |
   v
 S4 ENGINEERING + SAFETY SEMANTICS
@@ -408,37 +414,40 @@ Hardware attestation hooks remain reserved without binding the kernel to a TPM/T
 
 ## 7.5 Execution/qualification environment
 
-**Status: NEXT.**
+**Status: GATED.**
 
-Target:
+Contracts:
 
 - `aasm.execution.environment.v1`
-- explicit qualification level
+- `aasm.execution.environment-binding.v1`
+- `aasm.execution.environment.runtime.v1`
 
 Levels:
 
 `MODEL | SIMULATION | SIL | HIL | BENCH | CONTROLLED_PHYSICAL | OPERATIONAL`
 
-Simulation evidence cannot silently become physical evidence. Environment identity/configuration/revision must be explicit and portable. Environment proximity to hardware must not mint FactAuthority, source trust, or effect authority.
+The levels are exact qualification-context labels, not an ordinal truth or authority ranking. Accepted levels use exact set membership. Simulation evidence cannot silently become bench/physical evidence. Environment identity/configuration/revision is explicit and portable, optional identity/calibration/source-trust references are exact, and environment proximity to hardware does not mint FactAuthority, source trust, effect authority, or universal admission.
 
 ## 7.6 Observation lifecycle/fusion
 
-**Status: QUEUED after execution environment.**
+**Status: GATED.**
 
-Target:
+Contracts:
 
 - `aasm.observation.lifecycle.v1`
+- `aasm.observation.disposition.v1`
 - `aasm.observation.fusion.v1`
+- `aasm.observation.processing.runtime.v1`
 
 Lifecycle:
 
-`RAW -> NORMALIZED -> CALIBRATED -> DERIVED -> FUSED -> VALIDATED`, plus rejected/superseded/stale/disputed outcomes.
+`RAW -> NORMALIZED -> CALIBRATED -> DERIVED -> VALIDATED`, with multi-source fusion represented explicitly and rejected/superseded/stale/disputed outcomes recorded separately.
 
-Every derived/fused observation references sources. Fusion never votes authority.
+The existing `MachineStateObservation` remains the empirical root. RAW reproduces its exact portable value. Every later record references exact source IDs/fingerprints. Lifecycle stage progression is checked at runtime; CALIBRATED requires exact active calibration under an explicit time context; fusion requires at least two processed sources and cannot bypass lifecycle with direct raw machine observations. Fusion never votes authority, source independence never grants authority, and `VALIDATED` is only a local processing label—not FactAuthority or universal admission. Dispositions never erase source history, and disposed-source reuse fails closed.
 
 ## 7.7 Artifact revision lineage
 
-**Status: QUEUED under the separate cumulative `aasm/artifact-lineage` gate.**
+**Status: NEXT under the separate cumulative `aasm/artifact-lineage` gate.**
 
 Target: `aasm.artifact.revision.v1`.
 
@@ -450,15 +459,16 @@ Bind:
 - parent revisions;
 - producer/effect/machine binding;
 - source problem revision;
+- source external revision where applicable;
 - format/schema/tool identity;
 - external references;
 - Evidence IDs.
 
-Failed/generated artifacts may remain Evidence without becoming current authoritative artifacts.
+Failed/generated artifacts may remain Evidence without becoming current authoritative artifacts. Artifact existence or successful generation is not authoritative acceptance. AASM must not introduce a hidden current-artifact/project-truth table.
 
 ## 7.8 Entity evolution
 
-**Status: QUEUED after artifact revision lineage.**
+**Status: NEXT after/with artifact revision lineage under `aasm/artifact-lineage`.**
 
 Target: `aasm.entity.evolution.v1`.
 
@@ -466,7 +476,7 @@ Relations:
 
 `UNCHANGED | MODIFIED | GENERATED | SPLIT | MERGED | REPLACED | DELETED | AMBIGUOUS`
 
-Hard reusable knowledge fails closed across `AMBIGUOUS` mapping.
+Hard reusable knowledge fails closed across `AMBIGUOUS` mapping. Evolution records preserve exact predecessor/successor identities and provenance; they do not silently rewrite historical entity identity.
 
 ## 7.9 TextPCB S3 conformance fixtures
 
@@ -481,7 +491,10 @@ Permanent fixture requirements include:
 - simulation result presented as if bench/physical;
 - artifact hash mismatch;
 - project/tool identity/configuration revision changes;
-- DRC/tool calibration or trust invalidation without authority laundering.
+- DRC/tool calibration or trust invalidation without authority laundering;
+- lifecycle stage skip or forged calibration/source lineage;
+- multi-source agreement attempting to vote truth;
+- disposed/stale/disputed source reuse.
 
 TextPCB-specific kernel types remain forbidden.
 
@@ -489,7 +502,7 @@ TextPCB-specific kernel types remain forbidden.
 
 Every S3 object must define canonical field types, ordering, identity payload, enum values, optionality and fingerprint rules without Python object identity. These become future machine/kernel IR references rather than being redesigned for Rust.
 
-**Gates:** `aasm/physical-evidence`, `aasm/identity-calibration-trust`, `aasm/artifact-lineage`.
+**Gates:** `aasm/physical-evidence`, `aasm/identity-calibration-trust`, `aasm/execution-environment`, `aasm/observation-epistemics`, `aasm/artifact-lineage`.
 
 ---
 
@@ -884,7 +897,7 @@ Qualify the same semantic machine across:
 
 `MODEL -> SIMULATION -> SIL -> HIL -> BENCH -> CONTROLLED_PHYSICAL -> OPERATIONAL`.
 
-Evidence level changes only through explicit qualification policy, identity, calibration and verifier claims.
+Evidence level changes only through explicit qualification policy, identity, calibration and verifier claims. The S3 environment contract provides the exact context identity; it does not itself define an ordinal truth ladder.
 
 ## 13.2 Embedded reference consumer
 
@@ -1002,6 +1015,8 @@ Include at minimum:
 - forged/uncalibrated observation;
 - simulation-as-physical laundering;
 - sensor/solver consensus laundering;
+- lifecycle stage laundering and forged processing lineage;
+- disposed/stale/disputed observation reuse;
 - artifact tampering;
 - quantity/rule attacks;
 - refinement self-authorization/no-progress/oscillation;
@@ -1062,18 +1077,17 @@ TextPCB may pressure contract design through realistic cases, but:
 
 # 18. Immediate builder queue
 
-1. **Implement `aasm.execution.environment.v1`** with explicit `MODEL | SIMULATION | SIL | HIL | BENCH | CONTROLLED_PHYSICAL | OPERATIONAL` qualification levels, exact environment/configuration identity, problem/external revisions and Evidence lineage. Environment proximity to hardware must never mint authority.
-2. Extend `aasm/physical-evidence` with simulation-as-physical laundering, wrong environment/configuration/revision, identity/calibration/trust mismatch, stale environment evidence and deterministic replay attacks.
-3. Implement `aasm.observation.lifecycle.v1` over existing observations/Evidence; preserve exact source lineage through normalization/calibration/derivation/fusion/validation and explicit rejected/superseded/stale/disputed outcomes.
-4. Implement `aasm.observation.fusion.v1` as explicit derivation over source IDs/fingerprints; fusion never votes truth or creates `FactAuthority`.
-5. Implement artifact revision and entity evolution under the separate cumulative `aasm/artifact-lineage` gate.
-6. Apply the cross-cutting portable identity/serialization discipline to every remaining S3 contract immediately.
-7. Add TextPCB-derived environment/lifecycle/fusion/artifact/entity fixtures as each generic contract lands.
-8. Begin S4 quantity/rule/projection/uncertainty/safety semantics and formal invariant taxonomy.
-9. Build S5 RefinementLoop/Experiment/VerificationPlan/KnowledgeApplication on existing Evidence/ProblemDelta/authority/resource/dependency planes.
-10. Freeze S6 machine IR/kernel/wire semantics and Python reference vectors.
-11. Implement S7 Rust `std` only against the frozen portable target; then S8 `no_std`/real-time/executor traits.
-12. Complete TextPCB + embedded qualification, readiness and permanent stress corpus.
+1. **Implement `aasm.artifact.revision.v1`** with stable logical artifact ID, immutable revision ID, content hash, semantic projection hash, parent revisions, producer/effect/machine binding, source problem/external revisions, format/schema/tool identity, external references and Evidence lineage. Artifact existence or generation must never imply authoritative/current acceptance.
+2. Implement `aasm.entity.evolution.v1` with `UNCHANGED | MODIFIED | GENERATED | SPLIT | MERGED | REPLACED | DELETED | AMBIGUOUS`; hard reusable knowledge must fail closed across ambiguous mapping.
+3. Add the separate cumulative `aasm/artifact-lineage` gate with forged hash/parent/revision, out-of-band artifact change, stale artifact, ambiguous split/merge/replacement, TextPCB board/CAD/project fixtures and deterministic replay attacks.
+4. Keep TextPCB authoritative for project/artifact truth: AASM records portable lineage and governed acceptance Evidence rather than a competing hidden current-artifact/project-state table.
+5. Apply the cross-cutting portable identity/serialization discipline to artifact/entity contracts immediately.
+6. Add TextPCB-derived artifact/entity fixtures as each generic contract lands.
+7. After artifact/entity lineage qualifies, close S3/U4 and begin S4 quantity/rule/projection/uncertainty/safety semantics and formal invariant taxonomy.
+8. Build S5 RefinementLoop/Experiment/VerificationPlan/KnowledgeApplication on existing Evidence/ProblemDelta/authority/resource/dependency planes.
+9. Freeze S6 machine IR/kernel/wire semantics and Python reference vectors.
+10. Implement S7 Rust `std` only against the frozen portable target; then S8 `no_std`/real-time/executor traits.
+11. Complete TextPCB + embedded qualification, readiness and permanent stress corpus.
 
 ---
 
