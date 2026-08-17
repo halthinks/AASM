@@ -3,7 +3,8 @@
 **Status projection date:** 2026-08-16
 **Latest immutable release:** `v0.56.0` at commit `551b2f4780acaeb93384b454f6f474f6ebd1b30e`
 **Current development target:** `0.56.1` on `main`; exact unreleased identity is Git SHA
-**Current adoption contract:** `aasm.adoption.v1 / 0.32.7`
+**Current adoption contract:** `aasm.adoption.v1 / 0.32.11`
+**Current exact qualified development boundary:** `6dbd62dc704b15fccb86a61053ce7bfdcdea477a` — all 23 current custom qualification contexts green
 **Doctrine:** `docs/architecture/GOVERNED_SEMANTIC_EVOLUTION_WHITEPAPER.md`
 **Physical/distributed reconciliation:** `docs/architecture/GOVERNED_PHYSICAL_DISTRIBUTED_REALITY_RECONCILIATION.md`
 **Physical integration plan:** `docs/implementation/GOVERNED_PHYSICAL_REALITY_INTEGRATION_PLAN.md`
@@ -51,9 +52,13 @@ Dormant or interrupted source code does not advance a row by itself. A row advan
 | 56.4 | `knowledge-applicability-application` | Generic knowledge applicability/application | SOURCE_LOCKED | applicability-scoped learned constraints beyond solver learning | generalize v0.48/v0.53 mechanisms; no second knowledge store | 55.1; 56.1; solver learning | poisoned/cross-revision/cross-scope reuse corpus required | solver-learning subset already real | design explicit applicability/application contracts |
 | 56.5 | `integrated-core-conflict-pipeline` | Integrated core/conflict pipeline | SOURCE_LOCKED | raw → normalized → minimized → independently rechecked requirement core | `conflict_minimization.py` exists as reusable primitive | 55.1; 55.3; 56.1 | irrelevant assumption/core-oracle fixtures | generic minimizer exists; integrated solver/domain pipeline not claimed | integrate after lineage + truthful outcomes |
 | 57.1 | `external-machine-supervision` / PR-2A | External machine binding | GATED | supervise an external authoritative state machine without mirroring truth | `aasm.machine.binding.v1`; `aasm.machine.state-observation.v1`; `aasm.machine.external.runtime.v1`; `external_machine.py`; `external_machine_runtime.py`; schemas; active `public_v56` | v0.54 effects; 55.1 revisions; PR-1 | exact-head `aasm/external-machine`; subject/namespace/revision/capability laundering rejection; SQLite replay; binding references cannot mint fact/effect authority | reference/correlation only; no external truth copy, executor invocation, effect authority, or core machine-state mutation | preserve as PR-2A boundary; PR-2B/2C now qualified on top |
-| 57.2 | `external-machine-supervision` / PR-2B–2C | Revision-safe transition, state observation, postcondition verification | GATED | expected authoritative pre-state/revision, desired target state, post-effect observation, execution correlation, independently authoritative achieved state | `aasm.machine.transition.v1`; `aasm.machine.transition.runtime.v1`; `aasm.machine.postcondition-verification.v1`; `aasm.machine.postcondition-verification.runtime.v1`; existing v0.54 `EffectIntent`/ownership/reconciliation; active `public_v56` | 57.1; effects; PR-1 | exact-head `aasm/machine-transition`, `aasm/machine-postcondition`, cumulative `aasm/v56`, and full CI; real resource→worker→TaskDemand→TaskLease→ownership→dispatch path; stale prestate/correlation, ACK-without-achievement, non-authoritative observation, mismatch, idempotency, SQLite replay | `SUCCEEDED` is not achieved state; exact canonical equality only; no freshness/calibration/tolerance semantics; no second dispatcher/effect lifecycle or authority minting | preserve; next dependency is PR-3 physical authority/capabilities and PR-4 temporal/identity/calibration semantics |
-| 57.3 | `external-machine-supervision` | Artifact revision lineage | DESIGNED | immutable CAD/PCB/CAE/physical outputs | designed `aasm.artifact.revision.v1`; artifact backends exist but canonical lineage contract not active | 55.1; 57.1 | tamper/parent/stale artifact fixtures | artifact existence is not authoritative acceptance | implement canonical artifact lineage |
-| 57.4 | `external-machine-supervision` | Entity evolution | DESIGNED | persistent semantic identity across topology/tool/world-model changes | designed `aasm.entity.evolution.v1` | 57.3 | ambiguous mapping blocks hard reuse | none yet | genericize beyond CAD |
+| 57.2 | `external-machine-supervision` / PR-2B–2C | Revision-safe transition, state observation, postcondition verification | GATED | expected authoritative pre-state/revision, desired target state, post-effect observation, execution correlation, independently authoritative achieved state | `aasm.machine.transition.v1`; `aasm.machine.transition.runtime.v1`; `aasm.machine.postcondition-verification.v1`; `aasm.machine.postcondition-verification.runtime.v1`; existing v0.54 `EffectIntent`/ownership/reconciliation; active public surface | 57.1; effects; PR-1; PR-3; S3 temporal/identity evidence | exact-head transition/postcondition gates plus cumulative `aasm/v56`; real resource→worker→TaskDemand→TaskLease→ownership→dispatch path; stale prestate/correlation, ACK-without-achievement, non-authoritative observation, mismatch, idempotency, SQLite replay | `SUCCEEDED` is not achieved state; freshness/causality/identity/calibration/trust are now separately qualified Evidence layers; tolerance/quantity semantics remain future S4 work; no second dispatcher/effect lifecycle or authority minting | preserve; next external-reality dependency is execution environment then observation lifecycle/fusion |
+| 57.3 | `external-machine-supervision` | Artifact revision lineage | DESIGNED | immutable CAD/PCB/CAE/physical outputs | designed `aasm.artifact.revision.v1`; artifact backends exist but canonical lineage contract not active | 55.1; 57.1; S3 reality evidence | tamper/parent/stale artifact fixtures | artifact existence is not authoritative acceptance | implement under `aasm/artifact-lineage` after/alongside environment+lifecycle foundations |
+| 57.4 | `external-machine-supervision` | Entity evolution | DESIGNED | persistent semantic identity across topology/tool/world-model changes | designed `aasm.entity.evolution.v1` | 57.3 | ambiguous mapping blocks hard reuse | none yet | genericize beyond CAD under `aasm/artifact-lineage` |
+| S3-01 | `reality-evidence` | State conflict + causal event identity + observation freshness | GATED | expectation violation, distributed causal coordinates, clock quality and explicit freshness without host-time laundering | `aasm.state.conflict.v1`; `aasm.event.causality.v1`; `aasm.observation.freshness.v1`; runtimes/schemas/public surface | PR-1; PR-2 | exact head `6dbd62dc704b15fccb86a61053ce7bfdcdea477a`; `aasm/physical-evidence`, `aasm/v56`, full CI; TextPCB out-of-band/stale-result fixtures; embedded reboot/sequence/receipt-order fixtures | conflict/freshness are Evidence only; no global total order; host wall clock not truth; `FRESH` grants no FactAuthority/effect authority/universal admission | preserve; compose with execution environment and lifecycle/fusion |
+| S3-02 | `physical-identity-trust` | Physical identity + calibration + source trust | GATED | exact source/device/project identity, validity/revocation and trust-policy inputs without replacing authority | `aasm.physical.identity.v1`; `aasm.calibration.v1`; `aasm.source.trust.v1`; runtimes/schemas/public surface | S3-01; scoped authority; PR-1 | exact head `6dbd62dc704b15fccb86a61053ce7bfdcdea477a`; independent `aasm/identity-calibration-trust`, cumulative `aasm/physical-evidence`, `aasm/v56`, full CI; identity substitution, calibration revocation, `TRUSTED != FactAuthority`, TextPCB project/tool fixtures, SQLite replay | identity/calibration/trust are Evidence/policy-input layers only; record/revoke authority is not trust-evaluation authority; no reputation/voting/latest pointer; trust does not admit claims or grant effects | preserve; next boundary is execution/qualification environment |
+| S3-03 | `execution-qualification-environment` | Explicit environment identity and qualification level | DESIGNED | distinguish model/simulation/SIL/HIL/bench/controlled-physical/operational evidence without proximity laundering | target `aasm.execution.environment.v1` | S3-01; S3-02 | simulation-as-physical, wrong config/revision/identity/calibration/trust, stale environment and replay fixtures required | environment level is context, not authority rank; no self-upgrade or cross-environment equivalence without explicit policy | NEXT: implement and qualify through `aasm/physical-evidence` |
+| S3-04 | `observation-epistemics` | Observation lifecycle + fusion | DESIGNED | raw→normalized→calibrated→derived→fused→validated lineage and explicit rejected/superseded/stale/disputed outcomes | targets `aasm.observation.lifecycle.v1`; `aasm.observation.fusion.v1` | S3-01–03 | source lineage, stale/calibration/environment mismatch, fusion laundering, replay fixtures required | every derivation names exact sources; fusion never votes truth or creates FactAuthority | queue after execution environment |
 | 58.1 | `governed-refinement-verification-planning` | Governed refinement proposal/loop | DESIGNED | solve→verify→diagnose→refine→re-solve without evaluator self-mutation | designed `aasm.refinement.proposal.v1` / `aasm.refinement.loop.v1`; ProblemDelta and Evidence substrates released | 55.1; 56.4; 57.x | stale/self-authorized/no-progress/oscillation attacks | evaluator proposes only; existing authority commits | implement as composition, not new truth/scheduler |
 | 58.2 | `governed-refinement-verification-planning` | Verification planning/debt | DESIGNED | multi-fidelity evidence acquisition and unresolved verification obligations | designed `aasm.verification.plan.v1` / `aasm.verification.debt.v1`; resources and verifier ABI exist | resources; verifier ABI; revisions | cheap pass cannot clear stronger obligation | debt is projection, not truth mutation | implement on existing obligations/Evidence/resources |
 | 59.1 | `engineering-semantics-production-search` | Quantity/unit/tolerance semantics | DESIGNED | dimensional correctness | designed `aasm.quantity.v1`; current continuous IR has numerical/tolerance policy but not general physical quantity contract | 55.1 | unit/dimension/rounding/tolerance attacks | no generic physical-quantity claim yet | implement reusable quantity contract |
@@ -74,17 +79,17 @@ These are the durable seams exposed by the Embedded/Physical review. They extend
 
 | ID | Milestone | Capability | Status | Existing substrate / landed work | Missing semantic elevation / next boundary |
 |---|---|---|---|---|---|
-| PHY-01 | `physical-authority-capabilities` / PR-3 | Authority domains, leases/epochs, bounded revocable effect capabilities, semantic preemption | RUNTIME_LANDED | PR-3A/3B `aasm.authority.domain.v1` + `aasm.authority.lease.v1`, PR-3C/3D `aasm.effect.capability.v1`, PR-3E/F `aasm.effect.capability-use.v1`, and PR-3G `aasm.authority.preemption.v1` are active and independently gated; existing scoped authority and Effect lifecycle remain authoritative | PR-3H integration into existing `authorize_effect` / `execute_effect` is still required before the PR-3 / PHY-01 parent can be GATED |
-| PHY-02 | `authoritative-state-claims` / PR-1 | Desired / predicted / observed / authoritative state separation + fact authority | GATED | `aasm.fact.authority.v1`; `aasm.state.claim.v1`; `aasm.state.authority.runtime.v1`; `state_authority.py`; `state_authority_runtime.py`; schemas; active public surface; existing Evidence + scoped authority only | PR-1 boundary complete: observation/consensus cannot create authority, fact authority grants no effect authority, claims do not mutate core machine state; PR-2 external-machine semantics are qualified on top |
-| PHY-03 | `postcondition-verification` / PR-2 | Command ≠ achievement; machine binding, transition attempt, correlated observation and postcondition verifier | GATED | `aasm.machine.binding.v1`; `aasm.machine.state-observation.v1`; `aasm.machine.transition.v1`; `aasm.machine.postcondition-verification.v1`; runtime mixins/schemas; existing v0.54 EffectIntent/Ownership/Reconciliation/UNKNOWN; active public surface | PR-2 boundary complete: successful governed dispatch/ACK cannot establish achieved state; verification requires correlated post-effect observation plus independently authoritative state; exact equality only; PR-4 owns freshness/clock/calibration/tolerance semantics |
-| PHY-04 | `temporal-causal-semantics` / PR-4 | sequence, causal relation, leases/deadlines, observation age, clock quality | DESIGNED | event order, timestamps, lease expiration in existing subsystems | explicit causal/partial-order contract; monotonic device epochs; clock-quality/freshness semantics |
-| PHY-05 | `physical-identity-trust` / PR-4 | device/component identity, calibration lifecycle, trust boundary, attestation | DESIGNED | external refs, environment fingerprints, measurement authority, runtime provenance | physical assembly/sensor/calibration identity; validity ranges/expiry; trust claims; secure-boot/firmware attestation hooks |
+| PHY-01 | `physical-authority-capabilities` / PR-3 | Authority domains, leases/epochs, bounded revocable effect capabilities, semantic preemption, inherited Effect-boundary enforcement | GATED | PR-3A–G contracts plus PR-3H `aasm.effect.physical-authority-binding.v1` / `aasm.effect.physical-authority-integration.runtime.v1`; active engine rechecks live authority/capability at inherited effect authorization/execution; existing Effect lifecycle remains authoritative | parent complete; preserve live recheck, no reusable capability-use bearer token, no second dispatcher/authority/resource/effect system |
+| PHY-02 | `authoritative-state-claims` / PR-1 | Desired / predicted / observed / authoritative state separation + fact authority | GATED | `aasm.fact.authority.v1`; `aasm.state.claim.v1`; `aasm.state.authority.runtime.v1`; Evidence + scoped authority only | boundary complete; preserve no authority laundering |
+| PHY-03 | `postcondition-verification` / PR-2 | Command ≠ achievement; machine binding, transition attempt, correlated observation and postcondition verifier | GATED | machine binding/observation/transition/postcondition contracts over existing Effect lifecycle and PR-1 state authority | boundary complete; S3 temporal/identity foundations now qualify freshness/identity context; S4 still owns quantity/tolerance semantics |
+| PHY-04 | `temporal-causal-semantics` / PR-4 | state conflict, causal relation, boot epochs/local sequence, observation age, clock quality/freshness | GATED | `aasm.state.conflict.v1`; `aasm.event.causality.v1`; `aasm.observation.freshness.v1`; active runtimes/schemas/public surface | next temporal/epistemic elevation is execution environment then observation lifecycle/fusion; no host-time truth/global ordering/authority from freshness |
+| PHY-05 | `physical-identity-trust` / PR-4 | device/component/project identity, calibration validity/revocation, source-trust policy boundary | GATED | `aasm.physical.identity.v1`; `aasm.calibration.v1`; `aasm.source.trust.v1`; active runtimes/schemas/public surface | hardware attestation remains reserved; next boundary execution environment; identity/calibration/trust remain Evidence only and `FactAuthority` remains separate |
 | PHY-06 | `degraded-autonomy-safety` / PR-5 | degraded modes, safety envelopes, semantic preemption, hybrid discrete/continuous guards | DESIGNED | machine states/obligations, continuous IR, effects, scoped authority | degradation policy, continuous safety envelope, hybrid state contract, emergency/local authority rules |
-| PHY-07 | `observation-epistemics` / PR-4 | observation lifecycle, fusion, source independence, epistemic containment | DESIGNED | Evidence, measurement authority, proof/evidence grades, no-voting solver doctrine, PR-1 observed/authoritative split | raw→calibrated→derived/fused lifecycle; fusion contract; no authority laundering across transformations |
+| PHY-07 | `observation-epistemics` / PR-4 | observation lifecycle, fusion, source independence, epistemic containment | DESIGNED | Evidence, PR-1 observed/authoritative split, no-voting doctrine, S3 freshness/identity/calibration/trust | implement execution environment first, then raw→normalized→calibrated→derived/fused→validated lifecycle and fusion contract without authority laundering |
 | PHY-08 | `epistemic-risk-obligations` / PR-5 | assumptions, epistemic debt, risk/hazards, irreversibility, pre/post obligations | DESIGNED | assumptions/reasoning artifacts, semantic dependencies, verification debt design, `EffectSpec.reversible`/compensation | generalized debt propagation, hazard/risk envelope, irreversible-action evidence escalation, obligation phase taxonomy |
 | PHY-09 | `governed-experiments` / PR-6 | experiment contract and information-value evidence acquisition | DESIGNED | refinement design, resources, Evidence, verifier planning | hypothesis/control/measurement/procedure contract; experiment selection under safety/evidence/resource constraints |
 | PHY-10 | `portable-kernel-machine-compiler` / PR-7 | language-neutral kernel semantics, stable machine IR, differential replay, Rust std/no_std | DESIGNED | portable semantic archive, typed IRs, deterministic fingerprints, formal models | kernel boundary independent of Python/DB/OS; canonical machine IR; Python/Rust conformance oracle; bounded no_std profile |
-| PHY-11 | `embedded-realtime-qualification` / PR-8 | embedded-hal-style executor traits, RTIC mapping, SIM→SIL→HIL→physical qualification, safety profile | DESIGNED | provider/capability manifests, effects, resources, adapter conformance | embedded executor profile, timing contracts, interrupt/event bridge, qualification-level Evidence binding, safety-development restrictions |
+| PHY-11 | `embedded-realtime-qualification` / PR-8 | embedded-hal-style executor traits, RTIC mapping, SIM→SIL→HIL→physical qualification, safety profile | DESIGNED | provider/capability manifests, effects, resources, adapter conformance, S3 causal/identity/trust foundations | execution environment/qualification-level binding; embedded executor profile; timing contracts; interrupt bridge; safety-development restrictions |
 
 ## Verified immutable release evidence
 
@@ -167,7 +172,7 @@ The PR-2 qualification specifically proved:
 
 This evidence qualifies **57.1 / PR-2A**, **57.2 / PR-2B–2C**, and **PHY-03 / PR-2** as **GATED**, not **RELEASED**.
 
-### PR-3A–G / PHY-01 partial qualification
+### PR-3A–G / PHY-01 child qualification
 
 The physical-authority, bounded capability, stale-command fencing, semantic preemption, and preemption-recovery child slices were qualified together on exact development head:
 
@@ -175,7 +180,7 @@ The physical-authority, bounded capability, stale-command fencing, semantic pree
 9425fbdd22f664f3a2cb5db73dcf45c5b77a0673
 ```
 
-All 20 required commit-status contexts were **success** on that exact implementation head, including full CI, formal assurance, semantic-solver RC, cumulative v0.56, provenance, state/external-machine gates, and the four PR-3 gates:
+All 20 then-required commit-status contexts were **success** on that exact implementation head, including full CI, formal assurance, semantic-solver RC, cumulative v0.56, provenance, state/external-machine gates, and the four PR-3 child gates:
 
 - `aasm/physical-authority`
 - `aasm/effect-capability`
@@ -197,19 +202,97 @@ The PR-3A–G qualification proves:
 - no PR-3A–G object grants `effect.authorize` merely by existing;
 - no second authority evaluator, dispatcher, resource ledger, Effect ownership model, or Effect lifecycle was introduced.
 
-These child slices are **GATED**, not **RELEASED**. The **PR-3 / PHY-01 parent remains incomplete and is not GATED** because PR-3H has not yet connected those checks to the existing Effect authorization/execution boundaries.
+These child slices remain **GATED**, not **RELEASED**. This earlier child qualification is retained as provenance and is superseded for parent-completion status by the later full PR-3 boundary below.
+
+### PR-3 / PHY-01 full qualification
+
+PR-3H connected the already-gated physical authority/capability semantics to the existing Effect authorization/execution boundaries. The full parent remains qualified on the later cumulative exact head:
+
+```text
+6dbd62dc704b15fccb86a61053ce7bfdcdea477a
+```
+
+Relevant success contexts include:
+
+- `aasm/physical-authority`
+- `aasm/effect-capability`
+- `aasm/physical-control-fencing`
+- `aasm/physical-preemption-recovery`
+- `aasm/physical-effect-integration`
+- `aasm/v56`
+- `aasm/ci-summary`
+- inherited formal/solver/replay gates.
+
+The full qualification proves live lease/capability/epoch/revocation/holder/operation/bounds/scope/revision recheck at the inherited `authorize_effect` and `execute_effect` boundaries. Existing scoped effect authority, resource reservations, TaskLease, EffectOwnership, dispatch, `UNKNOWN`, and reconciliation remain unchanged. A prior `EffectCapabilityUse` remains Evidence only and never becomes a bearer token.
+
+This evidence qualifies **PR-3 / PHY-01 as GATED**, not RELEASED.
+
+### S3 temporal / causal / freshness qualification — PHY-04
+
+State conflict, causal-event identity and observation freshness are qualified on the same exact cumulative boundary:
+
+```text
+6dbd62dc704b15fccb86a61053ce7bfdcdea477a
+```
+
+The qualification includes `aasm/physical-evidence`, `aasm/v56`, full CI, formal assurance and the frozen semantic-solver RC. It proves:
+
+- expectation-vs-actual conflict preserves both durable state-claim histories;
+- canonical portable JSON/revision comparison avoids Python-specific equality accidents;
+- source event identity uses node + boot epoch + bounded local sequence;
+- receipt order cannot silently become source causal order;
+- source/receipt time and clock quality/uncertainty are explicit;
+- host wall clock is not universal truth;
+- `FRESH | STALE | UNKNOWN` remain distinct;
+- receipt-time fallback is explicit and weaker;
+- freshness/conflict cannot mint FactAuthority/effect authority or universally admit Evidence;
+- TextPCB out-of-band/stale DRC/project-revision fixtures and embedded reboot/sequence/replay fixtures pass.
+
+This evidence qualifies **PHY-04 as GATED**, not RELEASED.
+
+### S3 physical identity / calibration / source trust qualification — PHY-05
+
+The identity/calibration/trust foundation is qualified on exact development head:
+
+```text
+6dbd62dc704b15fccb86a61053ce7bfdcdea477a
+```
+
+The independent and cumulative success contexts include:
+
+- `aasm/identity-calibration-trust`
+- `aasm/physical-evidence`
+- `aasm/v56`
+- `aasm/ci-summary`
+- inherited formal/solver/replay gates.
+
+The qualification specifically proves:
+
+- same-context physical identity substitution/configuration change fails closed unless problem/external revision advances;
+- physical identity is exact reference Evidence and grants no FactAuthority/effect authority/source trust;
+- calibration binds exact identity ID/fingerprint/namespace/revisions and explicit nanosecond validity;
+- calibration revocation is append-only and does not rewrite the observation;
+- no hidden current/latest calibration exists;
+- source trust binds exact principal/subject/identity/calibration/revisions and has no score, voting, or automatic latest pointer;
+- revoking required calibration makes an existing `TRUSTED` assertion ineffective as policy input without rewriting that assertion;
+- a valid `TRUSTED` source still cannot create an `AUTHORITATIVE` state claim without existing `FactAuthority`;
+- scoped authority permits trust record/revoke only and is explicitly not trust-evaluation authority;
+- generic TextPCB project/tool identity, calibration and trust fixtures pass without TextPCB-specific kernel types;
+- SQLite restart/replay remains exact.
+
+This evidence qualifies **PHY-05 as GATED**, not RELEASED.
 
 ## Immediate builder queue
 
 1. Keep `v0.56.0` / `551b2f47…` as the immutable published boundary. Do not publish 0.56.1 automatically.
-2. Preserve PR-1 / PHY-02, PR-2 / PHY-03, and PR-3A–G claim ceilings; do not turn evidence or capability existence into actuator authority.
-3. **PR-3H is next:** integrate the current authority lease, capability identity/fingerprint, epoch, effective revocation generation, holder, operation/bounds, workspace/scope/subject, and problem/external revision checks into the **existing** `authorize_effect` / `execute_effect` path.
-4. PR-3H must recheck at the actual authorization and execution boundaries. An earlier `EffectCapabilityUse` validation record must never become a reusable bearer token.
-5. PR-3H must preserve v0.54 `EffectIntent`, TaskLease/resource governance, durable `EffectOwnership`, external dispatch, `UNKNOWN`, and reconciliation. No second dispatcher or authority system is allowed.
-6. Only after PR-3H independently qualifies may the PR-3 / PHY-01 parent advance to `GATED`.
-7. After PR-3, proceed to PR-4 temporal/causal/physical-identity/calibration/observation-epistemics semantics; do not smuggle those semantics into PR-3H.
+2. Preserve PR-1 / PHY-02, PR-2 / PHY-03, PR-3 / PHY-01, PHY-04 and PHY-05 claim ceilings; do not turn Evidence, capability existence, environment proximity, calibration, freshness or trust disposition into authority.
+3. **NEXT: implement `aasm.execution.environment.v1`** with explicit `MODEL | SIMULATION | SIL | HIL | BENCH | CONTROLLED_PHYSICAL | OPERATIONAL` levels, exact environment/configuration identity, problem/external revisions and Evidence lineage.
+4. Environment level is qualification context, not an authority rank. Reject simulation-as-physical laundering and silent cross-environment equivalence; hardware proximity cannot mint FactAuthority, effect authority or source trust.
+5. Extend `aasm/physical-evidence` with wrong environment/config/revision/identity/calibration/trust, stale environment, simulation-as-bench/physical and deterministic replay fixtures.
+6. Then implement `aasm.observation.lifecycle.v1` and `aasm.observation.fusion.v1` over existing observations/Evidence. Every derivation must name exact sources; fusion never votes truth or creates FactAuthority.
+7. Implement artifact revision/entity evolution under the separate cumulative `aasm/artifact-lineage` gate.
 8. Reconcile dormant reproducibility/provenance-v2 source separately before any 56.3 admission; dormant code remains non-authoritative.
-9. Keep TextPCB as a demanding consumer/conformance target; do not move TextPCB-specific types into the kernel.
+9. Keep TextPCB as a demanding generic consumer/conformance target; do not move TextPCB-specific types into the kernel.
 
 ## Completion discipline
 
