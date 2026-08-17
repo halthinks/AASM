@@ -82,10 +82,12 @@ def test_entity_public_candidate_engine_methods_are_real_active_engine_methods()
         assert callable(getattr(candidate.AASMEngine, name, None))
 
 
-def test_entity_public_adoption_is_top_level_after_qualification():
+def test_entity_public_adoption_remains_inherited_after_later_additive_promotion():
     report = aasm.validate_public_api_contract()
     assert report["valid"], report
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.15"
+    assert candidate.PUBLIC_API_CONTRACT["contract_version"] == "0.32.15"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.16"
+    assert "entity_evolution" in aasm.PUBLIC_API_CONTRACT
     assert aasm.AASMEngine is candidate.AASMEngine
     assert aasm.ENTITY_EVOLUTION_CONTRACT_ID == candidate.ENTITY_EVOLUTION_CONTRACT_ID
     assert aasm.ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID == candidate.ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID
