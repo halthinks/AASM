@@ -126,12 +126,12 @@ def record(engine, item, *, backend, semantic_projection):
     )
 
 
-def test_real_active_engine_exposes_candidate_runtime_without_public_adoption_claim():
+def test_real_active_engine_exposes_public_artifact_lineage_runtime():
     assert ArtifactLineageEngine is ActiveEngine
     assert callable(getattr(ActiveEngine, "record_artifact_revision", None))
     assert callable(getattr(ActiveEngine, "artifact_revision_report", None))
     assert callable(getattr(ActiveEngine, "artifact_lineage_report", None))
-    assert artifact_lineage_runtime_contract()["runtime_admission"] == "ACTIVE_ENGINE_CANDIDATE_QUALIFICATION"
+    assert artifact_lineage_runtime_contract()["runtime_admission"] == "ACTIVE_PUBLIC_ADOPTION"
 
 
 def test_runtime_records_explicit_branch_and_merge_without_selecting_authority():

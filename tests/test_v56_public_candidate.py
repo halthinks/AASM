@@ -14,7 +14,7 @@ def test_v56_base_is_frozen_and_active_overlay_advances_adoption_only():
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.13"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.14"
     assert aasm.AASMEngine is public_active.AASMEngine
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v56.AASMEngine is not public_v55.AASMEngine
@@ -57,6 +57,8 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_reality_
         "record_observation_lifecycle", "record_observation_fusion", "record_observation_disposition",
         "observation_lifecycle_record_report", "observation_fusion_record_report", "observation_disposition_report",
         "observation_processing_report",
+        "artifact_lineage_runtime_contract_report", "record_artifact_revision",
+        "artifact_revision_report", "artifact_lineage_report",
     ):
         assert callable(getattr(aasm.AASMEngine, method)), method
         assert method in aasm.SUPPORTED_ENGINE_METHODS
@@ -64,7 +66,7 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_reality_
 
 def test_active_contract_preserves_external_reality_physical_control_and_s3_firewalls():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] == "0.32.13"
+    assert contract["contract_version"] == "0.32.14"
 
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -272,6 +274,35 @@ def test_active_contract_preserves_external_reality_physical_control_and_s3_fire
     assert processing_runtime["parallel_truth_table"] == "NONE"
     assert processing_runtime["parallel_authority_evaluator"] == "NONE"
 
+    artifact = contract["artifact_lineage"]
+    assert artifact["artifact_revision_contract_id"] == "aasm.artifact.revision.v1"
+    assert artifact["artifact_revision_contract_version"] == "0.3.0"
+    assert artifact["revision_identity"] == "BACKEND_INDEPENDENT_CONTENT_HASH_SEMANTIC_HASH_AND_PROVENANCE_BOUND"
+    assert artifact["parent_identity"] == "EXACT_PARENT_REVISION_ID_AND_FINGERPRINT_BINDINGS"
+    assert artifact["revision_relation"] == "EXPLICIT_NOT_INFERRED_FROM_RECENCY"
+    assert artifact["authority"] == "NONE_GRANTED_BY_ARTIFACT_REVISION"
+    assert artifact["truth_authority"] == "EXISTING_AASM_ADMISSION_PATH_ONLY"
+    assert artifact["current_artifact_pointer"] == "NONE"
+    assert artifact["parallel_artifact_registry"] == "NONE"
+    artifact_runtime = artifact["runtime"]
+    assert artifact_runtime["durability"] == "EXISTING_AASM_EVIDENCE_EVENT_REPLAY"
+    assert artifact_runtime["recording_authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"
+    assert artifact_runtime["evidence_envelope"] == "DETERMINISTIC_ID_OBJECT_ID_OBJECT_FINGERPRINT_AND_CANONICAL_STATEMENT"
+    assert artifact_runtime["scope_binding"] == "WORKSPACE_AND_SCOPE_BOUND_TO_DURABLE_REVISION_RECORD"
+    assert artifact_runtime["storage_rebinding"] == "APPEND_ONLY_EVIDENCE_BINDING_NOT_REVISION_MUTATION"
+    assert artifact_runtime["heads"] == "QUERY_PROJECTION_ONLY_NOT_ACCEPTANCE_OR_AUTHORITY"
+    assert artifact_runtime["newest_revision_authority"] == "NONE"
+    assert artifact_runtime["artifact_acceptance"] == "NONE_DEFINED_BY_RUNTIME"
+    assert artifact_runtime["fact_authority_creation"] == "NONE"
+    assert artifact_runtime["source_trust_creation"] == "NONE"
+    assert artifact_runtime["effect_authorization"] == "NONE"
+    assert artifact_runtime["effect_dispatch"] == "NONE"
+    assert artifact_runtime["state_claim_creation"] == "NONE"
+    assert artifact_runtime["current_artifact_pointer"] == "NONE"
+    assert artifact_runtime["parallel_artifact_registry"] == "NONE_EVIDENCE_PROJECTION_ONLY"
+    assert artifact_runtime["parallel_current_state_store"] == "NONE"
+    assert artifact_runtime["runtime_admission"] == "ACTIVE_PUBLIC_ADOPTION"
+
 
 def test_active_import_registry_contains_pr3_and_s3_reality_contracts():
     for name in (
@@ -297,6 +328,10 @@ def test_active_import_registry_contains_pr3_and_s3_reality_contracts():
         "ObservationSourceRef", "ObservationLifecycleRecord", "ObservationDisposition", "observation_lifecycle_contract",
         "ObservationFusionRecord", "observation_fusion_contract",
         "observation_processing_runtime_contract", "OBSERVATION_PROCESSING_CAPABILITIES",
+        "ArtifactRevision", "artifact_lineage_contract", "validate_artifact_revision_transition",
+        "ARTIFACT_REVISION_CONTRACT_ID", "ARTIFACT_REVISION_RELATIONS",
+        "artifact_lineage_runtime_contract", "project_artifact_lineage_evidence",
+        "ARTIFACT_LINEAGE_RUNTIME_CONTRACT_ID", "ARTIFACT_LINEAGE_CAPABILITIES",
     ):
         assert hasattr(aasm, name), name
         assert name in aasm.SUPPORTED_PUBLIC_IMPORTS

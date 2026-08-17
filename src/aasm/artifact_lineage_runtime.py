@@ -66,7 +66,7 @@ def artifact_lineage_runtime_contract() -> dict[str, Any]:
         "parallel_artifact_registry": "NONE_EVIDENCE_PROJECTION_ONLY",
         "parallel_current_state_store": "NONE",
         "hidden_wall_clock": "NONE",
-        "runtime_admission": "ACTIVE_ENGINE_CANDIDATE_QUALIFICATION",
+        "runtime_admission": "ACTIVE_PUBLIC_ADOPTION",
     }
 
 

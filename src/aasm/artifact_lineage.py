@@ -407,7 +407,7 @@ def artifact_lineage_contract() -> dict[str, Any]:
         "parallel_artifact_registry": "NONE",
         "parallel_truth_table": "NONE",
         "parallel_authority_evaluator": "NONE",
-        "runtime_admission": "PRE_ADMISSION_ONLY",
+        "runtime_admission": "ACTIVE_PUBLIC_ADOPTION",
     }
 
 

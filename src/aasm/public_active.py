@@ -4,6 +4,24 @@ from copy import deepcopy
 
 from . import public_v56 as _base
 
+from .artifact_lineage import (
+    ARTIFACT_LINEAGE_STABILITY,
+    ARTIFACT_REVISION_CONTRACT_ID,
+    ARTIFACT_REVISION_CONTRACT_VERSION,
+    ARTIFACT_REVISION_RELATIONS,
+    ArtifactRevision,
+    artifact_lineage_contract,
+    validate_artifact_revision_transition,
+)
+from .artifact_lineage_runtime import (
+    ARTIFACT_LINEAGE_CAPABILITIES,
+    ARTIFACT_LINEAGE_RUNTIME_CONTRACT_ID,
+    ARTIFACT_LINEAGE_RUNTIME_CONTRACT_VERSION,
+    ARTIFACT_LINEAGE_RUNTIME_STABILITY,
+    artifact_lineage_runtime_contract,
+    project_artifact_lineage_evidence,
+)
+
 for _name in dir(_base):
     if not _name.startswith("_"):
         globals()[_name] = getattr(_base, _name)
@@ -295,6 +313,10 @@ _NEW_ENGINE_METHODS = [
     "observation_fusion_record_report",
     "observation_disposition_report",
     "observation_processing_report",
+    "artifact_lineage_runtime_contract_report",
+    "record_artifact_revision",
+    "artifact_revision_report",
+    "artifact_lineage_report",
 ]
 
 _NEW_IMPORTS = [
@@ -466,6 +488,19 @@ _NEW_IMPORTS = [
     "OBSERVATION_PROCESSING_CAPABILITIES",
     "project_observation_processing_evidence",
     "observation_processing_runtime_contract",
+    "ARTIFACT_REVISION_CONTRACT_ID",
+    "ARTIFACT_REVISION_CONTRACT_VERSION",
+    "ARTIFACT_LINEAGE_STABILITY",
+    "ARTIFACT_REVISION_RELATIONS",
+    "ArtifactRevision",
+    "validate_artifact_revision_transition",
+    "artifact_lineage_contract",
+    "ARTIFACT_LINEAGE_RUNTIME_CONTRACT_ID",
+    "ARTIFACT_LINEAGE_RUNTIME_CONTRACT_VERSION",
+    "ARTIFACT_LINEAGE_RUNTIME_STABILITY",
+    "ARTIFACT_LINEAGE_CAPABILITIES",
+    "project_artifact_lineage_evidence",
+    "artifact_lineage_runtime_contract",
 ]
 
 SUPPORTED_ENGINE_METHODS = list(dict.fromkeys([*getattr(_base, "SUPPORTED_ENGINE_METHODS", []), *_NEW_ENGINE_METHODS]))
@@ -483,12 +518,13 @@ SUPPORTED_INSPECTION_SURFACES = list(dict.fromkeys([
     "source-trust",
     "execution-environment",
     "observation-processing",
+    "artifact-lineage",
 ]))
 SUPPORTED_PUBLIC_IMPORTS = list(dict.fromkeys([*getattr(_base, "SUPPORTED_PUBLIC_IMPORTS", []), *_NEW_IMPORTS]))
 
 PUBLIC_API_CONTRACT = deepcopy(_base.PUBLIC_API_CONTRACT)
 PUBLIC_API_CONTRACT.update({
-    "contract_version": "0.32.13",
+    "contract_version": "0.32.14",
     "runtime_version": __version__,
     "release_stability": PUBLIC_RELEASE_STABILITY,
     "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
@@ -545,6 +581,10 @@ PUBLIC_API_CONTRACT["observation_processing"] = {
     "fusion": observation_fusion_contract(),
     "runtime": observation_processing_runtime_contract(),
 }
+PUBLIC_API_CONTRACT["artifact_lineage"] = {
+    **artifact_lineage_contract(),
+    "runtime": artifact_lineage_runtime_contract(),
+}
 PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
 PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
 
@@ -567,7 +607,7 @@ def validate_public_api_contract():
         errors.append(f"missing active governed-reality engine methods: {missing_methods}")
     if PUBLIC_API_CONTRACT.get("runtime_version") != __version__:
         errors.append("active runtime version mismatch")
-    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.13":
+    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.14":
         errors.append("active adoption contract mismatch")
 
     capability = PUBLIC_API_CONTRACT.get("effect_capability", {})
@@ -752,6 +792,44 @@ def validate_public_api_contract():
         errors.append("observation processing introduced parallel observation/truth state")
     if processing_runtime.get("parallel_authority_evaluator") != "NONE":
         errors.append("observation processing introduced parallel authority evaluator")
+
+    artifact = PUBLIC_API_CONTRACT.get("artifact_lineage", {})
+    artifact_runtime = artifact.get("runtime", {})
+    if artifact.get("artifact_revision_contract_id") != ARTIFACT_REVISION_CONTRACT_ID:
+        errors.append("S3 artifact revision contract missing")
+    if artifact.get("revision_identity") != "BACKEND_INDEPENDENT_CONTENT_HASH_SEMANTIC_HASH_AND_PROVENANCE_BOUND":
+        errors.append("artifact revision identity is not portable/backend-independent")
+    if artifact.get("parent_identity") != "EXACT_PARENT_REVISION_ID_AND_FINGERPRINT_BINDINGS":
+        errors.append("artifact lineage does not bind exact predecessor fingerprints")
+    if artifact.get("revision_relation") != "EXPLICIT_NOT_INFERRED_FROM_RECENCY":
+        errors.append("artifact revision relation became implicit or recency-derived")
+    if artifact.get("authority") != "NONE_GRANTED_BY_ARTIFACT_REVISION":
+        errors.append("artifact revision incorrectly grants authority")
+    if artifact.get("truth_authority") != "EXISTING_AASM_ADMISSION_PATH_ONLY":
+        errors.append("artifact lineage introduced a parallel truth/admission path")
+    if artifact.get("current_artifact_pointer") != "NONE" or artifact.get("parallel_artifact_registry") != "NONE":
+        errors.append("artifact lineage introduced a current pointer or parallel registry")
+    if artifact_runtime.get("durability") != "EXISTING_AASM_EVIDENCE_EVENT_REPLAY":
+        errors.append("artifact lineage bypassed existing Evidence/replay durability")
+    if artifact_runtime.get("recording_authority") != "EXISTING_AASM_SCOPED_AUTHORITY_ONLY":
+        errors.append("artifact lineage introduced parallel recording authority")
+    if artifact_runtime.get("evidence_envelope") != "DETERMINISTIC_ID_OBJECT_ID_OBJECT_FINGERPRINT_AND_CANONICAL_STATEMENT":
+        errors.append("artifact lineage Evidence envelope drift")
+    if artifact_runtime.get("scope_binding") != "WORKSPACE_AND_SCOPE_BOUND_TO_DURABLE_REVISION_RECORD":
+        errors.append("artifact lineage lost workspace/scope binding")
+    if artifact_runtime.get("storage_rebinding") != "APPEND_ONLY_EVIDENCE_BINDING_NOT_REVISION_MUTATION":
+        errors.append("artifact storage rebinding mutates revision identity/history")
+    if artifact_runtime.get("heads") != "QUERY_PROJECTION_ONLY_NOT_ACCEPTANCE_OR_AUTHORITY":
+        errors.append("artifact lineage heads acquired acceptance/authority semantics")
+    if artifact_runtime.get("newest_revision_authority") != "NONE" or artifact_runtime.get("artifact_acceptance") != "NONE_DEFINED_BY_RUNTIME":
+        errors.append("artifact recency/runtime incorrectly grants authority or acceptance")
+    for key in ("fact_authority_creation", "source_trust_creation", "effect_authorization", "effect_dispatch", "state_claim_creation", "current_artifact_pointer"):
+        if artifact_runtime.get(key) != "NONE":
+            errors.append(f"artifact lineage source firewall drift: {key}")
+    if artifact_runtime.get("parallel_artifact_registry") != "NONE_EVIDENCE_PROJECTION_ONLY" or artifact_runtime.get("parallel_current_state_store") != "NONE":
+        errors.append("artifact lineage introduced a parallel artifact/current-state store")
+    if artifact_runtime.get("runtime_admission") != "ACTIVE_PUBLIC_ADOPTION":
+        errors.append("artifact lineage runtime is not active public adoption")
 
     return {"valid": not errors, "errors": errors, "contract": public_api_contract()}
 

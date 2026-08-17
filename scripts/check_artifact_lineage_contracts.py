@@ -47,7 +47,7 @@ def main() -> int:
         '"truth_authority": "EXISTING_AASM_ADMISSION_PATH_ONLY"',
         '"current_artifact_pointer": "NONE"',
         '"parallel_artifact_registry": "NONE"',
-        '"runtime_admission": "PRE_ADMISSION_ONLY"',
+        '"runtime_admission": "ACTIVE_PUBLIC_ADOPTION"',
         "parent_revision_fingerprints",
         "environment_fingerprint",
         "storage_binding_fingerprint",
@@ -69,7 +69,7 @@ def main() -> int:
         '"current_artifact_pointer": "NONE"',
         '"parallel_artifact_registry": "NONE_EVIDENCE_PROJECTION_ONLY"',
         '"hidden_wall_clock": "NONE"',
-        '"runtime_admission": "ACTIVE_ENGINE_CANDIDATE_QUALIFICATION"',
+        '"runtime_admission": "ACTIVE_PUBLIC_ADOPTION"',
         "_expected_evidence_id",
         "_require_evidence_envelope",
         "authorize_scoped_request",
@@ -84,7 +84,7 @@ def main() -> int:
     ])
     require(runtime_tests, [
         "ArtifactLineageEngine = ActiveEngine",
-        "test_real_active_engine_exposes_candidate_runtime_without_public_adoption_claim",
+        "test_real_active_engine_exposes_public_artifact_lineage_runtime",
         "test_runtime_records_explicit_branch_and_merge_without_selecting_authority",
         "test_runtime_rejects_forged_parent_fingerprint_and_second_created_root",
         "test_runtime_rejects_stale_problem_revision_missing_or_invalidated_source_evidence",
@@ -119,12 +119,17 @@ def main() -> int:
         "time_ns(", "datetime.now(", "datetime.utcnow(", "TextPCB", "TEXTPCB", "pickle",
     ])
     forbid(runtime_tests, ["class PreAdmissionArtifactLineageEngine"])
-    forbid(public_active, [
-        "from .artifact_lineage import",
-        "from .artifact_lineage_runtime import",
-        '"record_artifact_revision"',
-        '"artifact_lineage_report"',
-        '"artifact_revision_report"',
+    require(public_active, [
+        "from .artifact_lineage import (",
+        "from .artifact_lineage_runtime import (",
+        "ArtifactRevision",
+        "artifact_lineage_contract",
+        "artifact_lineage_runtime_contract",
+        "record_artifact_revision",
+        "artifact_revision_report",
+        "artifact_lineage_report",
+        "artifact-lineage",
+        "0.32.14",
     ])
 
     model_text = model.read_text(encoding="utf-8")
@@ -161,17 +166,17 @@ def main() -> int:
         fail("artifact revision introduced a parallel artifact registry", model)
     if runtime_contract["durability"] != "EXISTING_AASM_EVIDENCE_EVENT_REPLAY":
         fail("artifact lineage bypassed existing durable Evidence/replay", runtime)
-    if runtime_contract["runtime_admission"] != "ACTIVE_ENGINE_CANDIDATE_QUALIFICATION":
-        fail("artifact lineage is not at the active-engine candidate boundary", runtime)
+    if runtime_contract["runtime_admission"] != "ACTIVE_PUBLIC_ADOPTION":
+        fail("artifact lineage is not at the active public-adoption boundary", runtime)
     if runtime_contract["newest_revision_authority"] != "NONE" or runtime_contract["artifact_acceptance"] != "NONE_DEFINED_BY_RUNTIME":
         fail("artifact lineage acquired recency or acceptance authority", runtime)
     for name in ("record_artifact_revision", "artifact_revision_report", "artifact_lineage_report"):
         if not callable(getattr(AASMEngine, name, None)):
             fail(f"real imported AASMEngine is missing candidate artifact-lineage method: {name}", active_runtime)
-    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.13":
-        fail("candidate composition must not advance public adoption before qualification", public_active)
+    if PUBLIC_API_CONTRACT.get("contract_version") != "0.32.14":
+        fail("active artifact-lineage adoption contract mismatch", public_active)
 
-    print("S3 artifact revision active-engine candidate source contracts: PASS")
+    print("S3 artifact revision active public-adoption source contracts: PASS")
     return 0
 
 

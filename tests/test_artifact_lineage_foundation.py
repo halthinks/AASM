@@ -256,7 +256,7 @@ def test_contract_explicitly_denies_truth_acceptance_and_parallel_registry():
     assert contract["successful_generation_authority"] == "NONE"
     assert contract["current_artifact_pointer"] == "NONE"
     assert contract["parallel_artifact_registry"] == "NONE"
-    assert contract["runtime_admission"] == "PRE_ADMISSION_ONLY"
+    assert contract["runtime_admission"] == "ACTIVE_PUBLIC_ADOPTION"
 
 
 def test_schema_is_strict_2020_12_and_matches_contract_surface():
