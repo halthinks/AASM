@@ -1,0 +1,323 @@
+name: One-shot artifact lineage public adoption patch
+
+on:
+  push:
+    branches: [artifact-lineage-public-adoption]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-qualify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Apply guarded public-adoption edits
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          def read(path):
+              return Path(path).read_text(encoding="utf-8")
+
+          def write(path, value):
+              Path(path).write_text(value, encoding="utf-8")
+
+          def replace_once(value, old, new, label):
+              count = value.count(old)
+              if count != 1:
+                  raise SystemExit(f"{label}: expected exactly one anchor, found {count}")
+              return value.replace(old, new, 1)
+
+          # Public additive adoption overlay: preserve every previous 0.32.13 surface and add artifact lineage.
+          path = "src/aasm/public_active.py"
+          s = read(path)
+          s = replace_once(
+              s,
+              "from . import public_v56 as _base\n\n",
+              "from . import public_v56 as _base\n\n"
+              "from .artifact_lineage import (\n"
+              "    ARTIFACT_LINEAGE_STABILITY,\n"
+              "    ARTIFACT_REVISION_CONTRACT_ID,\n"
+              "    ARTIFACT_REVISION_CONTRACT_VERSION,\n"
+              "    ARTIFACT_REVISION_RELATIONS,\n"
+              "    ArtifactRevision,\n"
+              "    artifact_lineage_contract,\n"
+              "    validate_artifact_revision_transition,\n"
+              ")\n"
+              "from .artifact_lineage_runtime import (\n"
+              "    ARTIFACT_LINEAGE_CAPABILITIES,\n"
+              "    ARTIFACT_LINEAGE_RUNTIME_CONTRACT_ID,\n"
+              "    ARTIFACT_LINEAGE_RUNTIME_CONTRACT_VERSION,\n"
+              "    ARTIFACT_LINEAGE_RUNTIME_STABILITY,\n"
+              "    artifact_lineage_runtime_contract,\n"
+              "    project_artifact_lineage_evidence,\n"
+              ")\n\n",
+              "public_active artifact imports",
+          )
+          s = replace_once(
+              s,
+              '    "observation_processing_report",\n]\n\n_NEW_IMPORTS = [',
+              '    "observation_processing_report",\n'
+              '    "artifact_lineage_runtime_contract_report",\n'
+              '    "record_artifact_revision",\n'
+              '    "artifact_revision_report",\n'
+              '    "artifact_lineage_report",\n'
+              ']\n\n_NEW_IMPORTS = [',
+              "public_active artifact engine methods",
+          )
+          s = replace_once(
+              s,
+              '    "observation_processing_runtime_contract",\n]\n\nSUPPORTED_ENGINE_METHODS',
+              '    "observation_processing_runtime_contract",\n'
+              '    "ARTIFACT_REVISION_CONTRACT_ID",\n'
+              '    "ARTIFACT_REVISION_CONTRACT_VERSION",\n'
+              '    "ARTIFACT_LINEAGE_STABILITY",\n'
+              '    "ARTIFACT_REVISION_RELATIONS",\n'
+              '    "ArtifactRevision",\n'
+              '    "validate_artifact_revision_transition",\n'
+              '    "artifact_lineage_contract",\n'
+              '    "ARTIFACT_LINEAGE_RUNTIME_CONTRACT_ID",\n'
+              '    "ARTIFACT_LINEAGE_RUNTIME_CONTRACT_VERSION",\n'
+              '    "ARTIFACT_LINEAGE_RUNTIME_STABILITY",\n'
+              '    "ARTIFACT_LINEAGE_CAPABILITIES",\n'
+              '    "project_artifact_lineage_evidence",\n'
+              '    "artifact_lineage_runtime_contract",\n'
+              ']\n\nSUPPORTED_ENGINE_METHODS',
+              "public_active artifact import registry",
+          )
+          s = replace_once(
+              s,
+              '    "observation-processing",\n]))',
+              '    "observation-processing",\n    "artifact-lineage",\n]))',
+              "public_active artifact inspection surface",
+          )
+          old_count = s.count('"0.32.13"')
+          if old_count < 2:
+              raise SystemExit(f"public_active adoption pin: expected >=2 old pins, found {old_count}")
+          s = s.replace('"0.32.13"', '"0.32.14"')
+          s = replace_once(
+              s,
+              'PUBLIC_API_CONTRACT["observation_processing"] = {\n'
+              '    **observation_lifecycle_contract(),\n'
+              '    "fusion": observation_fusion_contract(),\n'
+              '    "runtime": observation_processing_runtime_contract(),\n'
+              '}\n'
+              'PUBLIC_API_CONTRACT["distribution"]["version"] = __version__',
+              'PUBLIC_API_CONTRACT["observation_processing"] = {\n'
+              '    **observation_lifecycle_contract(),\n'
+              '    "fusion": observation_fusion_contract(),\n'
+              '    "runtime": observation_processing_runtime_contract(),\n'
+              '}\n'
+              'PUBLIC_API_CONTRACT["artifact_lineage"] = {\n'
+              '    **artifact_lineage_contract(),\n'
+              '    "runtime": artifact_lineage_runtime_contract(),\n'
+              '}\n'
+              'PUBLIC_API_CONTRACT["distribution"]["version"] = __version__',
+              "public_active artifact contract section",
+          )
+          validation_anchor = (
+              '    if processing_runtime.get("parallel_authority_evaluator") != "NONE":\n'
+              '        errors.append("observation processing introduced parallel authority evaluator")\n\n'
+              '    return {"valid": not errors, "errors": errors, "contract": public_api_contract()}\n'
+          )
+          validation_replacement = (
+              '    if processing_runtime.get("parallel_authority_evaluator") != "NONE":\n'
+              '        errors.append("observation processing introduced parallel authority evaluator")\n\n'
+              '    artifact = PUBLIC_API_CONTRACT.get("artifact_lineage", {})\n'
+              '    artifact_runtime = artifact.get("runtime", {})\n'
+              '    if artifact.get("artifact_revision_contract_id") != ARTIFACT_REVISION_CONTRACT_ID:\n'
+              '        errors.append("S3 artifact revision contract missing")\n'
+              '    if artifact.get("revision_identity") != "BACKEND_INDEPENDENT_CONTENT_HASH_SEMANTIC_HASH_AND_PROVENANCE_BOUND":\n'
+              '        errors.append("artifact revision identity is not portable/backend-independent")\n'
+              '    if artifact.get("parent_identity") != "EXACT_PARENT_REVISION_ID_AND_FINGERPRINT_BINDINGS":\n'
+              '        errors.append("artifact lineage does not bind exact predecessor fingerprints")\n'
+              '    if artifact.get("revision_relation") != "EXPLICIT_NOT_INFERRED_FROM_RECENCY":\n'
+              '        errors.append("artifact revision relation became implicit or recency-derived")\n'
+              '    if artifact.get("authority") != "NONE_GRANTED_BY_ARTIFACT_REVISION":\n'
+              '        errors.append("artifact revision incorrectly grants authority")\n'
+              '    if artifact.get("truth_authority") != "EXISTING_AASM_ADMISSION_PATH_ONLY":\n'
+              '        errors.append("artifact lineage introduced a parallel truth/admission path")\n'
+              '    if artifact.get("current_artifact_pointer") != "NONE" or artifact.get("parallel_artifact_registry") != "NONE":\n'
+              '        errors.append("artifact lineage introduced a current pointer or parallel registry")\n'
+              '    if artifact_runtime.get("durability") != "EXISTING_AASM_EVIDENCE_EVENT_REPLAY":\n'
+              '        errors.append("artifact lineage bypassed existing Evidence/replay durability")\n'
+              '    if artifact_runtime.get("recording_authority") != "EXISTING_AASM_SCOPED_AUTHORITY_ONLY":\n'
+              '        errors.append("artifact lineage introduced parallel recording authority")\n'
+              '    if artifact_runtime.get("evidence_envelope") != "DETERMINISTIC_ID_OBJECT_ID_OBJECT_FINGERPRINT_AND_CANONICAL_STATEMENT":\n'
+              '        errors.append("artifact lineage Evidence envelope drift")\n'
+              '    if artifact_runtime.get("scope_binding") != "WORKSPACE_AND_SCOPE_BOUND_TO_DURABLE_REVISION_RECORD":\n'
+              '        errors.append("artifact lineage lost workspace/scope binding")\n'
+              '    if artifact_runtime.get("storage_rebinding") != "APPEND_ONLY_EVIDENCE_BINDING_NOT_REVISION_MUTATION":\n'
+              '        errors.append("artifact storage rebinding mutates revision identity/history")\n'
+              '    if artifact_runtime.get("heads") != "QUERY_PROJECTION_ONLY_NOT_ACCEPTANCE_OR_AUTHORITY":\n'
+              '        errors.append("artifact lineage heads acquired acceptance/authority semantics")\n'
+              '    if artifact_runtime.get("newest_revision_authority") != "NONE" or artifact_runtime.get("artifact_acceptance") != "NONE_DEFINED_BY_RUNTIME":\n'
+              '        errors.append("artifact recency/runtime incorrectly grants authority or acceptance")\n'
+              '    for key in ("fact_authority_creation", "source_trust_creation", "effect_authorization", "effect_dispatch", "state_claim_creation", "current_artifact_pointer"):\n'
+              '        if artifact_runtime.get(key) != "NONE":\n'
+              '            errors.append(f"artifact lineage source firewall drift: {key}")\n'
+              '    if artifact_runtime.get("parallel_artifact_registry") != "NONE_EVIDENCE_PROJECTION_ONLY" or artifact_runtime.get("parallel_current_state_store") != "NONE":\n'
+              '        errors.append("artifact lineage introduced a parallel artifact/current-state store")\n'
+              '    if artifact_runtime.get("runtime_admission") != "ACTIVE_PUBLIC_ADOPTION":\n'
+              '        errors.append("artifact lineage runtime is not active public adoption")\n\n'
+              '    return {"valid": not errors, "errors": errors, "contract": public_api_contract()}\n'
+          )
+          s = replace_once(s, validation_anchor, validation_replacement, "public_active artifact validation")
+          write(path, s)
+
+          # Model/runtime admission labels become truthful only after candidate qualification is green.
+          path = "src/aasm/artifact_lineage.py"
+          s = read(path)
+          s = replace_once(s, '"runtime_admission": "PRE_ADMISSION_ONLY"', '"runtime_admission": "ACTIVE_PUBLIC_ADOPTION"', "artifact model admission")
+          write(path, s)
+
+          path = "src/aasm/artifact_lineage_runtime.py"
+          s = read(path)
+          s = replace_once(s, '"runtime_admission": "ACTIVE_ENGINE_CANDIDATE_QUALIFICATION"', '"runtime_admission": "ACTIVE_PUBLIC_ADOPTION"', "artifact runtime admission")
+          write(path, s)
+
+          # Feature/runtime corpus must now assert the public boundary, not candidate status.
+          path = "tests/test_artifact_lineage_runtime.py"
+          s = read(path)
+          s = replace_once(
+              s,
+              "def test_real_active_engine_exposes_candidate_runtime_without_public_adoption_claim():",
+              "def test_real_active_engine_exposes_public_artifact_lineage_runtime():",
+              "artifact runtime public test name",
+          )
+          s = replace_once(s, '== "ACTIVE_ENGINE_CANDIDATE_QUALIFICATION"', '== "ACTIVE_PUBLIC_ADOPTION"', "artifact runtime public admission assertion")
+          write(path, s)
+
+          # Existing public-candidate corpus retains all prior assertions and adds artifact lineage.
+          path = "tests/test_v56_public_candidate.py"
+          s = read(path)
+          if s.count('"0.32.13"') < 2:
+              raise SystemExit("v56 public candidate: expected old 0.32.13 pins")
+          s = s.replace('"0.32.13"', '"0.32.14"')
+          s = replace_once(
+              s,
+              '        "observation_processing_report",\n    ):',
+              '        "observation_processing_report",\n'
+              '        "artifact_lineage_runtime_contract_report", "record_artifact_revision",\n'
+              '        "artifact_revision_report", "artifact_lineage_report",\n'
+              '    ):',
+              "v56 public artifact methods",
+          )
+          artifact_assertions = (
+              '\n    artifact = contract["artifact_lineage"]\n'
+              '    assert artifact["artifact_revision_contract_id"] == "aasm.artifact.revision.v1"\n'
+              '    assert artifact["artifact_revision_contract_version"] == "0.3.0"\n'
+              '    assert artifact["revision_identity"] == "BACKEND_INDEPENDENT_CONTENT_HASH_SEMANTIC_HASH_AND_PROVENANCE_BOUND"\n'
+              '    assert artifact["parent_identity"] == "EXACT_PARENT_REVISION_ID_AND_FINGERPRINT_BINDINGS"\n'
+              '    assert artifact["revision_relation"] == "EXPLICIT_NOT_INFERRED_FROM_RECENCY"\n'
+              '    assert artifact["authority"] == "NONE_GRANTED_BY_ARTIFACT_REVISION"\n'
+              '    assert artifact["truth_authority"] == "EXISTING_AASM_ADMISSION_PATH_ONLY"\n'
+              '    assert artifact["current_artifact_pointer"] == "NONE"\n'
+              '    assert artifact["parallel_artifact_registry"] == "NONE"\n'
+              '    artifact_runtime = artifact["runtime"]\n'
+              '    assert artifact_runtime["durability"] == "EXISTING_AASM_EVIDENCE_EVENT_REPLAY"\n'
+              '    assert artifact_runtime["recording_authority"] == "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"\n'
+              '    assert artifact_runtime["evidence_envelope"] == "DETERMINISTIC_ID_OBJECT_ID_OBJECT_FINGERPRINT_AND_CANONICAL_STATEMENT"\n'
+              '    assert artifact_runtime["scope_binding"] == "WORKSPACE_AND_SCOPE_BOUND_TO_DURABLE_REVISION_RECORD"\n'
+              '    assert artifact_runtime["storage_rebinding"] == "APPEND_ONLY_EVIDENCE_BINDING_NOT_REVISION_MUTATION"\n'
+              '    assert artifact_runtime["heads"] == "QUERY_PROJECTION_ONLY_NOT_ACCEPTANCE_OR_AUTHORITY"\n'
+              '    assert artifact_runtime["newest_revision_authority"] == "NONE"\n'
+              '    assert artifact_runtime["artifact_acceptance"] == "NONE_DEFINED_BY_RUNTIME"\n'
+              '    assert artifact_runtime["fact_authority_creation"] == "NONE"\n'
+              '    assert artifact_runtime["source_trust_creation"] == "NONE"\n'
+              '    assert artifact_runtime["effect_authorization"] == "NONE"\n'
+              '    assert artifact_runtime["effect_dispatch"] == "NONE"\n'
+              '    assert artifact_runtime["state_claim_creation"] == "NONE"\n'
+              '    assert artifact_runtime["current_artifact_pointer"] == "NONE"\n'
+              '    assert artifact_runtime["parallel_artifact_registry"] == "NONE_EVIDENCE_PROJECTION_ONLY"\n'
+              '    assert artifact_runtime["parallel_current_state_store"] == "NONE"\n'
+              '    assert artifact_runtime["runtime_admission"] == "ACTIVE_PUBLIC_ADOPTION"\n'
+          )
+          s = replace_once(
+              s,
+              '    assert processing_runtime["parallel_authority_evaluator"] == "NONE"\n\n\ndef test_active_import_registry_contains_pr3_and_s3_reality_contracts():',
+              '    assert processing_runtime["parallel_authority_evaluator"] == "NONE"\n' + artifact_assertions + '\n\ndef test_active_import_registry_contains_pr3_and_s3_reality_contracts():',
+              "v56 public artifact firewall assertions",
+          )
+          s = replace_once(
+              s,
+              '        "observation_processing_runtime_contract", "OBSERVATION_PROCESSING_CAPABILITIES",\n    ):',
+              '        "observation_processing_runtime_contract", "OBSERVATION_PROCESSING_CAPABILITIES",\n'
+              '        "ArtifactRevision", "artifact_lineage_contract", "validate_artifact_revision_transition",\n'
+              '        "ARTIFACT_REVISION_CONTRACT_ID", "ARTIFACT_REVISION_RELATIONS",\n'
+              '        "artifact_lineage_runtime_contract", "project_artifact_lineage_evidence",\n'
+              '        "ARTIFACT_LINEAGE_RUNTIME_CONTRACT_ID", "ARTIFACT_LINEAGE_CAPABILITIES",\n'
+              '    ):',
+              "v56 public artifact import registry",
+          )
+          write(path, s)
+
+          # Feature source firewall advances from candidate to active public adoption.
+          path = "scripts/check_artifact_lineage_contracts.py"
+          s = read(path)
+          s = s.replace('"runtime_admission": "PRE_ADMISSION_ONLY"', '"runtime_admission": "ACTIVE_PUBLIC_ADOPTION"')
+          s = s.replace('"runtime_admission": "ACTIVE_ENGINE_CANDIDATE_QUALIFICATION"', '"runtime_admission": "ACTIVE_PUBLIC_ADOPTION"')
+          s = s.replace("test_real_active_engine_exposes_candidate_runtime_without_public_adoption_claim", "test_real_active_engine_exposes_public_artifact_lineage_runtime")
+          s = s.replace('"0.32.13"', '"0.32.14"')
+          pattern = re.compile(r'    forbid\(public_active, \[\n.*?    \]\)\n\n    model_text', re.S)
+          replacement = (
+              '    require(public_active, [\n'
+              '        "from .artifact_lineage import (",\n'
+              '        "from .artifact_lineage_runtime import (",\n'
+              '        "ArtifactRevision",\n'
+              '        "artifact_lineage_contract",\n'
+              '        "artifact_lineage_runtime_contract",\n'
+              '        "record_artifact_revision",\n'
+              '        "artifact_revision_report",\n'
+              '        "artifact_lineage_report",\n'
+              '        "artifact-lineage",\n'
+              '        "0.32.14",\n'
+              '    ])\n\n'
+              '    model_text'
+          )
+          s, n = pattern.subn(replacement, s, count=1)
+          if n != 1:
+              raise SystemExit(f"artifact checker public_active firewall block: expected 1, found {n}")
+          s = s.replace("if runtime_contract[\"runtime_admission\"] != \"ACTIVE_ENGINE_CANDIDATE_QUALIFICATION\":", "if runtime_contract[\"runtime_admission\"] != \"ACTIVE_PUBLIC_ADOPTION\":")
+          s = s.replace("artifact lineage is not at the active-engine candidate boundary", "artifact lineage is not at the active public-adoption boundary")
+          s = s.replace("candidate composition must not advance public adoption before qualification", "active artifact-lineage adoption contract mismatch")
+          s = s.replace("S3 artifact revision active-engine candidate source contracts: PASS", "S3 artifact revision active public-adoption source contracts: PASS")
+          write(path, s)
+
+          path = ".github/workflows/artifact-lineage.yml"
+          s = read(path)
+          s = s.replace("active-engine candidate", "active public-adoption")
+          s = s.replace("active-engine candidate qualification", "active public-adoption qualification")
+          write(path, s)
+          PY
+
+      - name: Install development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Qualify public adoption before commit
+        run: |
+          python -m compileall -q src tests scripts
+          python scripts/check_artifact_lineage_contracts.py
+          pytest -q tests/test_artifact_lineage_*.py tests/test_v56_public_candidate.py
+          git diff --check
+      - name: Commit qualified public-adoption patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "halthinks"
+          git config user.email "halthinks@gmail.com"
+          git rm .github/workflows/promote-artifact-lineage-public.yml
+          git add src/aasm/artifact_lineage.py src/aasm/artifact_lineage_runtime.py src/aasm/public_active.py \
+            tests/test_artifact_lineage_runtime.py tests/test_v56_public_candidate.py \
+            scripts/check_artifact_lineage_contracts.py .github/workflows/artifact-lineage.yml
+          git diff --cached --check
+          git commit -m "Admit artifact lineage public surface 0.32.14"
+          git push origin HEAD:artifact-lineage-public-adoption
