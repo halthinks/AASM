@@ -10,8 +10,16 @@ from .semantic_result import semantic_fingerprint
 
 
 ARTIFACT_REVISION_CONTRACT_ID = "aasm.artifact.revision.v1"
-ARTIFACT_REVISION_CONTRACT_VERSION = "0.2.0"
+ARTIFACT_REVISION_CONTRACT_VERSION = "0.3.0"
 ARTIFACT_LINEAGE_STABILITY = "FOUNDATION_EXPERIMENTAL"
+ARTIFACT_REVISION_RELATIONS = (
+    "CREATED",
+    "CREATED_FROM",
+    "MODIFIES",
+    "DERIVED_FROM",
+    "MERGES",
+    "REPLACES",
+)
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -86,6 +94,28 @@ def _content_ref_digest(artifact_ref: str) -> str | None:
     return None
 
 
+def _parent_fingerprints(
+    parent_revision_ids: Sequence[str],
+    values: Mapping[str, str],
+) -> dict[str, str]:
+    normalized: dict[str, str] = {}
+    for raw_id, raw_fingerprint in values.items():
+        revision_id = _required_text("parent revision ID", str(raw_id))
+        if revision_id in normalized:
+            raise ValueError(f"duplicate parent revision fingerprint binding: {revision_id}")
+        normalized[revision_id] = _sha256(
+            f"parent revision fingerprint for {revision_id}",
+            str(raw_fingerprint),
+        )
+    expected = set(map(str, parent_revision_ids))
+    actual = set(normalized)
+    if actual != expected:
+        raise ValueError(
+            "artifact revision parent_revision_fingerprints keys must exactly equal parent_revision_ids"
+        )
+    return dict(sorted(normalized.items()))
+
+
 @dataclass(frozen=True)
 class ArtifactRevision:
     """Immutable, authority-neutral lineage record for one logical artifact revision.
@@ -105,11 +135,16 @@ class ArtifactRevision:
     artifact_ref: str = ""
     artifact_kind: str = ""
     parent_revision_ids: tuple[str, ...] = ()
+    parent_revision_fingerprints: Mapping[str, str] = field(default_factory=dict)
+    revision_relation: str = "CREATED"
     producer_kind: str = ""
     machine_id: str = ""
     effect_id: str = ""
     source_problem_revision_id: str = ""
     source_problem_revision_fingerprint: str = ""
+    environment_id: str = ""
+    environment_fingerprint: str = ""
+    refinement_run_id: str = ""
     source_external_references: tuple[ExternalReference | Mapping[str, Any], ...] = ()
     schema_id: str = ""
     tool_id: str = ""
@@ -148,6 +183,9 @@ class ArtifactRevision:
             "effect_id",
             "source_problem_revision_id",
             "source_problem_revision_fingerprint",
+            "environment_id",
+            "environment_fingerprint",
+            "refinement_run_id",
             "schema_id",
             "tool_id",
             "tool_version",
@@ -158,6 +196,21 @@ class ArtifactRevision:
         if any(not item for item in parents):
             raise ValueError("artifact revision parent IDs must be non-empty")
         object.__setattr__(self, "parent_revision_ids", parents)
+        parent_fingerprints = _parent_fingerprints(parents, self.parent_revision_fingerprints)
+        object.__setattr__(self, "parent_revision_fingerprints", parent_fingerprints)
+
+        relation = _required_text("revision_relation", self.revision_relation).upper()
+        if relation not in ARTIFACT_REVISION_RELATIONS:
+            raise ValueError(f"unsupported artifact revision relation: {relation}")
+        if not parents and relation != "CREATED":
+            raise ValueError("parentless artifact revision must use CREATED relation")
+        if parents and relation == "CREATED":
+            raise ValueError("artifact revision with parents cannot use CREATED relation")
+        if relation == "MERGES" and len(parents) < 2:
+            raise ValueError("MERGES artifact revision requires at least two parents")
+        if parents and relation != "MERGES" and len(parents) != 1:
+            raise ValueError("non-MERGES artifact revision requires exactly one parent")
+        object.__setattr__(self, "revision_relation", relation)
 
         source_refs = _refs(self.source_external_references)
         refs = _refs(self.external_references)
@@ -178,6 +231,23 @@ class ArtifactRevision:
             raise ValueError(
                 "source problem revision ID and fingerprint must either both be present or both be absent"
             )
+        if self.source_problem_revision_fingerprint:
+            object.__setattr__(
+                self,
+                "source_problem_revision_fingerprint",
+                _sha256("source_problem_revision_fingerprint", self.source_problem_revision_fingerprint),
+            )
+
+        if bool(self.environment_id) != bool(self.environment_fingerprint):
+            raise ValueError(
+                "environment ID and fingerprint must either both be present or both be absent"
+            )
+        if self.environment_fingerprint:
+            object.__setattr__(
+                self,
+                "environment_fingerprint",
+                _sha256("environment_fingerprint", self.environment_fingerprint),
+            )
 
         derived = f"artifact-revision-{semantic_fingerprint(self.identity_payload())[:24]}"
         supplied = self.revision_id.strip()
@@ -197,12 +267,17 @@ class ArtifactRevision:
             "semantic_projection_sha256": self.semantic_projection_sha256,
             "artifact_kind": self.artifact_kind,
             "parent_revision_ids": list(self.parent_revision_ids),
+            "parent_revision_fingerprints": dict(self.parent_revision_fingerprints),
+            "revision_relation": self.revision_relation,
             "producer_id": self.producer_id,
             "producer_kind": self.producer_kind,
             "machine_id": self.machine_id,
             "effect_id": self.effect_id,
             "source_problem_revision_id": self.source_problem_revision_id,
             "source_problem_revision_fingerprint": self.source_problem_revision_fingerprint,
+            "environment_id": self.environment_id,
+            "environment_fingerprint": self.environment_fingerprint,
+            "refinement_run_id": self.refinement_run_id,
             "source_external_references": [row.to_dict() for row in self.source_external_references],
             "format_id": self.format_id,
             "schema_id": self.schema_id,
@@ -253,6 +328,7 @@ class ArtifactRevision:
             "evidence_ids",
         ):
             payload[name] = tuple(payload.get(name) or ())
+        payload["parent_revision_fingerprints"] = dict(payload.get("parent_revision_fingerprints") or {})
         item = cls(**payload)
         if supplied_fingerprint and supplied_fingerprint != item.fingerprint:
             raise ValueError("artifact revision fingerprint does not match canonical semantic content")
@@ -278,20 +354,29 @@ def validate_artifact_revision_transition(
     errors: list[str] = []
 
     parent_ids = tuple(sorted(row.revision_id for row in source))
+    parent_fingerprints = dict(sorted((row.revision_id, row.fingerprint) for row in source))
     if len(parent_ids) != len(set(parent_ids)):
         errors.append("DUPLICATE_PARENT_REVISION")
     if tuple(result.parent_revision_ids) != parent_ids:
         errors.append("PARENT_REVISION_SET_MISMATCH")
+    if dict(result.parent_revision_fingerprints) != parent_fingerprints:
+        errors.append("PARENT_REVISION_FINGERPRINT_MISMATCH")
     if any(row.logical_artifact_id != result.logical_artifact_id for row in source):
         errors.append("LOGICAL_ARTIFACT_ID_CHANGED")
     if result.revision_id in parent_ids:
         errors.append("SELF_PARENT_REVISION")
+    if result.revision_relation == "MERGES" and len(parent_ids) < 2:
+        errors.append("MERGE_REQUIRES_MULTIPLE_PARENTS")
+    if parent_ids and result.revision_relation != "MERGES" and len(parent_ids) != 1:
+        errors.append("NON_MERGE_REQUIRES_SINGLE_PARENT")
 
     return {
         "valid": not errors,
         "errors": errors,
         "logical_artifact_id": result.logical_artifact_id,
         "parent_revision_ids": list(parent_ids),
+        "parent_revision_fingerprints": parent_fingerprints,
+        "revision_relation": result.revision_relation,
         "target_revision_id": result.revision_id,
     }
 
@@ -303,12 +388,16 @@ def artifact_lineage_contract() -> dict[str, Any]:
         "stability": ARTIFACT_LINEAGE_STABILITY,
         "logical_identity": "STABLE_ACROSS_IMMUTABLE_REVISIONS",
         "revision_identity": "BACKEND_INDEPENDENT_CONTENT_HASH_SEMANTIC_HASH_AND_PROVENANCE_BOUND",
+        "parent_identity": "EXACT_PARENT_REVISION_ID_AND_FINGERPRINT_BINDINGS",
+        "revision_relation": "EXPLICIT_NOT_INFERRED_FROM_RECENCY",
         "storage_binding_identity": "SEPARATE_FROM_REVISION_IDENTITY_AND_INTEGRITY_FINGERPRINTED",
         "content_storage": "EXISTING_AASM_ARTIFACT_BACKENDS_OR_EXTERNAL_REFERENCE",
         "artifact_ref": "NON_SEMANTIC_OPAQUE_STORAGE_BINDING_WITH_DIGEST_CHECK_WHEN_DECODABLE",
         "external_lineage": "EXISTING_AASM_EXTERNAL_REFERENCE_CONTRACT",
         "evidence_lineage": "EXISTING_AASM_EVIDENCE_IDS_ONLY",
         "source_problem_revision": "EXACT_ID_AND_FINGERPRINT_WHEN_PRESENT",
+        "execution_environment": "EXACT_ID_AND_FINGERPRINT_WHEN_PRESENT",
+        "refinement_run": "OPTIONAL_OPAQUE_LINEAGE_REFERENCE_UNTIL_REFINEMENT_CONTRACT_ADMISSION",
         "authority": "NONE_GRANTED_BY_ARTIFACT_REVISION",
         "truth_authority": "EXISTING_AASM_ADMISSION_PATH_ONLY",
         "artifact_acceptance": "NOT_DEFINED_BY_FOUNDATION_CONTRACT",
@@ -326,6 +415,7 @@ __all__ = [
     "ARTIFACT_REVISION_CONTRACT_ID",
     "ARTIFACT_REVISION_CONTRACT_VERSION",
     "ARTIFACT_LINEAGE_STABILITY",
+    "ARTIFACT_REVISION_RELATIONS",
     "ArtifactRevision",
     "validate_artifact_revision_transition",
     "artifact_lineage_contract",
