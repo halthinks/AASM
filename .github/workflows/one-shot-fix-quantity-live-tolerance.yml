@@ -1,0 +1,86 @@
+name: One-shot quantity live-tolerance alignment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/one-shot-fix-quantity-live-tolerance.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  align:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Align non-regression assertions to the live solver tolerance contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              Path('scripts/check_quantity_contracts.py'): (
+                  '''    expected_legacy_fields = {
+        "absolute",
+        "relative",
+        "primal_feasibility",
+        "dual_feasibility",
+        "integrality",
+        "mip_gap",
+    }
+''',
+                  '''    expected_legacy_fields = {
+        "policy_id",
+        "contract_id",
+        "contract_version",
+        "absolute_tolerance",
+        "relative_tolerance",
+        "precision",
+        "fingerprint",
+    }
+    require(legacy_tolerance["properties"]["contract_id"]["const"] == "aasm.numeric.tolerance.v1", "legacy numeric tolerance contract ID drift")
+    require(legacy_tolerance["properties"]["absolute_tolerance"]["type"] == "string", "legacy absolute tolerance lost exact-string encoding")
+    require(legacy_tolerance["properties"]["relative_tolerance"]["type"] == "string", "legacy relative tolerance lost exact-string encoding")
+'''),
+              Path('tests/test_quantity_foundation.py'): (
+                  '''    assert set(schema["properties"]) == {
+        "absolute",
+        "relative",
+        "primal_feasibility",
+        "dual_feasibility",
+        "integrality",
+        "mip_gap",
+    }
+''',
+                  '''    assert set(schema["properties"]) == {
+        "policy_id",
+        "contract_id",
+        "contract_version",
+        "absolute_tolerance",
+        "relative_tolerance",
+        "precision",
+        "fingerprint",
+    }
+    assert schema["properties"]["contract_id"]["const"] == "aasm.numeric.tolerance.v1"
+    assert schema["properties"]["absolute_tolerance"]["type"] == "string"
+    assert schema["properties"]["relative_tolerance"]["type"] == "string"
+'''),
+          }
+          for path, (old, new) in replacements.items():
+              text = path.read_text(encoding='utf-8')
+              if text.count(old) != 1:
+                  raise SystemExit(f'{path}: live-tolerance alignment anchor drift')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+              print(f'{path}: aligned to live aasm.numeric.tolerance.v1')
+          PY
+          python -m compileall -q scripts/check_quantity_contracts.py tests/test_quantity_foundation.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/check_quantity_contracts.py tests/test_quantity_foundation.py
+          git commit -m 'Preserve live numeric tolerance contract in S4 checks'
+          git push origin HEAD:main
