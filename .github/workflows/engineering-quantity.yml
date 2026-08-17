@@ -1,0 +1,58 @@
+name: AASM Engineering Quantity Qualification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: aasm-engineering-quantity-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  engineering-quantity:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install AASM development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile quantity foundation and qualification corpus
+        run: |
+          python -m compileall -q \
+            src/aasm/quantity.py \
+            tests/test_quantity_foundation.py \
+            scripts/check_quantity_contracts.py
+          python -m json.tool schemas/quantity.schema.json >/dev/null
+      - name: Check quantity source and pre-admission firewalls
+        run: python scripts/check_quantity_contracts.py
+      - name: Run quantity adversarial foundation corpus
+        run: pytest -q tests/test_quantity_foundation.py
+      - name: Publish engineering quantity qualification
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='S4 aasm.quantity.v1 pre-admission foundation qualification passed'
+          else
+            state=failure
+            description='S4 aasm.quantity.v1 pre-admission foundation qualification failed'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" \
+            -f context='aasm/engineering-quantity' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
