@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/semantic-projection.schema.json",
+  "title": "AASM Semantic Projection and Equivalence Foundation",
+  "oneOf": [
+    {"$ref": "#/$defs/projectionDefinition"},
+    {"$ref": "#/$defs/projectionResult"},
+    {"$ref": "#/$defs/equivalenceAssessment"}
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "jsonValue": {
+      "anyOf": [
+        {"type": "string"},
+        {"type": "integer"},
+        {"type": "boolean"},
+        {"type": "null"},
+        {
+          "type": "array",
+          "items": {"$ref": "#/$defs/jsonValue"}
+        },
+        {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/jsonValue"}
+        }
+      ]
+    },
+    "invariantRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["invariant_id", "classification", "treatment"],
+      "properties": {
+        "invariant_id": {"$ref": "#/$defs/nonEmptyString"},
+        "classification": {
+          "enum": ["REPRESENTATIONAL", "STATIC_PROTOCOL", "DYNAMIC_KERNEL", "EMPIRICAL"]
+        },
+        "treatment": {
+          "enum": ["PRESERVED", "DISCARDED", "UNSUPPORTED"]
+        }
+      }
+    },
+    "subjectRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "semantic_type_id",
+        "object_id",
+        "fingerprint",
+        "revision_id",
+        "revision_fingerprint"
+      ],
+      "properties": {
+        "semantic_type_id": {"$ref": "#/$defs/nonEmptyString"},
+        "object_id": {"$ref": "#/$defs/nonEmptyString"},
+        "fingerprint": {"$ref": "#/$defs/sha256"},
+        "revision_id": {"type": "string"},
+        "revision_fingerprint": {
+          "type": "string",
+          "pattern": "^(?:|[0-9a-f]{64})$"
+        }
+      }
+    },
+    "projectionDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "projection_id",
+        "contract_id",
+        "contract_version",
+        "projection_name",
+        "source_type_ids",
+        "target_type_id",
+        "purpose",
+        "fidelity",
+        "invariants",
+        "discarded_semantics",
+        "unsupported_semantics",
+        "revision_policy",
+        "metadata",
+        "fingerprint"
+      ],
+      "properties": {
+        "record_type": {"const": "PROJECTION_DEFINITION"},
+        "projection_id": {"type": "string", "pattern": "^semantic-projection-[0-9a-f]{24}$"},
+        "contract_id": {"const": "aasm.semantic.projection.v1"},
+        "contract_version": {"const": "0.1.0"},
+        "projection_name": {"$ref": "#/$defs/nonEmptyString"},
+        "source_type_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "target_type_id": {"$ref": "#/$defs/nonEmptyString"},
+        "purpose": {"$ref": "#/$defs/nonEmptyString"},
+        "fidelity": {"enum": ["LOSSLESS", "LOSSY"]},
+        "invariants": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/invariantRef"}
+        },
+        "discarded_semantics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "unsupported_semantics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "revision_policy": {
+          "enum": ["EXACT_MATCH_REQUIRED", "EXPLICIT_CROSS_REVISION"]
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/jsonValue"}
+        },
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "projectionResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "result_id",
+        "projection_id",
+        "projection_fingerprint",
+        "subject",
+        "status",
+        "projected_fingerprint",
+        "evidence_ids",
+        "diagnostics",
+        "fingerprint"
+      ],
+      "properties": {
+        "record_type": {"const": "PROJECTION_RESULT"},
+        "result_id": {"type": "string", "pattern": "^semantic-projection-result-[0-9a-f]{24}$"},
+        "projection_id": {"type": "string", "pattern": "^semantic-projection-[0-9a-f]{24}$"},
+        "projection_fingerprint": {"$ref": "#/$defs/sha256"},
+        "subject": {"$ref": "#/$defs/subjectRef"},
+        "status": {"enum": ["PROJECTED", "UNSUPPORTED", "INDETERMINATE"]},
+        "projected_fingerprint": {
+          "type": "string",
+          "pattern": "^(?:|[0-9a-f]{64})$"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "diagnostics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "equivalenceAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_type",
+        "assessment_id",
+        "contract_id",
+        "contract_version",
+        "projection_id",
+        "projection_fingerprint",
+        "left_result_id",
+        "left_result_fingerprint",
+        "right_result_id",
+        "right_result_fingerprint",
+        "left_subject",
+        "right_subject",
+        "relation",
+        "projection_fidelity",
+        "revision_relation",
+        "diagnostics",
+        "fingerprint"
+      ],
+      "properties": {
+        "record_type": {"const": "EQUIVALENCE_ASSESSMENT"},
+        "assessment_id": {"type": "string", "pattern": "^semantic-equivalence-[0-9a-f]{24}$"},
+        "contract_id": {"const": "aasm.semantic.equivalence.v1"},
+        "contract_version": {"const": "0.1.0"},
+        "projection_id": {"type": "string", "pattern": "^semantic-projection-[0-9a-f]{24}$"},
+        "projection_fingerprint": {"$ref": "#/$defs/sha256"},
+        "left_result_id": {"type": "string", "pattern": "^semantic-projection-result-[0-9a-f]{24}$"},
+        "left_result_fingerprint": {"$ref": "#/$defs/sha256"},
+        "right_result_id": {"type": "string", "pattern": "^semantic-projection-result-[0-9a-f]{24}$"},
+        "right_result_fingerprint": {"$ref": "#/$defs/sha256"},
+        "left_subject": {"$ref": "#/$defs/subjectRef"},
+        "right_subject": {"$ref": "#/$defs/subjectRef"},
+        "relation": {
+          "enum": ["EXACT_IDENTITY", "PROJECTION_EQUIVALENT", "NON_EQUIVALENT", "INDETERMINATE", "UNSUPPORTED"]
+        },
+        "projection_fidelity": {"enum": ["LOSSLESS", "LOSSY"]},
+        "revision_relation": {"enum": ["SAME", "DIFFERENT", "UNBOUND"]},
+        "diagnostics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonEmptyString"}
+        },
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

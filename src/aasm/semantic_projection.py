@@ -1,0 +1,20 @@
+from __future__ import annotations
+
+from ._semantic_projection_core import (
+    SEMANTIC_PROJECTION_CONTRACT_ID, SEMANTIC_PROJECTION_CONTRACT_VERSION,
+    SEMANTIC_EQUIVALENCE_CONTRACT_ID, SEMANTIC_EQUIVALENCE_CONTRACT_VERSION,
+    INVARIANT_CONTRACT_ID, INVARIANT_CONTRACT_VERSION, SEMANTIC_PROJECTION_STABILITY,
+    INVARIANT_CLASSIFICATIONS, INVARIANT_TREATMENTS, PROJECTION_FIDELITIES,
+    PROJECTION_STATUSES, REVISION_POLICIES, EQUIVALENCE_RELATIONS, REVISION_RELATIONS,
+    InvariantRef, SemanticSubjectRef, SemanticProjectionDefinition,
+)
+from ._semantic_projection_equivalence import (
+    SemanticProjectionResult, SemanticEquivalenceAssessment, assess_semantic_equivalence,
+)
+
+def invariant_contract():
+    return {"contract_id": INVARIANT_CONTRACT_ID, "contract_version": INVARIANT_CONTRACT_VERSION, "classifications": list(INVARIANT_CLASSIFICATIONS), "classification_meaning": {"REPRESENTATIONAL": "identity/serialization/type-shape property", "STATIC_PROTOCOL": "configuration/protocol legality knowable without executing the dynamic kernel", "DYNAMIC_KERNEL": "runtime transition/reducer/authority property requiring dynamic execution semantics", "EMPIRICAL": "world/measurement/experiment property requiring empirical evidence"}, "projection_preservation_is_proof": False, "representational_equivalence_proves_dynamic_kernel": False, "representational_equivalence_proves_empirical": False, "truth_authority": "NONE"}
+def semantic_projection_contract():
+    return {"contract_id": SEMANTIC_PROJECTION_CONTRACT_ID, "contract_version": SEMANTIC_PROJECTION_CONTRACT_VERSION, "equivalence_contract_id": SEMANTIC_EQUIVALENCE_CONTRACT_ID, "equivalence_contract_version": SEMANTIC_EQUIVALENCE_CONTRACT_VERSION, "invariant_contract_id": INVARIANT_CONTRACT_ID, "invariant_contract_version": INVARIANT_CONTRACT_VERSION, "stability": SEMANTIC_PROJECTION_STABILITY, "relations": list(EQUIVALENCE_RELATIONS), "fidelities": list(PROJECTION_FIDELITIES), "projection_statuses": list(PROJECTION_STATUSES), "revision_policies": list(REVISION_POLICIES), "exact_identity": "SAME_TYPE_OBJECT_FINGERPRINT_AND_REVISION_BINDING", "projection_equivalence": "RELATIVE_TO_EXACT_EXPLICIT_PROJECTION_ONLY", "lossy_projection": "MUST_DECLARE_DISCARDED_SEMANTICS_OR_INVARIANTS_AND_NEVER_BECOMES_EXACT_IDENTITY", "unsupported_and_indeterminate": "DISTINCT_FAIL_CLOSED_RELATIONS", "revision_mismatch": "INDETERMINATE_WHEN_EXACT_MATCH_REQUIRED", "projection_hashing": "REUSES_EXISTING_SEMANTIC_FINGERPRINT_FOR_CONTRACT_RECORDS", "semantic_object_hashing": "REFERENCES_EXISTING_OBJECT_FINGERPRINTS_DOES_NOT_DEFINE_SECOND_OBJECT_IDENTITY_PLANE", "existing_quantity_projection": "PRESERVED_UNCHANGED", "existing_artifact_projection": "PRESERVED_UNCHANGED", "existing_solver_legacy_projection": "PRESERVED_UNCHANGED", "existing_trace_projection": "PRESERVED_UNCHANGED", "existing_solution_pool_identity": "PRESERVED_EXACT_ASSIGNMENT_ONLY", "existing_reuse_certified_equivalent": "NOT_REINTERPRETED_OR_ADMITTED_BY_FOUNDATION", "truth_authority": "NONE", "fact_authority": "NONE", "effect_authority": "NONE", "artifact_acceptance": "NONE", "entity_identity_authority": "NONE", "proof_authority": "NONE", "objective_preference": "NONE", "reuse_admission": "NONE", "parallel_projection_registry": "NONE", "current_projection_pointer": "NONE", "runtime_admission": "PRE_ADMISSION_ONLY", "public_admission": "PRE_ADMISSION_ONLY"}
+
+__all__ = ["SEMANTIC_PROJECTION_CONTRACT_ID", "SEMANTIC_PROJECTION_CONTRACT_VERSION", "SEMANTIC_EQUIVALENCE_CONTRACT_ID", "SEMANTIC_EQUIVALENCE_CONTRACT_VERSION", "INVARIANT_CONTRACT_ID", "INVARIANT_CONTRACT_VERSION", "SEMANTIC_PROJECTION_STABILITY", "INVARIANT_CLASSIFICATIONS", "INVARIANT_TREATMENTS", "PROJECTION_FIDELITIES", "PROJECTION_STATUSES", "REVISION_POLICIES", "EQUIVALENCE_RELATIONS", "REVISION_RELATIONS", "InvariantRef", "SemanticSubjectRef", "SemanticProjectionDefinition", "SemanticProjectionResult", "SemanticEquivalenceAssessment", "assess_semantic_equivalence", "invariant_contract", "semantic_projection_contract"]
