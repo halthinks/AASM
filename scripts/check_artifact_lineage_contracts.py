@@ -53,7 +53,7 @@ def main() -> int:
         "evidence_ids",
     ])
     require(tests, [
-        "reuses_existing_file_and_sql_blob_content_ids",
+        "reuses_existing_memory_and_local_content_backends",
         "rejects_content_ref_digest_mismatch",
         "rejects_forged_revision_id_and_fingerprint",
         "requires_exact_id_and_fingerprint_pair",
@@ -76,8 +76,9 @@ def main() -> int:
         "time_ns(",
         "datetime.now(",
         "pickle",
-        "FileArtifactBackend(",
-        "SqlBlobArtifactBackend(",
+        "MemoryArtifactBackend(",
+        "LocalDirectoryArtifactBackend(",
+        "ArtifactBackendRegistry(",
     ])
     forbid(active_runtime, [
         "artifact_lineage",

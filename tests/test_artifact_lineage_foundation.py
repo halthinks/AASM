@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from aasm.artifact_backends import FileArtifactBackend, SqlBlobArtifactBackend
+from aasm.artifact_backends import LocalDirectoryArtifactBackend, MemoryArtifactBackend
 from aasm.artifact_lineage import (
     ARTIFACT_REVISION_CONTRACT_ID,
     ArtifactRevision,
@@ -73,15 +73,24 @@ def test_artifact_revision_is_deterministic_content_and_provenance_bound():
     assert second.to_dict() == first.to_dict()
 
 
-def test_artifact_revision_reuses_existing_file_and_sql_blob_content_ids(tmp_path):
+def test_artifact_revision_reuses_existing_memory_and_local_content_backends(tmp_path):
     payload = "same content through existing backends"
-    file_ref = FileArtifactBackend(tmp_path / "files").put_text(payload)
-    sql_ref = SqlBlobArtifactBackend(tmp_path / "artifacts.sqlite").put_text(payload)
-    assert file_ref == sql_ref == _digest(payload)
-    item = _revision(payload=payload, artifact_ref=file_ref)
-    assert item.artifact_ref == item.content_sha256
-    assert FileArtifactBackend(tmp_path / "files").get_text(item.artifact_ref) == payload
-    assert SqlBlobArtifactBackend(tmp_path / "artifacts.sqlite").get_text(item.artifact_ref) == payload
+    memory = MemoryArtifactBackend()
+    local = LocalDirectoryArtifactBackend(tmp_path / "files")
+
+    memory_ref = memory.put_text("artifact-lineage", "board", payload)
+    local_ref = local.put_text("artifact-lineage", "board", payload)
+
+    memory_item = _revision(payload=payload, artifact_ref=memory_ref)
+    local_item = _revision(payload=payload, artifact_ref=local_ref)
+    expected_digest = _digest(payload)
+
+    assert memory_item.content_sha256 == expected_digest
+    assert local_item.content_sha256 == expected_digest
+    assert memory.get_text(memory_ref) == payload
+    assert local.get_text(local_ref) == payload
+    assert memory_ref.startswith("artifact+memory://")
+    assert local_ref.startswith("artifact+file://")
 
 
 def test_artifact_revision_rejects_content_ref_digest_mismatch():
