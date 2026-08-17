@@ -16,6 +16,19 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - name: Correct one stale current-release phrase anchor in the one-shot script
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/one_shot_sync_s3_docs.py')
+          text = p.read_text(encoding='utf-8')
+          old = '    old_phrase = f"qualified the active `0.56.1 / {ADOPTION}` candidate with all required direct contexts green, including:"'
+          new = '    old_phrase = "qualified the active `0.56.1 / 0.32.7` candidate with all required direct contexts green, including:"'
+          if text.count(old) != 1:
+              raise SystemExit('current-release phrase anchor patch drift')
+          p.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
       - name: Run guarded documentation transforms
         run: python scripts/one_shot_sync_s3_docs.py
       - name: Verify and commit synchronized documents
