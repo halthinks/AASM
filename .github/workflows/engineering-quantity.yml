@@ -25,17 +25,24 @@ jobs:
           cache: pip
       - name: Install AASM development dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Compile quantity foundation and qualification corpus
+      - name: Compile quantity foundation and public-candidate qualification corpus
         run: |
           python -m compileall -q \
             src/aasm/quantity.py \
+            src/aasm/public_active_engineering_quantity.py \
             tests/test_quantity_foundation.py \
-            scripts/check_quantity_contracts.py
+            tests/test_quantity_public_candidate.py \
+            scripts/check_quantity_contracts.py \
+            scripts/check_quantity_public_candidate.py
           python -m json.tool schemas/quantity.schema.json >/dev/null
       - name: Check quantity source and pre-admission firewalls
         run: python scripts/check_quantity_contracts.py
       - name: Run quantity adversarial foundation corpus
         run: pytest -q tests/test_quantity_foundation.py
+      - name: Check quantity public-candidate source firewall
+        run: python scripts/check_quantity_public_candidate.py
+      - name: Run 0.32.16 public adoption candidate corpus
+        run: pytest -q tests/test_quantity_public_candidate.py
       - name: Publish engineering quantity qualification
         if: always()
         env:
@@ -46,10 +53,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S4 aasm.quantity.v1 pre-admission foundation qualification passed'
+            description='S4 aasm.quantity.v1 foundation + 0.32.16 public-candidate qualification passed'
           else
             state=failure
-            description='S4 aasm.quantity.v1 pre-admission foundation qualification failed'
+            description='S4 aasm.quantity.v1 foundation/public-candidate qualification failed'
           fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             -f state="$state" \
