@@ -177,7 +177,7 @@ jobs:
           assert calibration['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
           assert calibration['validity_reference']=='EXPLICIT_CALLER_NANOSECOND_TIME_ONLY'
           assert calibration['observation_mutation']=='NONE'; assert calibration['fact_authority_creation']=='NONE'
-          assert calibration['source_trust']=='NONE_CALIBRATION_IS_ONLY_VALIDITY_EVIDENCE'
+          assert calibration['source_trust']=='NONE_CALIBRATION_IS_ONLY_EVIDENCE_INPUT_TO_LATER_POLICY'
           assert calibration['parallel_calibration_store']=='NONE_EVIDENCE_PROJECTION_ONLY'; assert calibration['parallel_truth_table']=='NONE'
           trust=engine.source_trust_contract_report()
           assert trust['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
