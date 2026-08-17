@@ -31,15 +31,19 @@ jobs:
             src/aasm/entity_evolution.py \
             src/aasm/entity_evolution_runtime.py \
             src/aasm/runtime_v56_foundation.py \
+            src/aasm/public_active_entity_evolution.py \
             tests/test_entity_evolution.py \
             tests/test_entity_evolution_active_engine.py \
+            tests/test_entity_evolution_public_candidate.py \
             scripts/check_entity_evolution_contracts.py
-      - name: Check entity evolution source firewall
+      - name: Check entity evolution source firewall and public candidate
         run: python scripts/check_entity_evolution_contracts.py
-      - name: Run entity evolution pre-admission adversarial corpus
+      - name: Run entity evolution adversarial and replay corpus on active engine
         run: pytest -q tests/test_entity_evolution.py
       - name: Run identical corpus against exported AASMEngine
         run: pytest -q tests/test_entity_evolution_active_engine.py
+      - name: Run 0.32.15 public adoption candidate corpus
+        run: pytest -q tests/test_entity_evolution_public_candidate.py
       - name: Publish entity evolution qualification
         if: always()
         env:
@@ -50,10 +54,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S3 entity evolution active-engine qualification passed'
+            description='S3 entity evolution active-engine + 0.32.15 public-candidate qualification passed'
           else
             state=failure
-            description='S3 entity evolution active-engine qualification failed'
+            description='S3 entity evolution active-engine/public-candidate qualification failed'
           fi
           gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
             -f state="$state" \
