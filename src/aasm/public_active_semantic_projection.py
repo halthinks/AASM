@@ -44,13 +44,18 @@ PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.18"
 PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.17"
 SEMANTIC_PROJECTION_PUBLIC_ADMISSION = "QUALIFIED_SEMANTIC_IR_ONLY"
 
-SUPPORTED_PUBLIC_IMPORTS = tuple(dict.fromkeys(_PARENT_IMPORTS + tuple(_SEMANTIC_IMPORTS)))
-SUPPORTED_INSPECTION_SURFACES = tuple(dict.fromkeys(_PARENT_INSPECTION + ("semantic-projection",)))
+SUPPORTED_PUBLIC_IMPORTS = tuple(
+    dict.fromkeys(tuple(_PARENT_IMPORTS) + tuple(_SEMANTIC_IMPORTS))
+)
+SUPPORTED_INSPECTION_SURFACES = tuple(
+    dict.fromkeys(tuple(_PARENT_INSPECTION) + ("semantic-projection",))
+)
 
 PUBLIC_API_CONTRACT = deepcopy(_PARENT_CONTRACT)
 PUBLIC_API_CONTRACT["contract_version"] = PUBLIC_ADOPTION_CONTRACT_VERSION
 PUBLIC_API_CONTRACT["parent_contract_version"] = PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION
 PUBLIC_API_CONTRACT["description"] = "0.32.17 Rule boundary plus qualified semantic projection/equivalence/invariant IR; no runtime composition."
+PUBLIC_API_CONTRACT["supported_imports"] = list(SUPPORTED_PUBLIC_IMPORTS)
 PUBLIC_API_CONTRACT["supported_public_imports"] = list(SUPPORTED_PUBLIC_IMPORTS)
 PUBLIC_API_CONTRACT["supported_engine_methods"] = list(SUPPORTED_ENGINE_METHODS)
 PUBLIC_API_CONTRACT["supported_inspection_surfaces"] = list(SUPPORTED_INSPECTION_SURFACES)
@@ -93,7 +98,9 @@ def validate_public_api_contract() -> dict:
         return {"valid": False, "reason": "parent_rule_contract_version_drift"}
     if PUBLIC_API_CONTRACT.get("contract_version") != PUBLIC_ADOPTION_CONTRACT_VERSION:
         return {"valid": False, "reason": "semantic_projection_public_contract_version_drift"}
-    if tuple(PUBLIC_API_CONTRACT.get("supported_engine_methods") or ()) != SUPPORTED_ENGINE_METHODS:
+    if list(PUBLIC_API_CONTRACT.get("supported_imports") or []) != list(SUPPORTED_PUBLIC_IMPORTS):
+        return {"valid": False, "reason": "public_import_surface_drift"}
+    if list(PUBLIC_API_CONTRACT.get("supported_engine_methods") or []) != list(SUPPORTED_ENGINE_METHODS):
         return {"valid": False, "reason": "engine_method_surface_drift"}
     semantic = PUBLIC_API_CONTRACT.get("semantic_projection") or {}
     required = {
