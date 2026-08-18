@@ -3,8 +3,26 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from aasm.calculus import OBLIGATION_STATUSES, OBLIGATION_TRANSITIONS, default_calculus_state
+
 
 ROOT = Path(__file__).resolve().parents[1]
+
+EXPECTED_OBLIGATION_TRANSITIONS = {
+    "AVAILABLE": {"ENABLED", "BLOCKED", "LOCKED", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"},
+    "ENABLED": {"IN_PROGRESS", "BLOCKED", "LOCKED", "NEEDS_REVALIDATION", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"},
+    "IN_PROGRESS": {"VERIFYING", "BLOCKED", "NEEDS_REVALIDATION", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"},
+    "VERIFYING": {"VERIFIED", "BLOCKED", "NEEDS_REVALIDATION", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"},
+    "VERIFIED": {"COMMITTED", "NEEDS_REVALIDATION", "SUPERSEDED"},
+    "COMMITTED": {"NEEDS_REVALIDATION", "SUPERSEDED"},
+    "BLOCKED": {"AVAILABLE", "ENABLED", "LOCKED", "NEEDS_REVALIDATION", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"},
+    "LOCKED": {"AVAILABLE", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"},
+    "NEEDS_REVALIDATION": {"AVAILABLE", "ENABLED", "VERIFYING", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"},
+    "REJECTED": set(),
+    "SUPERSEDED": set(),
+    "IMPOSSIBLE": set(),
+}
+EXPECTED_OBLIGATION_STATUSES = set(EXPECTED_OBLIGATION_TRANSITIONS)
 
 
 def fail(message: str) -> None:
@@ -44,6 +62,8 @@ def main() -> None:
         'OBLIGATION_PHASE_CONTRACT_VERSION = "0.1.0"',
         'OBLIGATION_PHASE_BINDING_CONTRACT_ID = "aasm.obligation.phase-binding.v1"',
         'OBLIGATION_PHASE_ASSESSMENT_CONTRACT_ID = "aasm.obligation.phase-assessment.v1"',
+        'CALCULUS_SUBSTRATE_ID = "aasm.calculus.v1"',
+        'CALCULUS_STATE_SCHEMA_VERSION = 1',
         '"PRE_AUTHORIZE"',
         '"PRE_DISPATCH"',
         '"POST_DISPATCH"',
@@ -64,6 +84,7 @@ def main() -> None:
         'def validate_obligation_phase_binding(',
         'def validate_obligation_phase_plan(',
         'def assess_obligation_phase_readiness(',
+        '"calculus_state_schema_version": CALCULUS_STATE_SCHEMA_VERSION',
         '"obligation_store": "EXISTING_AASM_CALCULUS_V1_ONLY"',
         '"obligation_edges": "EXISTING_AASM_CALCULUS_V1_REQUIRES_EDGES_ONLY"',
         '"obligation_status_machine": "EXISTING_AASM_CALCULUS_V1_OBLIGATION_TRANSITIONS_UNCHANGED"',
@@ -104,12 +125,19 @@ def main() -> None:
     ), "obligation-phase model")
 
     require(calculus_model, (
-        'CALCULUS_CONTRACT_ID = "aasm.calculus.v1"',
         'class ObligationRecord:',
+        'OBLIGATION_STATUSES = {',
         'OBLIGATION_TRANSITIONS = {',
-        '"AVAILABLE": {"ENABLED", "BLOCKED", "LOCKED", "SUPERSEDED", "IMPOSSIBLE"}',
-        '"VERIFIED": {"COMMITTED", "NEEDS_REVALIDATION", "REJECTED"}',
+        '"obligations": {},',
+        '"obligation_edges": [],',
     ), "existing calculus model")
+    if OBLIGATION_STATUSES != EXPECTED_OBLIGATION_STATUSES:
+        fail(f"live obligation status vocabulary drifted: {sorted(OBLIGATION_STATUSES)}")
+    if OBLIGATION_TRANSITIONS != EXPECTED_OBLIGATION_TRANSITIONS:
+        fail(f"live obligation transition machine drifted: {OBLIGATION_TRANSITIONS}")
+    if int(default_calculus_state().get("schema_version", -1)) != 1:
+        fail("live calculus state schema_version is no longer 1")
+
     require(calculus_runtime, (
         'def register_obligation(',
         'state["obligation_edges"].append({"src": dependency, "dst": record.obligation_id, "relation": "REQUIRES"})',
