@@ -51,6 +51,7 @@ def forbid(source: str, tokens: tuple[str, ...], label: str) -> None:
 def main() -> None:
     model = text("src/aasm/obligation_phase.py")
     calculus_model = text("src/aasm/_calculus_model.py")
+    calculus_public = text("src/aasm/calculus.py")
     calculus_runtime = text("src/aasm/runtime_v21.py")
     runtime_v56 = text("src/aasm/runtime_v56_foundation.py")
     package_root = text("src/aasm/__init__.py")
@@ -64,6 +65,7 @@ def main() -> None:
         'OBLIGATION_PHASE_ASSESSMENT_CONTRACT_ID = "aasm.obligation.phase-assessment.v1"',
         'CALCULUS_SUBSTRATE_ID = "aasm.calculus.v1"',
         'CALCULUS_STATE_SCHEMA_VERSION = 1',
+        'OBLIGATION_BINDING_PROJECTION_ID = "aasm.obligation.phase.binding-projection.v1"',
         '"PRE_AUTHORIZE"',
         '"PRE_DISPATCH"',
         '"POST_DISPATCH"',
@@ -74,10 +76,14 @@ def main() -> None:
         'OBLIGATION_STATUSES',
         'OBLIGATION_TRANSITIONS',
         'ObligationRecord',
+        'content_hash',
         'normalize_calculus_state',
-        'obligation_fingerprint',
         'from .scopes import ROOT_SCOPE_ID, scope_id_from, with_scope',
+        'def obligation_binding_projection(',
+        'def obligation_semantic_fingerprint(',
+        'return content_hash(obligation_binding_projection(value))',
         'class ObligationPhaseBinding:',
+        'obligation_semantic_fingerprint: str',
         'class ObligationPhasePlan:',
         'class ObligationPhaseAssessment:',
         'def bind_obligation_phase(',
@@ -85,6 +91,10 @@ def main() -> None:
         'def validate_obligation_phase_plan(',
         'def assess_obligation_phase_readiness(',
         '"calculus_state_schema_version": CALCULUS_STATE_SCHEMA_VERSION',
+        '"obligation_identity": "EXISTING_OBLIGATION_ID_UNCHANGED_NO_NEW_OBLIGATION_IDENTITY"',
+        '"binding_projection_id": OBLIGATION_BINDING_PROJECTION_ID',
+        '"binding_projection": "VERSIONED_STABLE_REQUIREMENT_PROJECTION_HASHED_WITH_EXISTING_CALCULUS_CONTENT_HASH"',
+        '"binding_projection_is_obligation_identity": False',
         '"obligation_store": "EXISTING_AASM_CALCULUS_V1_ONLY"',
         '"obligation_edges": "EXISTING_AASM_CALCULUS_V1_REQUIRES_EDGES_ONLY"',
         '"obligation_status_machine": "EXISTING_AASM_CALCULUS_V1_OBLIGATION_TRANSITIONS_UNCHANGED"',
@@ -113,6 +123,8 @@ def main() -> None:
         "\nOBLIGATION_PHASE_REGISTRY =",
         "\nCURRENT_OBLIGATION_PHASE =",
         "\nCURRENT_PHASE =",
+        "def content_hash(",
+        "def obligation_fingerprint(",
         "FactAuthority(",
         "StateClaim(",
         ".authorize_effect(",
@@ -125,12 +137,17 @@ def main() -> None:
     ), "obligation-phase model")
 
     require(calculus_model, (
+        'def content_hash(',
         'class ObligationRecord:',
         'OBLIGATION_STATUSES = {',
         'OBLIGATION_TRANSITIONS = {',
         '"obligations": {},',
         '"obligation_edges": [],',
     ), "existing calculus model")
+    require(calculus_public, (
+        'from ._calculus_model import *',
+        'from ._calculus_logic import *',
+    ), "existing calculus public facade")
     if OBLIGATION_STATUSES != EXPECTED_OBLIGATION_STATUSES:
         fail(f"live obligation status vocabulary drifted: {sorted(OBLIGATION_STATUSES)}")
     if OBLIGATION_TRANSITIONS != EXPECTED_OBLIGATION_TRANSITIONS:
@@ -159,12 +176,14 @@ def main() -> None:
         "ObligationPhaseAssessment",
     ), "active package root")
 
-    for filename, contract_id in (
-        ("schemas/obligation-phase-binding.schema.json", "aasm.obligation.phase-binding.v1"),
-        ("schemas/obligation-phase-plan.schema.json", "aasm.obligation.phase.v1"),
-        ("schemas/obligation-phase-assessment.schema.json", "aasm.obligation.phase-assessment.v1"),
+    binding_schema = json.loads(text("schemas/obligation-phase-binding.schema.json"))
+    plan_schema = json.loads(text("schemas/obligation-phase-plan.schema.json"))
+    assessment_schema = json.loads(text("schemas/obligation-phase-assessment.schema.json"))
+    for filename, schema, contract_id in (
+        ("schemas/obligation-phase-binding.schema.json", binding_schema, "aasm.obligation.phase-binding.v1"),
+        ("schemas/obligation-phase-plan.schema.json", plan_schema, "aasm.obligation.phase.v1"),
+        ("schemas/obligation-phase-assessment.schema.json", assessment_schema, "aasm.obligation.phase-assessment.v1"),
     ):
-        schema = json.loads(text(filename))
         if schema.get("additionalProperties") is not False:
             fail(f"{filename} must be closed")
         serialized = json.dumps(schema, sort_keys=True)
@@ -172,13 +191,21 @@ def main() -> None:
             fail(f"{filename} missing contract ID {contract_id}")
         if "RECOVERY" not in serialized and "assessment" not in filename:
             fail(f"{filename} missing RECOVERY phase vocabulary")
+    binding_serialized = json.dumps(binding_schema, sort_keys=True)
+    plan_serialized = json.dumps(plan_schema, sort_keys=True)
+    if "obligation_semantic_fingerprint" not in binding_serialized or "obligation_semantic_fingerprint" not in plan_serialized:
+        fail("phase binding schemas must carry obligation_semantic_fingerprint")
+    if '"obligation_fingerprint"' in binding_serialized or '"obligation_fingerprint"' in plan_serialized:
+        fail("stale claim of native obligation_fingerprint remains in phase binding schemas")
 
     for token in (
         "test_phase_vocabulary_order_and_recovery_orthogonality_are_exact",
-        "test_binding_uses_exact_existing_obligation_fingerprint_scope_and_revision",
-        "test_obligation_status_changes_do_not_stale_binding_but_semantic_requirement_changes_do",
+        "test_binding_uses_exact_obligation_semantic_projection_scope_and_revision",
+        "test_runtime_progress_changes_do_not_stale_binding_but_semantic_requirement_changes_do",
+        "test_statement_activation_dependency_and_scope_changes_stale_phase_binding",
         "test_plan_requires_exactly_one_binding_for_every_existing_obligation",
         "test_forward_normal_dependency_is_valid_and_backward_normal_dependency_fails_closed",
+        "test_dependency_record_and_edge_projection_must_agree_exactly",
         "test_recovery_dependencies_are_explicit_edges_without_implicit_phase_order",
         "test_phase_readiness_uses_existing_status_machine_without_mutating_it",
         "test_terminal_obligation_disposition_is_not_treated_as_phase_success",
