@@ -20,6 +20,7 @@ def text(path: str) -> str:
 def main() -> None:
     active = text("src/aasm/public_active_engineering_rule.py")
     parent = text("src/aasm/public_active_engineering_quantity.py")
+    semantic_parent = text("src/aasm/public_active_semantic_projection.py")
     package_init = text("src/aasm/__init__.py")
     foundation = text("src/aasm/runtime_v56_foundation.py")
     rule_model = text("src/aasm/rule.py")
@@ -27,7 +28,7 @@ def main() -> None:
     decision_vector = text("src/aasm/decision_vector_ir.py")
     tests = text("tests/test_rule_public.py")
 
-    require('"contract_version": "0.32.17"' in active, "active engineering Rule adoption version drift")
+    require('"contract_version": "0.32.17"' in active, "engineering Rule adoption version drift")
     for token in (
         "RULE_CONTRACT_ID",
         "RULE_CONTRACT_VERSION",
@@ -53,14 +54,17 @@ def main() -> None:
         '"DISTINCT_NO_IMPLICIT_MAPPING_TO_FORMAL_CALCULUS_HARD_SOFT"',
         '"NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED"',
     ):
-        require(token in active, f"active engineering Rule public surface missing token: {token}")
+        require(token in active, f"engineering Rule public surface missing token: {token}")
 
-    require("from . import public_active_engineering_quantity as _base" in active, "active engineering Rule surface does not inherit qualified 0.32.16 parent")
-    require("AASMEngine = _base.AASMEngine" in active, "active engineering Rule surface forked AASMEngine")
-    require('SUPPORTED_ENGINE_METHODS = list(getattr(_base, "SUPPORTED_ENGINE_METHODS", []))' in active, "active engineering Rule surface changed engine method set")
+    require("from . import public_active_engineering_quantity as _base" in active, "engineering Rule surface does not inherit qualified 0.32.16 parent")
+    require("AASMEngine = _base.AASMEngine" in active, "engineering Rule surface forked AASMEngine")
+    require('SUPPORTED_ENGINE_METHODS = list(getattr(_base, "SUPPORTED_ENGINE_METHODS", []))' in active, "engineering Rule surface changed engine method set")
 
-    require("from .public_active_engineering_rule import *" in package_init, "qualified engineering Rule surface is not package root")
-    require("from .public_active_engineering_rule import __version__, AASMEngine" in package_init, "package root does not bind qualified Rule contract helpers")
+    # Rule remains independently qualified as the exact parent of active 0.32.18.
+    require('from . import public_active_engineering_rule as _base' in semantic_parent, "active 0.32.18 surface does not inherit qualified Rule parent")
+    require('PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.17"' in semantic_parent, "active semantic projection parent version drift")
+    require('from .public_active_semantic_projection import *' in package_init, "qualified 0.32.18 semantic projection surface is not package root")
+    require('from .public_active_semantic_projection import __version__, AASMEngine' in package_init, "package root does not bind qualified 0.32.18 helpers")
     require("from .rule" not in parent, "Rule leaked backward into qualified 0.32.16 parent")
     require("aasm.rule.v1" not in parent, "Rule contract leaked backward into qualified 0.32.16 parent")
 
@@ -86,7 +90,7 @@ def main() -> None:
         "current_rule_store",
         "latest_rule",
     ):
-        require(token not in active, f"active engineering Rule public surface violates firewall with token: {token}")
+        require(token not in active, f"engineering Rule public surface violates firewall with token: {token}")
 
     for token in (
         "test_rule_public_adoption_is_additive_over_qualified_quantity_parent",
@@ -95,9 +99,9 @@ def main() -> None:
         "test_rule_public_adoption_preserves_learned_constraint_and_objective_separation",
         "test_rule_public_adoption_does_not_add_engine_methods_or_runtime_state",
     ):
-        require(token in tests, f"active engineering Rule public corpus missing test: {token}")
+        require(token in tests, f"engineering Rule public corpus missing test: {token}")
 
-    print("S4 aasm.rule.v1 active 0.32.17 public adoption source contracts: PASS")
+    print("S4 aasm.rule.v1 qualified 0.32.17 parent beneath active 0.32.18 source contracts: PASS")
 
 
 if __name__ == "__main__":
