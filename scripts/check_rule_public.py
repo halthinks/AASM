@@ -21,6 +21,7 @@ def main() -> None:
     active = text("src/aasm/public_active_engineering_rule.py")
     parent = text("src/aasm/public_active_engineering_quantity.py")
     semantic_parent = text("src/aasm/public_active_semantic_projection.py")
+    s44_child = text("src/aasm/public_active_uncertainty_scenario_trace.py")
     package_init = text("src/aasm/__init__.py")
     foundation = text("src/aasm/runtime_v56_foundation.py")
     rule_model = text("src/aasm/rule.py")
@@ -60,11 +61,13 @@ def main() -> None:
     require("AASMEngine = _base.AASMEngine" in active, "engineering Rule surface forked AASMEngine")
     require('SUPPORTED_ENGINE_METHODS = list(getattr(_base, "SUPPORTED_ENGINE_METHODS", []))' in active, "engineering Rule surface changed engine method set")
 
-    # Rule remains independently qualified as the exact parent of active 0.32.18.
-    require('from . import public_active_engineering_rule as _base' in semantic_parent, "active 0.32.18 surface does not inherit qualified Rule parent")
-    require('PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.17"' in semantic_parent, "active semantic projection parent version drift")
-    require('from .public_active_semantic_projection import *' in package_init, "qualified 0.32.18 semantic projection surface is not package root")
-    require('from .public_active_semantic_projection import __version__, AASMEngine' in package_init, "package root does not bind qualified 0.32.18 helpers")
+    # Rule remains independently qualified beneath the additive 0.32.18 -> 0.32.19 chain.
+    require('from . import public_active_engineering_rule as _base' in semantic_parent, "qualified 0.32.18 surface does not inherit Rule parent")
+    require('PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.17"' in semantic_parent, "semantic projection parent version drift")
+    require('from . import public_active_semantic_projection as _base' in s44_child, "active 0.32.19 surface does not inherit qualified 0.32.18 parent")
+    require('PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.18"' in s44_child, "active S4.4 parent version drift")
+    require('from .public_active_uncertainty_scenario_trace import *' in package_init, "qualified 0.32.19 S4.4 surface is not package root")
+    require('from .public_active_uncertainty_scenario_trace import __version__, AASMEngine' in package_init, "package root does not bind qualified 0.32.19 helpers")
     require("from .rule" not in parent, "Rule leaked backward into qualified 0.32.16 parent")
     require("aasm.rule.v1" not in parent, "Rule contract leaked backward into qualified 0.32.16 parent")
 
@@ -101,7 +104,7 @@ def main() -> None:
     ):
         require(token in tests, f"engineering Rule public corpus missing test: {token}")
 
-    print("S4 aasm.rule.v1 qualified 0.32.17 parent beneath active 0.32.18 source contracts: PASS")
+    print("S4 aasm.rule.v1 qualified 0.32.17 parent beneath active 0.32.19 chain: PASS")
 
 
 if __name__ == "__main__":
