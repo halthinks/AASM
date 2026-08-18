@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/effect-irreversibility.schema.json",
+  "title": "AASM Effect Irreversibility v1",
+  "type": "object",
+  "required": ["profile_id", "contract_id", "contract_version", "operation", "subject", "classification", "recovery_operations", "evidence_ids", "metadata", "fingerprint"],
+  "properties": {
+    "profile_id": {"type": "string", "pattern": "^effect-irreversibility-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.effect.irreversibility.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "operation": {"type": "string", "minLength": 1},
+    "subject": {"$ref": "#/$defs/subject"},
+    "classification": {"enum": ["REVERSIBLE", "CONDITIONALLY_REVERSIBLE", "COSTLY_TO_REVERSE", "IRREVERSIBLE", "UNKNOWN"]},
+    "recovery_operations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "subject": {
+      "type": "object",
+      "required": ["semantic_type_id", "object_id", "fingerprint", "revision_id", "revision_fingerprint"],
+      "properties": {
+        "semantic_type_id": {"type": "string", "minLength": 1},
+        "object_id": {"type": "string", "minLength": 1},
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "revision_id": {"type": "string"},
+        "revision_fingerprint": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
