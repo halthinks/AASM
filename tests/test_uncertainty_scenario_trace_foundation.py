@@ -49,12 +49,12 @@ def ref(
     )
 
 
-def scenario(name: str = "hot-ambient") -> Scenario:
-    return Scenario(
-        name,
-        "problem-revision-7",
-        "7" * 64,
-        (
+def scenario(name: str = "hot-ambient", **overrides) -> Scenario:
+    payload = {
+        "scenario_name": name,
+        "base_problem_revision_id": "problem-revision-7",
+        "base_problem_revision_fingerprint": "7" * 64,
+        "bindings": (
             ScenarioBinding("mode", "LITERAL", "production"),
             ScenarioBinding(
                 "ambient",
@@ -62,9 +62,11 @@ def scenario(name: str = "hot-ambient") -> Scenario:
                 value_ref=ref("aasm.quantity.v1", "quantity-ambient", "a"),
             ),
         ),
-        evidence_ids=("evidence-scenario-source",),
-        tags=("thermal",),
-    )
+        "evidence_ids": ("evidence-scenario-source",),
+        "tags": ("thermal",),
+    }
+    payload.update(overrides)
+    return Scenario(**payload)
 
 
 def events() -> list[dict[str, object]]:
