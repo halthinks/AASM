@@ -90,7 +90,7 @@ def test_contract_reuses_existing_calculus_and_has_strict_claim_ceiling():
     contract = obligation_phase_contract()
     assert contract["contract_id"] == "aasm.obligation.phase.v1"
     assert contract["calculus_contract_id"] == "aasm.calculus.v1"
-    assert contract["calculus_contract_version"] == "1.0.0"
+    assert contract["calculus_state_schema_version"] == 1
     assert contract["obligation_type"] == "EXISTING_AASM_CALCULUS_V1_OBLIGATION_RECORD_ONLY"
     assert contract["obligation_fingerprint"] == "EXISTING_AASM_CALCULUS_V1_OBLIGATION_FINGERPRINT_ONLY"
     assert contract["obligation_store"] == "EXISTING_AASM_CALCULUS_V1_ONLY"
@@ -325,11 +325,18 @@ def test_binary_float_metadata_and_identity_tampering_fail_closed():
 
 
 def test_existing_obligation_status_machine_is_not_redefined_or_weakened():
-    assert "COMMITTED" not in OBLIGATION_TRANSITIONS["AVAILABLE"]
-    assert OBLIGATION_TRANSITIONS["ENABLED"] == {"IN_PROGRESS", "BLOCKED", "LOCKED", "NEEDS_REVALIDATION", "SUPERSEDED", "IMPOSSIBLE"}
-    assert OBLIGATION_TRANSITIONS["IN_PROGRESS"] == {"VERIFYING", "BLOCKED", "NEEDS_REVALIDATION", "REJECTED"}
-    assert OBLIGATION_TRANSITIONS["VERIFYING"] == {"VERIFIED", "REJECTED", "NEEDS_REVALIDATION"}
-    assert OBLIGATION_TRANSITIONS["VERIFIED"] == {"COMMITTED", "NEEDS_REVALIDATION", "REJECTED"}
+    assert OBLIGATION_TRANSITIONS["AVAILABLE"] == {"ENABLED", "BLOCKED", "LOCKED", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"}
+    assert OBLIGATION_TRANSITIONS["ENABLED"] == {"IN_PROGRESS", "BLOCKED", "LOCKED", "NEEDS_REVALIDATION", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"}
+    assert OBLIGATION_TRANSITIONS["IN_PROGRESS"] == {"VERIFYING", "BLOCKED", "NEEDS_REVALIDATION", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"}
+    assert OBLIGATION_TRANSITIONS["VERIFYING"] == {"VERIFIED", "BLOCKED", "NEEDS_REVALIDATION", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"}
+    assert OBLIGATION_TRANSITIONS["VERIFIED"] == {"COMMITTED", "NEEDS_REVALIDATION", "SUPERSEDED"}
+    assert OBLIGATION_TRANSITIONS["COMMITTED"] == {"NEEDS_REVALIDATION", "SUPERSEDED"}
+    assert OBLIGATION_TRANSITIONS["BLOCKED"] == {"AVAILABLE", "ENABLED", "LOCKED", "NEEDS_REVALIDATION", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"}
+    assert OBLIGATION_TRANSITIONS["LOCKED"] == {"AVAILABLE", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"}
+    assert OBLIGATION_TRANSITIONS["NEEDS_REVALIDATION"] == {"AVAILABLE", "ENABLED", "VERIFYING", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"}
+    assert OBLIGATION_TRANSITIONS["REJECTED"] == set()
+    assert OBLIGATION_TRANSITIONS["SUPERSEDED"] == set()
+    assert OBLIGATION_TRANSITIONS["IMPOSSIBLE"] == set()
 
 
 def test_foundation_is_not_public_root_or_runtime_composition():
