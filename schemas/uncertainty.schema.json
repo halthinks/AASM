@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/uncertainty.schema.json",
+  "title": "AASM Uncertainty v1",
+  "type": "object",
+  "required": ["uncertainty_id", "contract_id", "contract_version", "subject", "form", "interval_quantity", "scenario_refs", "distribution_reference", "sample_refs", "bound_quantity", "evidence_ids", "metadata", "fingerprint"],
+  "properties": {
+    "uncertainty_id": {"type": "string", "pattern": "^uncertainty-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.uncertainty.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "subject": {"$ref": "#/$defs/subjectRef"},
+    "form": {"enum": ["EXACT", "INTERVAL", "SCENARIOS", "DISTRIBUTION_REFERENCE", "EMPIRICAL_SAMPLES", "UNKNOWN_BOUNDED", "UNKNOWN_UNBOUNDED"]},
+    "interval_quantity": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/subjectRef"}]},
+    "scenario_refs": {"type": "array", "items": {"$ref": "#/$defs/subjectRef"}, "uniqueItems": true},
+    "distribution_reference": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/externalRef"}]},
+    "sample_refs": {"type": "array", "items": {"$ref": "#/$defs/subjectRef"}, "uniqueItems": true},
+    "bound_quantity": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/subjectRef"}]},
+    "evidence_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "subjectRef": {
+      "type": "object",
+      "required": ["semantic_type_id", "object_id", "fingerprint", "revision_id", "revision_fingerprint"],
+      "properties": {
+        "semantic_type_id": {"type": "string", "minLength": 1},
+        "object_id": {"type": "string", "minLength": 1},
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "revision_id": {"type": "string"},
+        "revision_fingerprint": {"type": "string", "pattern": "^$|^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "externalRef": {
+      "type": "object",
+      "required": ["contract_id", "contract_version", "namespace", "external_id", "role", "revision", "source_fingerprint", "source_location", "semantic_entity_id", "metadata", "key", "fingerprint"],
+      "properties": {
+        "contract_id": {"const": "aasm.external.reference.v1"},
+        "contract_version": {"const": "0.1.0"},
+        "namespace": {"type": "string", "minLength": 1},
+        "external_id": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1},
+        "revision": {"type": "string"},
+        "source_fingerprint": {"type": "string"},
+        "source_location": {"type": "object"},
+        "semantic_entity_id": {"type": "string"},
+        "metadata": {"type": "object"},
+        "key": {"type": "string", "minLength": 3},
+        "fingerprint": {"type": "string", "minLength": 16}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
