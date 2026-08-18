@@ -18,14 +18,16 @@ def test_semantic_projection_public_adoption_is_additive_over_qualified_rule_par
     assert active_report["active_root_status"] == "ACTIVE_QUALIFIED_PUBLIC_ROOT"
 
 
-def test_semantic_projection_remains_qualified_03218_parent_beneath_active_03219():
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.19"
-    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.18"
+def test_semantic_projection_remains_qualified_03218_parent_beneath_active_03220():
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.20"
+    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.19"
     assert aasm.AASMEngine is parent.AASMEngine
     assert active.PUBLIC_API_CONTRACT["contract_version"] == "0.32.18"
     assert active.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.17"
     assert active.public_api_contract()["semantic_projection"]["active_root_status"] == "ACTIVE_QUALIFIED_PUBLIC_ROOT"
     assert aasm.public_api_contract()["semantic_projection"] == active.public_api_contract()["semantic_projection"]
+    assert aasm.public_api_contract()["degraded_operation"]["runtime_admission"] == "PRE_ADMISSION_ONLY"
+    assert aasm.public_api_contract()["degraded_operation"]["mode_activation"] == "NONE"
     assert aasm.validate_public_api_contract()["valid"] is True
     assert hasattr(aasm, "SemanticProjectionDefinition")
     assert hasattr(aasm, "SemanticEquivalenceAssessment")
