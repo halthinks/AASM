@@ -14,8 +14,8 @@ def test_v56_base_is_frozen_and_active_overlay_advances_adoption_only():
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.19"
-    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.18"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.20"
+    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.19"
     assert aasm.AASMEngine is public_active.AASMEngine
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v56.AASMEngine is not public_v55.AASMEngine
@@ -67,8 +67,8 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_reality_
 
 def test_active_contract_preserves_external_reality_physical_control_and_s3_firewalls():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] == "0.32.19"
-    assert contract["parent_contract_version"] == "0.32.18"
+    assert contract["contract_version"] == "0.32.20"
+    assert contract["parent_contract_version"] == "0.32.19"
 
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -416,6 +416,25 @@ def test_active_contract_exposes_s4_quantity_rule_and_projection_foundations_wit
     assert trace_property["parallel_property_registry"] == "NONE"
     assert all(value == "NONE" for value in trace_property["public_claim_ceiling"].values())
 
+    degraded = contract["degraded_operation"]
+    assert degraded["contract_id"] == "aasm.degraded.operation.v1"
+    assert degraded["public_admission"] == "QUALIFIED_SEMANTIC_IR_ONLY"
+    assert degraded["runtime_admission"] == "PRE_ADMISSION_ONLY"
+    assert degraded["engine_state_integration"] == "NONE_SEMANTIC_IR_ONLY"
+    assert degraded["active_root_status"] == "ACTIVE_QUALIFIED_PUBLIC_ROOT"
+    assert degraded["mode_activation"] == "NONE"
+    assert degraded["authority_ceiling"] == "EXACT_EXISTING_EFFECT_CAPABILITY_ID_AND_FINGERPRINT_ONLY_NEVER_AMPLIFIED"
+    assert degraded["hidden_current_mode"] == "NONE"
+    assert degraded["parallel_mode_store"] == "NONE"
+    assert degraded["parallel_authority_evaluator"] == "NONE"
+    assert degraded["parallel_effect_lifecycle"] == "NONE"
+    assert degraded["parallel_dispatcher"] == "NONE"
+    assert degraded["mode_selection_grants_effect_authority"] is False
+    assert degraded["assessment_is_authorization"] is False
+    assert degraded["assessment_activates_mode"] is False
+    assert degraded["assessment_proves_safety"] is False
+    assert all(value == "NONE" for value in degraded["public_claim_ceiling"].values())
+
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert not any(name.startswith("rule_") for name in aasm.SUPPORTED_ENGINE_METHODS)
     assert not any(name.startswith("semantic_projection_") for name in aasm.SUPPORTED_ENGINE_METHODS)
@@ -423,3 +442,4 @@ def test_active_contract_exposes_s4_quantity_rule_and_projection_foundations_wit
     assert not any(name.startswith("uncertainty_") for name in aasm.SUPPORTED_ENGINE_METHODS)
     assert not any(name.startswith("scenario_") for name in aasm.SUPPORTED_ENGINE_METHODS)
     assert not any(name.startswith("trace_property_") for name in aasm.SUPPORTED_ENGINE_METHODS)
+    assert not any(name.startswith("degraded_operation_") for name in aasm.SUPPORTED_ENGINE_METHODS)
