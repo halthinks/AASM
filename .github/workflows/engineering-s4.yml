@@ -37,6 +37,9 @@ jobs:
             src/aasm/uncertainty_scenario_trace.py \
             src/aasm/public_active_uncertainty_scenario_trace.py \
             src/aasm/degraded_operation.py \
+            src/aasm/public_active_degraded_operation.py \
+            src/aasm/risk_irreversibility.py \
+            src/aasm/obligation_phase.py \
             scripts/check_quantity_contracts.py \
             scripts/check_quantity_public.py \
             scripts/check_rule_contracts.py \
@@ -45,7 +48,10 @@ jobs:
             scripts/check_semantic_projection_public.py \
             scripts/check_uncertainty_scenario_trace_contracts.py \
             scripts/check_uncertainty_scenario_trace_public.py \
-            scripts/check_degraded_operation_contracts.py
+            scripts/check_degraded_operation_contracts.py \
+            scripts/check_degraded_operation_public.py \
+            scripts/check_risk_irreversibility_contracts.py \
+            scripts/check_obligation_phase_contracts.py
           python -m json.tool schemas/quantity.schema.json >/dev/null
           python -m json.tool schemas/rule.schema.json >/dev/null
           python -m json.tool schemas/semantic-projection.schema.json >/dev/null
@@ -54,6 +60,13 @@ jobs:
           python -m json.tool schemas/trace-property.schema.json >/dev/null
           python -m json.tool schemas/degraded-operation.schema.json >/dev/null
           python -m json.tool schemas/degraded-operation-assessment.schema.json >/dev/null
+          python -m json.tool schemas/risk-envelope.schema.json >/dev/null
+          python -m json.tool schemas/effect-irreversibility.schema.json >/dev/null
+          python -m json.tool schemas/irreversibility-assurance-policy.schema.json >/dev/null
+          python -m json.tool schemas/risk-assessment.schema.json >/dev/null
+          python -m json.tool schemas/obligation-phase-binding.schema.json >/dev/null
+          python -m json.tool schemas/obligation-phase-plan.schema.json >/dev/null
+          python -m json.tool schemas/obligation-phase-assessment.schema.json >/dev/null
       - name: Check Quantity semantic contracts
         run: |
           python scripts/check_quantity_contracts.py
@@ -70,8 +83,14 @@ jobs:
         run: |
           python scripts/check_uncertainty_scenario_trace_contracts.py
           python scripts/check_uncertainty_scenario_trace_public.py
-      - name: Check Degraded Operation semantic contracts
-        run: python scripts/check_degraded_operation_contracts.py
+      - name: Check Degraded Operation foundation and active public contracts
+        run: |
+          python scripts/check_degraded_operation_contracts.py
+          python scripts/check_degraded_operation_public.py
+      - name: Check Risk and Irreversibility pre-admission contracts
+        run: python scripts/check_risk_irreversibility_contracts.py
+      - name: Check Obligation Phase pre-admission contracts
+        run: python scripts/check_obligation_phase_contracts.py
       - name: Run cumulative S4 semantic corpus
         run: |
           pytest -q \
@@ -85,7 +104,10 @@ jobs:
             tests/test_semantic_projection_public.py \
             tests/test_uncertainty_scenario_trace_foundation.py \
             tests/test_uncertainty_scenario_trace_public.py \
-            tests/test_degraded_operation_foundation.py
+            tests/test_degraded_operation_foundation.py \
+            tests/test_degraded_operation_public.py \
+            tests/test_risk_irreversibility_foundation.py \
+            tests/test_obligation_phase_foundation.py
       - name: Publish cumulative S4 qualification
         if: always()
         env:
@@ -96,7 +118,7 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S4 Quantity + Rule + Projection + U/S/T 0.32.19 + degraded pre-admission passed'
+            description='S4 through active degraded 0.32.20 + risk + obligation phases passed'
           else
             state=failure
             description='S4 cumulative semantic boundary failed'
