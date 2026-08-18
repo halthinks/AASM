@@ -33,11 +33,13 @@ jobs:
             src/aasm/semantic_projection.py \
             src/aasm/_semantic_projection_core.py \
             src/aasm/_semantic_projection_equivalence.py \
+            src/aasm/public_active_semantic_projection.py \
             scripts/check_quantity_contracts.py \
             scripts/check_quantity_public.py \
             scripts/check_rule_contracts.py \
             scripts/check_rule_public.py \
-            scripts/check_semantic_projection_contracts.py
+            scripts/check_semantic_projection_contracts.py \
+            scripts/check_semantic_projection_public.py
           python -m json.tool schemas/quantity.schema.json >/dev/null
           python -m json.tool schemas/rule.schema.json >/dev/null
           python -m json.tool schemas/semantic-projection.schema.json >/dev/null
@@ -50,7 +52,9 @@ jobs:
           python scripts/check_rule_contracts.py
           python scripts/check_rule_public.py
       - name: Check Projection and Equivalence semantic contracts
-        run: python scripts/check_semantic_projection_contracts.py
+        run: |
+          python scripts/check_semantic_projection_contracts.py
+          python scripts/check_semantic_projection_public.py
       - name: Run cumulative S4 semantic corpus
         run: |
           pytest -q \
@@ -60,7 +64,8 @@ jobs:
             tests/test_rule_public.py \
             tests/test_semantic_projection_foundation.py \
             tests/test_semantic_projection_textpcb.py \
-            tests/test_semantic_projection_adversarial.py
+            tests/test_semantic_projection_adversarial.py \
+            tests/test_semantic_projection_public.py
       - name: Publish cumulative S4 qualification
         if: always()
         env:
@@ -71,10 +76,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S4 Quantity + Rule + Projection/Equivalence cumulative boundary passed'
+            description='S4 Quantity + Rule + Projection/Equivalence active 0.32.18 boundary passed'
           else
             state=failure
-            description='S4 Quantity + Rule + Projection/Equivalence cumulative boundary failed'
+            description='S4 Quantity + Rule + Projection/Equivalence active 0.32.18 boundary failed'
           fi
           for attempt in 1 2 3 4 5; do
             if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
