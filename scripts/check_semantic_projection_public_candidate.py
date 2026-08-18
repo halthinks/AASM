@@ -31,6 +31,8 @@ def main() -> None:
         '"artifact_acceptance": "NONE"', '"entity_identity_authority": "NONE"', '"proof_authority": "NONE"',
         '"objective_preference": "NONE"', '"reuse_admission": "NONE"', '"runtime_execution": "NONE"',
         'def validate_public_api_contract()',
+        'PUBLIC_API_CONTRACT["semantic_projection"] = _semantic',
+        '"supported_imports": SUPPORTED_PUBLIC_IMPORTS',
     ):
         require(token in candidate, f"semantic projection public candidate missing token: {token}")
     for token in (
@@ -43,9 +45,14 @@ def main() -> None:
         "class AASMEngine(", "FactAuthority(", "StateClaim(", "authorize_scoped_request(",
         ".authorize_effect(", ".execute_effect(", "dispatch_effect(", "register_projection(",
         "PROJECTION_REGISTRY =", "projection_registry[", "latest_projection", "current_projection_store",
+        "PUBLIC_ADOPTION_STABILITY", "PUBLIC_ADOPTION_SUPPORT",
     ):
         require(token not in candidate, f"semantic projection public candidate violates source firewall: {token}")
-    require('from .public_active_engineering_rule import (' in candidate, "candidate does not inherit qualified Rule public boundary")
+    require('from . import public_active_engineering_rule as _base' in candidate, "candidate does not inherit qualified Rule public boundary")
+    require('for _name in dir(_base):' in candidate, "candidate does not preserve complete qualified Rule public surface")
+    require('AASMEngine = _base.AASMEngine' in candidate, "candidate forked the qualified Rule engine")
+    require('PUBLIC_RELEASE_STABILITY = _base.PUBLIC_RELEASE_STABILITY' in candidate, "candidate does not preserve release stability vocabulary")
+    require('SUPPORTED_ENGINE_METHODS = list(getattr(_base, "SUPPORTED_ENGINE_METHODS", []))' in candidate, "candidate changed engine method set")
     require('"contract_version": "0.32.17"' in parent, "Rule parent public adoption drifted")
     require('from .public_active_engineering_rule import *' in package_root, "active package root is not the qualified 0.32.17 Rule overlay")
     require("public_active_semantic_projection" not in package_root, "candidate activated before qualification")
