@@ -15,12 +15,15 @@ def test_rule_public_adoption_is_additive_over_qualified_quantity_parent():
     assert root_report["valid"], root_report
     assert parent.PUBLIC_API_CONTRACT["contract_version"] == "0.32.16"
     assert active.PUBLIC_API_CONTRACT["contract_version"] == "0.32.17"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.17"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.18"
+    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.17"
     assert active.AASMEngine is parent.AASMEngine
     assert active.AASMEngine is aasm.AASMEngine
     assert set(parent.SUPPORTED_PUBLIC_IMPORTS).issubset(active.SUPPORTED_PUBLIC_IMPORTS)
+    assert set(active.SUPPORTED_PUBLIC_IMPORTS).issubset(aasm.SUPPORTED_PUBLIC_IMPORTS)
     assert set(parent.SUPPORTED_INSPECTION_SURFACES).issubset(active.SUPPORTED_INSPECTION_SURFACES)
     assert active.SUPPORTED_ENGINE_METHODS == parent.SUPPORTED_ENGINE_METHODS
+    assert aasm.SUPPORTED_ENGINE_METHODS == active.SUPPORTED_ENGINE_METHODS
     assert aasm.EngineeringRule is active.EngineeringRule
 
 
@@ -75,6 +78,7 @@ def test_rule_public_adoption_exposes_real_rule_value_types_without_engine_state
     assert assessment.result == "APPLICABLE"
     assert aasm.EngineeringRule.from_dict(rule.to_dict()).fingerprint == rule.fingerprint
     assert "engineering-rule" in active.SUPPORTED_INSPECTION_SURFACES
+    assert "engineering-rule" in aasm.SUPPORTED_INSPECTION_SURFACES
     assert not any(name.startswith("rule_") for name in active.SUPPORTED_ENGINE_METHODS)
 
 
@@ -106,7 +110,9 @@ def test_rule_public_adoption_preserves_learned_constraint_and_objective_separat
 def test_rule_public_adoption_does_not_add_engine_methods_or_runtime_state():
     assert aasm.AASMEngine is active.AASMEngine
     assert active.SUPPORTED_ENGINE_METHODS == parent.SUPPORTED_ENGINE_METHODS
+    assert aasm.SUPPORTED_ENGINE_METHODS == active.SUPPORTED_ENGINE_METHODS
     contract = aasm.PUBLIC_API_CONTRACT["engineering_rule"]
     assert contract["engine_state_integration"] == "NONE_SEMANTIC_RULE_FOUNDATION_ONLY"
     assert contract["runtime_admission"] == "PRE_ADMISSION_ONLY"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.17"
+    assert active.PUBLIC_API_CONTRACT["contract_version"] == "0.32.17"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.18"
