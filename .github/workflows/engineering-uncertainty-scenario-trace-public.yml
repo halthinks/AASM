@@ -1,4 +1,4 @@
-name: AASM Engineering Uncertainty Scenario Trace Public Candidate Qualification
+name: AASM Engineering Uncertainty Scenario Trace Public Qualification
 
 on:
   push:
@@ -25,28 +25,28 @@ jobs:
           cache: pip
       - name: Install AASM development dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Compile S4.4 public candidate and foundation
+      - name: Compile active S4.4 public boundary and foundation
         run: |
           python -m compileall -q \
             src/aasm/uncertainty_scenario_trace.py \
             src/aasm/public_active_uncertainty_scenario_trace.py \
             scripts/check_uncertainty_scenario_trace_contracts.py \
-            scripts/check_uncertainty_scenario_trace_public_candidate.py \
+            scripts/check_uncertainty_scenario_trace_public.py \
             tests/test_uncertainty_scenario_trace_foundation.py \
-            tests/test_uncertainty_scenario_trace_public_candidate.py
+            tests/test_uncertainty_scenario_trace_public.py
           python -m json.tool schemas/uncertainty.schema.json >/dev/null
           python -m json.tool schemas/scenario.schema.json >/dev/null
           python -m json.tool schemas/trace-property.schema.json >/dev/null
       - name: Check S4.4 foundation firewalls
         run: python scripts/check_uncertainty_scenario_trace_contracts.py
-      - name: Check 0.32.19 public candidate firewalls
-        run: python scripts/check_uncertainty_scenario_trace_public_candidate.py
-      - name: Run S4.4 foundation and public candidate adversarial corpus
+      - name: Check active 0.32.19 public firewalls
+        run: python scripts/check_uncertainty_scenario_trace_public.py
+      - name: Run S4.4 foundation and active-public adversarial corpus
         run: |
           pytest -q \
             tests/test_uncertainty_scenario_trace_foundation.py \
-            tests/test_uncertainty_scenario_trace_public_candidate.py
-      - name: Publish S4.4 public candidate qualification
+            tests/test_uncertainty_scenario_trace_public.py
+      - name: Publish S4.4 public qualification
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
@@ -56,10 +56,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S4.4 uncertainty/scenario/trace-property public candidate 0.32.19 passed'
+            description='S4.4 uncertainty/scenario/trace-property active 0.32.19 public qualification passed'
           else
             state=failure
-            description='S4.4 uncertainty/scenario/trace-property public candidate 0.32.19 failed'
+            description='S4.4 uncertainty/scenario/trace-property active 0.32.19 public qualification failed'
           fi
           for attempt in 1 2 3 4 5; do
             if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \

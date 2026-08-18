@@ -6,7 +6,7 @@ from . import public_active_semantic_projection as _base
 
 # Preserve the complete qualified 0.32.18 public surface, then add only the
 # independently qualified S4.4 uncertainty/scenario/trace-property semantic IR.
-# This candidate does not compose new engine state, select/activate scenarios,
+# This active overlay does not compose new engine state, select/activate scenarios,
 # create registries, or grant truth, authority, proof, preference, acceptance,
 # or reuse admission.
 for _name in dir(_base):
@@ -74,7 +74,7 @@ def _qualified_semantic_contract(contract: dict, *, extra: dict | None = None) -
     value["public_admission"] = UNCERTAINTY_SCENARIO_TRACE_PUBLIC_ADMISSION
     value["runtime_admission"] = "PRE_ADMISSION_ONLY"
     value["engine_state_integration"] = "NONE_SEMANTIC_IR_ONLY"
-    value["active_root_status"] = "CANDIDATE_UNTIL_PACKAGE_ROOT_SWITCH"
+    value["active_root_status"] = "ACTIVE_QUALIFIED_PUBLIC_ROOT"
     value["public_claim_ceiling"] = {
         "truth_authority": "NONE",
         "fact_authority": "NONE",
@@ -98,7 +98,7 @@ PUBLIC_API_CONTRACT.update(
         "runtime_version": __version__,
         "release_stability": PUBLIC_RELEASE_STABILITY,
         "description": (
-            "0.32.19 candidate boundary: active 0.32.18 Projection/Equivalence plus "
+            "0.32.19 active public boundary: qualified 0.32.18 Projection/Equivalence plus "
             "qualified uncertainty/scenario/trace-property semantic IR; no S4.4 runtime composition."
         ),
         "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
@@ -142,25 +142,25 @@ def validate_public_api_contract() -> dict:
     if _base.PUBLIC_API_CONTRACT.get("contract_version") != PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION:
         errors.append("0.32.18 parent public adoption drifted")
     if AASMEngine is not _base.AASMEngine:
-        errors.append("S4.4 public candidate forked AASMEngine")
+        errors.append("S4.4 public overlay forked AASMEngine")
     if PUBLIC_API_CONTRACT.get("contract_version") != PUBLIC_ADOPTION_CONTRACT_VERSION:
-        errors.append("S4.4 public candidate adoption version drift")
+        errors.append("S4.4 public adoption version drift")
     if PUBLIC_API_CONTRACT.get("parent_contract_version") != PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION:
-        errors.append("S4.4 public candidate parent version drift")
+        errors.append("S4.4 public parent version drift")
     if PUBLIC_API_CONTRACT.get("supported_imports") != SUPPORTED_PUBLIC_IMPORTS:
-        errors.append("S4.4 public candidate import surface drift")
+        errors.append("S4.4 public import surface drift")
     if PUBLIC_API_CONTRACT.get("supported_engine_methods") != SUPPORTED_ENGINE_METHODS:
-        errors.append("S4.4 public candidate engine method surface drift")
+        errors.append("S4.4 public engine method surface drift")
     if SUPPORTED_ENGINE_METHODS != list(getattr(_base, "SUPPORTED_ENGINE_METHODS", [])):
-        errors.append("S4.4 public candidate added engine methods")
+        errors.append("S4.4 public overlay added engine methods")
     if SUPPORTED_CLI_COMMANDS != list(getattr(_base, "SUPPORTED_CLI_COMMANDS", [])):
-        errors.append("S4.4 public candidate changed CLI commands")
+        errors.append("S4.4 public overlay changed CLI commands")
     if "uncertainty-scenario-trace" not in SUPPORTED_INSPECTION_SURFACES:
         errors.append("S4.4 inspection surface missing")
 
     missing_imports = [name for name in _UST_IMPORTS if name not in globals()]
     if missing_imports:
-        errors.append(f"missing S4.4 public candidate imports: {missing_imports}")
+        errors.append(f"missing S4.4 public imports: {missing_imports}")
 
     expected = {
         "uncertainty": UNCERTAINTY_CONTRACT_ID,
@@ -177,8 +177,8 @@ def validate_public_api_contract() -> dict:
             errors.append(f"S4.4 {key} runtime admission drift")
         if value.get("engine_state_integration") != "NONE_SEMANTIC_IR_ONLY":
             errors.append(f"S4.4 {key} engine-state boundary drift")
-        if value.get("active_root_status") != "CANDIDATE_UNTIL_PACKAGE_ROOT_SWITCH":
-            errors.append(f"S4.4 {key} candidate-root status drift")
+        if value.get("active_root_status") != "ACTIVE_QUALIFIED_PUBLIC_ROOT":
+            errors.append(f"S4.4 {key} active-root status drift")
         if any(item != "NONE" for item in (value.get("public_claim_ceiling") or {}).values()):
             errors.append(f"S4.4 {key} public claim ceiling drift")
 
@@ -208,7 +208,7 @@ def validate_public_api_contract() -> dict:
         "scenario_contract_id": SCENARIO_CONTRACT_ID,
         "trace_property_contract_id": TRACE_PROPERTY_CONTRACT_ID,
         "runtime_admission": "PRE_ADMISSION_ONLY",
-        "active_root_status": "CANDIDATE_UNTIL_PACKAGE_ROOT_SWITCH",
+        "active_root_status": "ACTIVE_QUALIFIED_PUBLIC_ROOT",
     }
 
 
