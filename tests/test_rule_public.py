@@ -15,8 +15,8 @@ def test_rule_public_adoption_is_additive_over_qualified_quantity_parent():
     assert root_report["valid"], root_report
     assert parent.PUBLIC_API_CONTRACT["contract_version"] == "0.32.16"
     assert active.PUBLIC_API_CONTRACT["contract_version"] == "0.32.17"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.19"
-    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.18"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.20"
+    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.19"
     assert active.AASMEngine is parent.AASMEngine
     assert active.AASMEngine is aasm.AASMEngine
     assert set(parent.SUPPORTED_PUBLIC_IMPORTS).issubset(active.SUPPORTED_PUBLIC_IMPORTS)
@@ -25,6 +25,8 @@ def test_rule_public_adoption_is_additive_over_qualified_quantity_parent():
     assert active.SUPPORTED_ENGINE_METHODS == parent.SUPPORTED_ENGINE_METHODS
     assert aasm.SUPPORTED_ENGINE_METHODS == active.SUPPORTED_ENGINE_METHODS
     assert aasm.EngineeringRule is active.EngineeringRule
+    assert aasm.PUBLIC_API_CONTRACT["degraded_operation"]["runtime_admission"] == "PRE_ADMISSION_ONLY"
+    assert aasm.PUBLIC_API_CONTRACT["degraded_operation"]["mode_activation"] == "NONE"
 
 
 def test_rule_public_adoption_exports_exact_rule_contract_and_firewalls():
@@ -115,5 +117,6 @@ def test_rule_public_adoption_does_not_add_engine_methods_or_runtime_state():
     assert contract["engine_state_integration"] == "NONE_SEMANTIC_RULE_FOUNDATION_ONLY"
     assert contract["runtime_admission"] == "PRE_ADMISSION_ONLY"
     assert active.PUBLIC_API_CONTRACT["contract_version"] == "0.32.17"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.19"
-    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.18"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.20"
+    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.19"
+    assert aasm.PUBLIC_API_CONTRACT["degraded_operation"]["runtime_admission"] == "PRE_ADMISSION_ONLY"
