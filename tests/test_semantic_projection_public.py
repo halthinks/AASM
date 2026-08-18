@@ -18,11 +18,14 @@ def test_semantic_projection_public_adoption_is_additive_over_qualified_rule_par
     assert active_report["active_root_status"] == "ACTIVE_QUALIFIED_PUBLIC_ROOT"
 
 
-def test_semantic_projection_is_active_package_root_at_03218():
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.18"
-    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.17"
+def test_semantic_projection_remains_qualified_03218_parent_beneath_active_03219():
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.19"
+    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.18"
     assert aasm.AASMEngine is parent.AASMEngine
-    assert aasm.public_api_contract()["semantic_projection"]["active_root_status"] == "ACTIVE_QUALIFIED_PUBLIC_ROOT"
+    assert active.PUBLIC_API_CONTRACT["contract_version"] == "0.32.18"
+    assert active.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.17"
+    assert active.public_api_contract()["semantic_projection"]["active_root_status"] == "ACTIVE_QUALIFIED_PUBLIC_ROOT"
+    assert aasm.public_api_contract()["semantic_projection"] == active.public_api_contract()["semantic_projection"]
     assert aasm.validate_public_api_contract()["valid"] is True
     assert hasattr(aasm, "SemanticProjectionDefinition")
     assert hasattr(aasm, "SemanticEquivalenceAssessment")
@@ -33,7 +36,9 @@ def test_semantic_projection_public_adoption_preserves_full_parent_import_surfac
     for name in parent.SUPPORTED_PUBLIC_IMPORTS:
         assert name in active.SUPPORTED_PUBLIC_IMPORTS, name
         assert hasattr(active, name), name
+        assert hasattr(aasm, name), name
     assert active.PUBLIC_API_CONTRACT["supported_imports"] == active.SUPPORTED_PUBLIC_IMPORTS
+    assert set(active.SUPPORTED_PUBLIC_IMPORTS).issubset(aasm.SUPPORTED_PUBLIC_IMPORTS)
 
 
 def test_semantic_projection_public_adoption_adds_ir_without_engine_methods():
@@ -56,6 +61,7 @@ def test_semantic_projection_public_adoption_adds_ir_without_engine_methods():
         assert hasattr(aasm, name), name
     assert "semantic-projection" in active.SUPPORTED_INSPECTION_SURFACES
     assert active.SUPPORTED_ENGINE_METHODS == parent.SUPPORTED_ENGINE_METHODS
+    assert aasm.SUPPORTED_ENGINE_METHODS == active.SUPPORTED_ENGINE_METHODS
     assert not any(name.startswith("semantic_projection_") for name in active.SUPPORTED_ENGINE_METHODS)
     assert not any(name.startswith("semantic_equivalence_") for name in active.SUPPORTED_ENGINE_METHODS)
 
@@ -82,6 +88,7 @@ def test_semantic_projection_public_claim_ceiling_and_invariant_classes_remain_s
     assert semantic["invariant_contract"]["representational_equivalence_proves_dynamic_kernel"] is False
     assert semantic["invariant_contract"]["representational_equivalence_proves_empirical"] is False
     assert all(value == "NONE" for value in semantic["public_claim_ceiling"].values())
+    assert aasm.public_api_contract()["semantic_projection"] == semantic
 
 
 def test_semantic_projection_public_types_are_deterministic_and_projection_relative():
