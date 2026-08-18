@@ -1,5 +1,5 @@
 name: AASM v0.56 Development Qualification
-# Qualified additive S4 lineage: Quantity 0.32.16 -> Rule 0.32.17 -> Projection/Equivalence 0.32.18 -> active Uncertainty/Scenario/Trace-Property 0.32.19.
+# Qualified additive S4 lineage: Quantity 0.32.16 -> Rule 0.32.17 -> Projection/Equivalence 0.32.18 -> U/S/T 0.32.19 -> active Degraded Operation 0.32.20; Risk/Irreversibility remains pre-admission.
 
 on:
   push:
@@ -139,6 +139,15 @@ jobs:
           python scripts/check_uncertainty_scenario_trace_contracts.py
           python scripts/check_uncertainty_scenario_trace_public.py
           pytest -q tests/test_uncertainty_scenario_trace_foundation.py tests/test_uncertainty_scenario_trace_public.py
+      - name: Check S4.5 Degraded Operation foundation and active public adoption
+        run: |
+          python scripts/check_degraded_operation_contracts.py
+          python scripts/check_degraded_operation_public.py
+          pytest -q tests/test_degraded_operation_foundation.py tests/test_degraded_operation_public.py
+      - name: Check S4.6 Risk and Irreversibility pre-admission foundation
+        run: |
+          python scripts/check_risk_irreversibility_contracts.py
+          pytest -q tests/test_risk_irreversibility_foundation.py
 
       - name: Validate cumulative development source contract
         run: python scripts/check_release_contracts.py
@@ -151,27 +160,34 @@ jobs:
           active=aasm.validate_public_api_contract(); assert active['valid'], active
           contract=aasm.public_api_contract()
           assert aasm.__version__=='0.56.1'
-          assert contract['contract_version']=='0.32.19'
-          assert contract['parent_contract_version']=='0.32.18'
+          assert contract['contract_version']=='0.32.20'
+          assert contract['parent_contract_version']=='0.32.19'
           assert public_v56.__version__=='0.56.1'
           assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.6'
           assert public_v55.__version__=='0.55.0'
           assert aasm.AASMEngine is public_v56.AASMEngine
-          for key in ('engineering_quantity','engineering_rule','semantic_projection','uncertainty','scenario','trace_property'):
+          for key in ('engineering_quantity','engineering_rule','semantic_projection','uncertainty','scenario','trace_property','degraded_operation'):
               assert key in contract, key
               assert contract[key]['runtime_admission']=='PRE_ADMISSION_ONLY', (key, contract[key])
           assert contract['uncertainty']['contract_id']=='aasm.uncertainty.v1'
           assert contract['scenario']['contract_id']=='aasm.scenario.v1'
           assert contract['trace_property']['contract_id']=='aasm.trace-property.v1'
+          assert contract['degraded_operation']['contract_id']=='aasm.degraded.operation.v1'
           assert contract['scenario']['scenario_activation']=='NONE_FOUNDATION_ONLY'
           assert contract['trace_property']['trace_projection']=='EXISTING_PROJECT_TRACE_FUNCTION_UNCHANGED'
           assert contract['trace_property']['static_constraint_lowering']=='NONE'
+          assert contract['degraded_operation']['mode_activation']=='NONE'
+          assert contract['degraded_operation']['active_root_status']=='ACTIVE_QUALIFIED_PUBLIC_ROOT'
+          assert contract['degraded_operation']['assessment_is_authorization'] is False
+          assert contract['degraded_operation']['assessment_activates_mode'] is False
+          assert contract['degraded_operation']['assessment_proves_safety'] is False
           assert all(v=='NONE' for v in contract['uncertainty']['public_claim_ceiling'].values())
           assert all(v=='NONE' for v in contract['scenario']['public_claim_ceiling'].values())
           assert all(v=='NONE' for v in contract['trace_property']['public_claim_ceiling'].values())
+          assert all(v=='NONE' for v in contract['degraded_operation']['public_claim_ceiling'].values())
           methods=aasm.SUPPORTED_ENGINE_METHODS
-          assert not any(name.startswith(('rule_','semantic_projection_','semantic_equivalence_','uncertainty_','scenario_','trace_property_')) for name in methods)
-          print('cumulative 0.56.1 + active adoption 0.32.19 PR-3 + S3 + S4 Quantity/Rule/Projection/Uncertainty/Scenario/Trace-Property: PASS')
+          assert not any(name.startswith(('rule_','semantic_projection_','semantic_equivalence_','uncertainty_','scenario_','trace_property_','degraded_operation_','risk_','irreversibility_')) for name in methods)
+          print('cumulative 0.56.1 + active adoption 0.32.20 PR-3 + S3 + S4 through Risk/Irreversibility pre-admission: PASS')
           PY
 
       - name: Publish cumulative v0.56 development qualification
@@ -184,7 +200,7 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='0.56.1 cumulative PR-3+S3+S4 through active 0.32.19 qualification passed'
+            description='0.56.1 cumulative PR-3+S3+S4 through active 0.32.20 and S4.6 pre-admission passed'
           else
             state=failure
             description='0.56 cumulative development qualification failed'
