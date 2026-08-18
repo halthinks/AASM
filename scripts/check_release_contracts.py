@@ -16,16 +16,18 @@ def _fail(message: str, *, path: Path | None = None) -> None:
 
 def require(path: Path | str, tokens) -> None:
     path = Path(path)
-    text = path.read_text(encoding="utf-8")
-    missing = [token for token in tokens if token not in text]
+    if not path.exists():
+        _fail("required file is missing", path=path)
+    value = path.read_text(encoding="utf-8")
+    missing = [token for token in tokens if token not in value]
     if missing:
         _fail(f"missing required source-contract tokens: {missing}", path=path)
 
 
 def forbid(path: Path | str, tokens) -> None:
     path = Path(path)
-    text = path.read_text(encoding="utf-8")
-    present = [token for token in tokens if token in text]
+    value = path.read_text(encoding="utf-8")
+    present = [token for token in tokens if token in value]
     if present:
         _fail(f"forbidden stale/release-overclaim text: {present}", path=path)
 
@@ -51,6 +53,7 @@ def main() -> int:
     if set(project.get("license-files", [])) != {"LICENSE", "NOTICE", "LICENSE_POLICY.md"}:
         _fail("license file set drift", path=root / "pyproject.toml")
 
+    # Additive adoption lineage. Package SemVer and adoption versions remain independent.
     require(root / "src/aasm/__init__.py", [
         "public_v56",
         "public_active",
@@ -58,288 +61,71 @@ def main() -> int:
         "public_active_engineering_quantity",
         "public_active_engineering_rule",
         "public_active_semantic_projection",
+        "public_active_uncertainty_scenario_trace",
+        "from .public_active_uncertainty_scenario_trace import *",
     ])
     require(root / "src/aasm/public_v56.py", [
         '__version__ = "0.56.1"',
         '"contract_version": "0.32.6"',
         'PUBLIC_RELEASE_STABILITY = "ACTIVE_DEVELOPMENT"',
-        "physical_authority_runtime_contract",
     ])
-    require(root / "src/aasm/public_active.py", [
-        '"contract_version": "0.32.14"',
-        "EFFECT_CAPABILITY_CONTRACT_ID",
-        "PhysicalEffectAuthorityBinding",
-        "STATE_CONFLICT_CONTRACT_ID",
-        "EVENT_CAUSALITY_CONTRACT_ID",
-        "OBSERVATION_FRESHNESS_CONTRACT_ID",
-        "PHYSICAL_IDENTITY_CONTRACT_ID",
-        "PhysicalIdentity",
-        "CALIBRATION_CONTRACT_ID",
-        "CalibrationCertificate",
-        "CalibrationRevocation",
-        "SOURCE_TRUST_CONTRACT_ID",
-        "SourceTrustAssertion",
-        "SourceTrustRevocation",
-        "EXECUTION_ENVIRONMENT_CONTRACT_ID",
-        "ExecutionEnvironment",
-        "EnvironmentEvidenceBinding",
-        "OBSERVATION_LIFECYCLE_CONTRACT_ID",
-        "ObservationLifecycleRecord",
-        "ObservationDisposition",
-        "OBSERVATION_FUSION_CONTRACT_ID",
-        "ObservationFusionRecord",
-        "physical_effect_integration_runtime_contract",
-        "state_conflict_runtime_contract",
-        "event_causality_runtime_contract",
-        "observation_freshness_runtime_contract",
-        "physical_identity_runtime_contract",
-        "calibration_runtime_contract",
-        "source_trust_runtime_contract",
-        "execution_environment_runtime_contract",
-        "observation_processing_runtime_contract",
-        '"physical_identity"',
-        '"calibration"',
-        '"source_trust"',
-        '"execution-environment"',
-        '"observation-processing"',
-    ])
-    require(root / "src/aasm/public_active_entity_evolution.py", [
-        '"contract_version": "0.32.15"',
-        "ENTITY_EVOLUTION_CONTRACT_ID",
-        "ENTITY_EVOLUTION_RUNTIME_CONTRACT_ID",
-        "EntityRepresentationRef",
-        "EntityEvolution",
-        "entity_evolution_contract",
-        "entity_evolution_runtime_contract",
-        '"entity-evolution"',
-        '"record_entity_evolution"',
-    ])
-    require(root / "src/aasm/public_active_engineering_quantity.py", [
-        '"contract_version": "0.32.16"',
-        "QUANTITY_CONTRACT_ID",
-        "Quantity",
-        "quantity_contract",
-        '"engineering-quantity"',
-        '"public_admission": "QUALIFIED"',
-        '"engine_state_integration": "NONE_SEMANTIC_VALUE_FOUNDATION_ONLY"',
-    ])
-    require(root / "src/aasm/quantity.py", [
-        'QUANTITY_CONTRACT_ID = "aasm.quantity.v1"',
-        '"PRE_ADMISSION_ONLY"',
-        '"NONE_HIDDEN_OR_MUTABLE"',
-        '"UNCHANGED_NOT_REINTERPRETED_BY_QUANTITY_FOUNDATION"',
-    ])
-    require(root / "src/aasm/public_active_engineering_rule.py", [
-        '"contract_version": "0.32.17"',
-        "RULE_CONTRACT_ID",
-        "RULE_CONTRACT_VERSION",
-        "EngineeringRule",
-        "RuleApplicabilityContext",
-        "evaluate_rule_applicability",
-        "compare_rule_precedence",
-        "rule_contract",
-        '"engineering-rule"',
-        '"public_admission": "QUALIFIED"',
-        '"engine_state_integration": "NONE_SEMANTIC_RULE_FOUNDATION_ONLY"',
-        '"DISTINCT_NO_IMPLICIT_MAPPING_TO_FORMAL_CALCULUS_HARD_SOFT"',
-        '"NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED"',
-    ])
-    require(root / "src/aasm/rule.py", [
-        'RULE_CONTRACT_ID = "aasm.rule.v1"',
-        'RULE_CONTRACT_VERSION = "0.1.0"',
-        '"HARD_FLOOR"',
-        '"POLICY"',
-        '"PREFERENCE"',
-        '"ADVISORY"',
-        '"EXPLICIT_PORTABLE_CONTEXT_MATCH_TRI_STATE_FAIL_CLOSED"',
-        '"STRENGTH_THEN_SPECIFICITY_THEN_PRIORITY_WITHIN_EXPLICIT_GROUP"',
-        '"STRUCTURAL_ELIGIBILITY_ONLY_EXISTING_SCOPED_AUTHORITY_MUST_AUTHORIZE_LATER_RUNTIME_ACTION"',
-        '"DISTINCT_NO_IMPLICIT_MAPPING_TO_FORMAL_CALCULUS_HARD_SOFT"',
-        '"NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED"',
-        '"parallel_rule_registry": "NONE"',
-        '"current_rule_pointer": "NONE"',
-        '"parallel_constraint_engine": "NONE"',
-        '"parallel_authority_evaluator": "NONE"',
-        '"runtime_admission": "PRE_ADMISSION_ONLY"',
-    ])
+    require(root / "src/aasm/public_active.py", ['"contract_version": "0.32.14"'])
+    require(root / "src/aasm/public_active_entity_evolution.py", ['"contract_version": "0.32.15"'])
+    require(root / "src/aasm/public_active_engineering_quantity.py", ['"contract_version": "0.32.16"'])
+    require(root / "src/aasm/public_active_engineering_rule.py", ['"contract_version": "0.32.17"'])
     require(root / "src/aasm/public_active_semantic_projection.py", [
         'PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.18"',
         'PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.17"',
         'SEMANTIC_PROJECTION_PUBLIC_ADMISSION = "QUALIFIED_SEMANTIC_IR_ONLY"',
-        "SEMANTIC_PROJECTION_CONTRACT_ID",
-        "SEMANTIC_EQUIVALENCE_CONTRACT_ID",
-        "INVARIANT_CONTRACT_ID",
-        "InvariantRef",
-        "SemanticSubjectRef",
-        "SemanticProjectionDefinition",
-        "SemanticProjectionResult",
-        "SemanticEquivalenceAssessment",
-        "assess_semantic_equivalence",
+        '"runtime_admission"] = "PRE_ADMISSION_ONLY"',
+        '"engine_state_integration"] = "NONE_SEMANTIC_IR_ONLY"',
+    ])
+    require(root / "src/aasm/public_active_uncertainty_scenario_trace.py", [
+        'PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.19"',
+        'PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.18"',
+        'UNCERTAINTY_SCENARIO_TRACE_PUBLIC_ADMISSION = "QUALIFIED_SEMANTIC_IR_ONLY"',
+        'PUBLIC_API_CONTRACT["uncertainty"]',
+        'PUBLIC_API_CONTRACT["scenario"]',
+        'PUBLIC_API_CONTRACT["trace_property"]',
         '"active_root_status"] = "ACTIVE_QUALIFIED_PUBLIC_ROOT"',
         '"runtime_admission"] = "PRE_ADMISSION_ONLY"',
         '"engine_state_integration"] = "NONE_SEMANTIC_IR_ONLY"',
-        '"parallel_projection_registry": "NONE"',
-        '"current_projection_pointer": "NONE"',
-        '"reuse_admission": "NONE"',
-        '"runtime_execution": "NONE"',
+        'AASMEngine = _base.AASMEngine',
     ])
-    require(root / "src/aasm/_semantic_projection_core.py", [
-        'SEMANTIC_PROJECTION_CONTRACT_ID = "aasm.semantic.projection.v1"',
-        'SEMANTIC_EQUIVALENCE_CONTRACT_ID = "aasm.semantic.equivalence.v1"',
-        'INVARIANT_CONTRACT_ID = "aasm.invariant.v1"',
-        'INVARIANT_CLASSIFICATIONS = ("REPRESENTATIONAL", "STATIC_PROTOCOL", "DYNAMIC_KERNEL", "EMPIRICAL")',
-        'PROJECTION_FIDELITIES = ("LOSSLESS", "LOSSY")',
-        'PROJECTION_STATUSES = ("PROJECTED", "UNSUPPORTED", "INDETERMINATE")',
-        'EQUIVALENCE_RELATIONS = ("EXACT_IDENTITY", "PROJECTION_EQUIVALENT", "NON_EQUIVALENT", "INDETERMINATE", "UNSUPPORTED")',
-    ])
-    require(root / "src/aasm/semantic_projection.py", [
-        '"public_admission": "PRE_ADMISSION_ONLY"',
+
+    # S4.4 foundation is semantic IR/evaluation only and must reuse existing substrates.
+    require(root / "src/aasm/uncertainty_scenario_trace.py", [
+        'UNCERTAINTY_CONTRACT_ID = "aasm.uncertainty.v1"',
+        'SCENARIO_CONTRACT_ID = "aasm.scenario.v1"',
+        'TRACE_PROPERTY_CONTRACT_ID = "aasm.trace-property.v1"',
+        'TRACE_PROPERTY_ASSESSMENT_CONTRACT_ID = "aasm.trace-property.assessment.v1"',
+        'TRACE_INVARIANT_CLASSIFICATION = "DYNAMIC_KERNEL"',
+        '"DISTINCT_FROM_AASM_NUMERIC_TOLERANCE_V1_ACCEPTANCE_POLICY"',
+        '"DISTINCT_FROM_SEMANTIC_RESULT_CONFIDENCE_NO_INFERENCE_OR_COERCION"',
+        '"EXISTING_AASM_TRACE_V1_AUTHORITATIVE_DURABLE_EVENT_HISTORY"',
+        '"EXISTING_PROJECT_TRACE_FUNCTION_UNCHANGED"',
+        '"scenario_activation": "NONE_FOUNDATION_ONLY"',
+        '"parallel_uncertainty_registry": "NONE"',
+        '"parallel_scenario_registry": "NONE"',
+        '"parallel_trace_store": "NONE"',
+        '"parallel_property_registry": "NONE"',
         '"runtime_admission": "PRE_ADMISSION_ONLY"',
-        '"parallel_projection_registry": "NONE"',
-        '"current_projection_pointer": "NONE"',
-        '"existing_reuse_certified_equivalent": "NOT_REINTERPRETED_OR_ADMITTED_BY_FOUNDATION"',
+        '"public_admission": "PRE_ADMISSION_ONLY"',
     ])
-    require(root / "src/aasm/runtime_v56_foundation.py", [
-        "PhysicalEffectIntegrationBoundaryMixin",
-        "ObservationProcessingRuntimeMixin",
-        "ArtifactLineageRuntimeMixin",
-        "EntityEvolutionRuntimeMixin",
-        "ExecutionEnvironmentRuntimeMixin",
-        "SourceTrustRuntimeMixin",
-        "CalibrationRuntimeMixin",
-        "PhysicalIdentityRuntimeMixin",
-        "ObservationFreshnessRuntimeMixin",
-        "EventCausalityRuntimeMixin",
-        "StateConflictRuntimeMixin",
-        "StateAuthorityRuntimeMixin",
-        "V55FoundationEngine",
-    ])
+
+    # Pre-admission engineering IR is not runtime engine state.
     forbid(root / "src/aasm/runtime_v56_foundation.py", [
-        "EngineeringRule", "from .rule", "SemanticProjectionDefinition", "from .semantic_projection"
+        "EngineeringRule",
+        "from .rule",
+        "SemanticProjectionDefinition",
+        "from .semantic_projection",
+        "UncertaintySpec",
+        "ScenarioBinding",
+        "TraceProperty",
+        "from .uncertainty_scenario_trace",
     ])
 
-    require(root / "src/aasm/physical_effect_binding.py", [
-        'PHYSICAL_EFFECT_AUTHORITY_BINDING_CONTRACT_ID = "aasm.effect.physical-authority-binding.v1"',
-        '"authorization_recheck": "MANDATORY_AT_EXISTING_AUTHORIZE_EFFECT_BOUNDARY"',
-        '"execution_recheck": "MANDATORY_AT_EXISTING_EXECUTE_EFFECT_BOUNDARY"',
-        '"prior_use_validation_is_authorization": False',
-        '"parallel_dispatcher": "NONE"',
-    ])
-    require(root / "src/aasm/physical_effect_integration_runtime.py", [
-        'PHYSICAL_EFFECT_INTEGRATION_RUNTIME_CONTRACT_ID = "aasm.effect.physical-authority-integration.runtime.v1"',
-        '"effect_authority": "EXISTING_V53_EFFECT_AUTHORIZE_AND_EFFECT_EXECUTE_REMAIN_REQUIRED"',
-        '"machine_transition_binding": "MANDATORY_BEFORE_AUTHORIZATION_OR_NEW_DISPATCH"',
-        '"task_lease": "EXISTING_V54_TASKLEASE_UNCHANGED"',
-        '"ownership": "EXISTING_V54_EFFECT_OWNERSHIP_UNCHANGED"',
-        '"unknown_and_reconciliation": "EXISTING_V54_UNKNOWN_AND_RECONCILIATION_UNCHANGED"',
-    ])
-    require(root / "src/aasm/state_conflict.py", [
-        'STATE_CONFLICT_CONTRACT_ID = "aasm.state.conflict.v1"',
-        '"comparison": "EXACT_CANONICAL_PORTABLE_JSON_VALUE_PLUS_EXACT_REVISION_IDENTITY"',
-        '"conflict_grants_fact_authority": False',
-        '"parallel_truth_table": "NONE"',
-    ])
-    require(root / "src/aasm/event_causality.py", [
-        'EVENT_CAUSALITY_CONTRACT_ID = "aasm.event.causality.v1"',
-        "PORTABLE_U63_MAX = (1 << 63) - 1",
-        '"local_event_identity": "NODE_ID_PLUS_BOOT_EPOCH_PLUS_MONOTONIC_LOCAL_SEQUENCE"',
-        '"receipt_order_implies_source_order": False',
-        '"parallel_event_ledger": "NONE"',
-    ])
-    require(root / "src/aasm/observation_freshness.py", [
-        'OBSERVATION_FRESHNESS_CONTRACT_ID = "aasm.observation.freshness.v1"',
-        '"reference_time": "EXPLICIT_INTEGER_NANOSECONDS_NEVER_IMPLICIT_HOST_NOW"',
-        '"freshness_elevates_observation_authority": False',
-        '"freshness_is_universal_admission": False',
-    ])
-    require(root / "src/aasm/physical_identity.py", [
-        'PHYSICAL_IDENTITY_CONTRACT_ID = "aasm.physical.identity.v1"',
-        '"role": "EXACT_EXTERNAL_SUBJECT_INSTANCE_CONFIGURATION_REFERENCE_NOT_TRUTH_OR_AUTHORITY_BY_EXISTENCE"',
-        '"identity_existence_grants_fact_authority": False',
-        '"identity_existence_grants_effect_authority": False',
-        '"identity_existence_grants_source_trust": False',
-        '"parallel_identity_registry": "NONE_EVIDENCE_PROJECTION_ONLY"',
-    ])
-    require(root / "src/aasm/physical_identity_runtime.py", [
-        'PHYSICAL_IDENTITY_RUNTIME_CONTRACT_ID = "aasm.physical.identity.runtime.v1"',
-        '"same_context_divergence": "REJECTED_BEFORE_RECORDING_REQUIRE_EXPLICIT_REVISION_CHANGE"',
-        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY"',
-        '"source_trust": "NONE_IDENTITY_IS_ONLY_AN_EXACT_REFERENCE"',
-    ])
-    require(root / "src/aasm/calibration.py", [
-        'CALIBRATION_CONTRACT_ID = "aasm.calibration.v1"',
-        '"identity_binding": "EXACT_PHYSICAL_IDENTITY_ID_AND_FINGERPRINT_REQUIRED"',
-        '"selection": "EXPLICIT_CALIBRATION_ID_NO_HIDDEN_CURRENT_CALIBRATION_POINTER"',
-        '"transform_application": "NOT_IMPLEMENTED_IN_S3_FOUNDATION"',
-        '"calibration_existence_grants_fact_authority": False',
-        '"calibration_mutates_observation": False',
-    ])
-    require(root / "src/aasm/calibration_runtime.py", [
-        'CALIBRATION_RUNTIME_CONTRACT_ID = "aasm.calibration.runtime.v1"',
-        '"validity_reference": "EXPLICIT_CALLER_NANOSECOND_TIME_ONLY"',
-        '"parallel_calibration_store": "NONE_EVIDENCE_PROJECTION_ONLY"',
-    ])
-    require(root / "src/aasm/source_trust.py", [
-        'SOURCE_TRUST_CONTRACT_ID = "aasm.source.trust.v1"',
-        '"role": "EXPLICIT_POLICY_INPUT_ABOUT_A_SOURCE_NOT_FACT_AUTHORITY_OR_EFFECT_AUTHORITY"',
-        '"aggregation": "NONE_NO_TRUST_SCORE_NO_VOTING_NO_AUTOMATIC_LATEST_ASSERTION"',
-        '"trusted_disposition_grants_fact_authority": False',
-        '"trusted_disposition_makes_claim_authoritative": False',
-        '"source_trust_is_universal_admission": False',
-    ])
-    require(root / "src/aasm/source_trust_runtime.py", [
-        'SOURCE_TRUST_RUNTIME_CONTRACT_ID = "aasm.source.trust.runtime.v1"',
-        '"fact_authority": "EXISTING_FACT_AUTHORITY_REMAINS_SEPARATE_AND_REQUIRED"',
-        '"reputation_score": "NONE"',
-        '"parallel_authority_evaluator": "NONE"',
-    ])
-    require(root / "src/aasm/execution_environment.py", [
-        'EXECUTION_ENVIRONMENT_CONTRACT_ID = "aasm.execution.environment.v1"',
-        '"level_ordering": "NONE"',
-        '"simulation_as_physical": "REJECT_EXACT_ACCEPTED_LEVELS_ONLY"',
-        '"environment_existence_grants_fact_authority": False',
-    ])
-    require(root / "src/aasm/execution_environment_runtime.py", [
-        'EXECUTION_ENVIRONMENT_RUNTIME_CONTRACT_ID = "aasm.execution.environment.runtime.v1"',
-        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORD_BIND_NOT_ENVIRONMENT_TRUTH"',
-        '"parallel_environment_store": "NONE_EVIDENCE_PROJECTION_ONLY"',
-        '"parallel_authority_evaluator": "NONE"',
-    ])
-    require(root / "src/aasm/observation_lifecycle.py", [
-        'OBSERVATION_LIFECYCLE_CONTRACT_ID = "aasm.observation.lifecycle.v1"',
-        'OBSERVATION_DISPOSITION_CONTRACT_ID = "aasm.observation.disposition.v1"',
-        '"empirical_root": "EXISTING_MACHINE_STATE_OBSERVATION_ONLY"',
-        '"stage_progression": "VALIDATED_AT_RUNTIME_NO_SILENT_STAGE_SKIPS"',
-        '"validated_stage_is_universal_admission": False',
-        '"parallel_observation_store": "NONE_EVIDENCE_PROJECTION_ONLY"',
-    ])
-    require(root / "src/aasm/observation_fusion.py", [
-        'OBSERVATION_FUSION_CONTRACT_ID = "aasm.observation.fusion.v1"',
-        '"agreement_semantics": "CORROBORATION_ONLY_NEVER_AUTHORITY_OR_TRUTH_BY_VOTE"',
-        '"declared_independence_grants_authority": False',
-        '"validated_by_agreement": False',
-        '"parallel_authority_evaluator": "NONE"',
-    ])
-    require(root / "src/aasm/observation_processing_runtime.py", [
-        'OBSERVATION_PROCESSING_RUNTIME_CONTRACT_ID = "aasm.observation.processing.runtime.v1"',
-        '"authority": "EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORDING_NOT_OBSERVATION_TRUTH"',
-        '"disposed_source_reuse": "FAIL_CLOSED_FOR_NEW_LIFECYCLE_OR_FUSION_RECORDS"',
-        '"fact_authority_creation": "NONE"',
-        '"state_claim_creation": "NONE"',
-        '"parallel_observation_store": "NONE_EVIDENCE_PROJECTION_ONLY"',
-        '"parallel_truth_table": "NONE"',
-        '"parallel_authority_evaluator": "NONE"',
-    ])
-
-    require(root / "src/aasm/public_v55.py", ['__version__ = "0.55.0"', '"contract_version": "0.31.0"'])
-    require(root / "src/aasm/public_v54.py", ['__version__ = "0.54.0"', '"contract_version": "0.30.0"'])
-    require(root / "src/aasm/semantic_evolution.py", [
-        'EXTERNAL_REFERENCE_CONTRACT_ID = "aasm.external.reference.v1"',
-        'PROBLEM_REVISION_CONTRACT_ID = "aasm.problem.revision.v1"',
-        'PROBLEM_DELTA_CONTRACT_ID = "aasm.problem.delta.v1"',
-    ])
-    require(root / "src/aasm/solver_learning.py", ['"truth_authority": "NONE"', '"policy_authority": "NONE"'])
-
+    # Detailed contracts remain delegated to the independently maintained source checkers.
     for script in (
         "check_v52_contracts.py",
         "check_v53_contracts.py",
@@ -373,6 +159,8 @@ def main() -> int:
         "check_rule_public.py",
         "check_semantic_projection_contracts.py",
         "check_semantic_projection_public.py",
+        "check_uncertainty_scenario_trace_contracts.py",
+        "check_uncertainty_scenario_trace_public.py",
     ):
         run_script(root, script)
 
@@ -408,9 +196,13 @@ def main() -> int:
         "quantity.schema.json",
         "rule.schema.json",
         "semantic-projection.schema.json",
+        "uncertainty.schema.json",
+        "scenario.schema.json",
+        "trace-property.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
+    # Development/release truth remains explicit.
     require(root / "README.md", [
         "Current release — v0.56.0",
         "Next release / cumulative release:** v0.56.1",
@@ -434,96 +226,44 @@ def main() -> int:
         "New implementation modules must use stable semantic names",
     ])
 
+    # Cumulative and dedicated qualification must exercise the exact active surface.
     require(root / ".github/workflows/v56.yml", [
         "AASM v0.56 Development Qualification",
-        "check_identity_calibration_trust_contracts.py",
-        "check_execution_environment_contracts.py",
-        "check_observation_processing_contracts.py",
-        "tests/test_identity_calibration_trust.py",
-        "tests/test_execution_environment.py",
-        "tests/test_observation_processing.py",
         "check_artifact_lineage_contracts.py",
         "check_entity_evolution_contracts.py",
-        "tests/test_artifact_lineage_runtime.py",
-        "tests/test_entity_evolution.py",
-        "tests/test_entity_evolution_public.py",
         "check_quantity_contracts.py",
         "check_quantity_public.py",
-        "tests/test_quantity_foundation.py",
-        "tests/test_quantity_public.py",
         "check_rule_contracts.py",
         "check_rule_public.py",
-        "tests/test_rule_foundation.py",
-        "tests/test_rule_public.py",
         "check_semantic_projection_contracts.py",
         "check_semantic_projection_public.py",
-        "tests/test_semantic_projection_foundation.py",
-        "tests/test_semantic_projection_textpcb.py",
-        "tests/test_semantic_projection_adversarial.py",
-        "tests/test_semantic_projection_public.py",
-        "0.32.16",
-        "0.32.17",
-        "0.32.18",
+        "check_uncertainty_scenario_trace_contracts.py",
+        "check_uncertainty_scenario_trace_public.py",
+        "tests/test_uncertainty_scenario_trace_foundation.py",
+        "tests/test_uncertainty_scenario_trace_public.py",
+        "0.32.19",
         "context='aasm/v56'",
     ])
-    require(root / ".github/workflows/identity-calibration-trust.yml", [
-        "check_identity_calibration_trust_contracts.py",
-        "tests/test_identity_calibration_trust.py",
-        "context='aasm/identity-calibration-trust'",
-    ])
-    require(root / ".github/workflows/execution-environment.yml", [
-        "check_execution_environment_contracts.py",
-        "tests/test_execution_environment.py",
-        "context='aasm/execution-environment'",
-    ])
-    require(root / ".github/workflows/observation-epistemics.yml", [
-        "check_observation_processing_contracts.py",
-        "tests/test_observation_processing.py",
-        "context='aasm/observation-epistemics'",
-    ])
-    require(root / ".github/workflows/engineering-rule.yml", [
-        "check_rule_contracts.py",
-        "check_rule_public.py",
-        "tests/test_rule_foundation.py",
-        "tests/test_rule_public.py",
-        "0.32.17",
-        "context='aasm/engineering-rule'",
-    ])
-    require(root / ".github/workflows/engineering-semantic-projection.yml", [
-        "check_semantic_projection_contracts.py",
-        "tests/test_semantic_projection_foundation.py",
-        "tests/test_semantic_projection_textpcb.py",
-        "tests/test_semantic_projection_adversarial.py",
-        "context='aasm/engineering-semantic-projection'",
-    ])
-    require(root / ".github/workflows/engineering-semantic-projection-public.yml", [
-        "check_semantic_projection_contracts.py",
-        "check_semantic_projection_public.py",
-        "tests/test_semantic_projection_public.py",
-        "context='aasm/engineering-semantic-projection-public'",
-    ])
     require(root / ".github/workflows/engineering-s4.yml", [
-        "check_semantic_projection_contracts.py",
         "check_semantic_projection_public.py",
-        "tests/test_semantic_projection_public.py",
+        "check_uncertainty_scenario_trace_contracts.py",
+        "check_uncertainty_scenario_trace_public.py",
+        "tests/test_uncertainty_scenario_trace_public.py",
         "context='aasm/engineering-s4'",
     ])
-    require(root / ".github/workflows/physical-evidence.yml", [
-        "check_state_conflict_contracts.py",
-        "check_causal_freshness_contracts.py",
-        "check_identity_calibration_trust_contracts.py",
-        "check_execution_environment_contracts.py",
-        "check_observation_processing_contracts.py",
-        "tests/test_state_conflict.py",
-        "tests/test_causal_freshness.py",
-        "tests/test_identity_calibration_trust.py",
-        "tests/test_execution_environment.py",
-        "tests/test_observation_processing.py",
-        "context='aasm/physical-evidence'",
+    require(root / ".github/workflows/engineering-uncertainty-scenario-trace.yml", [
+        "check_uncertainty_scenario_trace_contracts.py",
+        "tests/test_uncertainty_scenario_trace_foundation.py",
+        "context='aasm/engineering-uncertainty-scenario-trace'",
     ])
-    require(root / ".github/workflows/release.yml", [
-        "workflow_dispatch:",
-        "confirm_release:",
+    require(root / ".github/workflows/engineering-uncertainty-scenario-trace-public.yml", [
+        "check_uncertainty_scenario_trace_contracts.py",
+        "check_uncertainty_scenario_trace_public.py",
+        "tests/test_uncertainty_scenario_trace_public.py",
+        "context='aasm/engineering-uncertainty-scenario-trace-public'",
+    ])
+
+    release_contexts = (
         "aasm/v56-provenance",
         "aasm/state-authority",
         "aasm/external-machine",
@@ -544,47 +284,102 @@ def main() -> int:
         "aasm/engineering-rule",
         "aasm/engineering-semantic-projection",
         "aasm/engineering-semantic-projection-public",
+        "aasm/engineering-uncertainty-scenario-trace",
+        "aasm/engineering-uncertainty-scenario-trace-public",
         "aasm/engineering-s4",
+    )
+    require(root / ".github/workflows/release.yml", [
+        "workflow_dispatch:",
+        "confirm_release:",
+        *release_contexts,
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
     ])
     forbid(root / ".github/workflows/release.yml", ["workflow_run:"])
 
-    env = os.environ.copy()
-    src = str(root / "src")
-    env["PYTHONPATH"] = src if not env.get("PYTHONPATH") else src + os.pathsep + env["PYTHONPATH"]
-    code = (
-        "import aasm; "
-        "r=aasm.validate_public_api_contract(); assert r['valid'], r; "
-        "c=aasm.public_api_contract(); assert c['runtime_version']=='0.56.1'; "
-        "assert c['contract_version']=='0.32.18'; assert c['parent_contract_version']=='0.32.17'; "
-        "assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust','execution_environment','observation_processing','artifact_lineage','entity_evolution','engineering_quantity','engineering_rule','semantic_projection')); "
-        "q=c['engineering_quantity']; assert q['contract_id']=='aasm.quantity.v1' and q['public_admission']=='QUALIFIED' and q['runtime_admission']=='PRE_ADMISSION_ONLY'; "
-        "x=c['engineering_rule']; assert x['contract_id']=='aasm.rule.v1' and x['contract_version']=='0.1.0'; "
-        "assert x['public_admission']=='QUALIFIED' and x['runtime_admission']=='PRE_ADMISSION_ONLY'; "
-        "assert x['engine_state_integration']=='NONE_SEMANTIC_RULE_FOUNDATION_ONLY'; "
-        "assert x['precedence_is_objective_priority'] is False and x['precedence_authorizes_override'] is False; "
-        "assert x['hard_floor_waiver']=='FORBIDDEN' and x['hard_floor_override']=='FORBIDDEN'; "
-        "assert x['learned_constraint_relation']=='DISTINCT_NO_IMPLICIT_MAPPING_TO_FORMAL_CALCULUS_HARD_SOFT'; "
-        "assert x['rule_to_constraint_lowering']=='NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED'; "
-        "assert x['parallel_rule_registry']=='NONE' and x['current_rule_pointer']=='NONE'; "
-        "assert x['parallel_constraint_engine']=='NONE' and x['parallel_authority_evaluator']=='NONE'; "
-        "assert x['rule_existence_grants_fact_authority'] is False and x['rule_existence_grants_effect_authority'] is False and x['rule_existence_grants_source_authority'] is False; "
-        "p=c['semantic_projection']; assert p['contract_id']=='aasm.semantic.projection.v1'; "
-        "assert p['equivalence_contract_id']=='aasm.semantic.equivalence.v1' and p['invariant_contract_id']=='aasm.invariant.v1'; "
-        "assert p['public_admission']=='QUALIFIED_SEMANTIC_IR_ONLY' and p['runtime_admission']=='PRE_ADMISSION_ONLY'; "
-        "assert p['engine_state_integration']=='NONE_SEMANTIC_IR_ONLY'; "
-        "assert p['parallel_projection_registry']=='NONE' and p['current_projection_pointer']=='NONE'; "
-        "assert p['invariant_contract']['classifications']==['REPRESENTATIONAL','STATIC_PROTOCOL','DYNAMIC_KERNEL','EMPIRICAL']; "
-        "assert all(v=='NONE' for v in p['public_claim_ceiling'].values()); "
-        "assert not any(n.startswith('semantic_projection_') or n.startswith('semantic_equivalence_') for n in aasm.SUPPORTED_ENGINE_METHODS)"
-    )
-    completed = subprocess.run([sys.executable, "-c", code], cwd=root, env=env)
-    if completed.returncode != 0:
-        _fail("active public contract execution failed")
+    # Execute the active public contract from source, not from textual inference.
+    sys.path.insert(0, str(root / "src"))
+    import aasm
+    from aasm import public_v56
 
-    print("0.56.1 development target + active adoption 0.32.18 + PR-3 + S3 + S4 Quantity + Rule + Projection/Equivalence source/release contracts: PASS")
+    report = aasm.validate_public_api_contract()
+    if not report.get("valid"):
+        _fail(f"active public contract invalid: {report}")
+    contract = aasm.public_api_contract()
+    if aasm.__version__ != "0.56.1" or contract.get("runtime_version") != "0.56.1":
+        _fail("active runtime version drift")
+    if contract.get("contract_version") != "0.32.19" or contract.get("parent_contract_version") != "0.32.18":
+        _fail("active public adoption lineage drift")
+    if aasm.AASMEngine is not public_v56.AASMEngine:
+        _fail("semantic public overlays forked the active engine")
+
+    for key in (
+        "physical_effect_integration",
+        "state_conflict",
+        "event_causality",
+        "observation_freshness",
+        "physical_identity",
+        "calibration",
+        "source_trust",
+        "execution_environment",
+        "observation_processing",
+        "artifact_lineage",
+        "entity_evolution",
+        "engineering_quantity",
+        "engineering_rule",
+        "semantic_projection",
+        "uncertainty",
+        "scenario",
+        "trace_property",
+    ):
+        if key not in contract:
+            _fail(f"active public contract missing cumulative surface: {key}")
+
+    quantity = contract["engineering_quantity"]
+    rule = contract["engineering_rule"]
+    projection = contract["semantic_projection"]
+    uncertainty = contract["uncertainty"]
+    scenario = contract["scenario"]
+    trace_property = contract["trace_property"]
+    if quantity.get("contract_id") != "aasm.quantity.v1" or quantity.get("runtime_admission") != "PRE_ADMISSION_ONLY":
+        _fail("Quantity public/runtime boundary drift")
+    if rule.get("contract_id") != "aasm.rule.v1" or rule.get("runtime_admission") != "PRE_ADMISSION_ONLY":
+        _fail("Rule public/runtime boundary drift")
+    if projection.get("contract_id") != "aasm.semantic.projection.v1" or projection.get("runtime_admission") != "PRE_ADMISSION_ONLY":
+        _fail("Projection public/runtime boundary drift")
+    if uncertainty.get("contract_id") != "aasm.uncertainty.v1" or uncertainty.get("runtime_admission") != "PRE_ADMISSION_ONLY":
+        _fail("Uncertainty public/runtime boundary drift")
+    if scenario.get("contract_id") != "aasm.scenario.v1" or scenario.get("runtime_admission") != "PRE_ADMISSION_ONLY":
+        _fail("Scenario public/runtime boundary drift")
+    if trace_property.get("contract_id") != "aasm.trace-property.v1" or trace_property.get("runtime_admission") != "PRE_ADMISSION_ONLY":
+        _fail("TraceProperty public/runtime boundary drift")
+
+    for name, value in (("projection", projection), ("uncertainty", uncertainty), ("scenario", scenario), ("trace_property", trace_property)):
+        ceiling = value.get("public_claim_ceiling") or {}
+        if any(item != "NONE" for item in ceiling.values()):
+            _fail(f"{name} public claim ceiling drift")
+    if uncertainty.get("parallel_uncertainty_registry") != "NONE" or uncertainty.get("current_uncertainty_pointer") != "NONE":
+        _fail("uncertainty parallel-plane drift")
+    if scenario.get("parallel_scenario_registry") != "NONE" or scenario.get("hidden_current_scenario") != "NONE" or scenario.get("scenario_activation") != "NONE_FOUNDATION_ONLY":
+        _fail("scenario parallel-plane/activation drift")
+    if trace_property.get("parallel_trace_store") != "NONE" or trace_property.get("parallel_property_registry") != "NONE" or trace_property.get("static_constraint_lowering") != "NONE":
+        _fail("trace-property parallel-plane/lowering drift")
+    if trace_property.get("trace_projection") != "EXISTING_PROJECT_TRACE_FUNCTION_UNCHANGED" or trace_property.get("invariant_classification") != "DYNAMIC_KERNEL":
+        _fail("trace-property substrate/classification drift")
+
+    semantic_prefixes = (
+        "rule_",
+        "semantic_projection_",
+        "semantic_equivalence_",
+        "uncertainty_",
+        "scenario_",
+        "trace_property_",
+    )
+    if any(name.startswith(semantic_prefixes) for name in aasm.SUPPORTED_ENGINE_METHODS):
+        _fail("pre-admission semantic IR leaked into engine method surface")
+
+    print("0.56.1 development target + active adoption 0.32.19 + PR-3 + S3 + S4 through Uncertainty/Scenario/Trace-Property source/release contracts: PASS")
     return 0
 
 

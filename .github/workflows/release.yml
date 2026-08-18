@@ -134,6 +134,8 @@ jobs:
             aasm/engineering-rule \
             aasm/engineering-semantic-projection \
             aasm/engineering-semantic-projection-public \
+            aasm/engineering-uncertainty-scenario-trace \
+            aasm/engineering-uncertainty-scenario-trace-public \
             aasm/engineering-s4 \
             aasm/physical-evidence; do
             state=""
