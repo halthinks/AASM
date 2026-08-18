@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/risk-assessment.schema.json",
+  "title": "AASM Risk Assessment v1",
+  "type": "object",
+  "required": ["assessment_id", "contract_id", "contract_version", "envelope_id", "envelope_fingerprint", "irreversibility_profile_id", "irreversibility_fingerprint", "status", "required_assurance_level", "available_assurance_level", "blocking_hazard_ids", "mitigation_hazard_ids", "acceptance_hazard_ids", "diagnostics", "effect_authority_granted", "rule_waiver_performed", "objective_override_performed", "resource_override_performed", "artifact_acceptance_granted", "fingerprint"],
+  "properties": {
+    "assessment_id": {"type": "string", "pattern": "^risk-assessment-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.risk.assessment.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "envelope_id": {"type": "string", "minLength": 1},
+    "envelope_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "irreversibility_profile_id": {"type": "string", "minLength": 1},
+    "irreversibility_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "status": {"enum": ["ADMISSIBLE_FOR_PROPOSAL", "BLOCKED_HARD_HAZARD", "BLOCKED_INDETERMINATE_HAZARD", "REQUIRES_MITIGATION", "REQUIRES_EXPLICIT_ACCEPTANCE", "REQUIRES_ADDITIONAL_ASSURANCE"]},
+    "required_assurance_level": {"enum": ["BASELINE", "ELEVATED", "STRONG", "MAXIMUM"]},
+    "available_assurance_level": {"enum": ["BASELINE", "ELEVATED", "STRONG", "MAXIMUM"]},
+    "blocking_hazard_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "mitigation_hazard_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "acceptance_hazard_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "diagnostics": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "effect_authority_granted": {"const": false},
+    "rule_waiver_performed": {"const": false},
+    "objective_override_performed": {"const": false},
+    "resource_override_performed": {"const": false},
+    "artifact_acceptance_granted": {"const": false},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}
