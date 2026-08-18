@@ -12,13 +12,14 @@ def require(condition: bool, message: str) -> None:
 
 def text(path: str) -> str:
     target = ROOT / path
-    require(target.exists(), f"missing active semantic projection public file: {path}")
+    require(target.exists(), f"missing semantic projection public file: {path}")
     return target.read_text(encoding="utf-8")
 
 
 def main() -> None:
     active = text("src/aasm/public_active_semantic_projection.py")
     parent = text("src/aasm/public_active_engineering_rule.py")
+    s44_child = text("src/aasm/public_active_uncertainty_scenario_trace.py")
     package_root = text("src/aasm/__init__.py")
     foundation = "\n".join((
         text("src/aasm/semantic_projection.py"),
@@ -52,7 +53,7 @@ def main() -> None:
         'PUBLIC_RELEASE_STABILITY = _base.PUBLIC_RELEASE_STABILITY',
         'SUPPORTED_ENGINE_METHODS = list(getattr(_base, "SUPPORTED_ENGINE_METHODS", []))',
     ):
-        require(token in active, f"active semantic projection public surface missing token: {token}")
+        require(token in active, f"semantic projection public layer missing token: {token}")
 
     for token in (
         "SEMANTIC_PROJECTION_CONTRACT_ID",
@@ -68,7 +69,7 @@ def main() -> None:
         "semantic_projection_contract",
         '"semantic-projection"',
     ):
-        require(token in active, f"active semantic projection import/surface missing: {token}")
+        require(token in active, f"semantic projection import/surface missing: {token}")
 
     for token in (
         "class AASMEngine(",
@@ -86,12 +87,14 @@ def main() -> None:
         "PUBLIC_ADOPTION_STABILITY",
         "PUBLIC_ADOPTION_SUPPORT",
     ):
-        require(token not in active, f"active semantic projection public surface violates firewall: {token}")
+        require(token not in active, f"semantic projection public layer violates firewall: {token}")
 
     require('"contract_version": "0.32.17"' in parent, "qualified Rule parent public adoption drifted")
-    require('from .public_active_semantic_projection import *' in package_root, "qualified 0.32.18 semantic projection surface is not package root")
-    require('from .public_active_semantic_projection import __version__, AASMEngine' in package_root, "package root does not bind 0.32.18 contract helpers")
-    require('from .public_active_engineering_rule import *' not in package_root, "package root still points directly at 0.32.17 Rule overlay")
+    require('from . import public_active_semantic_projection as _base' in s44_child, "active 0.32.19 S4.4 layer does not inherit qualified 0.32.18 projection parent")
+    require('PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.18"' in s44_child, "active S4.4 child parent version drift")
+    require('from .public_active_uncertainty_scenario_trace import *' in package_root, "qualified 0.32.19 S4.4 surface is not package root")
+    require('from .public_active_uncertainty_scenario_trace import __version__, AASMEngine' in package_root, "package root does not bind 0.32.19 helpers")
+    require('from .public_active_semantic_projection import *' not in package_root, "package root still points directly at 0.32.18 projection parent")
 
     require('"public_admission": "PRE_ADMISSION_ONLY"' in foundation, "semantic foundation public pre-admission declaration drifted")
     require('"runtime_admission": "PRE_ADMISSION_ONLY"' in foundation, "semantic foundation runtime claim ceiling drifted")
@@ -100,15 +103,15 @@ def main() -> None:
 
     for token in (
         "test_semantic_projection_public_adoption_is_additive_over_qualified_rule_parent",
-        "test_semantic_projection_is_active_package_root_at_03218",
+        "test_semantic_projection_remains_qualified_03218_parent_beneath_active_03219",
         "test_semantic_projection_public_adoption_preserves_full_parent_import_surface",
         "test_semantic_projection_public_adoption_adds_ir_without_engine_methods",
         "test_semantic_projection_public_claim_ceiling_and_invariant_classes_remain_strict",
         "test_semantic_projection_public_types_are_deterministic_and_projection_relative",
     ):
-        require(token in tests, f"active semantic projection public corpus missing test: {token}")
+        require(token in tests, f"semantic projection public corpus missing test: {token}")
 
-    print("S4 semantic projection/equivalence active 0.32.18 public adoption source contracts: PASS")
+    print("S4 semantic projection/equivalence qualified 0.32.18 parent beneath active 0.32.19: PASS")
 
 
 if __name__ == "__main__":
