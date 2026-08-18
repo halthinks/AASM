@@ -545,7 +545,7 @@ def test_rule_contract_firewalls_and_pre_admission_boundary_are_explicit():
 
 def test_rule_public_admission_does_not_imply_runtime_composition():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] in {"0.32.16", "0.32.17"}
+    assert contract["contract_version"] in {"0.32.16", "0.32.17", "0.32.18"}
     if contract["contract_version"] == "0.32.16":
         assert "engineering_rule" not in contract
         assert not hasattr(aasm, "EngineeringRule")
@@ -555,6 +555,9 @@ def test_rule_public_admission_does_not_imply_runtime_composition():
         assert public_rule["public_admission"] == "QUALIFIED"
         assert public_rule["runtime_admission"] == "PRE_ADMISSION_ONLY"
         assert hasattr(aasm, "EngineeringRule")
+    if contract["contract_version"] == "0.32.18":
+        assert contract["parent_contract_version"] == "0.32.17"
+        assert contract["semantic_projection"]["runtime_admission"] == "PRE_ADMISSION_ONLY"
     runtime_source = (ROOT / "src/aasm/runtime_v56_foundation.py").read_text(encoding="utf-8")
     assert "EngineeringRule" not in runtime_source
     assert "from .rule" not in runtime_source
