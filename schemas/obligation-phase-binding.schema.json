@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/obligation-phase-binding.schema.json",
+  "title": "AASM Obligation Phase Binding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "binding_id",
+    "contract_id",
+    "contract_version",
+    "obligation_id",
+    "obligation_fingerprint",
+    "phase",
+    "problem_revision_id",
+    "problem_revision_fingerprint",
+    "scope_id",
+    "metadata",
+    "fingerprint"
+  ],
+  "properties": {
+    "binding_id": {"type": "string", "pattern": "^obligation-phase-binding-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.obligation.phase-binding.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "obligation_id": {"type": "string", "minLength": 1},
+    "obligation_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "phase": {
+      "enum": ["PRE_AUTHORIZE", "PRE_DISPATCH", "POST_DISPATCH", "POST_OBSERVE", "POST_VERIFY", "RECOVERY"]
+    },
+    "problem_revision_id": {"type": "string", "minLength": 1},
+    "problem_revision_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "scope_id": {"type": "string", "minLength": 1},
+    "metadata": {"$ref": "#/$defs/portableObject"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "portableObject": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/portableValue"}
+    },
+    "portableValue": {
+      "oneOf": [
+        {"type": "string"},
+        {"type": "integer"},
+        {"type": "boolean"},
+        {"type": "null"},
+        {"type": "array", "items": {"$ref": "#/$defs/portableValue"}},
+        {"$ref": "#/$defs/portableObject"}
+      ]
+    }
+  }
+}
