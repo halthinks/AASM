@@ -57,6 +57,7 @@ def main() -> int:
         "public_active_entity_evolution",
         "public_active_engineering_quantity",
         "public_active_engineering_rule",
+        "public_active_semantic_projection",
     ])
     require(root / "src/aasm/public_v56.py", [
         '__version__ = "0.56.1"',
@@ -161,6 +162,43 @@ def main() -> int:
         '"parallel_authority_evaluator": "NONE"',
         '"runtime_admission": "PRE_ADMISSION_ONLY"',
     ])
+    require(root / "src/aasm/public_active_semantic_projection.py", [
+        'PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.18"',
+        'PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.17"',
+        'SEMANTIC_PROJECTION_PUBLIC_ADMISSION = "QUALIFIED_SEMANTIC_IR_ONLY"',
+        "SEMANTIC_PROJECTION_CONTRACT_ID",
+        "SEMANTIC_EQUIVALENCE_CONTRACT_ID",
+        "INVARIANT_CONTRACT_ID",
+        "InvariantRef",
+        "SemanticSubjectRef",
+        "SemanticProjectionDefinition",
+        "SemanticProjectionResult",
+        "SemanticEquivalenceAssessment",
+        "assess_semantic_equivalence",
+        '"active_root_status"] = "ACTIVE_QUALIFIED_PUBLIC_ROOT"',
+        '"runtime_admission"] = "PRE_ADMISSION_ONLY"',
+        '"engine_state_integration"] = "NONE_SEMANTIC_IR_ONLY"',
+        '"parallel_projection_registry": "NONE"',
+        '"current_projection_pointer": "NONE"',
+        '"reuse_admission": "NONE"',
+        '"runtime_execution": "NONE"',
+    ])
+    require(root / "src/aasm/_semantic_projection_core.py", [
+        'SEMANTIC_PROJECTION_CONTRACT_ID = "aasm.semantic.projection.v1"',
+        'SEMANTIC_EQUIVALENCE_CONTRACT_ID = "aasm.semantic.equivalence.v1"',
+        'INVARIANT_CONTRACT_ID = "aasm.invariant.v1"',
+        'INVARIANT_CLASSIFICATIONS = ("REPRESENTATIONAL", "STATIC_PROTOCOL", "DYNAMIC_KERNEL", "EMPIRICAL")',
+        'PROJECTION_FIDELITIES = ("LOSSLESS", "LOSSY")',
+        'PROJECTION_STATUSES = ("PROJECTED", "UNSUPPORTED", "INDETERMINATE")',
+        'EQUIVALENCE_RELATIONS = ("EXACT_IDENTITY", "PROJECTION_EQUIVALENT", "NON_EQUIVALENT", "INDETERMINATE", "UNSUPPORTED")',
+    ])
+    require(root / "src/aasm/semantic_projection.py", [
+        '"public_admission": "PRE_ADMISSION_ONLY"',
+        '"runtime_admission": "PRE_ADMISSION_ONLY"',
+        '"parallel_projection_registry": "NONE"',
+        '"current_projection_pointer": "NONE"',
+        '"existing_reuse_certified_equivalent": "NOT_REINTERPRETED_OR_ADMITTED_BY_FOUNDATION"',
+    ])
     require(root / "src/aasm/runtime_v56_foundation.py", [
         "PhysicalEffectIntegrationBoundaryMixin",
         "ObservationProcessingRuntimeMixin",
@@ -176,7 +214,9 @@ def main() -> int:
         "StateAuthorityRuntimeMixin",
         "V55FoundationEngine",
     ])
-    forbid(root / "src/aasm/runtime_v56_foundation.py", ["EngineeringRule", "from .rule"])
+    forbid(root / "src/aasm/runtime_v56_foundation.py", [
+        "EngineeringRule", "from .rule", "SemanticProjectionDefinition", "from .semantic_projection"
+    ])
 
     require(root / "src/aasm/physical_effect_binding.py", [
         'PHYSICAL_EFFECT_AUTHORITY_BINDING_CONTRACT_ID = "aasm.effect.physical-authority-binding.v1"',
@@ -331,6 +371,8 @@ def main() -> int:
         "check_quantity_public.py",
         "check_rule_contracts.py",
         "check_rule_public.py",
+        "check_semantic_projection_contracts.py",
+        "check_semantic_projection_public.py",
     ):
         run_script(root, script)
 
@@ -365,6 +407,7 @@ def main() -> int:
         "entity-evolution.schema.json",
         "quantity.schema.json",
         "rule.schema.json",
+        "semantic-projection.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -412,8 +455,15 @@ def main() -> int:
         "check_rule_public.py",
         "tests/test_rule_foundation.py",
         "tests/test_rule_public.py",
+        "check_semantic_projection_contracts.py",
+        "check_semantic_projection_public.py",
+        "tests/test_semantic_projection_foundation.py",
+        "tests/test_semantic_projection_textpcb.py",
+        "tests/test_semantic_projection_adversarial.py",
+        "tests/test_semantic_projection_public.py",
         "0.32.16",
         "0.32.17",
+        "0.32.18",
         "context='aasm/v56'",
     ])
     require(root / ".github/workflows/identity-calibration-trust.yml", [
@@ -438,6 +488,25 @@ def main() -> int:
         "tests/test_rule_public.py",
         "0.32.17",
         "context='aasm/engineering-rule'",
+    ])
+    require(root / ".github/workflows/engineering-semantic-projection.yml", [
+        "check_semantic_projection_contracts.py",
+        "tests/test_semantic_projection_foundation.py",
+        "tests/test_semantic_projection_textpcb.py",
+        "tests/test_semantic_projection_adversarial.py",
+        "context='aasm/engineering-semantic-projection'",
+    ])
+    require(root / ".github/workflows/engineering-semantic-projection-public.yml", [
+        "check_semantic_projection_contracts.py",
+        "check_semantic_projection_public.py",
+        "tests/test_semantic_projection_public.py",
+        "context='aasm/engineering-semantic-projection-public'",
+    ])
+    require(root / ".github/workflows/engineering-s4.yml", [
+        "check_semantic_projection_contracts.py",
+        "check_semantic_projection_public.py",
+        "tests/test_semantic_projection_public.py",
+        "context='aasm/engineering-s4'",
     ])
     require(root / ".github/workflows/physical-evidence.yml", [
         "check_state_conflict_contracts.py",
@@ -473,6 +542,9 @@ def main() -> int:
         "aasm/entity-evolution",
         "aasm/engineering-quantity",
         "aasm/engineering-rule",
+        "aasm/engineering-semantic-projection",
+        "aasm/engineering-semantic-projection-public",
+        "aasm/engineering-s4",
         "check_version_policy.py",
         "release_manifest.py --check-file-list",
         "verify-github-release",
@@ -486,8 +558,8 @@ def main() -> int:
         "import aasm; "
         "r=aasm.validate_public_api_contract(); assert r['valid'], r; "
         "c=aasm.public_api_contract(); assert c['runtime_version']=='0.56.1'; "
-        "assert c['contract_version']=='0.32.17'; "
-        "assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust','execution_environment','observation_processing','artifact_lineage','entity_evolution','engineering_quantity','engineering_rule')); "
+        "assert c['contract_version']=='0.32.18'; assert c['parent_contract_version']=='0.32.17'; "
+        "assert all(k in c for k in ('physical_effect_integration','state_conflict','event_causality','observation_freshness','physical_identity','calibration','source_trust','execution_environment','observation_processing','artifact_lineage','entity_evolution','engineering_quantity','engineering_rule','semantic_projection')); "
         "q=c['engineering_quantity']; assert q['contract_id']=='aasm.quantity.v1' and q['public_admission']=='QUALIFIED' and q['runtime_admission']=='PRE_ADMISSION_ONLY'; "
         "x=c['engineering_rule']; assert x['contract_id']=='aasm.rule.v1' and x['contract_version']=='0.1.0'; "
         "assert x['public_admission']=='QUALIFIED' and x['runtime_admission']=='PRE_ADMISSION_ONLY'; "
@@ -498,13 +570,21 @@ def main() -> int:
         "assert x['rule_to_constraint_lowering']=='NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED'; "
         "assert x['parallel_rule_registry']=='NONE' and x['current_rule_pointer']=='NONE'; "
         "assert x['parallel_constraint_engine']=='NONE' and x['parallel_authority_evaluator']=='NONE'; "
-        "assert x['rule_existence_grants_fact_authority'] is False and x['rule_existence_grants_effect_authority'] is False and x['rule_existence_grants_source_authority'] is False"
+        "assert x['rule_existence_grants_fact_authority'] is False and x['rule_existence_grants_effect_authority'] is False and x['rule_existence_grants_source_authority'] is False; "
+        "p=c['semantic_projection']; assert p['contract_id']=='aasm.semantic.projection.v1'; "
+        "assert p['equivalence_contract_id']=='aasm.semantic.equivalence.v1' and p['invariant_contract_id']=='aasm.invariant.v1'; "
+        "assert p['public_admission']=='QUALIFIED_SEMANTIC_IR_ONLY' and p['runtime_admission']=='PRE_ADMISSION_ONLY'; "
+        "assert p['engine_state_integration']=='NONE_SEMANTIC_IR_ONLY'; "
+        "assert p['parallel_projection_registry']=='NONE' and p['current_projection_pointer']=='NONE'; "
+        "assert p['invariant_contract']['classifications']==['REPRESENTATIONAL','STATIC_PROTOCOL','DYNAMIC_KERNEL','EMPIRICAL']; "
+        "assert all(v=='NONE' for v in p['public_claim_ceiling'].values()); "
+        "assert not any(n.startswith('semantic_projection_') or n.startswith('semantic_equivalence_') for n in aasm.SUPPORTED_ENGINE_METHODS)"
     )
     completed = subprocess.run([sys.executable, "-c", code], cwd=root, env=env)
     if completed.returncode != 0:
         _fail("active public contract execution failed")
 
-    print("0.56.1 development target + active adoption 0.32.17 + PR-3 + S3 + S4 quantity + Rule source/release contracts: PASS")
+    print("0.56.1 development target + active adoption 0.32.18 + PR-3 + S3 + S4 Quantity + Rule + Projection/Equivalence source/release contracts: PASS")
     return 0
 
 
