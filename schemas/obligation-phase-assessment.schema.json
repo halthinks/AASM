@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/obligation-phase-assessment.schema.json",
+  "title": "AASM Obligation Phase Assessment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "assessment_id",
+    "contract_id",
+    "contract_version",
+    "plan_id",
+    "plan_fingerprint",
+    "phase",
+    "problem_revision_id",
+    "problem_revision_fingerprint",
+    "readiness",
+    "required_obligation_ids",
+    "satisfied_obligation_ids",
+    "blocking_obligation_ids",
+    "terminal_unsatisfied_obligation_ids",
+    "observed_statuses",
+    "reasons",
+    "effect_authority_granted",
+    "authorization_performed",
+    "dispatch_performed",
+    "recovery_execution_performed",
+    "obligation_status_mutated",
+    "phase_activated",
+    "fingerprint"
+  ],
+  "properties": {
+    "assessment_id": {"type": "string", "pattern": "^obligation-phase-assessment-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.obligation.phase-assessment.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "plan_id": {"type": "string", "pattern": "^obligation-phase-plan-[0-9a-f]{24}$"},
+    "plan_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "phase": {
+      "enum": ["PRE_AUTHORIZE", "PRE_DISPATCH", "POST_DISPATCH", "POST_OBSERVE", "POST_VERIFY", "RECOVERY"]
+    },
+    "problem_revision_id": {"type": "string", "minLength": 1},
+    "problem_revision_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "readiness": {"enum": ["READY", "NOT_READY", "TERMINAL_UNSATISFIED"]},
+    "required_obligation_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "satisfied_obligation_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "blocking_obligation_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "terminal_unsatisfied_obligation_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "observed_statuses": {
+      "type": "object",
+      "additionalProperties": {
+        "enum": ["AVAILABLE", "ENABLED", "IN_PROGRESS", "VERIFYING", "VERIFIED", "COMMITTED", "BLOCKED", "LOCKED", "NEEDS_REVALIDATION", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"]
+      }
+    },
+    "reasons": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "effect_authority_granted": {"const": false},
+    "authorization_performed": {"const": false},
+    "dispatch_performed": {"const": false},
+    "recovery_execution_performed": {"const": false},
+    "obligation_status_mutated": {"const": false},
+    "phase_activated": {"const": false},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
