@@ -2,18 +2,17 @@ from __future__ import annotations
 
 from copy import deepcopy
 
-from .public_active_engineering_rule import (
-    AASMEngine,
-    PUBLIC_ADOPTION_STABILITY,
-    PUBLIC_ADOPTION_SUPPORT as _PARENT_SUPPORT,
-    PUBLIC_API_CONTRACT as _PARENT_CONTRACT,
-    SUPPORTED_ENGINE_METHODS,
-    SUPPORTED_INSPECTION_SURFACES as _PARENT_INSPECTION,
-    SUPPORTED_PUBLIC_IMPORTS as _PARENT_IMPORTS,
-    __version__,
-    public_api_contract as _parent_public_api_contract,
-    validate_public_api_contract as _validate_parent_public_api_contract,
-)
+from . import public_active_engineering_rule as _base
+
+# Preserve the complete qualified 0.32.17 public surface, then add only the
+# independently qualified semantic projection/equivalence/invariant IR. This
+# overlay does not compose projection state into AASMEngine, create a registry,
+# or grant truth, authority, proof, preference, artifact acceptance, entity
+# identity, or reuse admission.
+for _name in dir(_base):
+    if not _name.startswith("_"):
+        globals()[_name] = getattr(_base, _name)
+
 from .semantic_projection import (
     SEMANTIC_PROJECTION_CONTRACT_ID,
     SEMANTIC_PROJECTION_CONTRACT_VERSION,
@@ -40,25 +39,40 @@ from .semantic_projection import (
 )
 from .semantic_projection import __all__ as _SEMANTIC_IMPORTS
 
+
+__version__ = _base.__version__
+PUBLIC_RELEASE_STABILITY = _base.PUBLIC_RELEASE_STABILITY
+REMOTE_PROTOCOL_NAME = _base.REMOTE_PROTOCOL_NAME
+REMOTE_PROTOCOL_VERSION = _base.REMOTE_PROTOCOL_VERSION
+AASMEngine = _base.AASMEngine
+
 PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.18"
 PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.17"
 SEMANTIC_PROJECTION_PUBLIC_ADMISSION = "QUALIFIED_SEMANTIC_IR_ONLY"
 
-SUPPORTED_PUBLIC_IMPORTS = tuple(
-    dict.fromkeys(tuple(_PARENT_IMPORTS) + tuple(_SEMANTIC_IMPORTS))
+SUPPORTED_ENGINE_METHODS = list(getattr(_base, "SUPPORTED_ENGINE_METHODS", []))
+SUPPORTED_CLI_COMMANDS = list(getattr(_base, "SUPPORTED_CLI_COMMANDS", []))
+SUPPORTED_PUBLIC_IMPORTS = list(
+    dict.fromkeys([*getattr(_base, "SUPPORTED_PUBLIC_IMPORTS", []), *_SEMANTIC_IMPORTS])
 )
-SUPPORTED_INSPECTION_SURFACES = tuple(
-    dict.fromkeys(tuple(_PARENT_INSPECTION) + ("semantic-projection",))
+SUPPORTED_INSPECTION_SURFACES = list(
+    dict.fromkeys([*getattr(_base, "SUPPORTED_INSPECTION_SURFACES", []), "semantic-projection"])
 )
 
-PUBLIC_API_CONTRACT = deepcopy(_PARENT_CONTRACT)
-PUBLIC_API_CONTRACT["contract_version"] = PUBLIC_ADOPTION_CONTRACT_VERSION
-PUBLIC_API_CONTRACT["parent_contract_version"] = PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION
-PUBLIC_API_CONTRACT["description"] = "0.32.17 Rule boundary plus qualified semantic projection/equivalence/invariant IR; no runtime composition."
-PUBLIC_API_CONTRACT["supported_imports"] = list(SUPPORTED_PUBLIC_IMPORTS)
-PUBLIC_API_CONTRACT["supported_public_imports"] = list(SUPPORTED_PUBLIC_IMPORTS)
-PUBLIC_API_CONTRACT["supported_engine_methods"] = list(SUPPORTED_ENGINE_METHODS)
-PUBLIC_API_CONTRACT["supported_inspection_surfaces"] = list(SUPPORTED_INSPECTION_SURFACES)
+PUBLIC_API_CONTRACT = deepcopy(_base.PUBLIC_API_CONTRACT)
+PUBLIC_API_CONTRACT.update(
+    {
+        "contract_version": PUBLIC_ADOPTION_CONTRACT_VERSION,
+        "parent_contract_version": PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION,
+        "runtime_version": __version__,
+        "release_stability": PUBLIC_RELEASE_STABILITY,
+        "description": "0.32.17 Rule boundary plus qualified semantic projection/equivalence/invariant IR; no runtime composition.",
+        "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
+        "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
+        "supported_cli_commands": SUPPORTED_CLI_COMMANDS,
+        "supported_inspection_surfaces": SUPPORTED_INSPECTION_SURFACES,
+    }
+)
 
 _semantic = deepcopy(semantic_projection_contract())
 _semantic["public_admission"] = SEMANTIC_PROJECTION_PUBLIC_ADMISSION
@@ -78,30 +92,41 @@ _semantic["public_claim_ceiling"] = {
     "runtime_execution": "NONE",
 }
 PUBLIC_API_CONTRACT["semantic_projection"] = _semantic
+PUBLIC_API_CONTRACT["distribution"]["version"] = __version__
+PUBLIC_API_CONTRACT["distribution"]["stability"] = PUBLIC_RELEASE_STABILITY
 
-PUBLIC_ADOPTION_SUPPORT = dict(_PARENT_SUPPORT)
-PUBLIC_ADOPTION_SUPPORT.update({
-    "semantic_projection": "QUALIFIED_SEMANTIC_IR_ONLY",
-    "semantic_equivalence": "QUALIFIED_SEMANTIC_IR_ONLY",
-    "invariant_classification": "QUALIFIED_SEMANTIC_IR_ONLY",
-    "semantic_projection_runtime": "PRE_ADMISSION_ONLY",
-})
 
 def public_api_contract() -> dict:
     return deepcopy(PUBLIC_API_CONTRACT)
 
+
 def validate_public_api_contract() -> dict:
-    parent = _validate_parent_public_api_contract()
+    parent = _base.validate_public_api_contract()
+    errors: list[str] = []
     if not parent.get("valid"):
-        return {"valid": False, "reason": "parent_rule_public_contract_invalid", "parent": parent}
-    if _parent_public_api_contract().get("contract_version") != PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION:
-        return {"valid": False, "reason": "parent_rule_contract_version_drift"}
+        errors.append("qualified 0.32.17 Rule parent is invalid")
+
+    if _base.PUBLIC_API_CONTRACT.get("contract_version") != PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION:
+        errors.append("Rule parent public adoption drifted")
+    if AASMEngine is not _base.AASMEngine:
+        errors.append("semantic projection overlay forked AASMEngine")
     if PUBLIC_API_CONTRACT.get("contract_version") != PUBLIC_ADOPTION_CONTRACT_VERSION:
-        return {"valid": False, "reason": "semantic_projection_public_contract_version_drift"}
-    if list(PUBLIC_API_CONTRACT.get("supported_imports") or []) != list(SUPPORTED_PUBLIC_IMPORTS):
-        return {"valid": False, "reason": "public_import_surface_drift"}
-    if list(PUBLIC_API_CONTRACT.get("supported_engine_methods") or []) != list(SUPPORTED_ENGINE_METHODS):
-        return {"valid": False, "reason": "engine_method_surface_drift"}
+        errors.append("semantic projection public adoption version drift")
+    if PUBLIC_API_CONTRACT.get("parent_contract_version") != PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION:
+        errors.append("semantic projection parent adoption version drift")
+    if PUBLIC_API_CONTRACT.get("supported_imports") != SUPPORTED_PUBLIC_IMPORTS:
+        errors.append("semantic projection public import surface drift")
+    if PUBLIC_API_CONTRACT.get("supported_engine_methods") != SUPPORTED_ENGINE_METHODS:
+        errors.append("semantic projection engine method surface drift")
+    if SUPPORTED_ENGINE_METHODS != list(getattr(_base, "SUPPORTED_ENGINE_METHODS", [])):
+        errors.append("semantic projection overlay added engine methods")
+    if "semantic-projection" not in SUPPORTED_INSPECTION_SURFACES:
+        errors.append("semantic projection inspection surface missing")
+
+    missing_imports = [name for name in _SEMANTIC_IMPORTS if name not in globals()]
+    if missing_imports:
+        errors.append(f"missing semantic projection public imports: {missing_imports}")
+
     semantic = PUBLIC_API_CONTRACT.get("semantic_projection") or {}
     required = {
         "contract_id": SEMANTIC_PROJECTION_CONTRACT_ID,
@@ -115,11 +140,14 @@ def validate_public_api_contract() -> dict:
     }
     for key, value in required.items():
         if semantic.get(key) != value:
-            return {"valid": False, "reason": f"semantic_projection_{key}_drift"}
+            errors.append(f"semantic projection {key} drift")
     if any(value != "NONE" for value in (semantic.get("public_claim_ceiling") or {}).values()):
-        return {"valid": False, "reason": "semantic_projection_claim_ceiling_drift"}
-    return {
-        "valid": True,
+        errors.append("semantic projection public claim ceiling drift")
+
+    report = {
+        "valid": not errors,
+        "errors": errors,
+        "contract": public_api_contract(),
         "contract_version": PUBLIC_ADOPTION_CONTRACT_VERSION,
         "parent_contract_version": PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION,
         "semantic_projection_contract_id": SEMANTIC_PROJECTION_CONTRACT_ID,
@@ -128,10 +156,28 @@ def validate_public_api_contract() -> dict:
         "runtime_admission": "PRE_ADMISSION_ONLY",
         "active_root_status": "CANDIDATE_UNTIL_PACKAGE_ROOT_SWITCH",
     }
+    return report
 
-__all__ = tuple(dict.fromkeys((
-    "AASMEngine", "PUBLIC_API_CONTRACT", "PUBLIC_ADOPTION_CONTRACT_VERSION",
-    "PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION", "PUBLIC_ADOPTION_STABILITY",
-    "PUBLIC_ADOPTION_SUPPORT", "SUPPORTED_PUBLIC_IMPORTS", "SUPPORTED_ENGINE_METHODS",
-    "SUPPORTED_INSPECTION_SURFACES", "public_api_contract", "validate_public_api_contract", "__version__",
-) + tuple(_SEMANTIC_IMPORTS)))
+
+__all__ = tuple(
+    dict.fromkeys(
+        [
+            *SUPPORTED_PUBLIC_IMPORTS,
+            "AASMEngine",
+            "PUBLIC_API_CONTRACT",
+            "PUBLIC_ADOPTION_CONTRACT_VERSION",
+            "PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION",
+            "SEMANTIC_PROJECTION_PUBLIC_ADMISSION",
+            "PUBLIC_RELEASE_STABILITY",
+            "REMOTE_PROTOCOL_NAME",
+            "REMOTE_PROTOCOL_VERSION",
+            "SUPPORTED_PUBLIC_IMPORTS",
+            "SUPPORTED_ENGINE_METHODS",
+            "SUPPORTED_CLI_COMMANDS",
+            "SUPPORTED_INSPECTION_SURFACES",
+            "public_api_contract",
+            "validate_public_api_contract",
+            "__version__",
+        ]
+    )
+)
