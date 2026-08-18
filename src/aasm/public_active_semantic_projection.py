@@ -6,9 +6,9 @@ from . import public_active_engineering_rule as _base
 
 # Preserve the complete qualified 0.32.17 public surface, then add only the
 # independently qualified semantic projection/equivalence/invariant IR. This
-# overlay does not compose projection state into AASMEngine, create a registry,
-# or grant truth, authority, proof, preference, artifact acceptance, entity
-# identity, or reuse admission.
+# active overlay does not compose projection state into AASMEngine, create a
+# registry, or grant truth, authority, proof, preference, artifact acceptance,
+# entity identity, or reuse admission.
 for _name in dir(_base):
     if not _name.startswith("_"):
         globals()[_name] = getattr(_base, _name)
@@ -66,7 +66,7 @@ PUBLIC_API_CONTRACT.update(
         "parent_contract_version": PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION,
         "runtime_version": __version__,
         "release_stability": PUBLIC_RELEASE_STABILITY,
-        "description": "0.32.17 Rule boundary plus qualified semantic projection/equivalence/invariant IR; no runtime composition.",
+        "description": "0.32.18 active public boundary: Rule plus qualified semantic projection/equivalence/invariant IR; no projection runtime composition.",
         "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
         "supported_engine_methods": SUPPORTED_ENGINE_METHODS,
         "supported_cli_commands": SUPPORTED_CLI_COMMANDS,
@@ -78,7 +78,7 @@ _semantic = deepcopy(semantic_projection_contract())
 _semantic["public_admission"] = SEMANTIC_PROJECTION_PUBLIC_ADMISSION
 _semantic["runtime_admission"] = "PRE_ADMISSION_ONLY"
 _semantic["engine_state_integration"] = "NONE_SEMANTIC_IR_ONLY"
-_semantic["active_root_status"] = "CANDIDATE_UNTIL_PACKAGE_ROOT_SWITCH"
+_semantic["active_root_status"] = "ACTIVE_QUALIFIED_PUBLIC_ROOT"
 _semantic["invariant_contract"] = invariant_contract()
 _semantic["public_claim_ceiling"] = {
     "truth_authority": "NONE",
@@ -135,6 +135,7 @@ def validate_public_api_contract() -> dict:
         "public_admission": SEMANTIC_PROJECTION_PUBLIC_ADMISSION,
         "runtime_admission": "PRE_ADMISSION_ONLY",
         "engine_state_integration": "NONE_SEMANTIC_IR_ONLY",
+        "active_root_status": "ACTIVE_QUALIFIED_PUBLIC_ROOT",
         "parallel_projection_registry": "NONE",
         "current_projection_pointer": "NONE",
     }
@@ -144,7 +145,7 @@ def validate_public_api_contract() -> dict:
     if any(value != "NONE" for value in (semantic.get("public_claim_ceiling") or {}).values()):
         errors.append("semantic projection public claim ceiling drift")
 
-    report = {
+    return {
         "valid": not errors,
         "errors": errors,
         "contract": public_api_contract(),
@@ -154,9 +155,8 @@ def validate_public_api_contract() -> dict:
         "semantic_equivalence_contract_id": SEMANTIC_EQUIVALENCE_CONTRACT_ID,
         "invariant_contract_id": INVARIANT_CONTRACT_ID,
         "runtime_admission": "PRE_ADMISSION_ONLY",
-        "active_root_status": "CANDIDATE_UNTIL_PACKAGE_ROOT_SWITCH",
+        "active_root_status": "ACTIVE_QUALIFIED_PUBLIC_ROOT",
     }
-    return report
 
 
 __all__ = tuple(
