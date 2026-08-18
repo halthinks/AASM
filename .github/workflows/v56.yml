@@ -1,5 +1,5 @@
 name: AASM v0.56 Development Qualification
-# Qualified additive S4 lineage: Quantity 0.32.16 -> Rule 0.32.17 -> active Projection/Equivalence 0.32.18.
+# Qualified additive S4 lineage: Quantity 0.32.16 -> Rule 0.32.17 -> Projection/Equivalence 0.32.18 -> active Uncertainty/Scenario/Trace-Property 0.32.19.
 
 on:
   push:
@@ -28,11 +28,11 @@ jobs:
           cache: pip
       - name: Install cumulative v0.56 development qualification dependencies
         run: python -m pip install -e '.[dev,optimization]'
+
       - name: Check truthful solver outcome contracts
         run: python scripts/check_v56_solver_outcome.py
       - name: Run complete solver outcome fixtures
-        run: |
-          pytest -q tests/test_v56_solver_outcome_v2.py tests/test_v56_provider_status_v2.py tests/test_v56_solver_outcome_runtime.py tests/test_v56_public_candidate.py
+        run: pytest -q tests/test_v56_solver_outcome_v2.py tests/test_v56_provider_status_v2.py tests/test_v56_solver_outcome_runtime.py tests/test_v56_public_candidate.py
       - name: Qualify real provider status identity
         run: |
           python - <<'PY'
@@ -40,17 +40,21 @@ jobs:
           from aasm.provider_status_v2 import default_provider_status_map, map_provider_status
           providers={'SAT':'cadical','CP_SAT':'ortools-cp-sat','MILP':'highs'}; caps={'SAT':'solver.sat','CP_SAT':'solver.cp_sat','MILP':'solver.milp'}
           for family, model in reference_optimization_models().items():
-              req=OptimizationRequest(model,caps[family],'0.1.0',f'v56-real-{family.lower()}',required_provider=providers[family]); result=solve_optimization_request(req); validate_optimization_result(req,result)
-              raw=str(result.statistics.get('raw_status') or ''); code=str(result.statistics.get('raw_status_code') or ''); assert raw and code
+              req=OptimizationRequest(model,caps[family],'0.1.0',f'v56-real-{family.lower()}',required_provider=providers[family])
+              result=solve_optimization_request(req); validate_optimization_result(req,result)
+              raw=str(result.statistics.get('raw_status') or ''); code=str(result.statistics.get('raw_status_code') or '')
+              assert raw and code
               mapped=map_provider_status(default_provider_status_map(result.solver.provider_id,result.solver.version),raw_status=raw,raw_status_code=code,has_incumbent=bool(result.assignment),objective_present=model.objective is not None)
               assert mapped.mapping_status=='EXACT_RULE'
           PY
+
       - name: Check execution provenance contracts
         run: python scripts/check_v561_provenance.py
       - name: Run provenance replay and adversarial fixtures
         run: pytest -q tests/test_v56_solver_provenance.py tests/test_v56_solver_provenance_runtime.py
       - name: Qualify real provider provenance
         run: pytest -q tests/test_v561_solver_provenance_real.py
+
       - name: Check state authority contracts and adversarial fixtures
         run: |
           python scripts/check_state_authority_contracts.py
@@ -85,6 +89,7 @@ jobs:
         run: |
           python scripts/check_physical_effect_integration_contracts.py
           pytest -q tests/test_physical_effect_integration.py
+
       - name: Check S3 state conflict physical evidence foundation
         run: |
           python scripts/check_state_conflict_contracts.py
@@ -113,7 +118,8 @@ jobs:
         run: |
           python scripts/check_entity_evolution_contracts.py
           pytest -q tests/test_entity_evolution.py tests/test_entity_evolution_public.py
-      - name: Check S4 engineering quantity semantic foundation and public adoption
+
+      - name: Check S4 engineering Quantity semantic foundation and public adoption
         run: |
           python scripts/check_quantity_contracts.py
           python scripts/check_quantity_public.py
@@ -123,200 +129,51 @@ jobs:
           python scripts/check_rule_contracts.py
           python scripts/check_rule_public.py
           pytest -q tests/test_rule_foundation.py tests/test_rule_public.py
-      - name: Check S4 semantic projection/equivalence foundation and public adoption
+      - name: Check S4 semantic Projection Equivalence and Invariant foundation/public adoption
         run: |
           python scripts/check_semantic_projection_contracts.py
           python scripts/check_semantic_projection_public.py
           pytest -q tests/test_semantic_projection_foundation.py tests/test_semantic_projection_textpcb.py tests/test_semantic_projection_adversarial.py tests/test_semantic_projection_public.py
+      - name: Check S4.4 Uncertainty Scenario and Trace-Property foundation/public adoption
+        run: |
+          python scripts/check_uncertainty_scenario_trace_contracts.py
+          python scripts/check_uncertainty_scenario_trace_public.py
+          pytest -q tests/test_uncertainty_scenario_trace_foundation.py tests/test_uncertainty_scenario_trace_public.py
+
       - name: Validate cumulative development source contract
         run: python scripts/check_release_contracts.py
-      - name: Guard active 0.56.1 development root and additive authority boundaries
+
+      - name: Guard active 0.56.1 development root and semantic-runtime separation
         run: |
           python - <<'PY'
           import aasm
           from aasm import public_v55, public_v56
           active=aasm.validate_public_api_contract(); assert active['valid'], active
-          assert aasm.__version__=='0.56.1'; assert aasm.PUBLIC_API_CONTRACT['contract_version']=='0.32.18'
-          assert aasm.PUBLIC_API_CONTRACT['parent_contract_version']=='0.32.17'
-          assert public_v56.__version__=='0.56.1'; assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.6'
-          assert public_v55.__version__=='0.55.0'; assert aasm.AASMEngine is public_v56.AASMEngine
-          engine=aasm.AASMEngine(aasm.ProblemSpec('v56-gate'))
-          prov=engine.solver_provenance_runtime_contract_report()
-          assert prov['parallel_provenance_table']=='NONE'; assert prov['provenance_grants_reproducibility'] is False
-          state=engine.state_authority_contract_report()
-          assert state['parallel_truth_table']=='NONE'; assert state['machine_state_mutation']=='NONE'; assert state['effect_authority']=='NONE'
-          external=engine.external_machine_contract_report()
-          assert external['external_state_table']=='NONE'; assert external['effect_dispatch']=='NONE'; assert external['executor_invocation']=='NONE'
-          transition=engine.machine_transition_contract_report()
-          assert transition['effect_proposal_path']=='EXISTING_AASM_PROPOSE_EFFECT_ONLY'
-          assert transition['effect_authorization']=='NOT_PERFORMED_USE_EXISTING_AUTHORIZE_EFFECT'
-          assert transition['effect_dispatch']=='NOT_PERFORMED_USE_EXISTING_EXECUTE_EFFECT'
-          assert transition['transition_status_store']=='NONE_DERIVE_FROM_EXISTING_EFFECT_RECORD'
-          post=engine.machine_postcondition_contract_report()
-          assert post['effect_status_mutation']=='NONE'; assert post['state_claim_creation']=='NONE'; assert post['fact_authority_creation']=='NONE'
-          assert post['parallel_truth_table']=='NONE'; assert post['parallel_effect_lifecycle']=='NONE'
-          physical=engine.physical_authority_contract_report()
-          assert physical['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
-          assert physical['lease_exclusivity']=='NON_OVERLAPPING_EFFECTIVE_INTERVALS_PER_DOMAIN'
-          assert physical['authority_epoch']=='EXPLICIT_NEXT_MONOTONIC_EPOCH_REQUIRED'
-          assert physical['domain_existence_grants_effect_authority'] is False
-          assert physical['lease_existence_grants_effect_authority'] is False
-          capability=engine.effect_capability_contract_report()
-          assert capability['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
-          assert capability['non_amplification']=='OPERATIONS_BOUNDS_VALIDITY_SCOPE_REVISION_EPOCH_AND_DEPTH_FAIL_CLOSED'
-          assert capability['capability_existence_grants_effect_authority'] is False
-          assert capability['effect_dispatch']=='NONE'; assert capability['parallel_effect_lifecycle']=='NONE'
-          fencing=engine.physical_control_fencing_contract_report()
-          assert fencing['use_validation']=='POINT_IN_TIME_ONLY_REQUIRES_RECHECK_AT_PR3H_EFFECT_BOUNDARIES'
-          assert fencing['use_validation_grants_effect_authority'] is False
-          assert fencing['preemption_grants_effect_authority'] is False
-          assert fencing['parallel_authority_evaluator']=='NONE'; assert fencing['parallel_effect_lifecycle']=='NONE'
-          integration=engine.physical_effect_integration_contract_report()
-          assert integration['effect_authority']=='EXISTING_V53_EFFECT_AUTHORIZE_AND_EFFECT_EXECUTE_REMAIN_REQUIRED'
-          assert integration['authorization_boundary']=='LIVE_PHYSICAL_AUTHORITY_RECHECK_THEN_EXISTING_AUTHORIZE_EFFECT'
-          assert integration['execution_boundary']=='LIVE_PHYSICAL_AUTHORITY_RECHECK_THEN_EXISTING_EXECUTE_EFFECT'
-          assert integration['machine_transition_binding']=='MANDATORY_BEFORE_AUTHORIZATION_OR_NEW_DISPATCH'
-          assert integration['prior_use_validation']=='EVIDENCE_ONLY_NEVER_REUSABLE_AUTHORIZATION'
-          assert integration['task_lease']=='EXISTING_V54_TASKLEASE_UNCHANGED'
-          assert integration['ownership']=='EXISTING_V54_EFFECT_OWNERSHIP_UNCHANGED'
-          assert integration['unknown_and_reconciliation']=='EXISTING_V54_UNKNOWN_AND_RECONCILIATION_UNCHANGED'
-          assert integration['parallel_authority_evaluator']=='NONE'
-          assert integration['parallel_effect_store']=='NONE'; assert integration['parallel_effect_lifecycle']=='NONE'; assert integration['parallel_dispatcher']=='NONE'
-          conflict=engine.state_conflict_contract_report()
-          assert conflict['claim_source']=='EXISTING_AASM_STATE_CLAIM_PROJECTION_ONLY'
-          assert conflict['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
-          assert conflict['claim_mutation']=='NONE'; assert conflict['machine_state_mutation']=='NONE'
-          assert conflict['fact_authority_creation']=='NONE'; assert conflict['effect_authority']=='NONE'
-          assert conflict['parallel_truth_table']=='NONE'; assert conflict['parallel_dependency_graph']=='NONE'
-          causal=engine.event_causality_contract_report()
-          assert causal['core_aasm_event_log']=='UNCHANGED_AND_REMAINS_REPLAY_LEDGER'
-          assert causal['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
-          assert causal['ingest_order']=='MAY_DIFFER_FROM_SOURCE_SEQUENCE'
-          assert causal['same_node_boot_order']=='SEQUENCE_DEFINES_LOCAL_ORDER_INDEPENDENT_OF_INGEST_ORDER'
-          assert causal['parallel_event_ledger']=='NONE'; assert causal['parallel_truth_table']=='NONE'
-          freshness=engine.observation_freshness_contract_report()
-          assert freshness['observation_source']=='EXISTING_MACHINE_STATE_OBSERVATION_ONLY'
-          assert freshness['causal_source']=='EXACT_DURABLE_CAUSAL_EVENT_ID_AND_FINGERPRINT'
-          assert freshness['reference_time_source']=='EXPLICIT_CALLER_POLICY_INPUT_NOT_HOST_NOW'
-          assert freshness['fact_authority_creation']=='NONE'; assert freshness['effect_authority']=='NONE'
-          assert freshness['parallel_observation_store']=='NONE'; assert freshness['parallel_truth_table']=='NONE'
-          identity=engine.physical_identity_contract_report()
-          assert identity['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
-          assert identity['same_context_divergence']=='REJECTED_BEFORE_RECORDING_REQUIRE_EXPLICIT_REVISION_CHANGE'
-          assert identity['fact_authority_creation']=='NONE'; assert identity['effect_authority']=='NONE'
-          assert identity['source_trust']=='NONE_IDENTITY_IS_ONLY_AN_EXACT_REFERENCE'
-          assert identity['parallel_identity_registry']=='NONE_EVIDENCE_PROJECTION_ONLY'; assert identity['parallel_truth_table']=='NONE'
-          calibration=engine.calibration_contract_report()
-          assert calibration['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
-          assert calibration['validity_reference']=='EXPLICIT_CALLER_NANOSECOND_TIME_ONLY'
-          assert calibration['observation_mutation']=='NONE'; assert calibration['fact_authority_creation']=='NONE'
-          assert calibration['source_trust']=='NONE_CALIBRATION_IS_ONLY_EVIDENCE_INPUT_TO_LATER_POLICY'
-          assert calibration['parallel_calibration_store']=='NONE_EVIDENCE_PROJECTION_ONLY'; assert calibration['parallel_truth_table']=='NONE'
-          trust=engine.source_trust_contract_report()
-          assert trust['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORD_REVOKE_NOT_TRUST_EVALUATION'
-          assert trust['fact_authority']=='EXISTING_FACT_AUTHORITY_REMAINS_SEPARATE_AND_REQUIRED'
-          assert trust['trusted_claim_admission']=='NONE'; assert trust['reputation_score']=='NONE'
-          assert trust['parallel_authority_evaluator']=='NONE'; assert trust['parallel_trust_registry']=='NONE_EVIDENCE_PROJECTION_ONLY'; assert trust['parallel_truth_table']=='NONE'
-          environment=engine.execution_environment_contract_report()
-          assert environment['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORD_BIND_NOT_ENVIRONMENT_TRUTH'
-          assert environment['level_acceptance']=='EXACT_ACCEPTED_LEVEL_SET_MEMBERSHIP_NO_ORDINAL_INFERENCE'
-          assert environment['environment_level_authority']=='NONE'
-          assert environment['physical_identity_source']=='EXISTING_PHYSICAL_IDENTITY_PROJECTION_ONLY'
-          assert environment['calibration_source']=='EXISTING_CALIBRATION_PROJECTION_ONLY'
-          assert environment['source_trust_source']=='EXISTING_SOURCE_TRUST_PROJECTION_ONLY'
-          assert environment['observation_source']=='EXISTING_MACHINE_STATE_OBSERVATION_ONLY'
-          assert environment['fact_authority_creation']=='NONE'; assert environment['effect_authority']=='NONE'
-          assert environment['source_trust_creation']=='NONE'; assert environment['observation_mutation']=='NONE'
-          assert environment['parallel_environment_store']=='NONE_EVIDENCE_PROJECTION_ONLY'
-          assert environment['parallel_observation_store']=='NONE'; assert environment['parallel_truth_table']=='NONE'
-          assert environment['parallel_authority_evaluator']=='NONE'
-          processing=engine.observation_processing_contract_report()
-          assert processing['authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY_FOR_RECORDING_NOT_OBSERVATION_TRUTH'
-          assert processing['empirical_root']=='EXISTING_MACHINE_STATE_OBSERVATION_ONLY'
-          assert processing['disposed_source_reuse']=='FAIL_CLOSED_FOR_NEW_LIFECYCLE_OR_FUSION_RECORDS'
-          assert processing['fusion_agreement_authority']=='NONE'
-          assert processing['validated_stage_authority']=='NONE_LOCAL_PROCESSING_LABEL_ONLY'
-          assert processing['fact_authority_creation']=='NONE'; assert processing['effect_authority']=='NONE'
-          assert processing['source_trust_creation']=='NONE'; assert processing['state_claim_creation']=='NONE'
-          assert processing['machine_state_mutation']=='NONE'; assert processing['source_observation_mutation']=='NONE'
-          assert processing['current_observation_pointer']=='NONE'
-          assert processing['parallel_observation_store']=='NONE_EVIDENCE_PROJECTION_ONLY'
-          assert processing['parallel_truth_table']=='NONE'; assert processing['parallel_authority_evaluator']=='NONE'
-          fusion=engine.observation_fusion_contract_report()
-          assert fusion['agreement_semantics']=='CORROBORATION_ONLY_NEVER_AUTHORITY_OR_TRUTH_BY_VOTE'
-          assert fusion['declared_independence_grants_authority'] is False
-          assert fusion['validated_by_agreement'] is False
-          lifecycle=engine.observation_lifecycle_contract_report()
-          assert lifecycle['validated_stage_is_universal_admission'] is False
-          assert lifecycle['lifecycle_record_grants_fact_authority'] is False
-          artifact=engine.artifact_lineage_runtime_contract_report()
-          assert artifact['recording_authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
-          assert artifact['artifact_acceptance']=='NONE_DEFINED_BY_RUNTIME'
-          assert artifact['current_artifact_pointer']=='NONE'
-          assert artifact['parallel_artifact_registry']=='NONE_EVIDENCE_PROJECTION_ONLY'
-          assert artifact['fact_authority_creation']=='NONE'
-          assert artifact['effect_authorization']=='NONE'
-          entity=engine.entity_evolution_runtime_contract_report()
-          assert entity['recording_authority']=='EXISTING_AASM_SCOPED_AUTHORITY_ONLY'
-          assert entity['artifact_revision_source']=='EXISTING_ARTIFACT_LINEAGE_PROJECTION_ONLY'
-          assert entity['artifact_revision_binding']=='EXACT_ID_AND_FINGERPRINT_REQUIRED'
-          assert entity['ambiguity']=='RECORDED_EXPLICITLY_AND_FAIL_CLOSED_FOR_HARD_AUTOMATIC_REUSE'
-          assert entity['runtime_admission']=='ACTIVE_ENGINE_QUALIFIED'
-          assert entity['current_entity_state_pointer']=='NONE'
-          assert entity['parallel_entity_registry']=='NONE_EVIDENCE_PROJECTION_ONLY'
-          assert entity['parallel_current_state_store']=='NONE'
-          assert entity['fact_authority_creation']=='NONE'
-          assert entity['effect_authorization']=='NONE'
-          quantity=aasm.PUBLIC_API_CONTRACT['engineering_quantity']
-          assert quantity['contract_id']=='aasm.quantity.v1'
-          assert quantity['contract_version']=='0.1.0'
-          assert quantity['public_admission']=='QUALIFIED'
-          assert quantity['runtime_admission']=='PRE_ADMISSION_ONLY'
-          assert quantity['engine_state_integration']=='NONE_SEMANTIC_VALUE_FOUNDATION_ONLY'
-          assert quantity['numeric_identity']=='EXACT_INTEGER_RATIONAL_OR_CANONICAL_DECIMAL_NO_BINARY_FLOAT'
-          assert quantity['unit_registry']=='NONE_HIDDEN_OR_MUTABLE'
-          assert quantity['dimensional_inconsistency']=='FAIL_CLOSED_BEFORE_SOLVING_OR_VERIFICATION'
-          assert quantity['legacy_solver_numeric_tolerance']=='UNCHANGED_NOT_REINTERPRETED_BY_QUANTITY_FOUNDATION'
-          assert quantity['legacy_effect_capability_numeric_bounds']=='UNCHANGED_NOT_REINTERPRETED_BY_QUANTITY_FOUNDATION'
-          assert quantity['fact_authority']=='NONE'; assert quantity['physical_state_authority']=='NONE'
-          assert quantity['external_state_authority']=='NONE'; assert quantity['effect_authority']=='NONE'
-          assert quantity['artifact_acceptance']=='NONE'; assert quantity['entity_identity_authority']=='NONE'
-          assert quantity['hidden_wall_clock']=='NONE'
-          rule=aasm.PUBLIC_API_CONTRACT['engineering_rule']
-          assert rule['contract_id']=='aasm.rule.v1'
-          assert rule['contract_version']=='0.1.0'
-          assert rule['public_admission']=='QUALIFIED'
-          assert rule['runtime_admission']=='PRE_ADMISSION_ONLY'
-          assert rule['engine_state_integration']=='NONE_SEMANTIC_RULE_FOUNDATION_ONLY'
-          assert rule['applicability']=='EXPLICIT_PORTABLE_CONTEXT_MATCH_TRI_STATE_FAIL_CLOSED'
-          assert rule['precedence']=='STRENGTH_THEN_SPECIFICITY_THEN_PRIORITY_WITHIN_EXPLICIT_GROUP'
-          assert rule['precedence_is_objective_priority'] is False
-          assert rule['precedence_authorizes_override'] is False
-          assert rule['hard_floor_waiver']=='FORBIDDEN'; assert rule['hard_floor_override']=='FORBIDDEN'
-          assert rule['waiver_override_authority']=='STRUCTURAL_ELIGIBILITY_ONLY_EXISTING_SCOPED_AUTHORITY_MUST_AUTHORIZE_LATER_RUNTIME_ACTION'
-          assert rule['source_authority']=='EXACT_EXISTING_SCOPED_AUTHORITY_GRANT_REFERENCE_ONLY_NOT_VERIFIED_BY_FOUNDATION'
-          assert rule['learned_constraint_relation']=='DISTINCT_NO_IMPLICIT_MAPPING_TO_FORMAL_CALCULUS_HARD_SOFT'
-          assert rule['rule_to_constraint_lowering']=='NONE_FOUNDATION_ONLY_EXPLICIT_VERSIONED_FUTURE_CONTRACT_REQUIRED'
-          assert rule['parallel_rule_registry']=='NONE'; assert rule['current_rule_pointer']=='NONE'
-          assert rule['parallel_constraint_engine']=='NONE'; assert rule['parallel_authority_evaluator']=='NONE'
-          assert rule['rule_existence_grants_fact_authority'] is False
-          assert rule['rule_existence_grants_effect_authority'] is False
-          assert rule['rule_existence_grants_source_authority'] is False
-          assert not any(name.startswith('rule_') for name in aasm.SUPPORTED_ENGINE_METHODS)
-          projection=aasm.PUBLIC_API_CONTRACT['semantic_projection']
-          assert projection['contract_id']=='aasm.semantic.projection.v1'
-          assert projection['equivalence_contract_id']=='aasm.semantic.equivalence.v1'
-          assert projection['invariant_contract_id']=='aasm.invariant.v1'
-          assert projection['public_admission']=='QUALIFIED_SEMANTIC_IR_ONLY'
-          assert projection['runtime_admission']=='PRE_ADMISSION_ONLY'
-          assert projection['engine_state_integration']=='NONE_SEMANTIC_IR_ONLY'
-          assert projection['parallel_projection_registry']=='NONE'; assert projection['current_projection_pointer']=='NONE'
-          assert projection['invariant_contract']['classifications']==['REPRESENTATIONAL','STATIC_PROTOCOL','DYNAMIC_KERNEL','EMPIRICAL']
-          assert projection['invariant_contract']['projection_preservation_is_proof'] is False
-          assert all(value=='NONE' for value in projection['public_claim_ceiling'].values())
-          assert not any(name.startswith('semantic_projection_') or name.startswith('semantic_equivalence_') for name in aasm.SUPPORTED_ENGINE_METHODS)
-          print('cumulative 0.56.1 development contract + active adoption 0.32.18 PR-3 + S3 + S4 Quantity + Rule + Projection/Equivalence boundaries: PASS')
+          contract=aasm.public_api_contract()
+          assert aasm.__version__=='0.56.1'
+          assert contract['contract_version']=='0.32.19'
+          assert contract['parent_contract_version']=='0.32.18'
+          assert public_v56.__version__=='0.56.1'
+          assert public_v56.PUBLIC_API_CONTRACT['contract_version']=='0.32.6'
+          assert public_v55.__version__=='0.55.0'
+          assert aasm.AASMEngine is public_v56.AASMEngine
+          for key in ('engineering_quantity','engineering_rule','semantic_projection','uncertainty','scenario','trace_property'):
+              assert key in contract, key
+              assert contract[key]['runtime_admission']=='PRE_ADMISSION_ONLY', (key, contract[key])
+          assert contract['uncertainty']['contract_id']=='aasm.uncertainty.v1'
+          assert contract['scenario']['contract_id']=='aasm.scenario.v1'
+          assert contract['trace_property']['contract_id']=='aasm.trace-property.v1'
+          assert contract['scenario']['scenario_activation']=='NONE_FOUNDATION_ONLY'
+          assert contract['trace_property']['trace_projection']=='EXISTING_PROJECT_TRACE_FUNCTION_UNCHANGED'
+          assert contract['trace_property']['static_constraint_lowering']=='NONE'
+          assert all(v=='NONE' for v in contract['uncertainty']['public_claim_ceiling'].values())
+          assert all(v=='NONE' for v in contract['scenario']['public_claim_ceiling'].values())
+          assert all(v=='NONE' for v in contract['trace_property']['public_claim_ceiling'].values())
+          methods=aasm.SUPPORTED_ENGINE_METHODS
+          assert not any(name.startswith(('rule_','semantic_projection_','semantic_equivalence_','uncertainty_','scenario_','trace_property_')) for name in methods)
+          print('cumulative 0.56.1 + active adoption 0.32.19 PR-3 + S3 + S4 Quantity/Rule/Projection/Uncertainty/Scenario/Trace-Property: PASS')
           PY
+
       - name: Publish cumulative v0.56 development qualification
         if: always()
         env:
@@ -325,7 +182,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$JOB_STATUS" = success ]; then state=success; description='0.56.1 cumulative PR-3+S3+S4 Quantity+Rule+Projection/Equivalence qualification passed'; else state=failure; description='0.56 cumulative development qualification failed'; fi
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='0.56.1 cumulative PR-3+S3+S4 through active 0.32.19 qualification passed'
+          else
+            state=failure
+            description='0.56 cumulative development qualification failed'
+          fi
           for attempt in 1 2 3 4 5; do
             if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" -f state="$state" -f context='aasm/v56' -f description="$description" -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; then exit 0; fi
             if [ "$attempt" -lt 5 ]; then sleep $((attempt * 2)); fi
