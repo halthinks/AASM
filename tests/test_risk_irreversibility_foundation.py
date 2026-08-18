@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import hashlib
 import json
 from pathlib import Path
 
@@ -43,7 +44,12 @@ def subject() -> SemanticSubjectRef:
 def rule(*, rule_id: str, strength: str, clause_id: str) -> EngineeringRule:
     return EngineeringRule(
         rule_id,
-        RuleClauseRef("aasm.semantic.constraint.v1", clause_id, (clause_id[0] if clause_id else "c") * 64, "CONSTRAINT"),
+        RuleClauseRef(
+            "aasm.semantic.constraint.v1",
+            clause_id,
+            hashlib.sha256(clause_id.encode("utf-8")).hexdigest(),
+            "CONSTRAINT",
+        ),
         strength,
         RuleScopeSelector("workspace-1", "control", "EXACT", ("actuator-1",)),
         RuleApplicabilityPredicate("ALWAYS"),
