@@ -14,7 +14,8 @@ def test_v56_base_is_frozen_and_active_overlay_advances_adoption_only():
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.17"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.18"
+    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.17"
     assert aasm.AASMEngine is public_active.AASMEngine
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v56.AASMEngine is not public_v55.AASMEngine
@@ -66,7 +67,8 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_reality_
 
 def test_active_contract_preserves_external_reality_physical_control_and_s3_firewalls():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] == "0.32.17"
+    assert contract["contract_version"] == "0.32.18"
+    assert contract["parent_contract_version"] == "0.32.17"
 
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -337,7 +339,7 @@ def test_active_import_registry_contains_pr3_and_s3_reality_contracts():
         assert name in aasm.SUPPORTED_PUBLIC_IMPORTS
 
 
-def test_active_contract_exposes_s4_quantity_and_rule_foundations_without_runtime_composition():
+def test_active_contract_exposes_s4_quantity_rule_and_projection_foundations_without_runtime_composition():
     contract = aasm.public_api_contract()
     quantity = contract["engineering_quantity"]
     assert quantity["contract_id"] == "aasm.quantity.v1"
@@ -365,5 +367,22 @@ def test_active_contract_exposes_s4_quantity_and_rule_foundations_without_runtim
     assert rule["rule_existence_grants_fact_authority"] is False
     assert rule["rule_existence_grants_effect_authority"] is False
     assert rule["rule_existence_grants_source_authority"] is False
+
+    projection = contract["semantic_projection"]
+    assert projection["contract_id"] == "aasm.semantic.projection.v1"
+    assert projection["equivalence_contract_id"] == "aasm.semantic.equivalence.v1"
+    assert projection["invariant_contract_id"] == "aasm.invariant.v1"
+    assert projection["public_admission"] == "QUALIFIED_SEMANTIC_IR_ONLY"
+    assert projection["runtime_admission"] == "PRE_ADMISSION_ONLY"
+    assert projection["engine_state_integration"] == "NONE_SEMANTIC_IR_ONLY"
+    assert projection["parallel_projection_registry"] == "NONE"
+    assert projection["current_projection_pointer"] == "NONE"
+    assert projection["invariant_contract"]["classifications"] == [
+        "REPRESENTATIONAL", "STATIC_PROTOCOL", "DYNAMIC_KERNEL", "EMPIRICAL"
+    ]
+    assert all(value == "NONE" for value in projection["public_claim_ceiling"].values())
+
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert not any(name.startswith("rule_") for name in aasm.SUPPORTED_ENGINE_METHODS)
+    assert not any(name.startswith("semantic_projection_") for name in aasm.SUPPORTED_ENGINE_METHODS)
+    assert not any(name.startswith("semantic_equivalence_") for name in aasm.SUPPORTED_ENGINE_METHODS)
