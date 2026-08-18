@@ -6,8 +6,8 @@ from . import public_active_uncertainty_scenario_trace as _base
 
 # Preserve the complete qualified 0.32.19 public surface, then add only the
 # independently qualified S4.5 degraded-operation semantic policy/assessment IR.
-# This candidate cannot activate a mode, preempt authority, authorize/dispatch
-# effects, create a current-mode store, or expand an EffectCapability.
+# This active additive public layer cannot activate a mode, preempt authority,
+# authorize/dispatch effects, create a current-mode store, or expand an EffectCapability.
 for _name in dir(_base):
     if not _name.startswith("_"):
         globals()[_name] = getattr(_base, _name)
@@ -65,7 +65,7 @@ PUBLIC_API_CONTRACT.update(
         "runtime_version": __version__,
         "release_stability": PUBLIC_RELEASE_STABILITY,
         "description": (
-            "0.32.20 candidate boundary: qualified 0.32.19 uncertainty/scenario/trace-property plus "
+            "0.32.20 active additive boundary: qualified 0.32.19 uncertainty/scenario/trace-property plus "
             "degraded-operation semantic policy/assessment IR; no degraded-operation runtime composition."
         ),
         "supported_imports": SUPPORTED_PUBLIC_IMPORTS,
@@ -80,7 +80,7 @@ _degraded.update(
         "public_admission": DEGRADED_OPERATION_PUBLIC_ADMISSION,
         "runtime_admission": "PRE_ADMISSION_ONLY",
         "engine_state_integration": "NONE_SEMANTIC_IR_ONLY",
-        "active_root_status": "CANDIDATE_UNTIL_PACKAGE_ROOT_SWITCH",
+        "active_root_status": "ACTIVE_QUALIFIED_PUBLIC_ROOT",
         "public_role": "CAPABILITY_NARROWING_POLICY_AND_ASSESSMENT_ONLY",
         "mode_activation": "NONE",
         "public_claim_ceiling": {
@@ -112,17 +112,17 @@ def validate_public_api_contract() -> dict:
     if _base.PUBLIC_API_CONTRACT.get("contract_version") != PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION:
         errors.append("0.32.19 parent public adoption drifted")
     if AASMEngine is not _base.AASMEngine:
-        errors.append("degraded-operation public candidate forked AASMEngine")
+        errors.append("degraded-operation active public layer forked AASMEngine")
     if PUBLIC_API_CONTRACT.get("contract_version") != PUBLIC_ADOPTION_CONTRACT_VERSION:
-        errors.append("degraded-operation public candidate adoption version drift")
+        errors.append("degraded-operation active public adoption version drift")
     if PUBLIC_API_CONTRACT.get("parent_contract_version") != PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION:
-        errors.append("degraded-operation public candidate parent version drift")
+        errors.append("degraded-operation active public parent version drift")
     if PUBLIC_API_CONTRACT.get("supported_imports") != SUPPORTED_PUBLIC_IMPORTS:
-        errors.append("degraded-operation public import surface drift")
+        errors.append("degraded-operation active public import surface drift")
     if SUPPORTED_ENGINE_METHODS != list(getattr(_base, "SUPPORTED_ENGINE_METHODS", [])):
-        errors.append("degraded-operation public candidate added engine methods")
+        errors.append("degraded-operation active public layer added engine methods")
     if SUPPORTED_CLI_COMMANDS != list(getattr(_base, "SUPPORTED_CLI_COMMANDS", [])):
-        errors.append("degraded-operation public candidate changed CLI commands")
+        errors.append("degraded-operation active public layer changed CLI commands")
     if "degraded-operation" not in SUPPORTED_INSPECTION_SURFACES:
         errors.append("degraded-operation inspection surface missing")
     missing_imports = [name for name in _DEGRADED_IMPORTS if name not in globals()]
@@ -136,7 +136,7 @@ def validate_public_api_contract() -> dict:
         "public_admission": DEGRADED_OPERATION_PUBLIC_ADMISSION,
         "runtime_admission": "PRE_ADMISSION_ONLY",
         "engine_state_integration": "NONE_SEMANTIC_IR_ONLY",
-        "active_root_status": "CANDIDATE_UNTIL_PACKAGE_ROOT_SWITCH",
+        "active_root_status": "ACTIVE_QUALIFIED_PUBLIC_ROOT",
         "mode_activation": "NONE",
         "authority_ceiling": "EXACT_EXISTING_EFFECT_CAPABILITY_ID_AND_FINGERPRINT_ONLY_NEVER_AMPLIFIED",
         "hidden_current_mode": "NONE",
@@ -147,7 +147,7 @@ def validate_public_api_contract() -> dict:
     }
     for key, expected in required.items():
         if value.get(key) != expected:
-            errors.append(f"degraded-operation public {key} drift")
+            errors.append(f"degraded-operation active public {key} drift")
     if any(entry != "NONE" for entry in (value.get("public_claim_ceiling") or {}).values()):
         errors.append("degraded-operation public claim ceiling drift")
     if value.get("mode_selection_grants_effect_authority") is not False:
@@ -167,7 +167,7 @@ def validate_public_api_contract() -> dict:
         "parent_contract_version": PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION,
         "degraded_operation_contract_id": DEGRADED_OPERATION_CONTRACT_ID,
         "runtime_admission": "PRE_ADMISSION_ONLY",
-        "active_root_status": "CANDIDATE_UNTIL_PACKAGE_ROOT_SWITCH",
+        "active_root_status": "ACTIVE_QUALIFIED_PUBLIC_ROOT",
     }
 
 
