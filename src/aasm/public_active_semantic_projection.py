@@ -14,7 +14,30 @@ from .public_active_engineering_rule import (
     public_api_contract as _parent_public_api_contract,
     validate_public_api_contract as _validate_parent_public_api_contract,
 )
-from .semantic_projection import *
+from .semantic_projection import (
+    SEMANTIC_PROJECTION_CONTRACT_ID,
+    SEMANTIC_PROJECTION_CONTRACT_VERSION,
+    SEMANTIC_EQUIVALENCE_CONTRACT_ID,
+    SEMANTIC_EQUIVALENCE_CONTRACT_VERSION,
+    INVARIANT_CONTRACT_ID,
+    INVARIANT_CONTRACT_VERSION,
+    SEMANTIC_PROJECTION_STABILITY,
+    INVARIANT_CLASSIFICATIONS,
+    INVARIANT_TREATMENTS,
+    PROJECTION_FIDELITIES,
+    PROJECTION_STATUSES,
+    REVISION_POLICIES,
+    EQUIVALENCE_RELATIONS,
+    REVISION_RELATIONS,
+    InvariantRef,
+    SemanticSubjectRef,
+    SemanticProjectionDefinition,
+    SemanticProjectionResult,
+    SemanticEquivalenceAssessment,
+    assess_semantic_equivalence,
+    invariant_contract,
+    semantic_projection_contract,
+)
 from .semantic_projection import __all__ as _SEMANTIC_IMPORTS
 
 PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.18"
