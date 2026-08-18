@@ -45,16 +45,13 @@ jobs:
           set -euo pipefail
           if [ -n "${MANUAL_SHA:-}" ]; then ref="$MANUAL_SHA"; else ref="main"; fi
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
-
       - uses: actions/checkout@v7
         with:
           ref: ${{ steps.source.outputs.ref }}
           fetch-depth: 0
-
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-
       - name: Resolve release identity
         id: intent
         env:
@@ -90,11 +87,9 @@ jobs:
         with:
           ref: ${{ needs.release_intent.outputs.ref }}
           fetch-depth: 0
-
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
-
       - name: Require exact main commit and all qualification gates
         env:
           GH_TOKEN: ${{ github.token }}
@@ -136,6 +131,8 @@ jobs:
             aasm/engineering-semantic-projection-public \
             aasm/engineering-uncertainty-scenario-trace \
             aasm/engineering-uncertainty-scenario-trace-public \
+            aasm/engineering-degraded-operation \
+            aasm/engineering-degraded-operation-public \
             aasm/engineering-s4 \
             aasm/physical-evidence; do
             state=""
@@ -147,13 +144,11 @@ jobs:
             done
             test "$state" = success
           done
-
       - name: Enforce release identity and strict tracked-file inventory
         run: |
           python scripts/check_version_policy.py
           python scripts/release_manifest.py --check-file-list
           python scripts/check_release_contracts.py
-
       - name: Build and verify two byte-identical distributions
         id: release
         shell: bash
@@ -209,7 +204,6 @@ jobs:
           python scripts/release_artifacts.py verify-wheel "$(find dist -maxdepth 1 -name '*.whl' -print -quit)" --expected-version "$version"
           python scripts/release_artifacts.py verify-sdist "$(find dist -maxdepth 1 -name '*.tar.gz' -print -quit)" --expected-version "$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"; echo "tag=$tag" >> "$GITHUB_OUTPUT"; echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
-
       - name: Build historical release audit and immutable manifests
         env:
           GH_TOKEN: ${{ github.token }}
@@ -217,7 +211,6 @@ jobs:
         run: |
           python scripts/release_artifacts.py historical-report release-history.json --repository "$GITHUB_REPOSITORY" --output dist/historical-release-report.json --release-commit "$COMMIT_SHA"
           python scripts/release_artifacts.py manifest dist --checksums dist/SHA256SUMS.txt --json dist/release-manifest.json --commit-sha "$COMMIT_SHA"
-
       - name: Clean-install and exercise wheel
         env:
           EXPECTED_VERSION: ${{ steps.release.outputs.version }}
@@ -231,7 +224,6 @@ jobs:
           PY
           /tmp/aasm-release-venv/bin/aasm adoption-contract >/tmp/adoption.json
           /tmp/aasm-release-venv/bin/aasm runbook history-diagnosis >/tmp/runbook.json
-
       - name: Publish once and verify every remote asset byte
         env:
           GH_TOKEN: ${{ github.token }}
@@ -252,7 +244,6 @@ jobs:
           done
           test "$verified" = true
           gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" -f state=success -f context='aasm/release' -f description='deliberate reproducible release and exact remote assets verified' -f target_url="https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
-
       - uses: actions/upload-artifact@v7
         with:
           name: aasm-${{ steps.release.outputs.version }}-distributions
