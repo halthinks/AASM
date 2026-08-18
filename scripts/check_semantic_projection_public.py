@@ -20,6 +20,7 @@ def main() -> None:
     active = text("src/aasm/public_active_semantic_projection.py")
     parent = text("src/aasm/public_active_engineering_rule.py")
     s44_child = text("src/aasm/public_active_uncertainty_scenario_trace.py")
+    degraded_child = text("src/aasm/public_active_degraded_operation.py")
     package_root = text("src/aasm/__init__.py")
     foundation = "\n".join((
         text("src/aasm/semantic_projection.py"),
@@ -90,10 +91,13 @@ def main() -> None:
         require(token not in active, f"semantic projection public layer violates firewall: {token}")
 
     require('"contract_version": "0.32.17"' in parent, "qualified Rule parent public adoption drifted")
-    require('from . import public_active_semantic_projection as _base' in s44_child, "active 0.32.19 S4.4 layer does not inherit qualified 0.32.18 projection parent")
-    require('PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.18"' in s44_child, "active S4.4 child parent version drift")
-    require('from .public_active_uncertainty_scenario_trace import *' in package_root, "qualified 0.32.19 S4.4 surface is not package root")
-    require('from .public_active_uncertainty_scenario_trace import __version__, AASMEngine' in package_root, "package root does not bind 0.32.19 helpers")
+    require('from . import public_active_semantic_projection as _base' in s44_child, "qualified 0.32.19 S4.4 layer does not inherit qualified 0.32.18 projection parent")
+    require('PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.18"' in s44_child, "qualified S4.4 child parent version drift")
+    require('from . import public_active_uncertainty_scenario_trace as _base' in degraded_child, "active 0.32.20 child does not inherit qualified 0.32.19 S4.4 parent")
+    require('PARENT_PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.19"' in degraded_child, "active degraded-operation child parent version drift")
+    require('"active_root_status": "ACTIVE_QUALIFIED_PUBLIC_ROOT"' in degraded_child, "active degraded-operation status drift")
+    require('from .public_active_degraded_operation import *' in package_root, "qualified 0.32.20 degraded-operation surface is not package root")
+    require('from .public_active_degraded_operation import __version__, AASMEngine' in package_root, "package root does not bind 0.32.20 helpers")
     require('from .public_active_semantic_projection import *' not in package_root, "package root still points directly at 0.32.18 projection parent")
 
     require('"public_admission": "PRE_ADMISSION_ONLY"' in foundation, "semantic foundation public pre-admission declaration drifted")
@@ -103,7 +107,7 @@ def main() -> None:
 
     for token in (
         "test_semantic_projection_public_adoption_is_additive_over_qualified_rule_parent",
-        "test_semantic_projection_remains_qualified_03218_parent_beneath_active_03219",
+        "test_semantic_projection_remains_qualified_03218_parent_beneath_active_03220",
         "test_semantic_projection_public_adoption_preserves_full_parent_import_surface",
         "test_semantic_projection_public_adoption_adds_ir_without_engine_methods",
         "test_semantic_projection_public_claim_ceiling_and_invariant_classes_remain_strict",
@@ -111,7 +115,7 @@ def main() -> None:
     ):
         require(token in tests, f"semantic projection public corpus missing test: {token}")
 
-    print("S4 semantic projection/equivalence qualified 0.32.18 parent beneath active 0.32.19: PASS")
+    print("S4 semantic projection/equivalence qualified 0.32.18 parent beneath active 0.32.20: PASS")
 
 
 if __name__ == "__main__":
