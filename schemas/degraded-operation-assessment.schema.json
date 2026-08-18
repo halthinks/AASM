@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/degraded-operation-assessment.schema.json",
+  "title": "AASM Degraded Operation Assessment v1",
+  "type": "object",
+  "required": [
+    "assessment_id", "contract_id", "contract_version", "policy_id", "policy_fingerprint",
+    "capability_id", "capability_fingerprint", "context_fingerprint", "mode", "status",
+    "allowed_operations", "effect_policy", "remote_dependency_policy", "preemption_requirement",
+    "recovery_intent", "matched_rule_id", "diagnostics", "effect_authority_granted",
+    "reusable_authorization_token", "mode_activation_performed", "capability_liveness_checked", "fingerprint"
+  ],
+  "properties": {
+    "assessment_id": {"type": "string", "pattern": "^degraded-operation-assessment-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.degraded.operation.assessment.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "policy_id": {"type": "string", "minLength": 1},
+    "policy_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "capability_id": {"type": "string", "minLength": 1},
+    "capability_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "context_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "mode": {"enum": ["FULL_OPERATION", "DEGRADED_OPERATION", "LOCAL_ONLY", "SAFE_HOLD", "RETURN_TO_SAFE_STATE", "EMERGENCY"]},
+    "status": {"enum": ["SELECTED", "FAIL_CLOSED"]},
+    "allowed_operations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "effect_policy": {"enum": ["EXISTING_CAPABILITY_SUBSET_ONLY", "NO_NEW_EFFECTS"]},
+    "remote_dependency_policy": {"enum": ["ALLOW", "FORBID"]},
+    "preemption_requirement": {"enum": ["NONE", "EXPLICIT_EXISTING_PREEMPTION_REQUIRED"]},
+    "recovery_intent": {"enum": ["NONE", "HOLD", "RETURN_TO_SAFE_STATE", "EMERGENCY_RESPONSE"]},
+    "matched_rule_id": {"type": "string"},
+    "diagnostics": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "effect_authority_granted": {"const": false},
+    "reusable_authorization_token": {"const": false},
+    "mode_activation_performed": {"const": false},
+    "capability_liveness_checked": {"const": false},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

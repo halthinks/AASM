@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/degraded-operation.schema.json",
+  "title": "AASM Degraded Operation Policy v1",
+  "type": "object",
+  "required": [
+    "policy_id", "contract_id", "contract_version", "policy_name", "workspace_id", "scope_id", "subject_id",
+    "base_capability_id", "base_capability_fingerprint", "problem_revision_id", "problem_revision_fingerprint",
+    "dependency_ids", "mode_envelopes", "selection_rules", "fallback_mode", "metadata", "fingerprint"
+  ],
+  "properties": {
+    "policy_id": {"type": "string", "pattern": "^degraded-operation-policy-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.degraded.operation.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "policy_name": {"type": "string", "minLength": 1},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "subject_id": {"type": "string", "minLength": 1},
+    "base_capability_id": {"type": "string", "minLength": 1},
+    "base_capability_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "problem_revision_id": {"type": "string", "minLength": 1},
+    "problem_revision_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "dependency_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "mode_envelopes": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"$ref": "#/$defs/modeEnvelope"}},
+    "selection_rules": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/selectionRule"}},
+    "fallback_mode": {"const": "SAFE_HOLD"},
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "modeEnvelope": {
+      "type": "object",
+      "required": ["mode", "allowed_operations", "effect_policy", "remote_dependency_policy", "preemption_requirement", "recovery_intent", "metadata"],
+      "properties": {
+        "mode": {"enum": ["FULL_OPERATION", "DEGRADED_OPERATION", "LOCAL_ONLY", "SAFE_HOLD", "RETURN_TO_SAFE_STATE", "EMERGENCY"]},
+        "allowed_operations": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "effect_policy": {"enum": ["EXISTING_CAPABILITY_SUBSET_ONLY", "NO_NEW_EFFECTS"]},
+        "remote_dependency_policy": {"enum": ["ALLOW", "FORBID"]},
+        "preemption_requirement": {"enum": ["NONE", "EXPLICIT_EXISTING_PREEMPTION_REQUIRED"]},
+        "recovery_intent": {"enum": ["NONE", "HOLD", "RETURN_TO_SAFE_STATE", "EMERGENCY_RESPONSE"]},
+        "metadata": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "requirement": {
+      "type": "object",
+      "required": ["dependency_id", "allowed_statuses"],
+      "properties": {
+        "dependency_id": {"type": "string", "minLength": 1},
+        "allowed_statuses": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"enum": ["AVAILABLE", "DEGRADED", "UNAVAILABLE"]}
+        }
+      },
+      "additionalProperties": false
+    },
+    "selectionRule": {
+      "type": "object",
+      "required": ["rule_id", "mode", "requirements", "metadata"],
+      "properties": {
+        "rule_id": {"type": "string", "minLength": 1},
+        "mode": {"enum": ["FULL_OPERATION", "DEGRADED_OPERATION", "LOCAL_ONLY", "SAFE_HOLD", "RETURN_TO_SAFE_STATE", "EMERGENCY"]},
+        "requirements": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/requirement"}},
+        "metadata": {"type": "object"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
