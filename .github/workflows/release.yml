@@ -132,6 +132,9 @@ jobs:
             aasm/entity-evolution \
             aasm/engineering-quantity \
             aasm/engineering-rule \
+            aasm/engineering-semantic-projection \
+            aasm/engineering-semantic-projection-public \
+            aasm/engineering-s4 \
             aasm/physical-evidence; do
             state=""
             for _ in $(seq 1 90); do
