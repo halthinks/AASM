@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/irreversibility-assurance-policy.schema.json",
+  "title": "AASM Irreversibility Assurance Policy v1",
+  "type": "object",
+  "required": ["required_levels", "metadata", "fingerprint"],
+  "properties": {
+    "required_levels": {
+      "type": "object",
+      "required": ["REVERSIBLE", "CONDITIONALLY_REVERSIBLE", "COSTLY_TO_REVERSE", "IRREVERSIBLE", "UNKNOWN"],
+      "properties": {
+        "REVERSIBLE": {"enum": ["BASELINE", "ELEVATED", "STRONG", "MAXIMUM"]},
+        "CONDITIONALLY_REVERSIBLE": {"enum": ["BASELINE", "ELEVATED", "STRONG", "MAXIMUM"]},
+        "COSTLY_TO_REVERSE": {"enum": ["BASELINE", "ELEVATED", "STRONG", "MAXIMUM"]},
+        "IRREVERSIBLE": {"enum": ["BASELINE", "ELEVATED", "STRONG", "MAXIMUM"]},
+        "UNKNOWN": {"const": "MAXIMUM"}
+      },
+      "additionalProperties": false
+    },
+    "metadata": {"type": "object"},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}
