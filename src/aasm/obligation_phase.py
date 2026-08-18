@@ -9,8 +9,8 @@ from .calculus import (
     OBLIGATION_STATUSES,
     OBLIGATION_TRANSITIONS,
     ObligationRecord,
+    content_hash,
     normalize_calculus_state,
-    obligation_fingerprint,
 )
 from .scopes import ROOT_SCOPE_ID, scope_id_from, with_scope
 from .semantic_result import semantic_fingerprint
@@ -25,6 +25,7 @@ OBLIGATION_PHASE_ASSESSMENT_CONTRACT_VERSION = "0.1.0"
 OBLIGATION_PHASE_STABILITY = "FOUNDATION_EXPERIMENTAL"
 CALCULUS_SUBSTRATE_ID = "aasm.calculus.v1"
 CALCULUS_STATE_SCHEMA_VERSION = 1
+OBLIGATION_BINDING_PROJECTION_ID = "aasm.obligation.phase.binding-projection.v1"
 
 OBLIGATION_PHASES = (
     "PRE_AUTHORIZE",
@@ -99,6 +100,37 @@ def _canonical_obligation(value: ObligationRecord | Mapping[str, Any]) -> dict[s
     return row
 
 
+def obligation_binding_projection(value: ObligationRecord | Mapping[str, Any]) -> dict[str, Any]:
+    """Project stable obligation requirements for phase-binding staleness checks.
+
+    This is deliberately not an ObligationRecord identity or replacement.  The
+    live calculus has no native obligation fingerprint contract.  S4.7 binds
+    only to a versioned semantic projection and leaves the canonical
+    obligation_id, store, status machine, evidence attachment, locks, attempts,
+    fairness, and mutation ownership unchanged.
+    """
+    row = _canonical_obligation(value)
+    projection = {
+        "projection_id": OBLIGATION_BINDING_PROJECTION_ID,
+        "obligation_id": row["obligation_id"],
+        "statement": row["statement"],
+        "activation_condition": deepcopy(row.get("activation_condition") or {"const": True}),
+        "dependencies": sorted({str(v) for v in row.get("dependencies", [])}),
+        "decision_dependencies": sorted({str(v) for v in row.get("decision_dependencies", [])}),
+        "plan_node_ids": sorted({str(v) for v in row.get("plan_node_ids", [])}),
+        "required_evidence_types": sorted({str(v) for v in row.get("required_evidence_types", [])}),
+        "persistent": bool(row.get("persistent", True)),
+        "mandatory": bool(row.get("mandatory", True)),
+        "scope": with_scope(row.get("scope") if isinstance(row.get("scope"), Mapping) else {}, scope_id_from(row)),
+    }
+    return _jsonable(projection)
+
+
+def obligation_semantic_fingerprint(value: ObligationRecord | Mapping[str, Any]) -> str:
+    """Hash the S4.7 binding projection with the existing calculus content hash."""
+    return content_hash(obligation_binding_projection(value))
+
+
 def phase_relation(left: str, right: str) -> str:
     """Compare applicability phases without inventing an order for RECOVERY."""
     left_phase = _phase(left)
@@ -115,7 +147,7 @@ def phase_relation(left: str, right: str) -> str:
 @dataclass(frozen=True)
 class ObligationPhaseBinding:
     obligation_id: str
-    obligation_fingerprint: str
+    obligation_semantic_fingerprint: str
     phase: str
     problem_revision_id: str
     problem_revision_fingerprint: str
@@ -129,14 +161,14 @@ class ObligationPhaseBinding:
         if self.contract_id != OBLIGATION_PHASE_BINDING_CONTRACT_ID or self.contract_version != OBLIGATION_PHASE_BINDING_CONTRACT_VERSION:
             raise ValueError("unsupported obligation phase-binding contract")
         obligation_id = _required("obligation_id", self.obligation_id)
-        fingerprint = _sha256("obligation_fingerprint", self.obligation_fingerprint)
+        fingerprint = _sha256("obligation_semantic_fingerprint", self.obligation_semantic_fingerprint)
         phase = _phase(self.phase)
         revision_id = _required("problem_revision_id", self.problem_revision_id)
         revision_fingerprint = _sha256("problem_revision_fingerprint", self.problem_revision_fingerprint)
         scope_id = _required("scope_id", self.scope_id)
         metadata = _jsonable(dict(self.metadata))
         object.__setattr__(self, "obligation_id", obligation_id)
-        object.__setattr__(self, "obligation_fingerprint", fingerprint)
+        object.__setattr__(self, "obligation_semantic_fingerprint", fingerprint)
         object.__setattr__(self, "phase", phase)
         object.__setattr__(self, "problem_revision_id", revision_id)
         object.__setattr__(self, "problem_revision_fingerprint", revision_fingerprint)
@@ -153,7 +185,7 @@ class ObligationPhaseBinding:
             "contract_id": self.contract_id,
             "contract_version": self.contract_version,
             "obligation_id": self.obligation_id,
-            "obligation_fingerprint": self.obligation_fingerprint,
+            "obligation_semantic_fingerprint": self.obligation_semantic_fingerprint,
             "phase": self.phase,
             "problem_revision_id": self.problem_revision_id,
             "problem_revision_fingerprint": self.problem_revision_fingerprint,
@@ -387,7 +419,7 @@ def bind_obligation_phase(
     row = _canonical_obligation(obligation)
     return ObligationPhaseBinding(
         obligation_id=row["obligation_id"],
-        obligation_fingerprint=obligation_fingerprint(row),
+        obligation_semantic_fingerprint=obligation_semantic_fingerprint(row),
         phase=phase,
         problem_revision_id=problem_revision_id,
         problem_revision_fingerprint=problem_revision_fingerprint,
@@ -404,9 +436,9 @@ def validate_obligation_phase_binding(
     row = _canonical_obligation(obligation)
     if item.obligation_id != row["obligation_id"]:
         raise ValueError("obligation phase binding obligation_id mismatch")
-    actual_fingerprint = obligation_fingerprint(row)
-    if item.obligation_fingerprint != actual_fingerprint:
-        raise ValueError("obligation phase binding is stale or mismatched for canonical obligation fingerprint")
+    actual_fingerprint = obligation_semantic_fingerprint(row)
+    if item.obligation_semantic_fingerprint != actual_fingerprint:
+        raise ValueError("obligation phase binding is stale or mismatched for S4.7 obligation semantic projection")
     actual_scope = scope_id_from(row)
     if item.scope_id != actual_scope:
         raise ValueError("obligation phase binding scope_id mismatch")
@@ -414,8 +446,9 @@ def validate_obligation_phase_binding(
         "valid": True,
         "binding_id": item.binding_id,
         "binding_fingerprint": item.fingerprint,
+        "binding_projection_id": OBLIGATION_BINDING_PROJECTION_ID,
         "obligation_id": item.obligation_id,
-        "obligation_fingerprint": actual_fingerprint,
+        "obligation_semantic_fingerprint": actual_fingerprint,
         "scope_id": actual_scope,
         "phase": item.phase,
     }
@@ -481,6 +514,7 @@ def validate_obligation_phase_plan(
         "plan_id": item.plan_id,
         "plan_fingerprint": item.fingerprint,
         "calculus_state_schema_version": CALCULUS_STATE_SCHEMA_VERSION,
+        "binding_projection_id": OBLIGATION_BINDING_PROJECTION_ID,
         "obligation_count": len(obligations),
         "edge_count": len(actual_edges),
         "recovery_edges": recovery_edges,
@@ -558,7 +592,18 @@ def obligation_phase_contract() -> dict[str, Any]:
         "calculus_contract_id": CALCULUS_SUBSTRATE_ID,
         "calculus_state_schema_version": CALCULUS_STATE_SCHEMA_VERSION,
         "obligation_type": "EXISTING_AASM_CALCULUS_V1_OBLIGATION_RECORD_ONLY",
-        "obligation_fingerprint": "EXISTING_AASM_CALCULUS_V1_OBLIGATION_FINGERPRINT_ONLY",
+        "obligation_identity": "EXISTING_OBLIGATION_ID_UNCHANGED_NO_NEW_OBLIGATION_IDENTITY",
+        "binding_projection_id": OBLIGATION_BINDING_PROJECTION_ID,
+        "binding_projection": "VERSIONED_STABLE_REQUIREMENT_PROJECTION_HASHED_WITH_EXISTING_CALCULUS_CONTENT_HASH",
+        "binding_projection_includes": [
+            "obligation_id", "statement", "activation_condition", "dependencies", "decision_dependencies",
+            "plan_node_ids", "required_evidence_types", "persistent", "mandatory", "scope",
+        ],
+        "binding_projection_excludes_runtime_fields": [
+            "status", "evidence_ids", "artifact_ids", "lock_ids", "attempt_count", "created_sequence",
+            "last_state_change_sequence", "disposition_reason",
+        ],
+        "binding_projection_is_obligation_identity": False,
         "obligation_store": "EXISTING_AASM_CALCULUS_V1_ONLY",
         "obligation_edges": "EXISTING_AASM_CALCULUS_V1_REQUIRES_EDGES_ONLY",
         "obligation_statuses": sorted(OBLIGATION_STATUSES),
@@ -605,6 +650,7 @@ __all__ = [
     "OBLIGATION_PHASE_STABILITY",
     "CALCULUS_SUBSTRATE_ID",
     "CALCULUS_STATE_SCHEMA_VERSION",
+    "OBLIGATION_BINDING_PROJECTION_ID",
     "OBLIGATION_PHASES",
     "NORMAL_OBLIGATION_PHASES",
     "OBLIGATION_PHASE_READINESS",
@@ -613,6 +659,8 @@ __all__ = [
     "ObligationPhaseBinding",
     "ObligationPhasePlan",
     "ObligationPhaseAssessment",
+    "obligation_binding_projection",
+    "obligation_semantic_fingerprint",
     "phase_relation",
     "bind_obligation_phase",
     "validate_obligation_phase_binding",
