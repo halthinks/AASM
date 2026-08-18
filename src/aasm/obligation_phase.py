@@ -6,8 +6,6 @@ import re
 from typing import Any, Mapping, Sequence
 
 from .calculus import (
-    CALCULUS_CONTRACT_ID,
-    CALCULUS_CONTRACT_VERSION,
     OBLIGATION_STATUSES,
     OBLIGATION_TRANSITIONS,
     ObligationRecord,
@@ -25,6 +23,8 @@ OBLIGATION_PHASE_BINDING_CONTRACT_VERSION = "0.1.0"
 OBLIGATION_PHASE_ASSESSMENT_CONTRACT_ID = "aasm.obligation.phase-assessment.v1"
 OBLIGATION_PHASE_ASSESSMENT_CONTRACT_VERSION = "0.1.0"
 OBLIGATION_PHASE_STABILITY = "FOUNDATION_EXPERIMENTAL"
+CALCULUS_SUBSTRATE_ID = "aasm.calculus.v1"
+CALCULUS_STATE_SCHEMA_VERSION = 1
 
 OBLIGATION_PHASES = (
     "PRE_AUTHORIZE",
@@ -277,9 +277,10 @@ class ObligationPhaseAssessment:
         readiness = _required("readiness", self.readiness).upper()
         if readiness not in OBLIGATION_PHASE_READINESS:
             raise ValueError(f"unsupported obligation phase readiness: {readiness}")
+
         def ids(values: Sequence[Any], name: str) -> tuple[str, ...]:
-            normalized = tuple(sorted({_required(name, value) for value in values}))
-            return normalized
+            return tuple(sorted({_required(name, value) for value in values}))
+
         required = ids(self.required_obligation_ids, "required obligation_id")
         satisfied = ids(self.satisfied_obligation_ids, "satisfied obligation_id")
         blocking = ids(self.blocking_obligation_ids, "blocking obligation_id")
@@ -288,7 +289,10 @@ class ObligationPhaseAssessment:
             raise ValueError("obligation phase assessment result sets must be subsets of required obligations")
         if set(satisfied) & (set(blocking) | set(terminal)) or set(blocking) & set(terminal):
             raise ValueError("obligation phase assessment result sets must be disjoint")
-        statuses = {str(key): _required("observed obligation status", value).upper() for key, value in sorted(self.observed_statuses.items())}
+        statuses = {
+            str(key): _required("observed obligation status", value).upper()
+            for key, value in sorted(self.observed_statuses.items())
+        }
         if set(statuses) != set(required):
             raise ValueError("obligation phase observed statuses must exactly cover required obligations")
         for status in statuses.values():
@@ -296,8 +300,12 @@ class ObligationPhaseAssessment:
                 raise ValueError(f"unsupported observed obligation status: {status}")
         reasons = ids(self.reasons, "assessment reason")
         for name in (
-            "effect_authority_granted", "authorization_performed", "dispatch_performed",
-            "recovery_execution_performed", "obligation_status_mutated", "phase_activated",
+            "effect_authority_granted",
+            "authorization_performed",
+            "dispatch_performed",
+            "recovery_execution_performed",
+            "obligation_status_mutated",
+            "phase_activated",
         ):
             if bool(getattr(self, name)):
                 raise ValueError(f"obligation phase assessment cannot set {name}=True")
@@ -355,8 +363,11 @@ class ObligationPhaseAssessment:
         payload = deepcopy(dict(value))
         supplied = str(payload.pop("fingerprint", "")).strip()
         for name in (
-            "required_obligation_ids", "satisfied_obligation_ids", "blocking_obligation_ids",
-            "terminal_unsatisfied_obligation_ids", "reasons",
+            "required_obligation_ids",
+            "satisfied_obligation_ids",
+            "blocking_obligation_ids",
+            "terminal_unsatisfied_obligation_ids",
+            "reasons",
         ):
             payload[name] = tuple(payload.get(name) or ())
         item = cls(**payload)
@@ -415,6 +426,8 @@ def validate_obligation_phase_plan(
     plan: ObligationPhasePlan | Mapping[str, Any],
 ) -> dict[str, Any]:
     state = normalize_calculus_state(deepcopy(dict(calculus_state)))
+    if int(state.get("schema_version", -1)) != CALCULUS_STATE_SCHEMA_VERSION:
+        raise ValueError("obligation phase plan requires the existing calculus state schema_version 1")
     item = plan if isinstance(plan, ObligationPhasePlan) else ObligationPhasePlan.from_dict(plan)
     obligations = dict(state.get("obligations") or {})
     bindings = {binding.obligation_id: binding for binding in item.bindings}
@@ -431,7 +444,8 @@ def validate_obligation_phase_plan(
         for dependency in obligation.get("dependencies", [])
     }
     actual_edges: set[tuple[str, str, str]] = set()
-    for raw in state.get("obligation_edges", []):
+    raw_edges = list(state.get("obligation_edges", []))
+    for raw in raw_edges:
         edge = dict(raw)
         relation = _required("obligation edge relation", edge.get("relation"))
         src = _required("obligation edge src", edge.get("src"))
@@ -440,7 +454,10 @@ def validate_obligation_phase_plan(
             raise ValueError("obligation phase plan encountered edge with unknown canonical obligation")
         if src == dst:
             raise ValueError("obligation phase plan encountered self-referential obligation edge")
-        actual_edges.add((src, dst, relation))
+        key = (src, dst, relation)
+        if key in actual_edges:
+            raise ValueError("obligation phase plan encountered duplicate canonical obligation edge")
+        actual_edges.add(key)
     if actual_edges != expected_edges:
         raise ValueError("canonical obligation_edges must exactly represent ObligationRecord.dependencies before phase validation")
 
@@ -463,6 +480,7 @@ def validate_obligation_phase_plan(
         "valid": True,
         "plan_id": item.plan_id,
         "plan_fingerprint": item.fingerprint,
+        "calculus_state_schema_version": CALCULUS_STATE_SCHEMA_VERSION,
         "obligation_count": len(obligations),
         "edge_count": len(actual_edges),
         "recovery_edges": recovery_edges,
@@ -537,8 +555,8 @@ def obligation_phase_contract() -> dict[str, Any]:
         "binding_contract_id": OBLIGATION_PHASE_BINDING_CONTRACT_ID,
         "assessment_contract_id": OBLIGATION_PHASE_ASSESSMENT_CONTRACT_ID,
         "stability": OBLIGATION_PHASE_STABILITY,
-        "calculus_contract_id": CALCULUS_CONTRACT_ID,
-        "calculus_contract_version": CALCULUS_CONTRACT_VERSION,
+        "calculus_contract_id": CALCULUS_SUBSTRATE_ID,
+        "calculus_state_schema_version": CALCULUS_STATE_SCHEMA_VERSION,
         "obligation_type": "EXISTING_AASM_CALCULUS_V1_OBLIGATION_RECORD_ONLY",
         "obligation_fingerprint": "EXISTING_AASM_CALCULUS_V1_OBLIGATION_FINGERPRINT_ONLY",
         "obligation_store": "EXISTING_AASM_CALCULUS_V1_ONLY",
@@ -585,6 +603,8 @@ __all__ = [
     "OBLIGATION_PHASE_ASSESSMENT_CONTRACT_ID",
     "OBLIGATION_PHASE_ASSESSMENT_CONTRACT_VERSION",
     "OBLIGATION_PHASE_STABILITY",
+    "CALCULUS_SUBSTRATE_ID",
+    "CALCULUS_STATE_SCHEMA_VERSION",
     "OBLIGATION_PHASES",
     "NORMAL_OBLIGATION_PHASES",
     "OBLIGATION_PHASE_READINESS",
