@@ -14,8 +14,8 @@ def test_v56_base_is_frozen_and_active_overlay_advances_adoption_only():
     assert public_v56.PUBLIC_API_CONTRACT["contract_version"] == "0.32.6"
     assert public_v55.__version__ == "0.55.0"
     assert aasm.__version__ == "0.56.1"
-    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.18"
-    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.17"
+    assert aasm.PUBLIC_API_CONTRACT["contract_version"] == "0.32.19"
+    assert aasm.PUBLIC_API_CONTRACT["parent_contract_version"] == "0.32.18"
     assert aasm.AASMEngine is public_active.AASMEngine
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert public_v56.AASMEngine is not public_v55.AASMEngine
@@ -67,8 +67,8 @@ def test_active_engine_exposes_external_reality_physical_control_and_s3_reality_
 
 def test_active_contract_preserves_external_reality_physical_control_and_s3_firewalls():
     contract = aasm.public_api_contract()
-    assert contract["contract_version"] == "0.32.18"
-    assert contract["parent_contract_version"] == "0.32.17"
+    assert contract["contract_version"] == "0.32.19"
+    assert contract["parent_contract_version"] == "0.32.18"
 
     outcome = contract["solver_outcome_v2"]
     assert outcome["authoritative_detailed_status"] == "normalized_status"
@@ -382,7 +382,44 @@ def test_active_contract_exposes_s4_quantity_rule_and_projection_foundations_wit
     ]
     assert all(value == "NONE" for value in projection["public_claim_ceiling"].values())
 
+    uncertainty = contract["uncertainty"]
+    assert uncertainty["contract_id"] == "aasm.uncertainty.v1"
+    assert uncertainty["public_admission"] == "QUALIFIED_SEMANTIC_IR_ONLY"
+    assert uncertainty["runtime_admission"] == "PRE_ADMISSION_ONLY"
+    assert uncertainty["engine_state_integration"] == "NONE_SEMANTIC_IR_ONLY"
+    assert uncertainty["parallel_uncertainty_registry"] == "NONE"
+    assert uncertainty["current_uncertainty_pointer"] == "NONE"
+    assert uncertainty["probability_inference"] == "NONE"
+    assert all(value == "NONE" for value in uncertainty["public_claim_ceiling"].values())
+
+    scenario = contract["scenario"]
+    assert scenario["contract_id"] == "aasm.scenario.v1"
+    assert scenario["public_admission"] == "QUALIFIED_SEMANTIC_IR_ONLY"
+    assert scenario["runtime_admission"] == "PRE_ADMISSION_ONLY"
+    assert scenario["engine_state_integration"] == "NONE_SEMANTIC_IR_ONLY"
+    assert scenario["scenario_is_problem_revision"] is False
+    assert scenario["scenario_is_evidence"] is False
+    assert scenario["scenario_activation"] == "NONE_FOUNDATION_ONLY"
+    assert scenario["parallel_scenario_registry"] == "NONE"
+    assert scenario["hidden_current_scenario"] == "NONE"
+    assert all(value == "NONE" for value in scenario["public_claim_ceiling"].values())
+
+    trace_property = contract["trace_property"]
+    assert trace_property["contract_id"] == "aasm.trace-property.v1"
+    assert trace_property["public_admission"] == "QUALIFIED_SEMANTIC_IR_ONLY"
+    assert trace_property["runtime_admission"] == "PRE_ADMISSION_ONLY"
+    assert trace_property["engine_state_integration"] == "NONE_SEMANTIC_IR_ONLY"
+    assert trace_property["trace_projection"] == "EXISTING_PROJECT_TRACE_FUNCTION_UNCHANGED"
+    assert trace_property["invariant_classification"] == "DYNAMIC_KERNEL"
+    assert trace_property["static_constraint_lowering"] == "NONE"
+    assert trace_property["parallel_trace_store"] == "NONE"
+    assert trace_property["parallel_property_registry"] == "NONE"
+    assert all(value == "NONE" for value in trace_property["public_claim_ceiling"].values())
+
     assert aasm.AASMEngine is public_v56.AASMEngine
     assert not any(name.startswith("rule_") for name in aasm.SUPPORTED_ENGINE_METHODS)
     assert not any(name.startswith("semantic_projection_") for name in aasm.SUPPORTED_ENGINE_METHODS)
     assert not any(name.startswith("semantic_equivalence_") for name in aasm.SUPPORTED_ENGINE_METHODS)
+    assert not any(name.startswith("uncertainty_") for name in aasm.SUPPORTED_ENGINE_METHODS)
+    assert not any(name.startswith("scenario_") for name in aasm.SUPPORTED_ENGINE_METHODS)
+    assert not any(name.startswith("trace_property_") for name in aasm.SUPPORTED_ENGINE_METHODS)
