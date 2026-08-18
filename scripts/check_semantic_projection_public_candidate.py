@@ -46,7 +46,7 @@ def main() -> None:
     ):
         require(token not in candidate, f"semantic projection public candidate violates source firewall: {token}")
     require('from .public_active_engineering_rule import (' in candidate, "candidate does not inherit qualified Rule public boundary")
-    require('PUBLIC_ADOPTION_CONTRACT_VERSION = "0.32.17"' in parent, "Rule parent public adoption drifted")
+    require('"contract_version": "0.32.17"' in parent, "Rule parent public adoption drifted")
     require('from .public_active_engineering_rule import (' in package_root, "active package root changed before candidate qualification")
     require("public_active_semantic_projection" not in package_root, "candidate activated before qualification")
     require('"public_admission": "PRE_ADMISSION_ONLY"' in semantic, "foundation semantic projection claim ceiling drifted")
