@@ -1,10 +1,54 @@
 from __future__ import annotations
 
-from typing import Any
+from copy import deepcopy
+from typing import Any, Mapping
 
 from ._calculus_model import *
 from ._calculus_logic import *
-from .scopes import assert_scope_calculus_invariants
+from .scopes import assert_scope_calculus_invariants, scope_id_from, with_scope
+
+
+_OBLIGATION_SEMANTIC_LIST_FIELDS = (
+    "dependencies",
+    "decision_dependencies",
+    "plan_node_ids",
+    "required_evidence_types",
+    "artifact_ids",
+)
+
+
+def obligation_identity_payload(record: ObligationRecord | Mapping[str, Any]) -> dict[str, Any]:
+    """Return the stable semantic identity of an existing calculus obligation.
+
+    The existing ObligationRecord owns lifecycle state. This projection binds the
+    obligation's requirements and graph/application context while deliberately
+    excluding mutable execution-progress fields such as status, evidence_ids,
+    lock_ids, attempts, sequences, and disposition_reason.
+    """
+    row = record.to_dict() if isinstance(record, ObligationRecord) else deepcopy(dict(record))
+    obligation_id = str(row.get("obligation_id") or "").strip()
+    statement = str(row.get("statement") or "").strip()
+    if not obligation_id or not statement:
+        raise ValueError("obligation semantic identity requires obligation_id and statement")
+    scope_id = scope_id_from(row)
+    scope = with_scope(row.get("scope") if isinstance(row.get("scope"), dict) else {}, scope_id)
+    payload = {
+        "obligation_id": obligation_id,
+        "statement": statement,
+        "activation_condition": deepcopy(row.get("activation_condition") or {"const": True}),
+        "persistent": bool(row.get("persistent", True)),
+        "mandatory": bool(row.get("mandatory", True)),
+        "scope": scope,
+    }
+    for field_name in _OBLIGATION_SEMANTIC_LIST_FIELDS:
+        payload[field_name] = sorted({str(value) for value in (row.get(field_name) or [])})
+    return payload
+
+
+def obligation_fingerprint(record: ObligationRecord | Mapping[str, Any]) -> str:
+    """Hash only the stable semantic projection of an existing obligation."""
+    return content_hash(obligation_identity_payload(record))
+
 
 def assert_calculus_invariants(calculus: dict[str, Any]) -> None:
     state = normalize_calculus_state(calculus)
