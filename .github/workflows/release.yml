@@ -133,6 +133,8 @@ jobs:
             aasm/engineering-uncertainty-scenario-trace-public \
             aasm/engineering-degraded-operation \
             aasm/engineering-degraded-operation-public \
+            aasm/engineering-risk-irreversibility \
+            aasm/engineering-obligation-phase \
             aasm/engineering-s4 \
             aasm/physical-evidence; do
             state=""
