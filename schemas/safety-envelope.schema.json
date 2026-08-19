@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/safety-envelope.schema.json",
+  "title": "AASM Safety Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["envelope_id", "contract_id", "contract_version", "envelope_name", "subject", "problem_revision_id", "problem_revision_fingerprint", "modes", "evidence_ids", "external_references", "metadata", "fingerprint"],
+  "properties": {
+    "envelope_id": {"type": "string", "pattern": "^safety-envelope-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.safety.envelope.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "envelope_name": {"type": "string", "minLength": 1},
+    "subject": {"$ref": "#/$defs/semanticSubjectRef"},
+    "problem_revision_id": {"type": "string", "minLength": 1},
+    "problem_revision_fingerprint": {"$ref": "#/$defs/sha256"},
+    "modes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/modeEnvelope"}},
+    "evidence_ids": {"$ref": "#/$defs/uniqueStrings"},
+    "external_references": {"type": "array", "items": {"$ref": "#/$defs/externalReference"}},
+    "metadata": {"$ref": "#/$defs/portableObject"},
+    "fingerprint": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "uniqueStrings": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "portableValue": {"oneOf": [{"type": "null"}, {"type": "boolean"}, {"type": "string"}, {"type": "integer"}, {"type": "array", "items": {"$ref": "#/$defs/portableValue"}}, {"$ref": "#/$defs/portableObject"}]},
+    "portableObject": {"type": "object", "additionalProperties": {"$ref": "#/$defs/portableValue"}},
+    "semanticSubjectRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["semantic_type_id", "object_id", "fingerprint", "revision_id", "revision_fingerprint"],
+      "properties": {
+        "semantic_type_id": {"type": "string", "minLength": 1}, "object_id": {"type": "string", "minLength": 1}, "fingerprint": {"$ref": "#/$defs/sha256"},
+        "revision_id": {"type": "string"}, "revision_fingerprint": {"type": "string", "pattern": "^(?:|[0-9a-f]{64})$"}
+      }
+    },
+    "externalReference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["contract_id", "contract_version", "namespace", "external_id", "role", "revision", "source_fingerprint", "source_location", "semantic_entity_id", "metadata", "key", "fingerprint"],
+      "properties": {
+        "contract_id": {"const": "aasm.external.reference.v1"}, "contract_version": {"const": "0.1.0"},
+        "namespace": {"type": "string", "minLength": 1}, "external_id": {"type": "string", "minLength": 1}, "role": {"type": "string", "minLength": 1},
+        "revision": {"type": "string"}, "source_fingerprint": {"type": "string"}, "source_location": {"$ref": "#/$defs/portableObject"},
+        "semantic_entity_id": {"type": "string"}, "metadata": {"$ref": "#/$defs/portableObject"}, "key": {"type": "string", "minLength": 1}, "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "constraint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["constraint_id", "variable_id", "rule_revision_id", "rule_fingerprint", "allowed_quantity_id", "allowed_quantity_fingerprint", "allowed_projection_fingerprint", "evidence_ids", "external_references", "metadata", "fingerprint"],
+      "properties": {
+        "constraint_id": {"type": "string", "minLength": 1}, "variable_id": {"type": "string", "minLength": 1},
+        "rule_revision_id": {"type": "string", "minLength": 1}, "rule_fingerprint": {"$ref": "#/$defs/sha256"},
+        "allowed_quantity_id": {"type": "string", "minLength": 1}, "allowed_quantity_fingerprint": {"$ref": "#/$defs/sha256"},
+        "allowed_projection_fingerprint": {"$ref": "#/$defs/sha256"}, "evidence_ids": {"$ref": "#/$defs/uniqueStrings"},
+        "external_references": {"type": "array", "items": {"$ref": "#/$defs/externalReference"}}, "metadata": {"$ref": "#/$defs/portableObject"},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "modeEnvelope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode_id", "constraints", "evidence_ids", "external_references", "metadata", "fingerprint"],
+      "properties": {
+        "mode_id": {"type": "string", "minLength": 1}, "constraints": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/constraint"}},
+        "evidence_ids": {"$ref": "#/$defs/uniqueStrings"}, "external_references": {"type": "array", "items": {"$ref": "#/$defs/externalReference"}},
+        "metadata": {"$ref": "#/$defs/portableObject"}, "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

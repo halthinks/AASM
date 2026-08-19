@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/safety-envelope-assessment.schema.json",
+  "title": "AASM Safety Envelope Assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["assessment_id", "contract_id", "contract_version", "envelope_id", "envelope_fingerprint", "hybrid_state_id", "hybrid_state_fingerprint", "mode_id", "problem_revision_id", "problem_revision_fingerprint", "status", "constraint_assessments", "violating_constraint_ids", "indeterminate_constraint_ids", "missing_variable_ids", "diagnostics", "fact_authority_granted", "physical_state_authority_granted", "effect_authority_granted", "operational_mode_activated", "artifact_acceptance_granted", "dispatch_performed", "solver_executed", "dynamics_integrated", "fingerprint"],
+  "properties": {
+    "assessment_id": {"type": "string", "pattern": "^safety-envelope-assessment-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.safety.envelope.assessment.v1"}, "contract_version": {"const": "0.1.0"},
+    "envelope_id": {"type": "string", "pattern": "^safety-envelope-[0-9a-f]{24}$"}, "envelope_fingerprint": {"$ref": "#/$defs/sha256"},
+    "hybrid_state_id": {"type": "string", "pattern": "^hybrid-state-[0-9a-f]{24}$"}, "hybrid_state_fingerprint": {"$ref": "#/$defs/sha256"},
+    "mode_id": {"type": "string", "minLength": 1}, "problem_revision_id": {"type": "string", "minLength": 1}, "problem_revision_fingerprint": {"$ref": "#/$defs/sha256"},
+    "status": {"enum": ["SATISFIED", "VIOLATED", "INDETERMINATE", "MODE_UNCOVERED"]},
+    "constraint_assessments": {"type": "array", "items": {"$ref": "#/$defs/constraintAssessment"}},
+    "violating_constraint_ids": {"$ref": "#/$defs/uniqueStrings"}, "indeterminate_constraint_ids": {"$ref": "#/$defs/uniqueStrings"},
+    "missing_variable_ids": {"$ref": "#/$defs/uniqueStrings"}, "diagnostics": {"$ref": "#/$defs/uniqueStrings"},
+    "fact_authority_granted": {"const": false}, "physical_state_authority_granted": {"const": false}, "effect_authority_granted": {"const": false},
+    "operational_mode_activated": {"const": false}, "artifact_acceptance_granted": {"const": false}, "dispatch_performed": {"const": false},
+    "solver_executed": {"const": false}, "dynamics_integrated": {"const": false}, "fingerprint": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "uniqueStrings": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "constraintAssessment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["constraint_id", "variable_id", "relation", "rule_revision_id", "rule_fingerprint", "allowed_quantity_id", "allowed_quantity_fingerprint", "observed_quantity_id", "observed_quantity_fingerprint", "diagnostics", "fingerprint"],
+      "properties": {
+        "constraint_id": {"type": "string", "minLength": 1}, "variable_id": {"type": "string", "minLength": 1},
+        "relation": {"enum": ["WITHIN", "OUTSIDE", "OVERLAPS_BOUNDARY", "UNKNOWN", "UNSUPPORTED"]},
+        "rule_revision_id": {"type": "string", "minLength": 1}, "rule_fingerprint": {"$ref": "#/$defs/sha256"},
+        "allowed_quantity_id": {"type": "string", "minLength": 1}, "allowed_quantity_fingerprint": {"$ref": "#/$defs/sha256"},
+        "observed_quantity_id": {"type": "string"}, "observed_quantity_fingerprint": {"type": "string", "pattern": "^(?:|[0-9a-f]{64})$"},
+        "diagnostics": {"$ref": "#/$defs/uniqueStrings"}, "fingerprint": {"$ref": "#/$defs/sha256"}
+      },
+      "allOf": [{"if": {"properties": {"relation": {"enum": ["WITHIN", "OUTSIDE", "OVERLAPS_BOUNDARY", "UNSUPPORTED"]}}}, "then": {"properties": {"observed_quantity_id": {"minLength": 1}, "observed_quantity_fingerprint": {"pattern": "^[0-9a-f]{64}$"}}}, "else": {"properties": {"observed_quantity_id": {"const": ""}, "observed_quantity_fingerprint": {"const": ""}}}}]
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/hybrid-state.schema.json",
+  "title": "AASM Hybrid State v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state_id", "contract_id", "contract_version", "state_name", "subject", "mode_id", "problem_revision_id", "problem_revision_fingerprint", "observations", "mode_evidence_ids", "external_references", "metadata", "fingerprint"],
+  "properties": {
+    "state_id": {"type": "string", "pattern": "^hybrid-state-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.hybrid.state.v1"}, "contract_version": {"const": "0.1.0"},
+    "state_name": {"type": "string", "minLength": 1}, "subject": {"$ref": "#/$defs/semanticSubjectRef"}, "mode_id": {"type": "string", "minLength": 1},
+    "problem_revision_id": {"type": "string", "minLength": 1}, "problem_revision_fingerprint": {"$ref": "#/$defs/sha256"},
+    "observations": {"type": "array", "items": {"$ref": "#/$defs/observation"}}, "mode_evidence_ids": {"$ref": "#/$defs/uniqueStrings"},
+    "external_references": {"type": "array", "items": {"$ref": "#/$defs/externalReference"}}, "metadata": {"$ref": "#/$defs/portableObject"},
+    "fingerprint": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [{"anyOf": [{"properties": {"mode_evidence_ids": {"minItems": 1}}}, {"properties": {"external_references": {"minItems": 1}}}]}],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "uniqueStrings": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "portableValue": {"oneOf": [{"type": "null"}, {"type": "boolean"}, {"type": "string"}, {"type": "integer"}, {"type": "array", "items": {"$ref": "#/$defs/portableValue"}}, {"$ref": "#/$defs/portableObject"}]},
+    "portableObject": {"type": "object", "additionalProperties": {"$ref": "#/$defs/portableValue"}},
+    "semanticSubjectRef": {"type": "object", "additionalProperties": false, "required": ["semantic_type_id", "object_id", "fingerprint", "revision_id", "revision_fingerprint"], "properties": {"semantic_type_id": {"type": "string", "minLength": 1}, "object_id": {"type": "string", "minLength": 1}, "fingerprint": {"$ref": "#/$defs/sha256"}, "revision_id": {"type": "string"}, "revision_fingerprint": {"type": "string", "pattern": "^(?:|[0-9a-f]{64})$"}}},
+    "externalReference": {"type": "object", "additionalProperties": false, "required": ["contract_id", "contract_version", "namespace", "external_id", "role", "revision", "source_fingerprint", "source_location", "semantic_entity_id", "metadata", "key", "fingerprint"], "properties": {"contract_id": {"const": "aasm.external.reference.v1"}, "contract_version": {"const": "0.1.0"}, "namespace": {"type": "string", "minLength": 1}, "external_id": {"type": "string", "minLength": 1}, "role": {"type": "string", "minLength": 1}, "revision": {"type": "string"}, "source_fingerprint": {"type": "string"}, "source_location": {"$ref": "#/$defs/portableObject"}, "semantic_entity_id": {"type": "string"}, "metadata": {"$ref": "#/$defs/portableObject"}, "key": {"type": "string", "minLength": 1}, "fingerprint": {"$ref": "#/$defs/sha256"}}},
+    "observation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["variable_id", "status", "quantity_id", "quantity_fingerprint", "canonical_projection_fingerprint", "evidence_ids", "external_references", "metadata", "fingerprint"],
+      "properties": {
+        "variable_id": {"type": "string", "minLength": 1}, "status": {"enum": ["OBSERVED", "UNKNOWN"]}, "quantity_id": {"type": "string"},
+        "quantity_fingerprint": {"type": "string", "pattern": "^(?:|[0-9a-f]{64})$"}, "canonical_projection_fingerprint": {"type": "string", "pattern": "^(?:|[0-9a-f]{64})$"},
+        "evidence_ids": {"$ref": "#/$defs/uniqueStrings"}, "external_references": {"type": "array", "items": {"$ref": "#/$defs/externalReference"}},
+        "metadata": {"$ref": "#/$defs/portableObject"}, "fingerprint": {"$ref": "#/$defs/sha256"}
+      },
+      "allOf": [
+        {"anyOf": [{"properties": {"evidence_ids": {"minItems": 1}}}, {"properties": {"external_references": {"minItems": 1}}}]},
+        {"if": {"properties": {"status": {"const": "OBSERVED"}}}, "then": {"properties": {"quantity_id": {"minLength": 1}, "quantity_fingerprint": {"pattern": "^[0-9a-f]{64}$"}, "canonical_projection_fingerprint": {"pattern": "^[0-9a-f]{64}$"}}}, "else": {"properties": {"quantity_id": {"const": ""}, "quantity_fingerprint": {"const": ""}, "canonical_projection_fingerprint": {"const": ""}}}}
+      ]
+    }
+  }
+}
