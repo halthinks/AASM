@@ -1,0 +1,171 @@
+name: One-shot S4.8 CI Repair
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair-s48-ci:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install development dependencies
+        run: python -m pip install -e '.[dev,optimization]'
+      - name: Apply the locally validated minimal repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/repair-s48-ci.yml
+          python - <<'PY'
+          from __future__ import annotations
+
+          import ast
+          from pathlib import Path
+          import re
+          import subprocess
+
+          root = Path.cwd()
+          new_paths = [
+              ".github/workflows/engineering-safety-envelope-hybrid-state.yml",
+              "schemas/safety-envelope.schema.json",
+              "schemas/hybrid-state.schema.json",
+              "schemas/safety-envelope-assessment.schema.json",
+              "scripts/check_safety_envelope_hybrid_state_contracts.py",
+              "scripts/check_s48_release_contracts.py",
+              "docs/implementation/SAFETY_ENVELOPE_HYBRID_STATE_FOUNDATION.md",
+              "tests/test_safety_envelope_hybrid_state_foundation.py",
+              "src/aasm/safety_envelope_hybrid_state.py",
+              "src/aasm/_safety_envelope_common.py",
+              "src/aasm/_safety_envelope_records.py",
+              "src/aasm/_hybrid_state_records.py",
+              "src/aasm/_safety_envelope_assessment_records.py",
+              "src/aasm/_safety_envelope_validation.py",
+              "src/aasm/_safety_envelope_evaluation.py",
+          ]
+          anchors = {
+              "src/aasm/obligation_phase.py",
+              "scripts/check_obligation_phase_contracts.py",
+              "tests/test_obligation_phase_foundation.py",
+              "schemas/obligation-phase-assessment.schema.json",
+              ".github/workflows/engineering-obligation-phase.yml",
+          }
+
+          inventory = subprocess.run(
+              ["python", "scripts/release_manifest.py", "--check-file-list"],
+              text=True,
+              stdout=subprocess.PIPE,
+              stderr=subprocess.STDOUT,
+          )
+          if inventory.returncode:
+              candidates: list[tuple[int, Path, str]] = []
+              for path in root.rglob("*"):
+                  if not path.is_file() or ".git" in path.parts:
+                      continue
+                  if not any(
+                      word in path.name.lower()
+                      for word in ("release", "manifest", "inventory")
+                  ):
+                      continue
+                  try:
+                      text = path.read_text(encoding="utf-8")
+                  except (UnicodeDecodeError, OSError):
+                      continue
+                  score = sum(anchor in text for anchor in anchors)
+                  if score >= 3:
+                      candidates.append((score, path, text))
+              if not candidates:
+                  raise SystemExit(
+                      "tracked-file inventory failed, but no canonical inventory source was found\n"
+                      + inventory.stdout
+                  )
+              _, path, text = max(
+                  candidates,
+                  key=lambda item: (item[0], len(item[2])),
+              )
+              if path.suffix != ".py":
+                  raise SystemExit(
+                      f"unsupported non-Python canonical inventory source: {path}"
+                  )
+              tree = ast.parse(text)
+              matches: list[tuple[ast.List | ast.Tuple | ast.Set, list[str]]] = []
+              for node in ast.walk(tree):
+                  if not isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+                      continue
+                  values: list[str] = []
+                  for element in node.elts:
+                      if not (
+                          isinstance(element, ast.Constant)
+                          and isinstance(element.value, str)
+                      ):
+                          break
+                      values.append(element.value)
+                  else:
+                      if len(anchors.intersection(values)) >= 3:
+                          matches.append((node, values))
+              if not matches:
+                  raise SystemExit(
+                      f"no canonical literal tracked-file inventory found in {path}"
+                  )
+              node, values = max(matches, key=lambda item: len(item[1]))
+              additions = [value for value in new_paths if value not in values]
+              lines = text.splitlines()
+              close_index = node.end_lineno - 1
+              sample = next(
+                  (
+                      line
+                      for line in reversed(
+                          lines[node.lineno - 1 : node.end_lineno - 1]
+                      )
+                      if '"' in line or "'" in line
+                  ),
+                  lines[close_index],
+              )
+              indentation = re.match(r"\s*", sample).group(0)
+              quote = '"' if '"' in sample else "'"
+              comma = "," if sample.rstrip().endswith(",") else ""
+              lines[close_index:close_index] = [
+                  f"{indentation}{quote}{value}{quote}{comma}"
+                  for value in additions
+              ]
+              path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+          python_paths = [value for value in new_paths if value.endswith(".py")]
+          lint = subprocess.run(["ruff", "check", *python_paths])
+          if lint.returncode:
+              subprocess.run(
+                  ["ruff", "check", "--fix", *python_paths],
+                  check=False,
+              )
+              subprocess.run(["ruff", "format", *python_paths], check=True)
+          PY
+      - name: Verify exact repair before committing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/release_manifest.py --check-file-list
+          python scripts/check_release_contracts.py
+          python scripts/check_s48_release_contracts.py
+          python scripts/check_safety_envelope_hybrid_state_contracts.py
+          pytest -q tests/test_safety_envelope_hybrid_state_foundation.py
+          changed_python="$(git diff --name-only -- '*.py' | tr '\n' ' ')"
+          if [ -n "$changed_python" ]; then ruff check $changed_python; fi
+          git diff --check
+      - name: Commit the repair directly to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Repair S4.8 aggregate CI policy gates'
+          git push origin HEAD:main
