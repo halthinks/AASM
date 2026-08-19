@@ -1,0 +1,282 @@
+name: One-shot S4.9 Atomic Implementation
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: aasm-one-shot-semantic-advance
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  advance-s49:
+    if: github.event.head_commit.message == 'Execute atomic S4.9 implementation'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install complete development dependencies
+        run: python -m pip install -e '.[dev,optimization]'
+      - name: Materialize S4.9 and repair cumulative inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/s49_payload.py
+          python - <<'PY'
+          from __future__ import annotations
+
+          import ast
+          from pathlib import Path
+          import re
+          import subprocess
+
+          root = Path.cwd()
+          required_paths = [
+              ".github/workflows/engineering-safety-envelope-hybrid-state.yml",
+              "schemas/safety-envelope.schema.json",
+              "schemas/hybrid-state.schema.json",
+              "schemas/safety-envelope-assessment.schema.json",
+              "scripts/check_safety_envelope_hybrid_state_contracts.py",
+              "scripts/check_s48_release_contracts.py",
+              "docs/implementation/SAFETY_ENVELOPE_HYBRID_STATE_FOUNDATION.md",
+              "tests/test_safety_envelope_hybrid_state_foundation.py",
+              "src/aasm/safety_envelope_hybrid_state.py",
+              "src/aasm/_safety_envelope_common.py",
+              "src/aasm/_safety_envelope_records.py",
+              "src/aasm/_hybrid_state_records.py",
+              "src/aasm/_safety_envelope_assessment_records.py",
+              "src/aasm/_safety_envelope_validation.py",
+              "src/aasm/_safety_envelope_evaluation.py",
+              ".github/workflows/engineering-epistemic-debt-manual-override.yml",
+              "schemas/epistemic-debt.schema.json",
+              "schemas/manual-override.schema.json",
+              "schemas/manual-override-assessment.schema.json",
+              "scripts/check_epistemic_debt_manual_override_contracts.py",
+              "scripts/check_s49_release_contracts.py",
+              "docs/implementation/EPISTEMIC_DEBT_MANUAL_OVERRIDE_FOUNDATION.md",
+              "tests/test_epistemic_debt_manual_override_foundation.py",
+              "src/aasm/epistemic_debt_manual_override.py",
+              "src/aasm/_epistemic_debt.py",
+              "src/aasm/_manual_override.py",
+          ]
+          anchors = {
+              "src/aasm/obligation_phase.py",
+              "scripts/check_obligation_phase_contracts.py",
+              "tests/test_obligation_phase_foundation.py",
+              "schemas/obligation-phase-assessment.schema.json",
+              ".github/workflows/engineering-obligation-phase.yml",
+          }
+          check = subprocess.run(
+              ["python", "scripts/release_manifest.py", "--check-file-list"],
+              text=True,
+              stdout=subprocess.PIPE,
+              stderr=subprocess.STDOUT,
+          )
+          if check.returncode:
+              candidates: list[tuple[int, Path, str]] = []
+              for path in root.rglob("*"):
+                  if not path.is_file() or ".git" in path.parts:
+                      continue
+                  if not any(
+                      word in path.name.lower()
+                      for word in ("release", "manifest", "inventory")
+                  ):
+                      continue
+                  try:
+                      source = path.read_text(encoding="utf-8")
+                  except (UnicodeDecodeError, OSError):
+                      continue
+                  score = sum(anchor in source for anchor in anchors)
+                  if score >= 3:
+                      candidates.append((score, path, source))
+              if not candidates:
+                  raise SystemExit(
+                      "tracked-file inventory failed and no canonical inventory source was found\n"
+                      + check.stdout
+                  )
+              _, inventory_path, source = max(
+                  candidates,
+                  key=lambda item: (item[0], len(item[2])),
+              )
+              tree = ast.parse(source)
+              matches: list[tuple[ast.List | ast.Tuple | ast.Set, list[str]]] = []
+              for node in ast.walk(tree):
+                  if not isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+                      continue
+                  values: list[str] = []
+                  for element in node.elts:
+                      if not (
+                          isinstance(element, ast.Constant)
+                          and isinstance(element.value, str)
+                      ):
+                          break
+                      values.append(element.value)
+                  else:
+                      if len(anchors.intersection(values)) >= 3:
+                          matches.append((node, values))
+              if not matches:
+                  raise SystemExit(
+                      f"canonical literal tracked-file inventory not found in {inventory_path}"
+                  )
+              node, values = max(matches, key=lambda item: len(item[1]))
+              additions = [value for value in required_paths if value not in values]
+              lines = source.splitlines()
+              close_index = node.end_lineno - 1
+              sample = next(
+                  (
+                      line
+                      for line in reversed(
+                          lines[node.lineno - 1 : node.end_lineno - 1]
+                      )
+                      if '"' in line or "'" in line
+                  ),
+                  lines[close_index],
+              )
+              indentation = re.match(r"\s*", sample).group(0)
+              quote = '"' if '"' in sample else "'"
+              comma = "," if sample.rstrip().endswith(",") else ""
+              lines[close_index:close_index] = [
+                  f"{indentation}{quote}{value}{quote}{comma}"
+                  for value in additions
+              ]
+              inventory_path.write_text(
+                  "\n".join(lines) + "\n",
+                  encoding="utf-8",
+              )
+          PY
+      - name: Normalize only the new Python surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          paths=(
+            src/aasm/epistemic_debt_manual_override.py
+            src/aasm/_epistemic_debt.py
+            src/aasm/_manual_override.py
+            scripts/check_epistemic_debt_manual_override_contracts.py
+            scripts/check_s49_release_contracts.py
+            tests/test_epistemic_debt_manual_override_foundation.py
+          )
+          ruff check --fix "${paths[@]}" || true
+          ruff format "${paths[@]}"
+          ruff check "${paths[@]}"
+      - name: Remove one-shot transport and stale repair bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f --ignore-unmatch \
+            .github/s49_payload.py \
+            .github/workflows/advance-s49.yml \
+            .github/workflows/repair-s48-ci.yml
+      - name: Compile and validate schemas
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q \
+            src/aasm/safety_envelope_hybrid_state.py \
+            src/aasm/_safety_envelope_common.py \
+            src/aasm/_safety_envelope_records.py \
+            src/aasm/_hybrid_state_records.py \
+            src/aasm/_safety_envelope_assessment_records.py \
+            src/aasm/_safety_envelope_validation.py \
+            src/aasm/_safety_envelope_evaluation.py \
+            src/aasm/epistemic_debt_manual_override.py \
+            src/aasm/_epistemic_debt.py \
+            src/aasm/_manual_override.py \
+            scripts/check_safety_envelope_hybrid_state_contracts.py \
+            scripts/check_s48_release_contracts.py \
+            scripts/check_epistemic_debt_manual_override_contracts.py \
+            scripts/check_s49_release_contracts.py \
+            tests/test_safety_envelope_hybrid_state_foundation.py \
+            tests/test_epistemic_debt_manual_override_foundation.py
+          for schema in \
+            schemas/safety-envelope.schema.json \
+            schemas/hybrid-state.schema.json \
+            schemas/safety-envelope-assessment.schema.json \
+            schemas/epistemic-debt.schema.json \
+            schemas/manual-override.schema.json \
+            schemas/manual-override-assessment.schema.json; do
+            python -m json.tool "$schema" >/dev/null
+          done
+      - name: Run focused source firewalls and adversarial corpora
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/check_safety_envelope_hybrid_state_contracts.py
+          python scripts/check_epistemic_debt_manual_override_contracts.py
+          pytest -q \
+            tests/test_safety_envelope_hybrid_state_foundation.py \
+            tests/test_epistemic_debt_manual_override_foundation.py
+      - name: Run cumulative S4 semantic qualification locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/check_quantity_contracts.py
+          python scripts/check_quantity_public.py
+          python scripts/check_rule_contracts.py
+          python scripts/check_rule_public.py
+          python scripts/check_semantic_projection_contracts.py
+          python scripts/check_semantic_projection_public.py
+          python scripts/check_uncertainty_scenario_trace_contracts.py
+          python scripts/check_uncertainty_scenario_trace_public.py
+          python scripts/check_degraded_operation_contracts.py
+          python scripts/check_degraded_operation_public.py
+          python scripts/check_risk_irreversibility_contracts.py
+          python scripts/check_obligation_phase_contracts.py
+          pytest -q \
+            tests/test_quantity_foundation.py \
+            tests/test_quantity_public.py \
+            tests/test_rule_foundation.py \
+            tests/test_rule_public.py \
+            tests/test_semantic_projection_foundation.py \
+            tests/test_semantic_projection_textpcb.py \
+            tests/test_semantic_projection_adversarial.py \
+            tests/test_semantic_projection_public.py \
+            tests/test_uncertainty_scenario_trace_foundation.py \
+            tests/test_uncertainty_scenario_trace_public.py \
+            tests/test_degraded_operation_foundation.py \
+            tests/test_degraded_operation_public.py \
+            tests/test_risk_irreversibility_foundation.py \
+            tests/test_obligation_phase_foundation.py \
+            tests/test_safety_envelope_hybrid_state_foundation.py \
+            tests/test_epistemic_debt_manual_override_foundation.py
+      - name: Enforce release and public-boundary contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/release_manifest.py --check-file-list
+          python scripts/check_release_contracts.py
+          python scripts/check_s48_release_contracts.py
+          python scripts/check_s49_release_contracts.py
+          python scripts/check_version_policy.py
+          changed_python="$(git diff --name-only -- '*.py' | tr '\n' ' ')"
+          if [ -n "$changed_python" ]; then ruff check $changed_python; fi
+          git diff --check
+      - name: Commit and fast-forward main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Implement S4.9 epistemic debt and manual override'
+          git fetch origin main
+          if [ "$(git rev-parse HEAD^)" != "$(git rev-parse origin/main)" ]; then
+            git rebase origin/main
+            python scripts/release_manifest.py --check-file-list
+            python scripts/check_release_contracts.py
+            python scripts/check_s48_release_contracts.py
+            python scripts/check_s49_release_contracts.py
+            python scripts/check_epistemic_debt_manual_override_contracts.py
+            pytest -q tests/test_epistemic_debt_manual_override_foundation.py
+          fi
+          git push origin HEAD:main
