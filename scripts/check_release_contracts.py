@@ -107,12 +107,39 @@ def main() -> int:
         '"runtime_admission": "PRE_ADMISSION_ONLY"',
         '"public_admission": "PRE_ADMISSION_ONLY"',
     ])
+    require(root / "src/aasm/risk_irreversibility.py", [
+        'RISK_ENVELOPE_CONTRACT_ID = "aasm.risk.envelope.v1"',
+        'EFFECT_IRREVERSIBILITY_CONTRACT_ID = "aasm.effect.irreversibility.v1"',
+        'RISK_ASSESSMENT_CONTRACT_ID = "aasm.risk.assessment.v1"',
+        '"hard_hazard_legality": "EXACT_EXISTING_AASM_RULE_V1_HARD_FLOOR_REFERENCE_ONLY_NO_SECOND_HARD_FLOOR_SYSTEM"',
+        '"risk_cost_relation": "RISK_IS_NOT_RESOURCE_OR_MONETARY_COST_AND_HAS_NO_SCALAR_COST_COLLAPSE"',
+        '"runtime_admission": "PRE_ADMISSION_ONLY"',
+        '"public_admission": "PRE_ADMISSION_ONLY"',
+    ])
+    require(root / "src/aasm/obligation_phase.py", [
+        'OBLIGATION_PHASE_CONTRACT_ID = "aasm.obligation.phase.v1"',
+        'OBLIGATION_PHASE_BINDING_CONTRACT_ID = "aasm.obligation.phase-binding.v1"',
+        'OBLIGATION_PHASE_ASSESSMENT_CONTRACT_ID = "aasm.obligation.phase-assessment.v1"',
+        'OBLIGATION_BINDING_PROJECTION_ID = "aasm.obligation.phase.binding-projection.v1"',
+        '"obligation_identity": "EXISTING_OBLIGATION_ID_UNCHANGED_NO_NEW_OBLIGATION_IDENTITY"',
+        '"binding_projection_is_obligation_identity": False',
+        '"obligation_store": "EXISTING_AASM_CALCULUS_V1_ONLY"',
+        '"obligation_status_machine": "EXISTING_AASM_CALCULUS_V1_OBLIGATION_TRANSITIONS_UNCHANGED"',
+        '"recovery_phase_order": "ORTHOGONAL_NO_IMPLICIT_PRECEDENCE"',
+        '"obligation_mutation": "NONE"',
+        '"effect_authorization": "NONE"',
+        '"effect_dispatch": "NONE"',
+        '"runtime_admission": "PRE_ADMISSION_ONLY"',
+        '"public_admission": "PRE_ADMISSION_ONLY"',
+    ])
 
     forbid(root / "src/aasm/runtime_v56_foundation.py", [
         "EngineeringRule", "from .rule",
         "SemanticProjectionDefinition", "from .semantic_projection",
         "UncertaintySpec", "ScenarioBinding", "TraceProperty", "from .uncertainty_scenario_trace",
         "DegradedOperationPolicy", "DegradedOperationAssessment", "from .degraded_operation",
+        "RiskEnvelope", "EffectIrreversibility", "RiskAssessment", "from .risk_irreversibility",
+        "ObligationPhaseBinding", "ObligationPhasePlan", "ObligationPhaseAssessment", "from .obligation_phase",
     ])
 
     for script in (
@@ -132,6 +159,7 @@ def main() -> int:
         "check_semantic_projection_contracts.py", "check_semantic_projection_public.py",
         "check_uncertainty_scenario_trace_contracts.py", "check_uncertainty_scenario_trace_public.py",
         "check_degraded_operation_contracts.py", "check_degraded_operation_public.py",
+        "check_risk_irreversibility_contracts.py", "check_obligation_phase_contracts.py",
     ):
         run_script(root, script)
 
@@ -149,6 +177,9 @@ def main() -> int:
         "artifact-revision.schema.json", "entity-evolution.schema.json", "quantity.schema.json", "rule.schema.json",
         "semantic-projection.schema.json", "uncertainty.schema.json", "scenario.schema.json", "trace-property.schema.json",
         "degraded-operation.schema.json", "degraded-operation-assessment.schema.json",
+        "risk-envelope.schema.json", "effect-irreversibility.schema.json",
+        "irreversibility-assurance-policy.schema.json", "risk-assessment.schema.json",
+        "obligation-phase-binding.schema.json", "obligation-phase-plan.schema.json", "obligation-phase-assessment.schema.json",
     ):
         require(root / "schemas" / schema, ['"$schema"', "2020-12"])
 
@@ -167,10 +198,16 @@ def main() -> int:
     require(root / ".github/workflows/v56.yml", [
         "AASM v0.56 Development Qualification",
         "check_uncertainty_scenario_trace_public.py", "tests/test_uncertainty_scenario_trace_public.py",
-        "0.32.19", "context='aasm/v56'",
+        "check_degraded_operation_public.py", "tests/test_degraded_operation_public.py",
+        "check_risk_irreversibility_contracts.py", "tests/test_risk_irreversibility_foundation.py",
+        "check_obligation_phase_contracts.py", "tests/test_obligation_phase_foundation.py",
+        "0.32.20", "context='aasm/v56'",
     ])
     require(root / ".github/workflows/engineering-s4.yml", [
-        "check_degraded_operation_contracts.py", "tests/test_degraded_operation_foundation.py",
+        "check_degraded_operation_contracts.py", "check_degraded_operation_public.py",
+        "tests/test_degraded_operation_foundation.py", "tests/test_degraded_operation_public.py",
+        "check_risk_irreversibility_contracts.py", "tests/test_risk_irreversibility_foundation.py",
+        "check_obligation_phase_contracts.py", "tests/test_obligation_phase_foundation.py",
         "context='aasm/engineering-s4'",
     ])
     require(root / ".github/workflows/engineering-degraded-operation.yml", [
@@ -180,6 +217,14 @@ def main() -> int:
     require(root / ".github/workflows/engineering-degraded-operation-public.yml", [
         "check_degraded_operation_contracts.py", "check_degraded_operation_public.py",
         "tests/test_degraded_operation_public.py", "context='aasm/engineering-degraded-operation-public'",
+    ])
+    require(root / ".github/workflows/engineering-risk-irreversibility.yml", [
+        "check_risk_irreversibility_contracts.py", "tests/test_risk_irreversibility_foundation.py",
+        "context='aasm/engineering-risk-irreversibility'",
+    ])
+    require(root / ".github/workflows/engineering-obligation-phase.yml", [
+        "check_obligation_phase_contracts.py", "tests/test_obligation_phase_foundation.py",
+        "context='aasm/engineering-obligation-phase'",
     ])
 
     release_contexts = (
@@ -192,6 +237,7 @@ def main() -> int:
         "aasm/engineering-semantic-projection", "aasm/engineering-semantic-projection-public",
         "aasm/engineering-uncertainty-scenario-trace", "aasm/engineering-uncertainty-scenario-trace-public",
         "aasm/engineering-degraded-operation", "aasm/engineering-degraded-operation-public",
+        "aasm/engineering-risk-irreversibility", "aasm/engineering-obligation-phase",
         "aasm/engineering-s4",
     )
     require(root / ".github/workflows/release.yml", [
@@ -224,6 +270,13 @@ def main() -> int:
         if contract[key].get("runtime_admission") != "PRE_ADMISSION_ONLY":
             _fail(f"pre-admission S4 runtime boundary drift: {key}")
 
+    for key in ("risk_irreversibility", "risk", "irreversibility", "obligation_phase"):
+        if key in contract:
+            _fail(f"pre-admission S4.6/S4.7 surface leaked into active public contract: {key}")
+    for name in ("RiskEnvelope", "EffectIrreversibility", "RiskAssessment", "ObligationPhasePlan", "ObligationPhaseBinding"):
+        if hasattr(aasm, name):
+            _fail(f"pre-admission S4.6/S4.7 import leaked into package root: {name}")
+
     degraded = contract["degraded_operation"]
     if degraded.get("contract_id") != "aasm.degraded.operation.v1":
         _fail("degraded-operation public contract identity drift")
@@ -243,11 +296,12 @@ def main() -> int:
     semantic_prefixes = (
         "rule_", "semantic_projection_", "semantic_equivalence_", "uncertainty_",
         "scenario_", "trace_property_", "degraded_", "activate_degraded",
+        "risk_", "irreversibility_", "obligation_phase_",
     )
     if any(name.startswith(semantic_prefixes) for name in aasm.SUPPORTED_ENGINE_METHODS):
         _fail("pre-admission S4 semantic IR leaked into engine method surface")
 
-    print("0.56.1 development target + active adoption 0.32.20 + PR-3 + S3 + S4 through Degraded Operation source/release contracts: PASS")
+    print("0.56.1 development target + active adoption 0.32.20 + PR-3 + S3 + S4 through Obligation Phases source/release contracts: PASS")
     return 0
 
 
