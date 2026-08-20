@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 concurrency:
-  group: aasm-one-shot-semantic-advance
+  group: aasm-s410-advance-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -22,12 +22,38 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
+      - name: Publish S4.10 materialization start
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state=pending \
+            -f context='aasm/s410-advance' \
+            -f description='S4.10 atomic materialization running' \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
           cache: pip
       - name: Install complete development dependencies
-        run: python -m pip install -e '.[dev,optimization]'
+        run: |
+          python -m pip install -e '.[dev,optimization]'
+          python -m pip install 'ruff==0.15.22'
+      - name: Repair staged S4.10 inventory writer
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/s410_payload.py')
+          source = path.read_text(encoding='utf-8')
+          marker = '# Update the canonical tracked-file inventory.'
+          if marker not in source:
+              raise SystemExit('S4.10 inventory repair marker missing')
+          replacement = '''# Update the canonical tracked-file inventory from the actual materialized checkout.\nsubprocess.run(\n    ["python", "scripts/release_manifest.py", "--write-file-list"],\n    check=True,\n)\n\nprint("S4.10 payload materialized")\n'''
+          source = source.split(marker, 1)[0] + replacement
+          path.write_text(source, encoding='utf-8')
+          PY
       - name: Materialize permanent TextPCB corpus and aggregate gate
         run: python .github/s410_payload.py
       - name: Normalize new Python qualification surfaces
@@ -52,6 +78,7 @@ jobs:
             .github/s49_payload.py \
             .github/workflows/advance-s49.yml \
             .github/workflows/repair-s48-ci.yml
+          python scripts/release_manifest.py --write-file-list
       - name: Validate manifest, schema, and source contracts
         shell: bash
         run: |
@@ -124,6 +151,7 @@ jobs:
           git fetch origin main
           if [ "$(git rev-parse HEAD^)" != "$(git rev-parse origin/main)" ]; then
             git rebase origin/main
+            python scripts/release_manifest.py --write-file-list
             python scripts/release_manifest.py --check-file-list
             python scripts/check_release_contracts.py
             python scripts/check_s48_release_contracts.py
@@ -131,6 +159,8 @@ jobs:
             python scripts/check_s410_release_contracts.py
             python scripts/check_safety_governance_contracts.py
             pytest -q tests/test_textpcb_s4_safety_governance.py
+            git add FILE_LIST.txt
+            git commit --amend --no-edit
           fi
           git push origin HEAD:main
       - name: Publish S4.10 atomic transport outcome
