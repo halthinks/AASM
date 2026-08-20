@@ -263,7 +263,7 @@ Permanent fixture requirements include:
 - hard hazard/evidence floor not relaxed by solver/resource scarcity.
 
 **Current S4 gates:** `aasm/engineering-quantity`, `aasm/engineering-rule`, `aasm/engineering-semantic-projection`, `aasm/engineering-semantic-projection-public`, `aasm/engineering-uncertainty-scenario-trace`, `aasm/engineering-uncertainty-scenario-trace-public`, `aasm/engineering-degraded-operation`, `aasm/engineering-degraded-operation-public` (public promotion qualification), `aasm/engineering-s4`.
-**Next seam:** S5.5 integrated core/conflict pipeline after implemented S5.1-S5.4 foundations.
+**Next seam:** S5.7 portable boundary after implemented and qualified S5.1-S5.6 foundations.
 **Aggregate safety gate:** `aasm/safety-governance` (permanent TextPCB corpus implemented; qualification active).
 
 ---
@@ -320,11 +320,17 @@ Generalize the semantic/performance firewall:
 
 ## 5.5 Integrated core/conflict pipeline
 
-Preserve external references through raw -> normalized -> minimized -> independently rechecked cores/conflicts. Clearly distinguish irreducible, minimum/minimum-weight and budget-limited partial claims.
+**Status: FOUNDATION IMPLEMENTED AND QUALIFIED under `aasm/core-conflict`; backend-independent pre-admission pipeline active. Public admission remains `PRE_ADMISSION_ONLY`.**
+
+Preserve external references through raw -> normalized -> reduced -> independently rechecked cores/conflicts. The qualified contract distinguishes backend-reported, conflict-preserving, irreducible, minimum-cardinality, minimum-weight, and budget-limited partial claims without inferring one proof class from another. Irreducibility requires independent removal rechecks; minimum-cardinality and minimum-weight require their own explicit certificates.
 
 ## 5.6 TextPCB refinement qualification
 
-TextPCB consumes the generic `RefinementLoop` for DRC/ERC, SPICE, EM, thermal/PDN, mechanical/manufacturing checks, external measurements, and artifact/tool feedback. Evaluators return typed Evidence/counterexamples/diagnoses/proposals; none directly mutates canonical truth.
+**Status: QUALIFICATION IMPLEMENTED AND PASSED under `aasm/textpcb-refinement`; `QUALIFICATION_ONLY_NO_RUNTIME_SURFACE`.**
+
+TextPCB consumes the generic S5.1 `RefinementLoop` for DRC/ERC, SPICE, EM, thermal/PDN, mechanical/manufacturing checks, external measurements, and artifact/tool feedback. Evaluators return typed Evidence/counterexamples/diagnoses and optional ordinary `RefinementProposal` objects; none directly mutates canonical truth, accepts artifacts, dispatches effects, or bypasses existing scoped refinement authority.
+
+S5.6 is pinned to the permanent S4 TextPCB safety corpus and requires both `aasm/refinement` and `aasm/safety-governance` semantics to remain intact.
 
 Generic architecture:
 
