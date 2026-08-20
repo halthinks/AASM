@@ -90,7 +90,12 @@ def reduce_core(
         provenance=parent.provenance,
         members=child,
         stage="REDUCED",
-        claim=CoreClaim(kind, bool(budget_exhausted), evidence_ids if budget_exhausted else ()),
+        claim=CoreClaim(
+            claim_kind=kind,
+            established=bool(budget_exhausted),
+            evidence_ids=evidence_ids if budget_exhausted else (),
+            budget_exhausted=bool(budget_exhausted),
+        ),
         parent_core_fingerprint=parent.fingerprint,
         transformation_evidence_ids=evidence_ids,
         metadata=metadata or {},
