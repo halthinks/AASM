@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/core-conflict.schema.json",
+  "title": "AASM S5.5 Integrated Core/Conflict Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_type", "document"],
+  "properties": {
+    "record_type": {
+      "enum": ["CORE_MEMBER", "CORE_PROVENANCE", "CONFLICT_CORE", "CORE_RECHECK"]
+    },
+    "document": {"type": "object"}
+  }
+}
