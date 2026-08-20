@@ -1,9 +1,10 @@
 # S5.3 Governed Verification Plan and Debt Foundation
 
-**Status:** pre-admission semantic/assurance/lifecycle foundation  
+**Status:** pre-admission semantic/assurance/lifecycle/durable-runtime foundation  
 **Contracts:** `aasm.verification.plan.v1`, `aasm.verification.debt.v1`  
 **Assurance:** `aasm.verification.planning.assurance.v1`  
 **Lifecycle:** `aasm.verification.plan.lifecycle.v1`  
+**Runtime:** `aasm.verification.planning.runtime.v1`  
 **Qualification:** `aasm/verification-planning`
 
 ## Purpose
@@ -23,138 +24,98 @@ required evidence types.
 
 `VerifierCapabilityProfile` composes the existing `CapabilityContract` and
 requires its type to be `VERIFIER`. The profile adds planning declarations:
-
-- fidelity;
-- named evidence grade;
-- exact execution-environment reference;
-- exact numerical-policy reference;
-- exact existing resource-demand references;
-- explicit soundness and completeness claim slots;
-- declared formal verification strengths where applicable;
-- cache/reuse eligibility;
-- supporting Evidence references.
+fidelity, named evidence grade, environment, numerical policy, existing
+resource-demand references, soundness/completeness claim slots, formal
+verification strengths, cache/reuse eligibility, and supporting Evidence.
 
 These are planning declarations. They do not execute the verifier and do not
-turn a verifier claim into truth.
-
-Soundness/completeness states are deliberately `DECLARED | EVIDENCE_BACKED |
-UNKNOWN | NOT_APPLICABLE`; there is no `PROVEN` shortcut. Existing proof and
-certificate systems remain authoritative for proof-grade claims.
+turn a verifier claim into truth. There is no `PROVEN` shortcut in the claim
+slot; proof/certificate authority stays in the existing AASM assurance systems.
 
 ## No hidden evidence-grade or fidelity ordering
 
-AASM currently has no canonical universal evidence-grade ladder. S5.3 therefore
-uses opaque named evidence grades and exact acceptable sets. `GRADE_Z` does not
-implicitly outrank `GRADE_A` and cannot satisfy a `GRADE_A` requirement unless a
-separate policy explicitly lists it as acceptable.
-
-Likewise fidelity values are named applicability categories, not a universal
-numeric order:
+AASM has no canonical universal evidence-grade ladder. S5.3 uses opaque named
+grades and exact acceptable sets. Fidelity values are also named applicability
+categories, not a universal numeric order:
 
 `EXACT | BOUNDED | APPROXIMATE | EMPIRICAL | UNKNOWN`
 
-Formal `verification_strength` continues to use the existing AASM formal
-verification vocabulary; S5.3 does not redefine or rank it.
-
-## Verification plan
-
-A plan is exact-revision and exact-calculus-state bound *at planning time*. It
-contains:
-
-- one requirement for every unresolved canonical obligation that already
-  requires Evidence;
-- exact existing verifier capability profiles;
-- zero or more compatible verifier assignments;
-- producer and supporting Evidence provenance.
-
-Assignments are proposal-only. Leaving a requirement unassigned is permitted so
-planning can represent incapacity honestly. The requirement itself may not be
-omitted. Unassigned requirements become visible verification debt when no
-applicable Evidence already satisfies them.
+Formal verification strength retains the existing AASM vocabulary.
 
 ## Planning snapshot versus current applicability
 
-The immutable whole-calculus fingerprint is a planning-time provenance anchor,
-not a demand that the world never change.
+A plan is exact-revision and exact-calculus-state bound at planning time. The
+whole-calculus fingerprint is immutable provenance, not a demand that state never
+changes.
 
-Verification itself can legitimately change the calculus by attaching Evidence
-or advancing an obligation lifecycle. Requiring the original whole-state hash to
-remain equal would make a plan unusable precisely when verifier Evidence arrives.
+Verification can legitimately attach Evidence or advance obligation lifecycle.
+Current applicability therefore rechecks exact obligation semantic fingerprints
+and required Evidence types while allowing status/evidence attachment evolution.
+A new verification obligation, obligation semantic drift, or stale plan support
+requires replanning.
 
-S5.3 therefore separates two checks:
+The original plan ID, fingerprint, and planning snapshot fingerprint are never
+rewritten.
 
-1. **Planning-time exactness** — `validate_verification_plan()` requires the exact
-   original calculus snapshot and complete canonical verification-obligation set.
-2. **Current applicability** — `validate_verification_plan_current_applicability()`
-   allows lifecycle status and attached-Evidence evolution but rechecks every
-   planned obligation's exact semantic fingerprint and required Evidence types.
+## Durable proposal/history runtime
 
-A current plan must be replaced if:
+The runtime records only two append-only Evidence record types:
 
-- a new unresolved verification obligation appears;
-- a planned obligation disappears;
-- its semantic fingerprint changes;
-- its canonical required Evidence types change;
-- current plan/profile/reference support Evidence becomes stale.
+- `VERIFICATION_PLAN`
+- `VERIFICATION_EVIDENCE_APPLICABILITY`
 
-An obligation that becomes `VERIFIED` or `COMMITTED` may leave current debt
-without rewriting the original plan. The original plan ID, plan fingerprint,
-and planning snapshot fingerprint remain immutable provenance.
+There is no verification-plan table, no verifier-execution queue, and no debt
+store.
 
-## Verification debt
+A new plan must:
 
-`project_verification_debt_current()` is the current-world deterministic
-projection. It does not mutate obligation status.
+- exactly validate against the current calculus planning snapshot;
+- bind the exact current `ProblemRevision` head;
+- avoid a pending truth-maintenance boundary;
+- have active plan/profile/reference/claim support Evidence.
 
-The projection compares:
+A new applicability assessment must:
 
-1. the exact canonical obligation graph as it exists now;
-2. the immutable original verification plan plus current semantic-applicability
-   validation;
-3. existing Evidence records and active/invalidated status;
-4. explicit revision-bound evidence-applicability assessments.
+- reference a durable plan;
+- remain semantically applicable to the current obligation graph;
+- bind an exact plan requirement and problem revision;
+- pass Evidence-kind and applicability-provenance assurance;
+- use active current plan support.
 
-The produced debt record retains the original plan ID and fingerprint while
-recording the *current* calculus-state fingerprint. This exposes that the state
-has evolved without pretending the original plan was rewritten.
+Only one active applicability assessment may exist for a given
+`(plan_id, obligation_id, evidence_id)` semantic key. Reassessment uses the
+existing Evidence lifecycle: invalidate the old applicability Evidence, then
+record the new assessment. This avoids a second mutable applicability state
+machine.
 
-Only Evidence already attached to the canonical obligation can clear its debt.
-An unattached observation or an unassessed attached observation does not become
-applicable implicitly.
+## Current verification debt
 
-Debt reasons expose missing verifier coverage, absent or stale Evidence,
-unassessed/indeterminate applicability, evidence type/fidelity/grade mismatch,
-environment/numerical-policy mismatch, formal-strength mismatch, and terminal
-unresolved obligations.
+`verification_debt_report(plan_id)` recomputes debt from:
 
-There is deliberately no scalar debt score.
+- current canonical calculus obligations;
+- the immutable durable plan;
+- current Evidence active/invalidated state;
+- active durable applicability assessments.
 
-## Cross-history applicability assurance
+The report retains the original plan ID/fingerprint while recording the current
+calculus-state fingerprint. If result Evidence becomes stale, debt reappears. If
+applicability-assessment Evidence becomes stale, that applicability is downgraded
+to `INDETERMINATE` and debt reappears. If plan/profile/reference support becomes
+stale, current use fails closed and replanning is required.
 
-Before current-world debt projection the assurance layer checks:
-
-- the referenced Evidence exists;
-- the applicability `evidence_type` equals the existing Evidence `kind`;
-- an `APPLICABLE` assertion carries explicit assessment Evidence;
-- applicability-assessment Evidence exists and is active;
-- plan, verifier-profile, environment, numerical-policy, resource-demand, and
-  Evidence-backed soundness/completeness support Evidence exists and is active.
-
-A bad or stale applicability assertion is downgraded to `INDETERMINATE`, which
-leaves verification debt visible. Stale/missing plan support fails closed and
-requires replanning rather than silently trusting an obsolete assignment.
-
-Invalidation of the result Evidence itself is different: it becomes
-`STALE_EVIDENCE` debt rather than an input-system error.
+A debt report is never persisted as current truth. It is a recomputable
+projection only.
 
 ## Authority ceiling
 
 S5.3 grants no verifier execution, FactAuthority, effect authority, resource
 reservation, obligation transition authority, or problem mutation authority.
+Recording a plan or applicability assessment leaves the calculus unchanged.
+
 Cache/reuse is performance-only unless a separate existing certification path
 proves semantic reuse safe.
 
 ## Admission boundary
 
-All S5.3 contracts remain `PRE_ADMISSION_ONLY` and absent from the active public
-root. Durable recording/admission is the final S5.3 qualification step.
+S5.3 remains `PRE_ADMISSION_ONLY` and absent from the active public root until
+the full foundation/assurance/lifecycle/runtime adversarial corpus qualifies.

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/verification-planning-record.schema.json",
+  "title": "AASM Verification Planning Durable Evidence Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_type", "object_id", "document"],
+  "properties": {
+    "record_type": {"enum": ["VERIFICATION_PLAN", "VERIFICATION_EVIDENCE_APPLICABILITY"]},
+    "object_id": {"type": "string", "minLength": 1},
+    "document": {"type": "object"}
+  }
+}
