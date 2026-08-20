@@ -1,0 +1,129 @@
+name: AASM Exact-Head Qualification Summary
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  statuses: write
+
+concurrency:
+  group: aasm-qualification-summary-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  qualification-summary:
+    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verify every exact-head qualification context
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+          CI_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required=(
+            aasm/ci-summary
+            aasm/formal-assurance
+            aasm/semantic-solver-rc
+            aasm/proof-claims
+            aasm/solution-pools
+            aasm/optimization
+            aasm/scoped-authority
+            aasm/solver-learning
+            aasm/v54
+            aasm/v55
+            aasm/v56
+            aasm/v56-provenance
+            aasm/state-authority
+            aasm/external-machine
+            aasm/machine-transition
+            aasm/machine-postcondition
+            aasm/physical-authority
+            aasm/effect-capability
+            aasm/physical-control-fencing
+            aasm/physical-preemption-recovery
+            aasm/physical-effect-integration
+            aasm/identity-calibration-trust
+            aasm/execution-environment
+            aasm/observation-epistemics
+            aasm/artifact-lineage
+            aasm/entity-evolution
+            aasm/engineering-quantity
+            aasm/engineering-rule
+            aasm/engineering-semantic-projection
+            aasm/engineering-semantic-projection-public
+            aasm/engineering-uncertainty-scenario-trace
+            aasm/engineering-uncertainty-scenario-trace-public
+            aasm/engineering-degraded-operation
+            aasm/engineering-degraded-operation-public
+            aasm/engineering-risk-irreversibility
+            aasm/engineering-obligation-phase
+            aasm/engineering-safety-envelope-hybrid-state
+            aasm/engineering-epistemic-debt-manual-override
+            aasm/engineering-s4
+            aasm/safety-governance
+            aasm/physical-evidence
+          )
+
+          state=""
+          description=""
+          if [ "$CI_CONCLUSION" != success ]; then
+            state=failure
+            description="CI completed with $CI_CONCLUSION"
+          else
+            for attempt in $(seq 1 120); do
+              payload="$(gh api --paginate \
+                "repos/$GITHUB_REPOSITORY/commits/$COMMIT_SHA/statuses?per_page=100" \
+                --slurp)"
+
+              failure=""
+              missing=""
+              for context in "${required[@]}"; do
+                context_state="$(printf '%s' "$payload" | jq -r --arg context "$context" \
+                  '[.[][] | select(.context == $context)][0].state // ""')"
+                case "$context_state" in
+                  success) ;;
+                  failure|error)
+                    failure="$context:$context_state"
+                    break
+                    ;;
+                  *)
+                    if [ -z "$missing" ]; then missing="$context"; else missing="$missing,$context"; fi
+                    ;;
+                esac
+              done
+
+              if [ -n "$failure" ]; then
+                state=failure
+                description="exact-head qualification failed: $failure"
+                break
+              fi
+              if [ -z "$missing" ]; then
+                state=success
+                description="all exact-head release-required qualification contexts passed"
+                break
+              fi
+
+              if [ "$attempt" -eq 120 ]; then
+                state=failure
+                description="qualification timeout; missing: $missing"
+                break
+              fi
+              sleep 5
+            done
+          fi
+
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$COMMIT_SHA" \
+            -f state="$state" \
+            -f context='aasm/qualification-summary' \
+            -f description="${description:0:140}" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+          test "$state" = success
