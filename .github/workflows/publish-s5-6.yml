@@ -1,0 +1,111 @@
+name: One-shot publish qualified S5.6
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-s5-6.yml'
+
+permissions:
+  contents: write
+  statuses: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require recorded S5.6 qualification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QUALIFIED_SHA: 2caa7f267a6381e18b262e063e900467a79c8d56
+        run: |
+          set -euo pipefail
+          state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$QUALIFIED_SHA/status" --jq '.statuses[] | select(.context == "aasm/textpcb-refinement") | .state' | head -n1)"
+          test "$state" = success
+      - name: Advance README and canonical roadmap
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          readme = Path('README.md')
+          text = readme.read_text(encoding='utf-8')
+          old = '''**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + complete S3 + active S4 public lineage through Degraded Operation 0.32.20 + complete S5.1-S5.4 pre-admission foundations, with S5.4 Knowledge Applicability/Application qualified under `aasm/knowledge-applicability`
+          **Next unfinished boundary:** S5.5 — Integrated Core/Conflict Pipeline
+          **Latest fully qualified pre-documentation implementation head:** `95a73f543fa7303fe420ad145af83fb106c5787b`'''.replace('          ', '')
+          new = '''**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + complete S3 + active S4 public lineage through Degraded Operation 0.32.20 + complete S5.1-S5.6 pre-admission/qualification foundations, with S5.4 Knowledge Applicability/Application qualified under `aasm/knowledge-applicability`, S5.5 Integrated Core/Conflict qualified under `aasm/core-conflict`, and S5.6 TextPCB Refinement qualified under `aasm/textpcb-refinement`
+          **Next unfinished boundary:** S5.7 — Portable Boundary
+          **Latest fully qualified pre-documentation implementation head:** `2caa7f267a6381e18b262e063e900467a79c8d56`'''.replace('          ', '')
+          if old not in text:
+              raise SystemExit('README S5 boundary block did not match canonical source')
+          readme.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          roadmap = Path('docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md')
+          text = roadmap.read_text(encoding='utf-8')
+          old_seam = '**Next seam:** S5.5 integrated core/conflict pipeline after implemented S5.1-S5.4 foundations.'
+          new_seam = '**Next seam:** S5.7 portable boundary after implemented and qualified S5.1-S5.6 foundations.'
+          if old_seam not in text:
+              raise SystemExit('roadmap prior next-seam marker did not match canonical source')
+          text = text.replace(old_seam, new_seam, 1)
+
+          old_block = '''## 5.5 Integrated core/conflict pipeline
+
+          Preserve external references through raw -> normalized -> minimized -> independently rechecked cores/conflicts. Clearly distinguish irreducible, minimum/minimum-weight and budget-limited partial claims.
+
+          ## 5.6 TextPCB refinement qualification
+
+          TextPCB consumes the generic `RefinementLoop` for DRC/ERC, SPICE, EM, thermal/PDN, mechanical/manufacturing checks, external measurements, and artifact/tool feedback. Evaluators return typed Evidence/counterexamples/diagnoses/proposals; none directly mutates canonical truth.
+
+          Generic architecture:
+
+          `DESIGN -> VERIFY -> BUILD/GENERATE -> OPERATE/OBSERVE -> LEARN -> REDESIGN`'''.replace('          ', '')
+          new_block = '''## 5.5 Integrated core/conflict pipeline
+
+          **Status: FOUNDATION IMPLEMENTED AND QUALIFIED under `aasm/core-conflict`; backend-independent pre-admission pipeline active. Public admission remains `PRE_ADMISSION_ONLY`.**
+
+          Preserve external references through raw -> normalized -> reduced -> independently rechecked cores/conflicts. The qualified contract distinguishes backend-reported, conflict-preserving, irreducible, minimum-cardinality, minimum-weight, and budget-limited partial claims without inferring one proof class from another. Irreducibility requires independent removal rechecks; minimum-cardinality and minimum-weight require their own explicit certificates.
+
+          ## 5.6 TextPCB refinement qualification
+
+          **Status: QUALIFICATION IMPLEMENTED AND PASSED under `aasm/textpcb-refinement`; `QUALIFICATION_ONLY_NO_RUNTIME_SURFACE`.**
+
+          TextPCB consumes the generic S5.1 `RefinementLoop` for DRC/ERC, SPICE, EM, thermal/PDN, mechanical/manufacturing checks, external measurements, and artifact/tool feedback. Evaluators return typed Evidence/counterexamples/diagnoses and optional ordinary `RefinementProposal` objects; none directly mutates canonical truth, accepts artifacts, dispatches effects, or bypasses existing scoped refinement authority.
+
+          S5.6 is pinned to the permanent S4 TextPCB safety corpus and requires both `aasm/refinement` and `aasm/safety-governance` semantics to remain intact.
+
+          Generic architecture:
+
+          `DESIGN -> VERIFY -> BUILD/GENERATE -> OPERATE/OBSERVE -> LEARN -> REDESIGN`'''.replace('          ', '')
+          if old_block not in text:
+              raise SystemExit('roadmap S5.5/S5.6 block did not match canonical source')
+          roadmap.write_text(text.replace(old_block, new_block, 1), encoding='utf-8')
+          PY
+      - name: Commit canonical S5.6 publication
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md
+          git diff --cached --quiet && { echo 'expected canonical publication changes missing' >&2; exit 1; }
+          git commit -m 'Advance canonical roadmap through qualified S5.6'
+          git push origin HEAD:main
+      - name: Delete completed implementation branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for branch in s5-5-integrated-core-conflict s5-6-textpcb-refinement; do
+            if gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$branch" >/dev/null 2>&1; then
+              gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$branch"
+            fi
+          done
+      - name: Remove one-shot publisher
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin main
+          rm .github/workflows/publish-s5-6.yml
+          git add -A
+          git commit -m 'Remove one-shot S5.6 publication workflow'
+          git push origin HEAD:main
