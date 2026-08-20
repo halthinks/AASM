@@ -1,0 +1,48 @@
+name: S5.5 Integrated Core Conflict Qualification
+
+on:
+  push:
+    branches: [main, s5-5-integrated-core-conflict]
+    paths:
+      - 'src/aasm/core_conflict.py'
+      - 'src/aasm/core_conflict_runtime.py'
+      - 'schemas/core-conflict.schema.json'
+      - 'scripts/check_core_conflict_contracts.py'
+      - 'tests/test_core_conflict.py'
+      - '.github/workflows/core-conflict.yml'
+  pull_request:
+    paths:
+      - 'src/aasm/core_conflict.py'
+      - 'src/aasm/core_conflict_runtime.py'
+      - 'schemas/core-conflict.schema.json'
+      - 'scripts/check_core_conflict_contracts.py'
+      - 'tests/test_core_conflict.py'
+      - '.github/workflows/core-conflict.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install AASM development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile S5.5 foundation and runtime
+        run: |
+          python -m compileall -q \
+            src/aasm/core_conflict.py \
+            src/aasm/core_conflict_runtime.py \
+            scripts/check_core_conflict_contracts.py \
+            tests/test_core_conflict.py
+          python -m json.tool schemas/core-conflict.schema.json >/dev/null
+      - name: Check S5.5 semantic and authority firewalls
+        run: python scripts/check_core_conflict_contracts.py
+      - name: Run S5.5 adversarial core/conflict corpus
+        run: pytest -q tests/test_core_conflict.py
