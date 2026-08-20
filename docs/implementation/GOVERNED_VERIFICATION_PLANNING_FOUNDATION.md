@@ -1,8 +1,9 @@
 # S5.3 Governed Verification Plan and Debt Foundation
 
-**Status:** pre-admission semantic/assurance foundation  
+**Status:** pre-admission semantic/assurance/lifecycle foundation  
 **Contracts:** `aasm.verification.plan.v1`, `aasm.verification.debt.v1`  
 **Assurance:** `aasm.verification.planning.assurance.v1`  
+**Lifecycle:** `aasm.verification.plan.lifecycle.v1`  
 **Qualification:** `aasm/verification-planning`
 
 ## Purpose
@@ -57,7 +58,8 @@ verification vocabulary; S5.3 does not redefine or rank it.
 
 ## Verification plan
 
-A plan is exact-revision and exact-calculus-state bound. It contains:
+A plan is exact-revision and exact-calculus-state bound *at planning time*. It
+contains:
 
 - one requirement for every unresolved canonical obligation that already
   requires Evidence;
@@ -70,17 +72,51 @@ planning can represent incapacity honestly. The requirement itself may not be
 omitted. Unassigned requirements become visible verification debt when no
 applicable Evidence already satisfies them.
 
+## Planning snapshot versus current applicability
+
+The immutable whole-calculus fingerprint is a planning-time provenance anchor,
+not a demand that the world never change.
+
+Verification itself can legitimately change the calculus by attaching Evidence
+or advancing an obligation lifecycle. Requiring the original whole-state hash to
+remain equal would make a plan unusable precisely when verifier Evidence arrives.
+
+S5.3 therefore separates two checks:
+
+1. **Planning-time exactness** — `validate_verification_plan()` requires the exact
+   original calculus snapshot and complete canonical verification-obligation set.
+2. **Current applicability** — `validate_verification_plan_current_applicability()`
+   allows lifecycle status and attached-Evidence evolution but rechecks every
+   planned obligation's exact semantic fingerprint and required Evidence types.
+
+A current plan must be replaced if:
+
+- a new unresolved verification obligation appears;
+- a planned obligation disappears;
+- its semantic fingerprint changes;
+- its canonical required Evidence types change;
+- current plan/profile/reference support Evidence becomes stale.
+
+An obligation that becomes `VERIFIED` or `COMMITTED` may leave current debt
+without rewriting the original plan. The original plan ID, plan fingerprint,
+and planning snapshot fingerprint remain immutable provenance.
+
 ## Verification debt
 
-`project_verification_debt()` is a deterministic projection. It does not mutate
-obligation status.
+`project_verification_debt_current()` is the current-world deterministic
+projection. It does not mutate obligation status.
 
 The projection compares:
 
-1. the exact canonical obligation graph;
-2. the exact verification plan;
+1. the exact canonical obligation graph as it exists now;
+2. the immutable original verification plan plus current semantic-applicability
+   validation;
 3. existing Evidence records and active/invalidated status;
 4. explicit revision-bound evidence-applicability assessments.
+
+The produced debt record retains the original plan ID and fingerprint while
+recording the *current* calculus-state fingerprint. This exposes that the state
+has evolved without pretending the original plan was rewritten.
 
 Only Evidence already attached to the canonical obligation can clear its debt.
 An unattached observation or an unassessed attached observation does not become
@@ -91,16 +127,11 @@ unassessed/indeterminate applicability, evidence type/fidelity/grade mismatch,
 environment/numerical-policy mismatch, formal-strength mismatch, and terminal
 unresolved obligations.
 
-A `VERIFIED` or `COMMITTED` existing obligation leaves the projection because the
-canonical lifecycle—not the debt projection—says it is satisfied.
-
 There is deliberately no scalar debt score.
 
 ## Cross-history applicability assurance
 
-The base debt projection consumes typed applicability assessments. The assurance
-layer prevents those typed records from becoming a semantic laundering path.
-Before current-world debt projection it checks:
+Before current-world debt projection the assurance layer checks:
 
 - the referenced Evidence exists;
 - the applicability `evidence_type` equals the existing Evidence `kind`;
@@ -110,32 +141,20 @@ Before current-world debt projection it checks:
   Evidence-backed soundness/completeness support Evidence exists and is active.
 
 A bad or stale applicability assertion is downgraded to `INDETERMINATE`, which
-leaves the verification debt visible. Stale/missing plan support fails closed and
+leaves verification debt visible. Stale/missing plan support fails closed and
 requires replanning rather than silently trusting an obsolete assignment.
 
-The invalidation of the *result Evidence itself* is different: it is not an input
-error. It becomes `STALE_EVIDENCE` debt, preserving the distinction between a
-stale result and a stale applicability assessment.
-
-Historical audit can still use the base projection to reconstruct what was
-believed at the time; the assured projection is the current-world gate.
+Invalidation of the result Evidence itself is different: it becomes
+`STALE_EVIDENCE` debt rather than an input-system error.
 
 ## Authority ceiling
 
-S5.3 grants no:
-
-- verifier execution authority;
-- FactAuthority;
-- effect authority;
-- resource reservation;
-- obligation transition authority;
-- problem mutation authority.
-
+S5.3 grants no verifier execution, FactAuthority, effect authority, resource
+reservation, obligation transition authority, or problem mutation authority.
 Cache/reuse is performance-only unless a separate existing certification path
-proves semantic reuse safe. A plan never converts cached output into truth.
+proves semantic reuse safe.
 
 ## Admission boundary
 
 All S5.3 contracts remain `PRE_ADMISSION_ONLY` and absent from the active public
-root. Runtime durability/admission is a separate qualification step after this
-semantic and assurance foundation passes its adversarial corpus.
+root. Durable recording/admission is the final S5.3 qualification step.
