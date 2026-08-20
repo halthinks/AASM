@@ -1,0 +1,70 @@
+name: AASM Knowledge Applicability Qualification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: aasm-knowledge-applicability-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  knowledge-applicability:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install AASM development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile S5.4 knowledge applicability/application foundation and runtime
+        run: |
+          python -m compileall -q \
+            src/aasm/knowledge_applicability.py \
+            src/aasm/knowledge_applicability_runtime.py \
+            scripts/check_knowledge_applicability_contracts.py \
+            tests/test_knowledge_applicability_runtime.py
+          python -m json.tool schemas/knowledge-applicability.schema.json >/dev/null
+          python -m json.tool schemas/knowledge-applicability-record.schema.json >/dev/null
+      - name: Check S5.4 semantic, runtime, authority, and pre-admission firewalls
+        run: python scripts/check_knowledge_applicability_contracts.py
+      - name: Run S5.4 adversarial knowledge-applicability corpus
+        run: |
+          pytest -q \
+            tests/test_knowledge_applicability_runtime.py \
+            tests/test_v48_cross_run_knowledge.py
+      - name: Publish S5.4 knowledge-applicability qualification
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='S5.4 selection/applicability/authority/application separation passed'
+          else
+            state=failure
+            description='S5.4 knowledge applicability/application qualification failed'
+          fi
+          for attempt in 1 2 3 4 5; do
+            if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+              -f state="$state" \
+              -f context='aasm/knowledge-applicability' \
+              -f description="$description" \
+              -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 5 ]; then sleep $((attempt * 2)); fi
+          done
+          echo 'failed to publish aasm/knowledge-applicability after bounded retries' >&2
+          exit 1
