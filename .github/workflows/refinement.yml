@@ -2,7 +2,7 @@ name: AASM Governed Refinement Qualification
 
 on:
   push:
-    branches: [main, s5-7-refinement-portable]
+    branches: [main]
   pull_request:
     branches: [main]
 
