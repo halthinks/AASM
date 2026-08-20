@@ -47,6 +47,9 @@ jobs:
             src/aasm/_safety_envelope_assessment_records.py \
             src/aasm/_safety_envelope_validation.py \
             src/aasm/_safety_envelope_evaluation.py \
+            src/aasm/epistemic_debt_manual_override.py \
+            src/aasm/_epistemic_debt.py \
+            src/aasm/_manual_override.py \
             scripts/check_quantity_contracts.py \
             scripts/check_quantity_public.py \
             scripts/check_rule_contracts.py \
@@ -59,7 +62,8 @@ jobs:
             scripts/check_degraded_operation_public.py \
             scripts/check_risk_irreversibility_contracts.py \
             scripts/check_obligation_phase_contracts.py \
-            scripts/check_safety_envelope_hybrid_state_contracts.py
+            scripts/check_safety_envelope_hybrid_state_contracts.py \
+            scripts/check_epistemic_debt_manual_override_contracts.py
           python -m json.tool schemas/quantity.schema.json >/dev/null
           python -m json.tool schemas/rule.schema.json >/dev/null
           python -m json.tool schemas/semantic-projection.schema.json >/dev/null
@@ -78,6 +82,9 @@ jobs:
           python -m json.tool schemas/safety-envelope.schema.json >/dev/null
           python -m json.tool schemas/hybrid-state.schema.json >/dev/null
           python -m json.tool schemas/safety-envelope-assessment.schema.json >/dev/null
+          python -m json.tool schemas/epistemic-debt.schema.json >/dev/null
+          python -m json.tool schemas/manual-override.schema.json >/dev/null
+          python -m json.tool schemas/manual-override-assessment.schema.json >/dev/null
       - name: Check Quantity semantic contracts
         run: |
           python scripts/check_quantity_contracts.py
@@ -104,6 +111,8 @@ jobs:
         run: python scripts/check_obligation_phase_contracts.py
       - name: Check Safety Envelope and Hybrid State pre-admission contracts
         run: python scripts/check_safety_envelope_hybrid_state_contracts.py
+      - name: Check Epistemic Debt and Manual Override pre-admission contracts
+        run: python scripts/check_epistemic_debt_manual_override_contracts.py
       - name: Run cumulative S4 semantic corpus
         run: |
           pytest -q \
@@ -121,7 +130,8 @@ jobs:
             tests/test_degraded_operation_public.py \
             tests/test_risk_irreversibility_foundation.py \
             tests/test_obligation_phase_foundation.py \
-            tests/test_safety_envelope_hybrid_state_foundation.py
+            tests/test_safety_envelope_hybrid_state_foundation.py \
+            tests/test_epistemic_debt_manual_override_foundation.py
       - name: Publish cumulative S4 qualification
         if: always()
         env:
@@ -132,7 +142,7 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S4 through active degraded 0.32.20 + risk + obligation phases + safety envelope passed'
+            description='S4 through active degraded 0.32.20 + risk + obligation phases + safety envelope + epistemic governance passed'
           else
             state=failure
             description='S4 cumulative semantic boundary failed'

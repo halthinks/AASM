@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/manual-override-assessment.schema.json",
+  "title": "AASM Manual Override Assessment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "assessment_id", "contract_id", "contract_version", "override_id",
+    "override_fingerprint", "rule_revision_id", "rule_fingerprint",
+    "accepted_risk_assessment_id", "accepted_risk_assessment_fingerprint",
+    "status", "diagnostics", "waiver_performed", "rule_mutated",
+    "authority_granted", "effect_authority_granted", "obligation_mutated",
+    "history_deleted", "current_override_activated", "fingerprint"
+  ],
+  "properties": {
+    "assessment_id": {"type": "string", "pattern": "^manual-override-assessment-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.manual.override.assessment.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "override_id": {"type": "string", "pattern": "^manual-override-[0-9a-f]{24}$"},
+    "override_fingerprint": {"$ref": "#/$defs/sha256"},
+    "rule_revision_id": {"type": "string", "minLength": 1},
+    "rule_fingerprint": {"$ref": "#/$defs/sha256"},
+    "accepted_risk_assessment_id": {"type": "string", "minLength": 1},
+    "accepted_risk_assessment_fingerprint": {"$ref": "#/$defs/sha256"},
+    "status": {"enum": ["ADMISSIBLE_FOR_AUTHORIZATION_REVIEW", "BLOCKED_HARD_FLOOR", "BLOCKED_RULE_POLICY", "BLOCKED_AUTHORITY_REFERENCE", "BLOCKED_ACCEPTED_RISK", "BLOCKED_RESULTING_OBLIGATIONS", "OUTSIDE_VALIDITY_WINDOW"]},
+    "diagnostics": {"$ref": "#/$defs/uniqueStrings"},
+    "waiver_performed": {"const": false},
+    "rule_mutated": {"const": false},
+    "authority_granted": {"const": false},
+    "effect_authority_granted": {"const": false},
+    "obligation_mutated": {"const": false},
+    "history_deleted": {"const": false},
+    "current_override_activated": {"const": false},
+    "fingerprint": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "uniqueStrings": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  }
+}

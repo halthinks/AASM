@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/manual-override.schema.json",
+  "title": "AASM Manual Override v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "override_id", "contract_id", "contract_version", "principal_id",
+    "rule_revision_id", "rule_fingerprint", "rule_id", "reason",
+    "workspace_id", "scope_id", "scope_selector_fingerprint",
+    "problem_revision_id", "problem_revision_fingerprint", "validity",
+    "accepted_risk_assessment_id", "accepted_risk_assessment_fingerprint",
+    "accepted_hazard_ids", "authority", "authority_evidence_ids",
+    "resulting_obligations", "evidence_ids", "metadata", "fingerprint"
+  ],
+  "properties": {
+    "override_id": {"type": "string", "pattern": "^manual-override-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.manual.override.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "principal_id": {"type": "string", "minLength": 1},
+    "rule_revision_id": {"type": "string", "minLength": 1},
+    "rule_fingerprint": {"$ref": "#/$defs/sha256"},
+    "rule_id": {"type": "string", "minLength": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string"},
+    "scope_selector_fingerprint": {"$ref": "#/$defs/sha256"},
+    "problem_revision_id": {"type": "string", "minLength": 1},
+    "problem_revision_fingerprint": {"$ref": "#/$defs/sha256"},
+    "validity": {"$ref": "#/$defs/validityWindow"},
+    "accepted_risk_assessment_id": {"type": "string", "minLength": 1},
+    "accepted_risk_assessment_fingerprint": {"$ref": "#/$defs/sha256"},
+    "accepted_hazard_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "authority": {"$ref": "#/$defs/authorityRef"},
+    "authority_evidence_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "resulting_obligations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/obligationRef"}},
+    "evidence_ids": {"$ref": "#/$defs/uniqueStrings"},
+    "metadata": {"$ref": "#/$defs/portableObject"},
+    "fingerprint": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "uniqueStrings": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "portableValue": {"oneOf": [{"type": "null"}, {"type": "boolean"}, {"type": "string"}, {"type": "integer"}, {"type": "array", "items": {"$ref": "#/$defs/portableValue"}}, {"$ref": "#/$defs/portableObject"}]},
+    "portableObject": {"type": "object", "additionalProperties": {"$ref": "#/$defs/portableValue"}},
+    "validityWindow": {
+      "type": "object", "additionalProperties": false,
+      "required": ["clock_id", "not_before_sequence", "not_after_sequence", "fingerprint"],
+      "properties": {
+        "clock_id": {"type": "string", "minLength": 1},
+        "not_before_sequence": {"type": "integer", "minimum": 0},
+        "not_after_sequence": {"type": "integer", "minimum": 1},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "authorityRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["principal_id", "authority_grant_id", "authority_grant_fingerprint", "capability"],
+      "properties": {
+        "principal_id": {"type": "string", "minLength": 1},
+        "authority_grant_id": {"type": "string", "minLength": 1},
+        "authority_grant_fingerprint": {"$ref": "#/$defs/sha256"},
+        "capability": {"type": "string", "minLength": 1}
+      }
+    },
+    "obligationRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["obligation_id", "obligation_semantic_fingerprint", "fingerprint"],
+      "properties": {
+        "obligation_id": {"type": "string", "minLength": 1},
+        "obligation_semantic_fingerprint": {"$ref": "#/$defs/sha256"},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

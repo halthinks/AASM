@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/epistemic-debt.schema.json",
+  "title": "AASM Epistemic Debt Projection v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "projection_id", "contract_id", "contract_version",
+    "problem_revision_id", "problem_revision_fingerprint",
+    "calculus_state_fingerprint", "items", "total_debt_count",
+    "outstanding_count", "terminal_unresolved_count", "metadata", "fingerprint"
+  ],
+  "properties": {
+    "projection_id": {"type": "string", "pattern": "^epistemic-debt-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.epistemic.debt.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "problem_revision_id": {"type": "string", "minLength": 1},
+    "problem_revision_fingerprint": {"$ref": "#/$defs/sha256"},
+    "calculus_state_fingerprint": {"$ref": "#/$defs/sha256"},
+    "items": {"type": "array", "items": {"$ref": "#/$defs/debtItem"}},
+    "total_debt_count": {"type": "integer", "minimum": 0},
+    "outstanding_count": {"type": "integer", "minimum": 0},
+    "terminal_unresolved_count": {"type": "integer", "minimum": 0},
+    "metadata": {"$ref": "#/$defs/portableObject"},
+    "fingerprint": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "uniqueStrings": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "portableValue": {"oneOf": [{"type": "null"}, {"type": "boolean"}, {"type": "string"}, {"type": "integer"}, {"type": "array", "items": {"$ref": "#/$defs/portableValue"}}, {"$ref": "#/$defs/portableObject"}]},
+    "portableObject": {"type": "object", "additionalProperties": {"$ref": "#/$defs/portableValue"}},
+    "debtItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "item_id", "obligation_id", "obligation_semantic_fingerprint",
+        "obligation_status", "classification", "statement",
+        "dependency_obligation_ids", "required_evidence_types",
+        "attached_evidence_ids", "mandatory", "persistent", "scope_id",
+        "phase", "diagnostics", "fingerprint"
+      ],
+      "properties": {
+        "item_id": {"type": "string", "pattern": "^epistemic-debt-item-[0-9a-f]{24}$"},
+        "obligation_id": {"type": "string", "minLength": 1},
+        "obligation_semantic_fingerprint": {"$ref": "#/$defs/sha256"},
+        "obligation_status": {"enum": ["AVAILABLE", "ENABLED", "IN_PROGRESS", "VERIFYING", "BLOCKED", "LOCKED", "NEEDS_REVALIDATION", "REJECTED", "SUPERSEDED", "IMPOSSIBLE"]},
+        "classification": {"enum": ["OUTSTANDING", "TERMINAL_UNRESOLVED"]},
+        "statement": {"type": "string", "minLength": 1},
+        "dependency_obligation_ids": {"$ref": "#/$defs/uniqueStrings"},
+        "required_evidence_types": {"$ref": "#/$defs/uniqueStrings"},
+        "attached_evidence_ids": {"$ref": "#/$defs/uniqueStrings"},
+        "mandatory": {"type": "boolean"},
+        "persistent": {"type": "boolean"},
+        "scope_id": {"type": "string", "minLength": 1},
+        "phase": {"enum": ["", "PRE_AUTHORIZE", "PRE_DISPATCH", "POST_DISPATCH", "POST_OBSERVE", "POST_VERIFY", "RECOVERY"]},
+        "diagnostics": {"$ref": "#/$defs/uniqueStrings"},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

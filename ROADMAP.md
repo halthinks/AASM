@@ -352,3 +352,7 @@ Future capability names above are architecture/program identities only. They do 
 ## Release discipline
 
 No milestone above automatically changes package SemVer. A package release occurs only when a coherent selected scope is intentionally frozen and every required exact-head gate for that scope is green. Published tags/releases remain immutable.
+
+## Governed Semantic Evolution live status — S4.9
+
+S4.8 Safety Envelope/Hybrid State is implemented as a gated pre-admission semantic foundation. S4.9 Epistemic Debt/Manual Override is implemented with a dedicated qualification gate and remains pre-admission. The next dependency-ordered seam is the permanent S4.10 TextPCB fixture corpus and aggregate `aasm/safety-governance` qualification before S5 refinement admission.

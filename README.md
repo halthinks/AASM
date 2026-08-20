@@ -8,10 +8,10 @@
 
 **Next release / cumulative release:** v0.56.1 — Execution Profiles + Runtime Provenance + Governed External Reality + Physical Authority + S3 Artifact/Entity Lineage + S4 Engineering Quantity + Rule
 
-**Current development package on `main`:** `0.56.1`  
-**Current active adoption contract on `main`:** `aasm.adoption.v1 / 0.32.17`  
-**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + complete S3 + S4 `aasm.quantity.v1` + `aasm.rule.v1` public semantic foundations  
-**Next unfinished boundary:** S4.3 — semantic projection/equivalence; one explicit “same/equivalent” contract with no implicit “same enough”  
+**Current development package on `main`:** `0.56.1`
+**Current active adoption contract on `main`:** `aasm.adoption.v1 / 0.32.20`
+**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + complete S3 + active S4 public lineage through Degraded Operation 0.32.20, with Risk/Irreversibility, Obligation Phases, Safety Envelope/Hybrid State, and Epistemic Debt/Manual Override gated pre-admission foundations
+**Next unfinished boundary:** S4.10 — permanent TextPCB safety/engineering fixtures and aggregate safety-governance qualification
 **Latest fully qualified pre-documentation implementation head:** `7c808fc504fa91edb8fe9af13f12568b745f9762`
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, external engineering tools, physical/external state machines, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
@@ -33,7 +33,7 @@ latest published package / public surface: 0.56.0
 released adoption contract:                 aasm.adoption.v1 / 0.32.0
 
 current development package on main:        0.56.1
-active development adoption contract:       aasm.adoption.v1 / 0.32.17
+active development adoption contract:       aasm.adoption.v1 / 0.32.20
 
 v0.56 truthful solver evidence:
   aasm.solver.outcome.v2
@@ -980,10 +980,10 @@ Start with:
 
 AASM is an experimental `0.x` project. Public contracts are versioned and aggressively tested, but interfaces may still evolve between minor releases. Claims in the README are intended to stay below the evidence available from code, tests, and exact-head qualification gates.
 
-**Current immutable release:** `0.56.0`  
-**Current development target on `main`:** `0.56.1`  
-**Released adoption contract:** `aasm.adoption.v1 / 0.32.0`  
-**Active development adoption contract:** `aasm.adoption.v1 / 0.32.17`  
-**PR-3 / S3 / S4 status:** `complete PR-3 / PHY-01 GATED; complete S3 GATED; S4 Quantity + Rule GATED/public semantic IR; next S4.3 semantic projection/equivalence`  
-**License:** Apache-2.0  
+**Current immutable release:** `0.56.0`
+**Current development target on `main`:** `0.56.1`
+**Released adoption contract:** `aasm.adoption.v1 / 0.32.0`
+**Active development adoption contract:** `aasm.adoption.v1 / 0.32.17`
+**PR-3 / S3 / S4 status:** `complete PR-3 / PHY-01 GATED; complete S3 GATED; S4 Quantity + Rule GATED/public semantic IR; next S4.3 semantic projection/equivalence`
+**License:** Apache-2.0
 **Repository:** https://github.com/halthinks/AASM

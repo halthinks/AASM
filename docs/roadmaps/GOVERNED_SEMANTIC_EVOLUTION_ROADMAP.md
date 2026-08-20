@@ -1,8 +1,8 @@
 # AASM Governed Semantic Evolution — Unified Engineering and Portable Kernel Roadmap
 
-**Date:** August 2026  
-**Latest immutable release:** v0.56.0  
-**Current development package:** 0.56.1  
+**Date:** August 2026
+**Latest immutable release:** v0.56.0
+**Current development package:** 0.56.1
 **Architecture status:** active governed-semantic evolution program
 
 This roadmap is the canonical dependency-ordered implementation plan for evolving AASM from its existing governed reasoning/execution substrate into a domain-neutral supervisory-control kernel with typed engineering semantics, refinement/verification loops, a portable machine contract, and later independent Rust implementations.
@@ -53,9 +53,9 @@ S4 engineering semantics, safety, risk, uncertainty
     4.4 Uncertainty / Scenario / Trace Property GATED
     4.5 Degraded Operation                      FOUNDATION GATED; PUBLIC PROMOTION IN QUALIFICATION
     4.6 Risk / Irreversibility                  FOUNDATION IMPLEMENTED; QUALIFICATION ACTIVE
-    4.7 Obligation phases                       NEXT
-    4.8 Safety envelope / hybrid state
-    4.9 Epistemic debt / manual override
+    4.7 Obligation phases                       FOUNDATION GATED; PRE-ADMISSION
+    4.8 Safety envelope / hybrid state             FOUNDATION GATED; PRE-ADMISSION
+    4.9 Epistemic debt / manual override            FOUNDATION IMPLEMENTED; QUALIFICATION ACTIVE
 S5 governed refinement / experiments / verification planning / knowledge application
 S6 portable machine IR / kernel contract
 S7 Rust std reference kernel
@@ -211,7 +211,7 @@ The dedicated foundation must fail closed on forged Rule fingerprints, unknown h
 
 ## 4.7 Obligation phases
 
-**Status: NEXT after S4.6 foundation qualification/public admission review.**
+**Status: FOUNDATION GATED under `aasm/engineering-obligation-phase`; public/runtime admission remains `PRE_ADMISSION_ONLY`.**
 
 Extend the existing obligation graph with explicit phases:
 
@@ -220,6 +220,8 @@ Extend the existing obligation graph with explicit phases:
 This must extend the existing obligation graph rather than create a second lifecycle/verification queue.
 
 ## 4.8 Safety envelope/hybrid state
+
+**Status: FOUNDATION GATED under `aasm/engineering-safety-envelope-hybrid-state`; public/runtime admission remains `PRE_ADMISSION_ONLY`.**
 
 Targets:
 
@@ -230,14 +232,16 @@ Bind discrete modes to observed continuous quantities and external solver/eviden
 
 ## 4.9 Epistemic debt and manual override
 
+**Status: FOUNDATION IMPLEMENTED; dedicated qualification active. Public/runtime admission remains `PRE_ADMISSION_ONLY`.**
+
 Targets:
 
 - `aasm.epistemic.debt.v1`
 - `aasm.manual.override.v1`
 
-Debt uses existing semantic dependencies/obligations; no second debt graph.
+Debt is a deterministic, revision-bound projection of the exact existing calculus obligations and `REQUIRES` edges; there is no second debt graph, store, lifecycle, scalar score, or forgiveness switch. Verified/committed obligations leave the projection, while terminal unresolved obligations remain visible.
 
-Override records principal, exact waived rule, reason, scope, duration, accepted risk, authority evidence and resulting obligations. It never deletes history.
+Override records principal, exact Rule revision/fingerprint and scope, explicit logical-clock duration, exact accepted RiskAssessment, exact scoped-authority reference and evidence, and exact resulting existing obligations. `HARD_FLOOR` remains unconditionally non-overridable. An assessment is review eligibility only: it performs no waiver, authorization, Rule/obligation mutation, current-override activation, Effect dispatch, or history deletion.
 
 ## 4.10 TextPCB S4 fixtures
 
@@ -256,8 +260,8 @@ Permanent fixture requirements include:
 - irreversible-operation assurance escalation;
 - hard hazard/evidence floor not relaxed by solver/resource scarcity.
 
-**Current S4 gates:** `aasm/engineering-quantity`, `aasm/engineering-rule`, `aasm/engineering-semantic-projection`, `aasm/engineering-semantic-projection-public`, `aasm/engineering-uncertainty-scenario-trace`, `aasm/engineering-uncertainty-scenario-trace-public`, `aasm/engineering-degraded-operation`, `aasm/engineering-degraded-operation-public` (public promotion qualification), `aasm/engineering-s4`.  
-**Next seam:** finish S4.6 qualification, then S4.7 Obligation Phases.  
+**Current S4 gates:** `aasm/engineering-quantity`, `aasm/engineering-rule`, `aasm/engineering-semantic-projection`, `aasm/engineering-semantic-projection-public`, `aasm/engineering-uncertainty-scenario-trace`, `aasm/engineering-uncertainty-scenario-trace-public`, `aasm/engineering-degraded-operation`, `aasm/engineering-degraded-operation-public` (public promotion qualification), `aasm/engineering-s4`.
+**Next seam:** S4.10 permanent TextPCB fixtures and aggregate safety-governance qualification, then S5 governed refinement.
 **Future aggregate safety gate:** `aasm/safety-governance`.
 
 ---

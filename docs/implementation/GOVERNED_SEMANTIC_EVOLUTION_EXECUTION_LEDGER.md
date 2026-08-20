@@ -210,3 +210,19 @@ This evidence qualifies **S3 complete + 59.1/S4-01 Quantity + 59.2/S4-02 Rule as
 A row advances to `TESTED` only with reproducible tests. It advances to `GATED` only when the declared gate executes those claims on an exact Git head. It advances to `RELEASED` only when an immutable published package/tag exposes the capability without exceeding the evidence.
 
 Development may continue from a sufficiently qualified prerequisite without forcing an intermediate package publication. Package SemVer is assigned only at a deliberate coherent release boundary under `docs/VERSIONING.md`.
+
+## S4.8 — Safety Envelope and Hybrid State
+
+- Foundation implemented and gated under `aasm/engineering-safety-envelope-hybrid-state`.
+- Reuses exact Quantity, HARD_FLOOR/SAFETY_INVARIANT Rule, ProblemRevision, Evidence/external references, and existing authority/effect boundaries.
+- Performs conservative exact support containment only; no ODE/physics solving, controller synthesis, mode activation, authority grant, dispatch, or empirical safety proof.
+- Runtime/public admission remains `PRE_ADMISSION_ONLY`.
+
+## S4.9 — Epistemic Debt and Manual Override
+
+- Foundation implemented; dedicated qualification active under `aasm/engineering-epistemic-debt-manual-override`.
+- `aasm.epistemic.debt.v1` projects unresolved knowledge from the existing calculus obligation graph; no second graph/store/lifecycle or scalar debt score.
+- `aasm.manual.override.v1` records exact Rule, scope, reason, explicit sequence window, accepted RiskAssessment, scoped-authority reference/evidence, and resulting existing obligations.
+- HARD_FLOOR is never overridable. Review eligibility performs no waiver, authorization, mutation, dispatch, current-override activation, or history deletion.
+- Runtime/public admission remains `PRE_ADMISSION_ONLY`.
+- Next dependency seam: S4.10 permanent TextPCB fixtures and aggregate safety-governance qualification.
