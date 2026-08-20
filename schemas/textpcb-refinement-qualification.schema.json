@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/textpcb-refinement-qualification.schema.json",
+  "title": "AASM TextPCB S5.6 Refinement Qualification Fixtures",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "contract_version",
+    "fixture_suite",
+    "qualification_gate",
+    "required_refinement_gate",
+    "required_safety_gate",
+    "required_s4_safety_suite_fingerprint",
+    "runtime_admission",
+    "canonical_cycle",
+    "cases",
+    "suite_fingerprint"
+  ],
+  "properties": {
+    "contract_id": {"const": "aasm.textpcb.s5-refinement-fixtures.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "fixture_suite": {"const": "TextPCB S5.6 Refinement Qualification"},
+    "qualification_gate": {"const": "aasm/textpcb-refinement"},
+    "required_refinement_gate": {"const": "aasm/refinement"},
+    "required_safety_gate": {"const": "aasm/safety-governance"},
+    "required_s4_safety_suite_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "runtime_admission": {"const": "QUALIFICATION_ONLY_NO_RUNTIME_SURFACE"},
+    "canonical_cycle": {"const": "DESIGN -> VERIFY -> BUILD/GENERATE -> OPERATE/OBSERVE -> LEARN -> REDESIGN"},
+    "cases": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fixture_id", "domain", "result", "proposal_kind", "requirement", "expected", "forbidden_claims"],
+        "properties": {
+          "fixture_id": {"type": "string", "minLength": 1},
+          "domain": {
+            "enum": [
+              "DRC_ERC",
+              "SPICE",
+              "EM",
+              "THERMAL_PDN",
+              "MECHANICAL_MANUFACTURING",
+              "EXTERNAL_MEASUREMENT",
+              "ARTIFACT_TOOL_FEEDBACK"
+            ]
+          },
+          "result": {"enum": ["PASS", "FAIL", "INCONCLUSIVE"]},
+          "proposal_kind": {
+            "enum": [
+              "NO_GOOD",
+              "BOUND_TIGHTENING",
+              "NEW_CONSTRAINT",
+              "DOMAIN_RESTRICTION",
+              "OBJECTIVE_CORRECTION",
+              "REQUIRED_OBSERVATION",
+              "VERIFICATION_ESCALATION",
+              "MODEL_CORRECTION",
+              "SCENARIO_ADDITION",
+              "RULE_APPLICABILITY_CORRECTION"
+            ]
+          },
+          "requirement": {"type": "string", "minLength": 1},
+          "expected": {"type": "string", "minLength": 1},
+          "forbidden_claims": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "suite_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
