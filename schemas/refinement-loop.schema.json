@@ -1,0 +1,304 @@
+{
+  "$defs": {
+    "application": {
+      "additionalProperties": false,
+      "properties": {
+        "actor_principal_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "application_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "base_revision_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "base_revision_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "contract_id": {
+          "const": "aasm.refinement.loop.v1"
+        },
+        "contract_version": {
+          "const": "0.1.0"
+        },
+        "delta_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "delta_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "problem_transition_evidence_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "producer_principal_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "proposal_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "proposal_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "scoped_authorization_evidence_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "semantic_refinement_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "target_revision_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "target_revision_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "validation_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "validation_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "application_id",
+        "contract_id",
+        "contract_version",
+        "proposal_id",
+        "proposal_fingerprint",
+        "validation_id",
+        "validation_fingerprint",
+        "semantic_refinement_fingerprint",
+        "base_revision_id",
+        "base_revision_fingerprint",
+        "delta_id",
+        "delta_fingerprint",
+        "target_revision_id",
+        "target_revision_fingerprint",
+        "producer_principal_id",
+        "actor_principal_id",
+        "scoped_authorization_evidence_id",
+        "problem_transition_evidence_id",
+        "metadata",
+        "fingerprint"
+      ],
+      "type": "object"
+    },
+    "termination": {
+      "additionalProperties": false,
+      "properties": {
+        "actor_principal_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "base_revision_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "base_revision_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "blocking_obligation_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "contract_id": {
+          "const": "aasm.refinement.loop.v1"
+        },
+        "contract_version": {
+          "const": "0.1.0"
+        },
+        "evidence_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "head_revision_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "head_revision_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "is_success": {
+          "type": "boolean"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "problem_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "reason": {
+          "enum": [
+            "GOAL_SATISFIED",
+            "NO_PROGRESS",
+            "OSCILLATION",
+            "RESOURCE_EXHAUSTED",
+            "INCONCLUSIVE",
+            "CONFLICT",
+            "MANUAL_HOLD"
+          ]
+        },
+        "termination_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "termination_id",
+        "contract_id",
+        "contract_version",
+        "problem_id",
+        "base_revision_id",
+        "base_revision_fingerprint",
+        "head_revision_id",
+        "head_revision_fingerprint",
+        "reason",
+        "evidence_ids",
+        "actor_principal_id",
+        "blocking_obligation_ids",
+        "metadata",
+        "is_success",
+        "fingerprint"
+      ],
+      "type": "object"
+    },
+    "validation": {
+      "additionalProperties": false,
+      "properties": {
+        "applicability_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "base_revision_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "base_revision_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "contract_id": {
+          "const": "aasm.refinement.loop.v1"
+        },
+        "contract_version": {
+          "const": "0.1.0"
+        },
+        "fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "proposal_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "proposal_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "reasoning": {
+          "type": "string"
+        },
+        "result": {
+          "enum": [
+            "VALID",
+            "INVALID",
+            "INCONCLUSIVE"
+          ]
+        },
+        "semantic_refinement_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "supporting_evidence_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "validation_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "validator_principal_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "validation_id",
+        "contract_id",
+        "contract_version",
+        "proposal_id",
+        "proposal_fingerprint",
+        "semantic_refinement_fingerprint",
+        "base_revision_id",
+        "base_revision_fingerprint",
+        "applicability_fingerprint",
+        "validator_principal_id",
+        "result",
+        "supporting_evidence_ids",
+        "reasoning",
+        "metadata",
+        "fingerprint"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://aasm.dev/schemas/refinement-loop.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/validation"
+    },
+    {
+      "$ref": "#/$defs/application"
+    },
+    {
+      "$ref": "#/$defs/termination"
+    }
+  ],
+  "title": "AASM Refinement Loop Record"
+}

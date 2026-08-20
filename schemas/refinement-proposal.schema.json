@@ -1,0 +1,533 @@
+{
+  "$defs": {
+    "applicability": {
+      "additionalProperties": false,
+      "properties": {
+        "environment_fingerprints": {
+          "items": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "external_reference_fingerprints": {
+          "items": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "problem_revision_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "problem_revision_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "scope_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "subject_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "workspace_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "scope_id",
+        "problem_revision_id",
+        "problem_revision_fingerprint",
+        "subject_ids",
+        "environment_fingerprints",
+        "external_reference_fingerprints",
+        "metadata",
+        "fingerprint"
+      ],
+      "type": "object"
+    },
+    "external_reference": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_id": {
+          "const": "aasm.external.reference.v1"
+        },
+        "contract_version": {
+          "const": "0.1.0"
+        },
+        "external_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "key": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "namespace": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "role": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "semantic_entity_id": {
+          "type": "string"
+        },
+        "source_fingerprint": {
+          "type": "string"
+        },
+        "source_location": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "contract_id",
+        "contract_version",
+        "namespace",
+        "external_id",
+        "role",
+        "revision",
+        "source_fingerprint",
+        "source_location",
+        "semantic_entity_id",
+        "metadata",
+        "key",
+        "fingerprint"
+      ],
+      "type": "object"
+    },
+    "resource_estimate": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?$",
+          "type": "string"
+        },
+        "fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "resource_id": {
+          "type": "string"
+        },
+        "resource_kind": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "unit": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "resource_kind",
+        "amount",
+        "unit",
+        "resource_id",
+        "metadata",
+        "fingerprint"
+      ],
+      "type": "object"
+    },
+    "semantic_effect": {
+      "additionalProperties": false,
+      "properties": {
+        "added_external_reference_fingerprints": {
+          "items": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "changed_artifact_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "changed_objective_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "changed_quantity_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "changed_rule_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "changed_scenario_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "changed_semantic_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "impacted_obligation_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "impacted_solver_object_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "incremental_eligibility": {
+          "enum": [
+            "REQUIRES_REBUILD",
+            "INCREMENTAL_CANDIDATE",
+            "INCREMENTAL_CERTIFIED"
+          ]
+        },
+        "invalidated_evidence_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "modified_external_reference_fingerprints": {
+          "items": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "preserved_evidence_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "removed_external_reference_fingerprints": {
+          "items": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "target_problem_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "target_semantic_projection_fingerprint": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "truth_change_roots": {
+          "items": {
+            "$ref": "#/$defs/semantic_node"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "warm_start_eligibility": {
+          "enum": [
+            "FORBIDDEN",
+            "PERFORMANCE_ONLY_CANDIDATE",
+            "PERFORMANCE_ONLY_VALIDATED"
+          ]
+        }
+      },
+      "required": [
+        "target_problem_fingerprint",
+        "target_semantic_projection_fingerprint",
+        "added_external_reference_fingerprints",
+        "removed_external_reference_fingerprints",
+        "modified_external_reference_fingerprints",
+        "truth_change_roots",
+        "changed_semantic_ids",
+        "changed_quantity_ids",
+        "changed_rule_ids",
+        "changed_objective_ids",
+        "changed_scenario_ids",
+        "changed_artifact_ids",
+        "invalidated_evidence_ids",
+        "preserved_evidence_ids",
+        "impacted_obligation_ids",
+        "impacted_solver_object_ids",
+        "incremental_eligibility",
+        "warm_start_eligibility",
+        "fingerprint"
+      ],
+      "type": "object"
+    },
+    "semantic_node": {
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "node_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "node_type": {
+          "enum": [
+            "ENTITY",
+            "PREDICATE",
+            "OBJECTIVE",
+            "ARTIFACT",
+            "EVIDENCE",
+            "EVENT",
+            "VERIFIER",
+            "OBSERVER",
+            "CERTIFICATE",
+            "CONSTRAINT",
+            "DECISION",
+            "OBLIGATION",
+            "OPERATOR",
+            "EFFECT",
+            "RULE"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "node_type",
+        "node_id",
+        "key"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://aasm.dev/schemas/refinement-proposal.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "applicability": {
+      "$ref": "#/$defs/applicability"
+    },
+    "base_revision_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "base_revision_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "contract_id": {
+      "const": "aasm.refinement.proposal.v1"
+    },
+    "contract_version": {
+      "const": "0.1.0"
+    },
+    "dependency_fingerprints": {
+      "items": {
+        "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "expected_semantic_effect": {
+      "$ref": "#/$defs/semantic_effect"
+    },
+    "fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "independent_validation_required": {
+      "type": "boolean"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "producer_principal_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "proposal_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "proposed_semantic_payload": {
+      "type": "object"
+    },
+    "refinement_kind": {
+      "enum": [
+        "NO_GOOD",
+        "BOUND_TIGHTENING",
+        "NEW_CONSTRAINT",
+        "DOMAIN_RESTRICTION",
+        "OBJECTIVE_CORRECTION",
+        "REQUIRED_OBSERVATION",
+        "VERIFICATION_ESCALATION",
+        "MODEL_CORRECTION",
+        "SCENARIO_ADDITION",
+        "RULE_APPLICABILITY_CORRECTION"
+      ]
+    },
+    "resource_estimates": {
+      "items": {
+        "$ref": "#/$defs/resource_estimate"
+      },
+      "type": "array"
+    },
+    "scope_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "semantic_refinement_fingerprint": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "status": {
+      "const": "PROPOSED"
+    },
+    "target_external_refs": {
+      "items": {
+        "$ref": "#/$defs/external_reference"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "target_semantic_refs": {
+      "items": {
+        "$ref": "#/$defs/semantic_node"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "trigger_conflict_ids": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "trigger_core_ids": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "trigger_evidence_ids": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "trigger_reasoning_artifact_ids": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "workspace_id": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "proposal_id",
+    "contract_id",
+    "contract_version",
+    "refinement_kind",
+    "workspace_id",
+    "scope_id",
+    "base_revision_id",
+    "base_revision_fingerprint",
+    "applicability",
+    "target_semantic_refs",
+    "target_external_refs",
+    "proposed_semantic_payload",
+    "dependency_fingerprints",
+    "independent_validation_required",
+    "expected_semantic_effect",
+    "producer_principal_id",
+    "trigger_evidence_ids",
+    "trigger_reasoning_artifact_ids",
+    "trigger_conflict_ids",
+    "trigger_core_ids",
+    "resource_estimates",
+    "metadata",
+    "status",
+    "semantic_refinement_fingerprint",
+    "fingerprint"
+  ],
+  "title": "AASM Refinement Proposal",
+  "type": "object"
+}
