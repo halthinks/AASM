@@ -40,18 +40,26 @@ jobs:
         run: |
           python -m pip install -e '.[dev,optimization]'
           python -m pip install 'ruff==0.15.22'
-      - name: Repair staged S4.9 inventory writer
+      - name: Repair staged S4.9 transport assumptions
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
           path = Path('.github/s49_payload.py')
           source = path.read_text(encoding='utf-8')
-          marker = '# Update the canonical tracked-file inventory using its literal Python collection.'
-          if marker not in source:
+
+          inventory_marker = '# Update the canonical tracked-file inventory using its literal Python collection.'
+          if inventory_marker not in source:
               raise SystemExit('S4.9 inventory repair marker missing')
-          replacement = '''# Update the canonical tracked-file inventory from the actual materialized checkout.\nsubprocess.run(\n    ["python", "scripts/release_manifest.py", "--write-file-list"],\n    check=True,\n)\n\nprint("S4.9 payload materialized")\n'''
-          source = source.split(marker, 1)[0] + replacement
+          inventory_replacement = '''# Update the canonical tracked-file inventory from the actual materialized checkout.\nsubprocess.run(\n    ["python", "scripts/release_manifest.py", "--write-file-list"],\n    check=True,\n)\n\nprint("S4.9 payload materialized")\n'''
+          source = source.split(inventory_marker, 1)[0] + inventory_replacement
+
+          old = '''        changed.pop("fingerprint")\n        mismatch = ManualOverride.from_dict(changed)'''
+          new = '''        changed.pop("fingerprint")\n        changed.pop("override_id")\n        mismatch = ManualOverride.from_dict(changed)'''
+          if old not in source:
+              raise SystemExit('S4.9 accepted-risk adversarial fixture anchor missing')
+          source = source.replace(old, new, 1)
+
           path.write_text(source, encoding='utf-8')
           PY
       - name: Materialize S4.9 from staged canonical payload
