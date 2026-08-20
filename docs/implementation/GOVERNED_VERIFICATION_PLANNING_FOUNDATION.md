@@ -1,7 +1,8 @@
 # S5.3 Governed Verification Plan and Debt Foundation
 
-**Status:** pre-admission semantic foundation  
+**Status:** pre-admission semantic/assurance foundation  
 **Contracts:** `aasm.verification.plan.v1`, `aasm.verification.debt.v1`  
+**Assurance:** `aasm.verification.planning.assurance.v1`  
 **Qualification:** `aasm/verification-planning`
 
 ## Purpose
@@ -95,6 +96,30 @@ canonical lifecycle—not the debt projection—says it is satisfied.
 
 There is deliberately no scalar debt score.
 
+## Cross-history applicability assurance
+
+The base debt projection consumes typed applicability assessments. The assurance
+layer prevents those typed records from becoming a semantic laundering path.
+Before current-world debt projection it checks:
+
+- the referenced Evidence exists;
+- the applicability `evidence_type` equals the existing Evidence `kind`;
+- an `APPLICABLE` assertion carries explicit assessment Evidence;
+- applicability-assessment Evidence exists and is active;
+- plan, verifier-profile, environment, numerical-policy, resource-demand, and
+  Evidence-backed soundness/completeness support Evidence exists and is active.
+
+A bad or stale applicability assertion is downgraded to `INDETERMINATE`, which
+leaves the verification debt visible. Stale/missing plan support fails closed and
+requires replanning rather than silently trusting an obsolete assignment.
+
+The invalidation of the *result Evidence itself* is different: it is not an input
+error. It becomes `STALE_EVIDENCE` debt, preserving the distinction between a
+stale result and a stale applicability assessment.
+
+Historical audit can still use the base projection to reconstruct what was
+believed at the time; the assured projection is the current-world gate.
+
 ## Authority ceiling
 
 S5.3 grants no:
@@ -111,6 +136,6 @@ proves semantic reuse safe. A plan never converts cached output into truth.
 
 ## Admission boundary
 
-Both contracts remain `PRE_ADMISSION_ONLY` and absent from the active public
+All S5.3 contracts remain `PRE_ADMISSION_ONLY` and absent from the active public
 root. Runtime durability/admission is a separate qualification step after this
-semantic foundation passes its adversarial corpus.
+semantic and assurance foundation passes its adversarial corpus.

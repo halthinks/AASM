@@ -25,18 +25,26 @@ jobs:
           cache: pip
       - name: Install AASM development dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Compile S5.3 verification planning foundation
+      - name: Compile S5.3 verification planning foundation and assurance
         run: |
           python -m compileall -q \
             src/aasm/verification_planning.py \
+            src/aasm/verification_planning_assurance.py \
             scripts/check_verification_planning_contracts.py \
-            tests/test_verification_planning_foundation.py
+            scripts/check_verification_planning_assurance_contracts.py \
+            tests/test_verification_planning_foundation.py \
+            tests/test_verification_planning_assurance.py
           python -m json.tool schemas/verification-plan.schema.json >/dev/null
           python -m json.tool schemas/verification-debt.schema.json >/dev/null
-      - name: Check S5.3 semantic and pre-admission firewalls
-        run: python scripts/check_verification_planning_contracts.py
+      - name: Check S5.3 semantic, assurance, and pre-admission firewalls
+        run: |
+          python scripts/check_verification_planning_contracts.py
+          python scripts/check_verification_planning_assurance_contracts.py
       - name: Run S5.3 adversarial verification-planning corpus
-        run: pytest -q tests/test_verification_planning_foundation.py
+        run: |
+          pytest -q \
+            tests/test_verification_planning_foundation.py \
+            tests/test_verification_planning_assurance.py
       - name: Publish S5.3 verification-planning qualification
         if: always()
         env:
@@ -47,10 +55,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S5.3 verification plan/debt pre-admission foundation passed'
+            description='S5.3 verification plan/debt foundation and assurance passed'
           else
             state=failure
-            description='S5.3 verification plan/debt pre-admission foundation failed'
+            description='S5.3 verification plan/debt foundation or assurance failed'
           fi
           for attempt in 1 2 3 4 5; do
             if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
