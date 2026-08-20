@@ -1,0 +1,38 @@
+name: One-shot interrupted S5.4 recovery branch cleanup
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/s5-4-recovery-branch-cleanup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Delete superseded recovery branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/s5-4-knowledge-applicability" || {
+            status=$?
+            echo "recovery ref delete returned $status; verifying absence"
+            if gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/s5-4-knowledge-applicability" >/dev/null 2>&1; then
+              exit "$status"
+            fi
+          }
+      - name: Remove one-shot workflow from main
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/s5-4-recovery-branch-cleanup.yml
+          git commit -m 'Remove interrupted S5.4 recovery cleanup workflow'
+          git push origin HEAD:main
