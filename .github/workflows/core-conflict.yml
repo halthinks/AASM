@@ -1,5 +1,6 @@
 name: S5.5 Integrated Core Conflict Qualification
 
+# Qualification trigger marker: 2026-08-20
 on:
   push:
     branches: [main, s5-5-integrated-core-conflict]
