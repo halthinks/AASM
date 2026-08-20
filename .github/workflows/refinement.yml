@@ -30,21 +30,26 @@ jobs:
           python -m compileall -q \
             src/aasm/refinement.py \
             src/aasm/refinement_runtime.py \
+            src/aasm/refinement_runtime_assurance.py \
             scripts/check_refinement_contracts.py \
             scripts/check_refinement_runtime_contracts.py \
+            scripts/check_refinement_assurance_contracts.py \
             tests/test_refinement_foundation.py \
-            tests/test_refinement_runtime.py
+            tests/test_refinement_runtime.py \
+            tests/test_refinement_runtime_assurance.py
           python -m json.tool schemas/refinement-proposal.schema.json >/dev/null
           python -m json.tool schemas/refinement-loop.schema.json >/dev/null
       - name: Check S5.1 source and pre-admission firewalls
         run: |
           python scripts/check_refinement_contracts.py
           python scripts/check_refinement_runtime_contracts.py
-      - name: Run S5.1 adversarial foundation and durable-loop corpus
+          python scripts/check_refinement_assurance_contracts.py
+      - name: Run S5.1 adversarial foundation, durable-loop, and assurance corpus
         run: |
           pytest -q \
             tests/test_refinement_foundation.py \
-            tests/test_refinement_runtime.py
+            tests/test_refinement_runtime.py \
+            tests/test_refinement_runtime_assurance.py
       - name: Publish S5.1 refinement qualification
         if: always()
         env:
@@ -55,10 +60,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S5.1 governed refinement foundation and durable loop passed'
+            description='S5.1 governed refinement durable loop and assurance passed'
           else
             state=failure
-            description='S5.1 governed refinement foundation or durable loop failed'
+            description='S5.1 governed refinement durable loop or assurance failed'
           fi
           for attempt in 1 2 3 4 5; do
             if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \

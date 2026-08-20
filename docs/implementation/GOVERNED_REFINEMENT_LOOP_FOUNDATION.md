@@ -2,6 +2,7 @@
 
 **Status:** pre-admission foundation; qualified only by `aasm/refinement`  
 **Contract family:** `aasm.refinement.proposal.v1`, `aasm.refinement.loop.v1`  
+**Runtime assurance:** `aasm.refinement.runtime.assurance.v1`  
 **Canonical mutation path:** existing `ProblemDelta -> ProblemRevision` semantic-evolution runtime
 
 ## Purpose
@@ -41,6 +42,11 @@ The actor that applies a refinement must differ from the proposal producer.
 Canonical revision commit authority remains the pre-existing
 `POLICY | CONTROLLER` authority boundary.
 
+The assurance projector additionally proves that the principal named by the
+refinement application is the same principal recorded as authority on the
+canonical revision transition. A second scoped `ALLOW` cannot be substituted for
+the authority that actually committed the transition.
+
 ## Canonical mutation and invalidation
 
 S5.1 does not implement another problem-revision engine.
@@ -56,6 +62,21 @@ refinement application record is recoverable: the existing transition is
 reused, pending truth maintenance is resumed idempotently, and only then is the
 application record written.
 
+The assurance layer binds the recorded truth-impact Evidence id to the exact
+canonical impact application. A refinement may not claim unrelated invalidation
+or carry spurious truth-impact provenance.
+
+## Validation freshness
+
+A `VALID` refinement validation may be recorded only while its supporting
+Evidence is active. More importantly, supporting Evidence must still be active
+when a *new* semantic refinement is applied.
+
+If the supporting Evidence is later invalidated, it does not rewrite history or
+erase an already committed refinement application. Exact retry remains
+idempotent. It does, however, prevent stale validation from authorizing another
+new revision transition.
+
 ## Anti-loop behavior
 
 The semantic application key is:
@@ -69,23 +90,29 @@ idempotent; a conflicting repeat fails closed.
 `NO_PROGRESS` and `OSCILLATION` remain explicit non-success termination reasons
 and require blocking-obligation references under the base S5.1 model contract.
 
-## History projection
+## History projection and assurance
 
 `project_refinement_evidence()` reconstructs proposals, validations,
 applications, terminations, and semantic application keys from durable Evidence.
-It cross-checks every application against:
 
+`assure_refinement_projection()` adds cross-history checks against authoritative
+AASM state. It verifies:
+
+- proposal base revision identity and exact fingerprint;
+- proposal dependency applicability to that durable base;
 - the exact proposal and independent validation;
 - the canonical semantic refinement fingerprint;
 - the existing `ProblemDelta` transition;
 - the exact target `ProblemRevision`;
 - the durable transition Evidence id;
 - the durable scoped-authority `ALLOW` decision;
-- completed canonical truth-maintenance impact when truth-change roots exist;
+- the transition authority principal and authority class;
+- exact completed truth-maintenance impact provenance when truth-change roots exist;
+- exact termination base/head revision fingerprints;
 - the duplicate-application key.
 
 A forged application cannot become valid merely by carrying internally
-consistent refinement fields.
+consistent refinement fields or by presenting a different authorized principal.
 
 ## Admission boundary
 
