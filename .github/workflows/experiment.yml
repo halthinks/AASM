@@ -1,0 +1,66 @@
+name: AASM Governed Experiment Qualification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: aasm-experiment-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  experiment:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install AASM development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Compile S5.2 experiment foundation
+        run: |
+          python -m compileall -q \
+            src/aasm/experiment.py \
+            scripts/check_experiment_contracts.py \
+            tests/test_experiment_foundation.py
+          python -m json.tool schemas/experiment.schema.json >/dev/null
+          python -m json.tool schemas/experiment-selection-proposal.schema.json >/dev/null
+      - name: Check S5.2 semantic and pre-admission firewalls
+        run: python scripts/check_experiment_contracts.py
+      - name: Run S5.2 adversarial experiment corpus
+        run: pytest -q tests/test_experiment_foundation.py
+      - name: Publish S5.2 experiment qualification
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='S5.2 governed experiment pre-admission foundation passed'
+          else
+            state=failure
+            description='S5.2 governed experiment pre-admission foundation failed'
+          fi
+          for attempt in 1 2 3 4 5; do
+            if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+              -f state="$state" \
+              -f context='aasm/experiment' \
+              -f description="$description" \
+              -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 5 ]; then sleep $((attempt * 2)); fi
+          done
+          echo 'failed to publish aasm/experiment after bounded retries' >&2
+          exit 1

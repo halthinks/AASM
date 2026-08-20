@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/experiment-selection-proposal.schema.json",
+  "title": "AASM Experiment Selection Proposal v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "selection_id",
+    "contract_id",
+    "contract_version",
+    "workspace_id",
+    "scope_id",
+    "problem_revision_id",
+    "problem_revision_fingerprint",
+    "candidates",
+    "selected_candidate_id",
+    "selection_policy_id",
+    "selection_policy_fingerprint",
+    "producer_principal_id",
+    "evidence_ids",
+    "metadata",
+    "selected_experiment_id",
+    "fingerprint"
+  ],
+  "properties": {
+    "selection_id": {"type": "string", "pattern": "^experiment-selection-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.experiment.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "problem_revision_id": {"type": "string", "minLength": 1},
+    "problem_revision_fingerprint": {"$ref": "#/$defs/sha256"},
+    "candidates": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/candidate"}},
+    "selected_candidate_id": {"type": "string"},
+    "selection_policy_id": {"type": "string", "minLength": 1},
+    "selection_policy_fingerprint": {"$ref": "#/$defs/sha256"},
+    "producer_principal_id": {"type": "string", "minLength": 1},
+    "evidence_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "metadata": {"type": "object"},
+    "selected_experiment_id": {"type": "string"},
+    "fingerprint": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id", "contract_id", "contract_version", "experiment_id",
+        "experiment_fingerprint", "problem_revision_id", "problem_revision_fingerprint",
+        "constraint_status", "constraint_assessment_evidence_ids",
+        "expected_information_gain_ppm", "expected_uncertainty_reduction_ppm",
+        "metadata", "eligible", "fingerprint"
+      ],
+      "properties": {
+        "candidate_id": {"type": "string", "pattern": "^experiment-selection-candidate-[0-9a-f]{24}$"},
+        "contract_id": {"const": "aasm.experiment.v1"},
+        "contract_version": {"const": "0.1.0"},
+        "experiment_id": {"type": "string", "pattern": "^experiment-[0-9a-f]{24}$"},
+        "experiment_fingerprint": {"$ref": "#/$defs/sha256"},
+        "problem_revision_id": {"type": "string", "minLength": 1},
+        "problem_revision_fingerprint": {"$ref": "#/$defs/sha256"},
+        "constraint_status": {"enum": ["ELIGIBLE", "BLOCKED_REVISION", "BLOCKED_SAFETY", "BLOCKED_EVIDENCE", "BLOCKED_RESOURCE", "INDETERMINATE"]},
+        "constraint_assessment_evidence_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "expected_information_gain_ppm": {"type": "integer", "minimum": 0, "maximum": 1000000},
+        "expected_uncertainty_reduction_ppm": {"type": "integer", "minimum": 0, "maximum": 1000000},
+        "metadata": {"type": "object"},
+        "eligible": {"type": "boolean"},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

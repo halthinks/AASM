@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/experiment.schema.json",
+  "title": "AASM Experiment v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "experiment_id",
+    "contract_id",
+    "contract_version",
+    "experiment_name",
+    "workspace_id",
+    "scope_id",
+    "problem_revision_id",
+    "problem_revision_fingerprint",
+    "hypotheses",
+    "variables",
+    "procedure_steps",
+    "context_bindings",
+    "outcome_criteria",
+    "producer_principal_id",
+    "evidence_ids",
+    "metadata",
+    "fingerprint"
+  ],
+  "properties": {
+    "experiment_id": {"type": "string", "pattern": "^experiment-[0-9a-f]{24}$"},
+    "contract_id": {"const": "aasm.experiment.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "experiment_name": {"type": "string", "minLength": 1},
+    "workspace_id": {"type": "string", "minLength": 1},
+    "scope_id": {"type": "string", "minLength": 1},
+    "problem_revision_id": {"type": "string", "minLength": 1},
+    "problem_revision_fingerprint": {"$ref": "#/$defs/sha256"},
+    "hypotheses": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/hypothesis"}},
+    "variables": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/variable"}},
+    "procedure_steps": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/procedureStep"}},
+    "context_bindings": {"type": "array", "minItems": 6, "items": {"$ref": "#/$defs/contextBinding"}},
+    "outcome_criteria": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/outcome"}},
+    "producer_principal_id": {"type": "string", "minLength": 1},
+    "evidence_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "metadata": {"type": "object"},
+    "fingerprint": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "semanticRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_type", "node_id", "key"],
+      "properties": {
+        "node_type": {"type": "string", "minLength": 1},
+        "node_id": {"type": "string", "minLength": 1},
+        "key": {"type": "string", "minLength": 1}
+      }
+    },
+    "contextBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_kind", "status", "contract_id", "object_id", "object_fingerprint", "evidence_ids", "reason", "metadata", "fingerprint"],
+      "properties": {
+        "binding_kind": {"enum": ["ENVIRONMENT", "FIXTURE_IDENTITY", "CALIBRATION_IDENTITY", "EVIDENCE_FLOOR", "RISK_CONSTRAINT", "SAFETY_CONSTRAINT", "RESOURCE_DEMAND", "VERIFICATION_OBLIGATION"]},
+        "status": {"enum": ["BOUND", "NOT_APPLICABLE"]},
+        "contract_id": {"type": "string"},
+        "object_id": {"type": "string"},
+        "object_fingerprint": {"type": "string"},
+        "evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "reason": {"type": "string"},
+        "metadata": {"type": "object"},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hypothesis_id", "statement", "semantic_refs", "basis_evidence_ids", "metadata", "fingerprint"],
+      "properties": {
+        "hypothesis_id": {"type": "string", "pattern": "^experiment-hypothesis-[0-9a-f]{24}$"},
+        "statement": {"type": "string", "minLength": 1},
+        "semantic_refs": {"type": "array", "items": {"$ref": "#/$defs/semanticRef"}},
+        "basis_evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "metadata": {"type": "object"},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "variable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["variable_id", "role", "semantic_ref", "definition_fingerprint", "metadata", "fingerprint"],
+      "properties": {
+        "variable_id": {"type": "string", "minLength": 1},
+        "role": {"enum": ["CONTROLLED", "MEASURED"]},
+        "semantic_ref": {"$ref": "#/$defs/semanticRef"},
+        "definition_fingerprint": {"$ref": "#/$defs/sha256"},
+        "metadata": {"type": "object"},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "procedureStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step_id", "sequence", "instruction", "required_capability_ids", "input_artifact_ids", "output_artifact_ids", "metadata", "fingerprint"],
+      "properties": {
+        "step_id": {"type": "string", "minLength": 1},
+        "sequence": {"type": "integer", "minimum": 0},
+        "instruction": {"type": "string", "minLength": 1},
+        "required_capability_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "input_artifact_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "output_artifact_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "metadata": {"type": "object"},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome_id", "description", "predicate_fingerprint", "supports_hypothesis_ids", "contradicts_hypothesis_ids", "inconclusive", "metadata", "fingerprint"],
+      "properties": {
+        "outcome_id": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "predicate_fingerprint": {"$ref": "#/$defs/sha256"},
+        "supports_hypothesis_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "contradicts_hypothesis_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "inconclusive": {"type": "boolean"},
+        "metadata": {"type": "object"},
+        "fingerprint": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}
