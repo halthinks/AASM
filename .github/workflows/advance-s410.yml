@@ -10,6 +10,7 @@ concurrency:
 
 permissions:
   contents: write
+  statuses: write
 
 jobs:
   advance-s410:
@@ -132,3 +133,23 @@ jobs:
             pytest -q tests/test_textpcb_s4_safety_governance.py
           fi
           git push origin HEAD:main
+      - name: Publish S4.10 atomic transport outcome
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='S4.10 atomic materialization completed'
+          else
+            state=failure
+            description='S4.10 atomic materialization failed; inspect run logs'
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" \
+            -f context='aasm/s410-advance' \
+            -f description="$description" \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
