@@ -37,7 +37,9 @@ jobs:
           python-version: "3.13"
           cache: pip
       - name: Install complete development dependencies
-        run: python -m pip install -e '.[dev,optimization]'
+        run: |
+          python -m pip install -e '.[dev,optimization]'
+          python -m pip install 'ruff==0.15.22'
       - name: Repair staged S4.9 inventory writer
         shell: bash
         run: |
