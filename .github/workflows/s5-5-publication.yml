@@ -1,5 +1,6 @@
 name: One-shot S5.5 qualification and publication
 
+# Existing-workflow trigger commit: qualification must complete before publication.
 on:
   push:
     branches: [main]
