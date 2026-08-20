@@ -1,0 +1,104 @@
+{
+  "contract_id": "aasm.textpcb.s5-refinement-fixtures.v1",
+  "contract_version": "0.1.0",
+  "fixture_suite": "TextPCB S5.6 Refinement Qualification",
+  "qualification_gate": "aasm/textpcb-refinement",
+  "required_refinement_gate": "aasm/refinement",
+  "required_safety_gate": "aasm/safety-governance",
+  "required_s4_safety_suite_fingerprint": "e53391300409d3a18a0dfca88b97c3ba758881228e5b670aecc970b1aa66b5d4",
+  "runtime_admission": "QUALIFICATION_ONLY_NO_RUNTIME_SURFACE",
+  "canonical_cycle": "DESIGN -> VERIFY -> BUILD/GENERATE -> OPERATE/OBSERVE -> LEARN -> REDESIGN",
+  "cases": [
+    {
+      "fixture_id": "drc-erc-governed-proposal",
+      "domain": "DRC_ERC",
+      "result": "FAIL",
+      "proposal_kind": "NEW_CONSTRAINT",
+      "requirement": "DRC/ERC violations become typed Evidence/counterexamples and an ordinary RefinementProposal; the checker cannot mutate the design or waive a hard rule.",
+      "expected": "PROPOSAL_ONLY_NO_DIRECT_MUTATION",
+      "forbidden_claims": ["DRC result mutates canonical design", "DRC pass accepts artifact", "rule violation waives itself"]
+    },
+    {
+      "fixture_id": "spice-model-correction",
+      "domain": "SPICE",
+      "result": "FAIL",
+      "proposal_kind": "MODEL_CORRECTION",
+      "requirement": "SPICE disagreement is Evidence supporting a model-correction proposal bound to the exact problem revision and environment.",
+      "expected": "REVISION_BOUND_MODEL_CORRECTION_PROPOSAL",
+      "forbidden_claims": ["SPICE output is canonical truth", "solver success commits ProblemRevision"]
+    },
+    {
+      "fixture_id": "em-bound-tightening",
+      "domain": "EM",
+      "result": "FAIL",
+      "proposal_kind": "BOUND_TIGHTENING",
+      "requirement": "EM current-density or field violations may propose tighter bounds but cannot directly rewrite engineering quantities or constraints.",
+      "expected": "BOUND_TIGHTENING_PROPOSAL_ONLY",
+      "forbidden_claims": ["EM result edits Quantity", "field solver grants authority"]
+    },
+    {
+      "fixture_id": "thermal-pdn-escalation",
+      "domain": "THERMAL_PDN",
+      "result": "INCONCLUSIVE",
+      "proposal_kind": "VERIFICATION_ESCALATION",
+      "requirement": "Thermal/PDN uncertainty remains inconclusive and may escalate verification without being converted into a pass or relaxed safety floor.",
+      "expected": "INCONCLUSIVE_VERIFICATION_ESCALATION",
+      "forbidden_claims": ["inconclusive means safe", "resource scarcity lowers thermal evidence floor"]
+    },
+    {
+      "fixture_id": "mechanical-manufacturing-domain-restriction",
+      "domain": "MECHANICAL_MANUFACTURING",
+      "result": "FAIL",
+      "proposal_kind": "DOMAIN_RESTRICTION",
+      "requirement": "Mechanical or manufacturing infeasibility can propose a domain restriction while preserving exact rule, geometry/artifact, and revision provenance.",
+      "expected": "DOMAIN_RESTRICTION_PROPOSAL_ONLY",
+      "forbidden_claims": ["manufacturing tool edits canonical artifact", "tool acceptance equals production authority"]
+    },
+    {
+      "fixture_id": "external-measurement-required-observation",
+      "domain": "EXTERNAL_MEASUREMENT",
+      "result": "INCONCLUSIVE",
+      "proposal_kind": "REQUIRED_OBSERVATION",
+      "requirement": "External measurement can request an additional governed observation but cannot become authoritative state merely by being measured.",
+      "expected": "OBSERVATION_REQUEST_WITHOUT_AUTHORITY",
+      "forbidden_claims": ["measurement existence equals FactAuthority", "measurement directly commits redesign"]
+    },
+    {
+      "fixture_id": "artifact-tool-feedback",
+      "domain": "ARTIFACT_TOOL_FEEDBACK",
+      "result": "FAIL",
+      "proposal_kind": "VERIFICATION_ESCALATION",
+      "requirement": "CAD/EDA/tool or generated-artifact feedback is Evidence and may trigger verification escalation while artifact acceptance stays separate.",
+      "expected": "TOOL_FEEDBACK_EVIDENCE_NOT_ACCEPTANCE",
+      "forbidden_claims": ["tool green check accepts artifact", "generated artifact is canonical artifact truth"]
+    },
+    {
+      "fixture_id": "stale-revision-fails-closed",
+      "domain": "DRC_ERC",
+      "result": "FAIL",
+      "proposal_kind": "NEW_CONSTRAINT",
+      "requirement": "Evaluator result and proposal must bind the same exact current ProblemRevision ID and fingerprint.",
+      "expected": "FAIL_CLOSED_REVISION_MISMATCH",
+      "forbidden_claims": ["stale finding auto-rebases", "scope broadens on reuse"]
+    },
+    {
+      "fixture_id": "producer-cannot-self-apply",
+      "domain": "SPICE",
+      "result": "FAIL",
+      "proposal_kind": "MODEL_CORRECTION",
+      "requirement": "The evaluator remains proposal producer only; generic S5.1 requires independent validation and forbids the producer/evaluator from directly applying its own delta.",
+      "expected": "GENERIC_REFINEMENT_AUTHORITY_PATH_REQUIRED",
+      "forbidden_claims": ["evaluator applies delta", "validation is bearer authorization"]
+    },
+    {
+      "fixture_id": "safety-floor-survives-refinement",
+      "domain": "THERMAL_PDN",
+      "result": "INCONCLUSIVE",
+      "proposal_kind": "VERIFICATION_ESCALATION",
+      "requirement": "S5.6 reuses the permanent S4 TextPCB safety corpus; refinement, provider absence, or resource pressure cannot weaken hard hazard/evidence floors.",
+      "expected": "S4_SAFETY_GOVERNANCE_REMAINS_AUTHORITATIVE",
+      "forbidden_claims": ["refinement overrides hard floor", "resource exhaustion weakens legality"]
+    }
+  ],
+  "suite_fingerprint": "f865192eaecd532e2a11070c887ed0479c8dea09bebf40442db46ecc33b78812"
+}
