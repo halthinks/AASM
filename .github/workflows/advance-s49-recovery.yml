@@ -5,7 +5,7 @@ on:
     branches: [main]
 
 concurrency:
-  group: aasm-one-shot-semantic-advance
+  group: aasm-s49-recovery-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -22,6 +22,16 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
+      - name: Publish S4.9 recovery start
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state=pending \
+            -f context='aasm/s49-recovery' \
+            -f description='S4.9 recovery materialization running' \
+            -f target_url="https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
       - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
