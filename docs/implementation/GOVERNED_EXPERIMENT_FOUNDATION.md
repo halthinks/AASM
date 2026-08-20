@@ -1,7 +1,8 @@
-# S5.2 Governed Experiment Foundation
+# S5.2 Governed Experiment Foundation and Durable Proposal Runtime
 
-**Status:** pre-admission semantic foundation  
-**Contract:** `aasm.experiment.v1 / 0.1.0`  
+**Status:** pre-admission semantic/runtime foundation  
+**Semantic contract:** `aasm.experiment.v1 / 0.1.0`  
+**Runtime contract:** `aasm.experiment.runtime.v1 / 0.1.0`  
 **Qualification:** `aasm/experiment`
 
 ## Purpose
@@ -67,6 +68,36 @@ A blocked experiment with arbitrarily high information value cannot win. If no
 candidate is eligible, no experiment is selected. This is not reported as
 success.
 
+## Durable proposal history
+
+`ExperimentRuntimeMixin` records only two append-only proposal records through
+the existing AASM Evidence/event/replay path:
+
+- `EXPERIMENT_SPEC`
+- `EXPERIMENT_SELECTION_PROPOSAL`
+
+It introduces no experiment table or current-experiment pointer.
+
+New experiment records must bind the exact current durable `ProblemRevision` and
+may not cross a pending truth-maintenance boundary. Every supporting Evidence id
+from the experiment, its hypothesis basis, and its bound context records must
+exist and be active at record time.
+
+New selection records require:
+
+- every candidate experiment already exists in durable experiment history;
+- exact experiment fingerprint and revision match;
+- active hard-constraint assessment Evidence;
+- active support for every `ELIGIBLE` experiment;
+- deterministic recomputation of the selected candidate.
+
+A lower-information eligible experiment cannot be forged into a durable
+selection record. A blocked experiment still cannot win.
+
+If supporting Evidence is invalidated later, the historical proposal is not
+erased. The stale support only prevents that Evidence from authorizing a new
+experiment or selection proposal.
+
 ## Authority ceiling
 
 An experiment or selection proposal grants none of the following:
@@ -84,7 +115,7 @@ perform any later admission or execution.
 
 ## Admission boundary
 
-The foundation is `PRE_ADMISSION_ONLY`. It is intentionally absent from the
-active public root until a later qualification step proves that runtime
-recording/application semantics can be added without creating a parallel state
-or authority plane.
+The semantic and durable proposal runtime remain `PRE_ADMISSION_ONLY`. They are
+intentionally absent from the active public root. S5.2 does not add an execution
+path; later verification/experiment execution work must independently bind the
+existing authority, resource, effect, observation, and safety planes.

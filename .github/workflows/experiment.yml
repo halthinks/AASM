@@ -25,18 +25,26 @@ jobs:
           cache: pip
       - name: Install AASM development dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Compile S5.2 experiment foundation
+      - name: Compile S5.2 experiment foundation and durable runtime
         run: |
           python -m compileall -q \
             src/aasm/experiment.py \
+            src/aasm/experiment_runtime.py \
             scripts/check_experiment_contracts.py \
-            tests/test_experiment_foundation.py
+            scripts/check_experiment_runtime_contracts.py \
+            tests/test_experiment_foundation.py \
+            tests/test_experiment_runtime.py
           python -m json.tool schemas/experiment.schema.json >/dev/null
           python -m json.tool schemas/experiment-selection-proposal.schema.json >/dev/null
-      - name: Check S5.2 semantic and pre-admission firewalls
-        run: python scripts/check_experiment_contracts.py
-      - name: Run S5.2 adversarial experiment corpus
-        run: pytest -q tests/test_experiment_foundation.py
+      - name: Check S5.2 semantic, runtime, and pre-admission firewalls
+        run: |
+          python scripts/check_experiment_contracts.py
+          python scripts/check_experiment_runtime_contracts.py
+      - name: Run S5.2 adversarial experiment foundation and durable-runtime corpus
+        run: |
+          pytest -q \
+            tests/test_experiment_foundation.py \
+            tests/test_experiment_runtime.py
       - name: Publish S5.2 experiment qualification
         if: always()
         env:
@@ -47,10 +55,10 @@ jobs:
           set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
             state=success
-            description='S5.2 governed experiment pre-admission foundation passed'
+            description='S5.2 governed experiment foundation and durable runtime passed'
           else
             state=failure
-            description='S5.2 governed experiment pre-admission foundation failed'
+            description='S5.2 governed experiment foundation or durable runtime failed'
           fi
           for attempt in 1 2 3 4 5; do
             if gh api "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
