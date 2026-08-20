@@ -245,6 +245,8 @@ Override records principal, exact Rule revision/fingerprint and scope, explicit 
 
 ## 4.10 TextPCB S4 fixtures
 
+**Status: PERMANENT CORPUS IMPLEMENTED; aggregate qualification active under `aasm/safety-governance`.**
+
 Permanent fixture requirements include:
 
 - dimensional mismatch;
@@ -261,8 +263,8 @@ Permanent fixture requirements include:
 - hard hazard/evidence floor not relaxed by solver/resource scarcity.
 
 **Current S4 gates:** `aasm/engineering-quantity`, `aasm/engineering-rule`, `aasm/engineering-semantic-projection`, `aasm/engineering-semantic-projection-public`, `aasm/engineering-uncertainty-scenario-trace`, `aasm/engineering-uncertainty-scenario-trace-public`, `aasm/engineering-degraded-operation`, `aasm/engineering-degraded-operation-public` (public promotion qualification), `aasm/engineering-s4`.
-**Next seam:** S4.10 permanent TextPCB fixtures and aggregate safety-governance qualification, then S5 governed refinement.
-**Future aggregate safety gate:** `aasm/safety-governance`.
+**Next seam:** S5.1 governed Refinement Proposal/Loop foundation.
+**Aggregate safety gate:** `aasm/safety-governance` (permanent TextPCB corpus implemented; qualification active).
 
 ---
 

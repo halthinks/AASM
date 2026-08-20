@@ -2,10 +2,10 @@
 
 AASM's latest immutable public release is **v0.56.0 — Truthful Solver Outcomes + Governed Semantic Evolution + Engineering Mathematical IR**.
 
-**Current development package on `main`:** `0.56.1`  
-**Current active adoption contract:** `aasm.adoption.v1 / 0.32.17`  
-**Qualified development boundary:** PR-1, PR-2, complete PR-3 / PHY-01, complete S3 reality/artifact/entity semantics, plus the S4 `aasm.quantity.v1` and `aasm.rule.v1` public semantic foundations  
-**Exact qualified S4 Rule code boundary before documentation-only synchronization:** `7c808fc504fa91edb8fe9af13f12568b745f9762` — all 29 current custom qualification contexts green  
+**Current development package on `main`:** `0.56.1`
+**Current active adoption contract:** `aasm.adoption.v1 / 0.32.17`
+**Qualified development boundary:** PR-1, PR-2, complete PR-3 / PHY-01, complete S3 reality/artifact/entity semantics, plus the S4 `aasm.quantity.v1` and `aasm.rule.v1` public semantic foundations
+**Exact qualified S4 Rule code boundary before documentation-only synchronization:** `7c808fc504fa91edb8fe9af13f12568b745f9762` — all 29 current custom qualification contexts green
 **Immediate unfinished boundary:** **S4.3 — semantic projection/equivalence: one explicit, versioned meaning of “same/equivalent,” with no implicit “same enough”**
 
 Package SemVer is not an architecture-progress counter. Exact unreleased identity is the Git SHA. Future capabilities below are milestone identities, not reserved package versions. See [`docs/VERSIONING.md`](docs/VERSIONING.md).
@@ -228,7 +228,7 @@ TextPCB qualification must exercise dimensions/units, manufacturing/design rules
 
 Portable constraint active in U5: canonical quantitative/rule/projection representation and invariant classification must identify what can be statically represented, what remains a dynamic kernel guard, and what remains empirical Evidence.
 
-**Current gates:** `aasm/engineering-quantity`, `aasm/engineering-rule` — GATED.  
+**Current gates:** `aasm/engineering-quantity`, `aasm/engineering-rule` — GATED.
 **Planned U5 aggregate gates:** `aasm/engineering-semantics`, `aasm/safety-governance`.
 
 ### U6 — Governed Refinement, Experiments, Verification Planning, and Knowledge Application
@@ -356,3 +356,7 @@ No milestone above automatically changes package SemVer. A package release occur
 ## Governed Semantic Evolution live status — S4.9
 
 S4.8 Safety Envelope/Hybrid State is implemented as a gated pre-admission semantic foundation. S4.9 Epistemic Debt/Manual Override is implemented with a dedicated qualification gate and remains pre-admission. The next dependency-ordered seam is the permanent S4.10 TextPCB fixture corpus and aggregate `aasm/safety-governance` qualification before S5 refinement admission.
+
+## Governed Semantic Evolution live status — S4 complete
+
+S4.10 now provides the permanent, fingerprinted TextPCB stress corpus and independent `aasm/safety-governance` aggregate gate. All S4 foundations remain within their explicit claim ceilings. The next dependency-ordered implementation seam is S5.1 governed Refinement Proposal/Loop.

@@ -5,8 +5,6 @@
 ./.github/ISSUE_TEMPLATE/feature.yml
 ./.github/PULL_REQUEST_TEMPLATE.md
 ./.github/dependabot.yml
-./.github/s410_payload.py
-./.github/workflows/advance-s410.yml
 ./.github/workflows/artifact-lineage.yml
 ./.github/workflows/ci.yml
 ./.github/workflows/cross-run.yml
@@ -41,6 +39,7 @@
 ./.github/workflows/proof-claims.yml
 ./.github/workflows/rc.yml
 ./.github/workflows/release.yml
+./.github/workflows/safety-governance.yml
 ./.github/workflows/scoped-authority.yml
 ./.github/workflows/solution-pools.yml
 ./.github/workflows/solver-learning.yml
@@ -54,7 +53,6 @@
 ./.ruff_cache/.gitignore
 ./.ruff_cache/0.15.22/11088424378706515553
 ./.ruff_cache/0.15.22/11859921205939319212
-./.ruff_cache/0.15.22/4817476338552369788
 ./.ruff_cache/CACHEDIR.TAG
 ./CHANGELOG.md
 ./CHANGELOG_0.18_AND_EARLIER.md
@@ -172,6 +170,7 @@
 ./docs/implementation/PR3_EFFECT_CAPABILITY_QUALIFICATION_CHECKPOINT.md
 ./docs/implementation/PR3_STALE_COMMAND_FENCING_AND_PREEMPTION.md
 ./docs/implementation/SAFETY_ENVELOPE_HYBRID_STATE_FOUNDATION.md
+./docs/implementation/TEXTPCB_S4_SAFETY_GOVERNANCE_FIXTURES.md
 ./docs/implementation/V056_SOLVER_OUTCOME_V2_REBASE.md
 ./docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md
 ./docs/roadmaps/V056_CUMULATIVE_RELEASE_DISCIPLINE.md
@@ -214,6 +213,7 @@
 ./examples/runtime-config.local.json
 ./examples/scheduler_demo.py
 ./examples/sii_demo.py
+./fixtures/textpcb/s4-safety-governance-fixtures.json
 ./formal/AASMCalculus.cfg
 ./formal/AASMCalculus.tla
 ./formal/AASMCrossRunKnowledge.cfg
@@ -470,6 +470,7 @@
 ./schemas/state-conflict.schema.json
 ./schemas/state.schema.json
 ./schemas/task-demand.schema.json
+./schemas/textpcb-s4-safety-fixture.schema.json
 ./schemas/trace-contract.schema.json
 ./schemas/trace-corpus.schema.json
 ./schemas/trace-projection.schema.json
@@ -506,9 +507,11 @@
 ./scripts/check_risk_irreversibility_contracts.py
 ./scripts/check_rule_contracts.py
 ./scripts/check_rule_public.py
+./scripts/check_s410_release_contracts.py
 ./scripts/check_s48_release_contracts.py
 ./scripts/check_s49_release_contracts.py
 ./scripts/check_safety_envelope_hybrid_state_contracts.py
+./scripts/check_safety_governance_contracts.py
 ./scripts/check_semantic_projection_contracts.py
 ./scripts/check_semantic_projection_public.py
 ./scripts/check_state_authority_contracts.py
@@ -990,6 +993,7 @@
 ./tests/test_state_authority.py
 ./tests/test_state_conflict.py
 ./tests/test_team_protocol.py
+./tests/test_textpcb_s4_safety_governance.py
 ./tests/test_uncertainty_scenario_trace_foundation.py
 ./tests/test_uncertainty_scenario_trace_public.py
 ./tests/test_v18_provider_artifacts_controls.py

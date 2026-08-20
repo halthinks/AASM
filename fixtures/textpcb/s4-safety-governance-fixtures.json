@@ -1,0 +1,158 @@
+{
+  "contract_id": "aasm.textpcb.s4-safety-fixtures.v1",
+  "contract_version": "0.1.0",
+  "fixture_suite": "TextPCB S4 Safety Governance",
+  "required_aggregate_context": "aasm/safety-governance",
+  "runtime_admission": "QUALIFICATION_ONLY_NO_RUNTIME_SURFACE",
+  "cases": [
+    {
+      "fixture_id": "dimensional-mismatch",
+      "requirement": "dimensionally inconsistent engineering quantities fail closed before solving or verification",
+      "contracts": [
+        "aasm.quantity.v1"
+      ],
+      "expected": "FAIL_CLOSED_DIMENSION_MISMATCH",
+      "forbidden_claims": [
+        "implicit unit coercion",
+        "solver may repair dimensions"
+      ]
+    },
+    {
+      "fixture_id": "trace-width-clearance-manufacturing",
+      "requirement": "trace width, clearance, and manufacturing limits remain exact typed quantities and rules",
+      "contracts": [
+        "aasm.quantity.v1",
+        "aasm.rule.v1"
+      ],
+      "expected": "EXACT_TYPED_MANUFACTURING_SEMANTICS",
+      "forbidden_claims": [
+        "binary float identity",
+        "hidden unit registry"
+      ]
+    },
+    {
+      "fixture_id": "drc-erc-hard-vs-preference",
+      "requirement": "DRC and ERC hard floors dominate routing and production preferences",
+      "contracts": [
+        "aasm.rule.v1"
+      ],
+      "expected": "HARD_FLOOR_DOMINATES_PREFERENCE",
+      "forbidden_claims": [
+        "objective priority overrides hard floor"
+      ]
+    },
+    {
+      "fixture_id": "controlled-waiver-provenance",
+      "requirement": "a controlled waiver records principal, rule, scope, duration, risk, authority evidence, and resulting obligations without performing a waiver",
+      "contracts": [
+        "aasm.manual.override.v1",
+        "aasm.epistemic.debt.v1"
+      ],
+      "expected": "REVIEW_ONLY_APPEND_ONLY_OVERRIDE_RECORD",
+      "forbidden_claims": [
+        "waiver performed",
+        "history deleted",
+        "authority hitchhiked"
+      ]
+    },
+    {
+      "fixture_id": "thermal-power-signal-scenarios",
+      "requirement": "thermal, power, and signal analyses are explicit scenarios rather than a hidden current scenario",
+      "contracts": [
+        "aasm.scenario.v1"
+      ],
+      "expected": "EXPLICIT_DISTINCT_SCENARIOS",
+      "forbidden_claims": [
+        "scenario activation",
+        "scenario equals ProblemRevision"
+      ]
+    },
+    {
+      "fixture_id": "tolerance-quantization",
+      "requirement": "tolerance and quantization are explicit and conservative at safety boundaries",
+      "contracts": [
+        "aasm.quantity.v1",
+        "aasm.safety.envelope.v1",
+        "aasm.hybrid.state.v1"
+      ],
+      "expected": "BOUNDARY_OVERLAP_OR_UNSUPPORTED_IS_INDETERMINATE",
+      "forbidden_claims": [
+        "rounding proves safety",
+        "nominal value alone is decisive"
+      ]
+    },
+    {
+      "fixture_id": "production-alternative-equivalence-diversity",
+      "requirement": "production alternatives may be projection-equivalent while retaining distinct exact identities",
+      "contracts": [
+        "aasm.quantity.v1",
+        "aasm.semantic.projection.v1"
+      ],
+      "expected": "PROJECTION_EQUIVALENCE_WITH_IDENTITY_DIVERSITY",
+      "forbidden_claims": [
+        "same enough becomes exact identity"
+      ]
+    },
+    {
+      "fixture_id": "degraded-dependency-loss",
+      "requirement": "dependency loss can only preserve or reduce the existing EffectCapability operation set",
+      "contracts": [
+        "aasm.degraded.operation.v1"
+      ],
+      "expected": "NO_AUTHORITY_AMPLIFICATION",
+      "forbidden_claims": [
+        "degraded mode creates authority"
+      ]
+    },
+    {
+      "fixture_id": "degraded-unknown",
+      "requirement": "UNKNOWN degraded dependency state fails closed to no new effects",
+      "contracts": [
+        "aasm.degraded.operation.v1"
+      ],
+      "expected": "SAFE_HOLD_NO_NEW_EFFECTS",
+      "forbidden_claims": [
+        "unknown treated as available",
+        "safe hold proves physical safety"
+      ]
+    },
+    {
+      "fixture_id": "hard-hazard-dominance",
+      "requirement": "present and unknown hard hazards dominate optimization and proposal admissibility",
+      "contracts": [
+        "aasm.risk.envelope.v1",
+        "aasm.rule.v1"
+      ],
+      "expected": "BLOCKED_HARD_OR_INDETERMINATE_HAZARD",
+      "forbidden_claims": [
+        "objective improvement waives hazard"
+      ]
+    },
+    {
+      "fixture_id": "irreversibility-assurance",
+      "requirement": "irreversible and unknown operations require monotonic maximum assurance",
+      "contracts": [
+        "aasm.effect.irreversibility.v1",
+        "aasm.risk.assessment.v1"
+      ],
+      "expected": "ADDITIONAL_ASSURANCE_REQUIRED",
+      "forbidden_claims": [
+        "recovery claimed for irreversible effect"
+      ]
+    },
+    {
+      "fixture_id": "scarcity-cannot-relax-floor",
+      "requirement": "solver, provider, time, and resource scarcity cannot relax hard hazard or evidence floors",
+      "contracts": [
+        "aasm.risk.assessment.v1",
+        "aasm.rule.v1"
+      ],
+      "expected": "HARD_FLOOR_AND_ASSURANCE_PRESERVED",
+      "forbidden_claims": [
+        "resource exhaustion weakens legality",
+        "provider absence lowers evidence floor"
+      ]
+    }
+  ],
+  "suite_fingerprint": "e53391300409d3a18a0dfca88b97c3ba758881228e5b670aecc970b1aa66b5d4"
+}

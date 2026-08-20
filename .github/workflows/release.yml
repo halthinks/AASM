@@ -138,6 +138,7 @@ jobs:
             aasm/engineering-safety-envelope-hybrid-state \
             aasm/engineering-epistemic-debt-manual-override \
             aasm/engineering-s4 \
+            aasm/safety-governance \
             aasm/physical-evidence; do
             state=""
             for _ in $(seq 1 90); do
@@ -155,6 +156,7 @@ jobs:
           python scripts/check_release_contracts.py
           python scripts/check_s48_release_contracts.py
           python scripts/check_s49_release_contracts.py
+          python scripts/check_s410_release_contracts.py
       - name: Build and verify two byte-identical distributions
         id: release
         shell: bash

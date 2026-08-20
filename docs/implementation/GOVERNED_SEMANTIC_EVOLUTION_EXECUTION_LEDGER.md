@@ -226,3 +226,11 @@ Development may continue from a sufficiently qualified prerequisite without forc
 - HARD_FLOOR is never overridable. Review eligibility performs no waiver, authorization, mutation, dispatch, current-override activation, or history deletion.
 - Runtime/public admission remains `PRE_ADMISSION_ONLY`.
 - Next dependency seam: S4.10 permanent TextPCB fixtures and aggregate safety-governance qualification.
+
+## S4.10 — Permanent TextPCB Corpus and Aggregate Safety Governance
+
+- Closed, fingerprinted `aasm.textpcb.s4-safety-fixtures.v1` manifest implements all twelve normative S4.10 cases.
+- Independent `aasm/safety-governance` gate reruns every S4 foundation/public/adversarial corpus plus integrated TextPCB fixtures and release firewalls.
+- TextPCB remains a qualification consumer; no domain-specific runtime or engine surface was introduced.
+- S4 dependency chain is now implemented through the permanent aggregate corpus.
+- Next dependency seam: S5.1 governed Refinement Proposal/Loop foundation.

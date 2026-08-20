@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/textpcb-s4-safety-fixture.schema.json",
+  "title": "AASM TextPCB S4 Safety Governance Fixture Suite",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id", "contract_version", "fixture_suite",
+    "required_aggregate_context", "runtime_admission", "cases",
+    "suite_fingerprint"
+  ],
+  "properties": {
+    "contract_id": {"const": "aasm.textpcb.s4-safety-fixtures.v1"},
+    "contract_version": {"const": "0.1.0"},
+    "fixture_suite": {"const": "TextPCB S4 Safety Governance"},
+    "required_aggregate_context": {"const": "aasm/safety-governance"},
+    "runtime_admission": {"const": "QUALIFICATION_ONLY_NO_RUNTIME_SURFACE"},
+    "cases": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {"$ref": "#/$defs/case"}
+    },
+    "suite_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "uniqueStrings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fixture_id", "requirement", "contracts", "expected",
+        "forbidden_claims"
+      ],
+      "properties": {
+        "fixture_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]+$"},
+        "requirement": {"type": "string", "minLength": 1},
+        "contracts": {"$ref": "#/$defs/uniqueStrings"},
+        "expected": {"type": "string", "minLength": 1},
+        "forbidden_claims": {"$ref": "#/$defs/uniqueStrings"}
+      }
+    }
+  }
+}
