@@ -10,9 +10,9 @@
 
 **Current development package on `main`:** `0.56.1`
 **Current active adoption contract on `main`:** `aasm.adoption.v1 / 0.32.20`
-**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + complete S3 + active S4 public lineage through Degraded Operation 0.32.20, with Risk/Irreversibility, Obligation Phases, Safety Envelope/Hybrid State, and Epistemic Debt/Manual Override gated pre-admission foundations
-**Next unfinished boundary:** S5.1 — governed Refinement Proposal/Loop with evaluator/proposer authority separation
-**Latest fully qualified pre-documentation implementation head:** `7c808fc504fa91edb8fe9af13f12568b745f9762`
+**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + complete S3 + active S4 public lineage through Degraded Operation 0.32.20 + complete S5.1-S5.4 pre-admission foundations, with S5.4 Knowledge Applicability/Application qualified under `aasm/knowledge-applicability`
+**Next unfinished boundary:** S5.5 — Integrated Core/Conflict Pipeline
+**Latest fully qualified pre-documentation implementation head:** `95a73f543fa7303fe420ad145af83fb106c5787b`
 
 AASM is an event-sourced control plane for work that must survive retries, crashes, competing agents, changing evidence, external solvers, long-lived memory, external engineering tools, physical/external state machines, and prior-run knowledge **without allowing any of those inputs to silently become authority or truth**.
 

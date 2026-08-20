@@ -263,7 +263,7 @@ Permanent fixture requirements include:
 - hard hazard/evidence floor not relaxed by solver/resource scarcity.
 
 **Current S4 gates:** `aasm/engineering-quantity`, `aasm/engineering-rule`, `aasm/engineering-semantic-projection`, `aasm/engineering-semantic-projection-public`, `aasm/engineering-uncertainty-scenario-trace`, `aasm/engineering-uncertainty-scenario-trace-public`, `aasm/engineering-degraded-operation`, `aasm/engineering-degraded-operation-public` (public promotion qualification), `aasm/engineering-s4`.
-**Next seam:** S5.1 governed Refinement Proposal/Loop foundation.
+**Next seam:** S5.5 integrated core/conflict pipeline after implemented S5.1-S5.4 foundations.
 **Aggregate safety gate:** `aasm/safety-governance` (permanent TextPCB corpus implemented; qualification active).
 
 ---
@@ -307,6 +307,8 @@ Verifier capability declares fidelity, evidence grade, cost/resources, environme
 Verification debt is a projection from required obligations vs applicable evidence, not a second truth plane.
 
 ## 5.4 Knowledge applicability/application
+
+**Status: FOUNDATION IMPLEMENTED AND QUALIFIED; durable pre-admission runtime active under `aasm/knowledge-applicability`. Public admission remains `PRE_ADMISSION_ONLY`.**
 
 Generalize the semantic/performance firewall:
 
