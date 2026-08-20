@@ -1,0 +1,95 @@
+name: One-shot publish qualified S5.7
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-s5-7.yml'
+
+permissions:
+  contents: write
+  statuses: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require recorded S5.7 aggregate refinement qualification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QUALIFIED_SHA: cb11050d76fa39ce28573a892d991f16a9617b5c
+        run: |
+          set -euo pipefail
+          state="$(gh api "repos/$GITHUB_REPOSITORY/commits/$QUALIFIED_SHA/status" --jq '.statuses[] | select(.context == "aasm/refinement") | .state' | head -n1)"
+          test "$state" = success
+      - name: Advance canonical README and roadmap through complete S5
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          readme = Path('README.md')
+          text = readme.read_text(encoding='utf-8')
+          old = '''**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + complete S3 + active S4 public lineage through Degraded Operation 0.32.20 + complete S5.1-S5.6 pre-admission/qualification foundations, with S5.4 Knowledge Applicability/Application qualified under `aasm/knowledge-applicability`, S5.5 Integrated Core/Conflict qualified under `aasm/core-conflict`, and S5.6 TextPCB Refinement qualified under `aasm/textpcb-refinement`
+**Next unfinished boundary:** S5.7 — Portable Boundary
+**Latest fully qualified pre-documentation implementation head:** `2caa7f267a6381e18b262e063e900467a79c8d56`'''
+          new = '''**Qualified development boundary:** PR-1 + PR-2 + complete PR-3 / PHY-01 + complete S3 + active S4 public lineage through Degraded Operation 0.32.20 + complete S5.1-S5.7 governed refinement stack, with S5.4 Knowledge Applicability/Application qualified under `aasm/knowledge-applicability`, S5.5 Integrated Core/Conflict qualified under `aasm/core-conflict`, S5.6 TextPCB Refinement qualified under `aasm/textpcb-refinement`, and S5.7 Portable Refinement Boundary qualified as part of `aasm/refinement`
+**Next unfinished boundary:** S6.1 — Invariant Taxonomy
+**Latest fully qualified pre-documentation implementation head:** `cb11050d76fa39ce28573a892d991f16a9617b5c`'''
+          if old not in text:
+              raise SystemExit('README S5.7 boundary block did not match canonical source')
+          readme.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          roadmap = Path('docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md')
+          text = roadmap.read_text(encoding='utf-8')
+          old_seam = '**Next seam:** S5.7 portable boundary after implemented and qualified S5.1-S5.6 foundations.'
+          new_seam = '**Next seam:** S6.1 invariant taxonomy after the complete qualified S5 governed-refinement stack.'
+          if old_seam not in text:
+              raise SystemExit('roadmap next-seam marker did not match canonical source')
+          text = text.replace(old_seam, new_seam, 1)
+
+          old_block = '''## 5.7 Portable boundary
+
+The future portable kernel carries refinement IDs/revisions/Evidence refs/obligations/state transitions. It does not embed LLMs, solvers, CAD, SPICE, EM or physics engines.
+
+**Gate:** `aasm/refinement`.'''
+          new_block = '''## 5.7 Portable boundary
+
+**Status: FOUNDATION IMPLEMENTED AND QUALIFIED as part of `aasm/refinement`; reference-only pre-admission ABI active. Public admission remains `PRE_ADMISSION_ONLY`.**
+
+The portable refinement boundary carries workspace/scope/problem identity, exact ProblemRevision IDs/fingerprints, refinement proposal/validation/application/termination IDs, Evidence refs, obligation refs, conflict/core refs, and ProblemDelta transition refs. It deliberately strips proposed semantic payloads and provider/tool/solver execution payloads.
+
+It does not embed LLMs, solvers, CAD, SPICE, EM or physics engines; carries no authority token; cannot mutate a problem, dispatch an Effect, accept an artifact, or execute a solver. Machine IR, portable timing, language-independent reducer semantics, and Python-oracle differential vectors begin in S6 rather than being smuggled into the S5 transport ABI.
+
+**Gate:** `aasm/refinement` (complete S5.1-S5.7 aggregate qualification).'''
+          if old_block not in text:
+              raise SystemExit('roadmap S5.7 block did not match canonical source')
+          roadmap.write_text(text.replace(old_block, new_block, 1), encoding='utf-8')
+          PY
+      - name: Commit canonical S5 completion
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add README.md docs/roadmaps/GOVERNED_SEMANTIC_EVOLUTION_ROADMAP.md
+          git diff --cached --quiet && { echo 'expected S5 completion changes missing' >&2; exit 1; }
+          git commit -m 'Close qualified S5 and advance canonical boundary to S6.1'
+          git push origin HEAD:main
+      - name: Delete completed S5.7 implementation branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/s5-7-refinement-portable" >/dev/null 2>&1; then
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/s5-7-refinement-portable"
+          fi
+      - name: Remove one-shot publisher
+        run: |
+          set -euo pipefail
+          git pull --ff-only origin main
+          rm .github/workflows/publish-s5-7.yml
+          git add -A
+          git commit -m 'Remove one-shot S5.7 publication workflow'
+          git push origin HEAD:main
