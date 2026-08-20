@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aasm.dev/schemas/knowledge-applicability-record.schema.json",
+  "title": "AASM Knowledge Applicability and Application Durable Evidence Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["record_type", "object_id", "document"],
+  "properties": {
+    "record_type": {
+      "enum": ["KNOWLEDGE_ITEM", "KNOWLEDGE_SELECTION", "APPLICABILITY_CHECK", "KNOWLEDGE_APPLICATION"]
+    },
+    "object_id": {"type": "string", "minLength": 1},
+    "document": {"type": "object"}
+  }
+}
